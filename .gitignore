@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Bí mật — không bao giờ commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Kết quả build
+target/
+dist/
+node_modules/
+
+# Bản nén tạm
+*.zip
+
+# Dữ liệu gốc BWF: 41MB CSV thuộc bản quyền Badminton World Federation,
+# là bản phân phối lại của bên thứ ba. Không đẩy lên repo.
+# Bản đã bóc tách và chuẩn hoá nằm ở backend/src/main/resources/seed/bwf-*.json
+# Cách lấy lại: xem data/bwf-match-data/README.md
+data/bwf-match-data/*.csv
+data/bwf-match-data/index.json

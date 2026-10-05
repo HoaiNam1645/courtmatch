@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: courtly-backend
+
+  # Cau hinh bi mat (mat khau SMTP...) de o backend/.env, khong commit.
+  # Thieu file cung khong sao: ung dung van chay, chi la khong gui duoc mail.
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/courtly}
+    username: ${DB_USERNAME:courtly}
+    password: ${DB_PASSWORD:courtly}
+    hikari:
+      pool-name: courtly-pool
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Schema do Flyway quan ly. Hibernate chi kiem tra entity co khop schema khong.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # Khong dat hibernate.jdbc.time_zone: thuoc tinh nay ap ca len cot `time`
+        # va lam lech gia tri LocalTime (gio mo cua, khung gio ranh).
+        # Cac cot timestamptz deu map bang Instant nen luon duoc ghi theo UTC.
+        format_sql: false
+        default_schema: public
+        # Gop nhieu INSERT vao mot lan gui xuong database. Can cho seeder BWF:
+        # 26.000 dong ma gui tung cau thi mat hang phut. Dung duoc vi moi entity
+        # deu tu sinh UUID o tang ung dung, khong doi database tra ve id.
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          # Khong de luong gui mail treo lau hon thoi gian song cua ma xac minh.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,flyway
+  endpoint:
+    health:
+      show-details: when_authorized
+
+courtly:
+  seed:
+    # Bat seeder du lieu mau: SEED_ENABLED=true, hoac chay voi profile dev
+    enabled: ${SEED_ENABLED:false}
+  jobs:
+    booking-expiry:
+      # Tu dong huy don qua han thanh toan, giai phong khung gio (2.1.42)
+      enabled: ${BOOKING_EXPIRY_JOB_ENABLED:true}
+      interval-ms: 60000
+  mail:
+    # false = khong goi SMTP, chi ghi ma ra log. Dung khi chay test hoac chua co .env
+    enabled: ${MAIL_ENABLED:false}
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@courtly.vn}
+    from-name: ${MAIL_FROM_NAME:Courtly}
+  payment:
+    sepay:
+      # Khoa SePay gui kem header `Authorization: Apikey <key>` khi goi webhook.
+      # De trong thi moi webhook deu bi tu choi - an toan hon la nhan bua.
+      api-key: ${SEPAY_API_KEY:}
+      # Tai khoan nhan tien cua nen tang (khong phai cua chu san).
+      # Mac dinh la tai khoan demo, trung voi gia tri BookingSeeder dang dung nen du lieu mau
+      # va don tao moi khi chay dev deu nhat quan. MOI TRUONG THAT BAT BUOC ghi de bang bien
+      # moi truong, neu khong tien se chay vao tai khoan demo.
+      bank-code: ${SEPAY_BANK_CODE:MBBank}
+      bank-name: ${SEPAY_BANK_NAME:MB Bank}
+      account-no: ${SEPAY_ACCOUNT_NO:0359000111}
+      account-name: ${SEPAY_ACCOUNT_NAME:COURTLY DEMO}
+      qr-base-url: ${SEPAY_QR_BASE_URL:https://qr.sepay.vn/img}
+  auth:
+    email-verification:
+      # 2.1.1 - xac minh email khi dang ky
+      code-ttl-minutes: 15
+      max-attempts: 5
+      resend-cooldown-seconds: 60
+      max-sends-per-hour: 5
+    password-reset:
+      # 2.1.5 - cac nguong nay la mot phan cua hop dong API, frontend hien thi lai cho nguoi dung
+      code-ttl-minutes: 10
+      token-ttl-minutes: 10
+      max-attempts: 5
+      resend-cooldown-seconds: 60
+      max-sends-per-hour: 5
+  security:
+    jwt:
+      # BAT BUOC doi o moi truong that. Toi thieu 32 ky tu cho HS256.
+      secret: ${JWT_SECRET:courtly-dev-secret-key-doi-lai-truoc-khi-len-that-0123456789}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
+      issuer: courtly
+    cors:
+      # Frontend Vite chay o cong 5173
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+logging:
+  level:
+    com.courtly: DEBUG
+    org.flywaydb: INFO

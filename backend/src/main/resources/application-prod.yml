@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+courtly:
+  seed:
+    enabled: false
+
+logging:
+  level:
+    com.courtly: INFO
