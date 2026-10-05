@@ -1,0 +1,85 @@
+===============================================================================
+2.1.20 - LỌC SÂN THEO KHOẢNG CÁCH
+Giao diện: modal "Bộ lọc sân" ở / và /map
+API: GET /api/v1/venues?lat=...&lng=...&radiusKm=...        Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Chỉ hiện những sân nằm trong bán kính người dùng chọn (giao diện cho 2 km đến
+15 km). Chip nhanh "Gần tôi" áp bán kính 5 km.
+
+Phần tính toán giống hệt 2.1.14 — đọc file đó để hiểu ST_DWithin và cột
+location hoạt động thế nào. File này chỉ nói riêng phần bộ lọc.
+
+
+2. BỐN BỘ LỌC 2.1.19 – 2.1.22 ĐỀU LÀ THAM SỐ CỦA MỘT API
+-------------------------------------------------------------------------------
+Không có endpoint riêng cho từng bộ lọc. Tất cả đều là tham số của API tìm kiếm
+đã mô tả ở 2.1.13:
+
+  GET /api/v1/venues?district=...&radiusKm=...&maxPricePerHour=...&availableOnly=...
+
+Các bộ lọc CỘNG DỒN với nhau (điều kiện AND). Chọn "Quận 7" + "dưới 120.000đ"
+thì chỉ ra sân thoả cả hai.
+
+Toàn bộ việc lọc chạy Ở DATABASE, không phải tải hết danh sách về rồi lọc trong
+Java. Lọc ở Java thì phân trang sẽ sai: trang 1 lấy 20 sân, lọc xong còn 3 sân,
+người dùng thấy trang 1 có 3 sân mà tổng vẫn ghi 50.
+
+
+3. ĐIỀU QUAN TRỌNG NHẤT: PHẢI CÓ TOẠ ĐỘ
+-------------------------------------------------------------------------------
+radiusKm MỘT MÌNH KHÔNG CÓ TÁC DỤNG GÌ.
+
+Bán kính là khoảng cách tính từ MỘT ĐIỂM. Không có điểm đó (lat/lng) thì không
+có gì để đo. Gửi radiusKm mà thiếu toạ độ thì server lặng lẽ bỏ qua, không báo
+lỗi.
+
+Nên giao diện phải:
+  · Bật định vị trước, rồi mới cho chọn bán kính.
+  · Hoặc làm mờ thanh chọn bán kính khi chưa có toạ độ, kèm lời nhắc bật vị trí.
+
+Nếu để người dùng kéo thanh bán kính mà kết quả không đổi thì họ sẽ tưởng hệ
+thống hỏng.
+
+
+4. GIỚI HẠN GIÁ TRỊ
+-------------------------------------------------------------------------------
+  Giao diện cho chọn   2 – 15 km
+  Backend chấp nhận    0.1 – 50 km
+  Mặc định             5 km (khi có toạ độ mà không gửi radiusKm)
+
+Backend rộng hơn giao diện có chủ đích: sau này muốn thêm mức 20 km hay 30 km
+thì chỉ sửa giao diện, không phải sửa và triển khai lại backend.
+
+Chặn trên 50 km để một request không quét gần hết bảng.
+
+
+5. KẾT QUẢ ĐƯỢC SẮP XẾP LẠI
+-------------------------------------------------------------------------------
+Khi có toạ độ, thứ tự đổi từ "điểm đánh giá cao nhất" sang "gần nhất trước".
+
+Mỗi sân cũng có thêm trường distanceKm (làm tròn 1 chữ số thập phân). Không có
+toạ độ thì trường này là null — giao diện phải ẩn dòng khoảng cách chứ không
+hiện "null km" hay "0 km".
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues   (cột location, có index GiST venues_location_gix)
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   radiusKm ngoài khoảng 0.1–50, hoặc gửi lat mà
+                            thiếu lng
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSearchQuery.java
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java

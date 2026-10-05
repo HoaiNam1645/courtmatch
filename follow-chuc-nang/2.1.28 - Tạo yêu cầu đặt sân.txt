@@ -1,0 +1,164 @@
+===============================================================================
+2.1.28 - TẠO YÊU CẦU ĐẶT SÂN
+Giao diện: /booking/checkout
+API: POST /api/v1/bookings                                     Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Biến lựa chọn ở bước xem giá (2.1.27) thành một ĐƠN THẬT có giữ chỗ.
+
+Khác biệt lớn nhất so với 2.1.27: bước này GHI vào database và CHIẾM khung giờ,
+người khác không đặt chồng lên được nữa.
+
+Đơn sinh ra ở trạng thái "chờ thanh toán" và chỉ được giữ 10 PHÚT. Quá hạn mà
+chưa có tiền thì job tự huỷ (2.1.42).
+
+
+2. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{
+  "courtId":         "...",
+  "startTime":       "2026-09-28T11:00:00Z",
+  "durationMinutes": 90,
+  "note":            "Nhớ chuẩn bị cầu"      ← có thể bỏ trống
+}
+
+  startTime         bắt buộc ở tương lai
+  durationMinutes   60, 90 hoặc 120
+  note              tối đa 500 ký tự, để trống thì lưu NULL
+
+Giống 2.1.27, KHÔNG có trường nào cho số tiền.
+
+
+3. TÍNH LẠI GIÁ MỘT LẦN NỮA
+-------------------------------------------------------------------------------
+Bước đầu tiên của service là gọi lại QuoteService — đúng thứ mà 2.1.27 vừa gọi.
+
+Nghe như thừa, nhưng không: giữa lúc người dùng xem giá và lúc họ bấm xác nhận
+có thể đã trôi qua vài phút. Trong khoảng đó chủ sân có thể đổi bảng giá, hoặc
+người khác đã đặt mất khung giờ.
+
+Server không tin cả con số mà chính nó vừa trả về vài phút trước.
+
+
+4. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. Gọi QuoteService tính lại giá và kiểm tra còn trống.
+Bước 2. Hết chỗ  -> 409 BOOKING_SLOT_TAKEN.
+        Chưa có bảng giá -> 400 VALIDATION_FAILED.
+Bước 3. Sinh mã đơn dạng CT-yyyyMMdd-NNNN (xem mục 5).
+Bước 4. Dựng bookings + booking_items + dòng lịch sử đầu tiên.
+Bước 5. Lưu bằng saveAndFlush để lỗi trùng giờ nổ ra NGAY tại đây.
+Bước 6. Sinh giao dịch thanh toán SePay (2.1.33, 2.1.34).
+Bước 7. Trả về chi tiết đơn.
+
+
+5. MÃ ĐƠN SINH THẾ NÀO
+-------------------------------------------------------------------------------
+Dạng CT-20260928-0001: tiền tố CT, ngày tạo, số thứ tự trong ngày.
+
+Số thứ tự lấy bằng cách đếm số đơn đã tạo trong ngày rồi cộng 1. Hai người bấm
+cùng lúc có thể ra cùng một số — khi đó UNIQUE trên cột booking_code chặn lại
+và vòng lặp thử số tiếp theo, tối đa 5 lần.
+
+Mã này còn được dùng làm NỘI DUNG CHUYỂN KHOẢN (bỏ dấu gạch), nên nó là sợi dây
+duy nhất nối tiền với đơn. Xem 2.1.38.
+
+
+6. CHỐT CHẶN CUỐI CÙNG: EXCLUSION CONSTRAINT
+-------------------------------------------------------------------------------
+Bước 1 đã kiểm tra khung giờ còn trống. Nhưng hai người bấm cách nhau vài mili
+giây thì CẢ HAI đều thấy còn trống, rồi cả hai cùng ghi.
+
+Database chặn việc này, không phải code:
+
+  CONSTRAINT booking_items_no_overlap EXCLUDE USING gist (
+      court_id WITH =,
+      tstzrange(start_time, end_time, '[)') WITH &&
+  ) WHERE (status IN ('pending', 'confirmed'))
+
+Nghĩa là: trên cùng một sân, hai khung giờ đang pending/confirmed không được
+giao nhau. Người thua cuộc nhận DataIntegrityViolationException, service bắt
+lại và đổi thành 409 BOOKING_SLOT_TAKEN.
+
+Mệnh đề WHERE rất quan trọng: đơn đã cancelled/expired KHÔNG tính, nhờ vậy
+khung giờ được giải phóng cho người khác.
+
+'[)' nghĩa là tính giờ bắt đầu, không tính giờ kết thúc. Nhờ vậy đơn 18:00-19:00
+và đơn 19:00-20:00 KHÔNG bị coi là trùng nhau.
+
+
+7. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+bookings                 THÊM 1 dòng
+  booking_code           CT-20260928-0001
+  user_id                lấy từ token, KHÔNG lấy từ request
+  venue_id               suy ra từ sân con
+  status                 'pending_payment'
+  total_amount           server tự tính
+  note                   ghi chú, có thể NULL
+  expires_at             created_at + 10 phút
+  created_at             thời điểm tạo
+
+booking_items            THÊM 1 dòng
+  booking_id, court_id
+  start_time, end_time   giờ đã chuẩn hoá từ QuoteService
+  price                  bằng total_amount (hiện mỗi đơn một khung giờ)
+  status                 'pending'
+
+booking_status_history   THÊM 1 dòng
+  old_status             NULL (đơn mới sinh, chưa có trạng thái trước)
+  new_status             'pending_payment'
+  reason                 'Tao yeu cau dat san'
+  changed_by             người đặt
+
+payments                 THÊM 1 dòng -> xem 2.1.34
+
+
+8. VÌ SAO userId LẤY TỪ TOKEN
+-------------------------------------------------------------------------------
+Request không có trường userId. Controller đọc từ JWT:
+
+  UUID.fromString(jwt.getSubject())
+
+Nếu nhận userId từ client thì ai cũng đặt sân được dưới tên người khác.
+
+
+9. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+HTTP 201 Created, kèm toàn bộ chi tiết đơn giống 2.1.29:
+
+{
+  "id": "...", "bookingCode": "CT-20260928-0001",
+  "status": "pending_payment",
+  "totalAmount": 190000,
+  "expiresAt": "2026-09-28T10:10:00Z",   ← hạn thanh toán
+  "cancellable": true,
+  "venue": { ... }, "items": [ ... ], "statusHistory": [ ... ]
+}
+
+Giao diện lấy expiresAt để đếm ngược, rồi chuyển sang trang thanh toán.
+
+
+10. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED        401   Chưa đăng nhập
+  VALIDATION_FAILED   400   Thiếu courtId, giờ ở quá khứ, thời lượng sai,
+                            ghi chú quá 500 ký tự, khung giờ chưa có bảng giá
+  NOT_FOUND           404   Sân con không tồn tại hoặc sân cha chưa duyệt
+  BOOKING_SLOT_TAKEN  409   Khung giờ vừa có người đặt
+
+
+11. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/BookingController.java
+  backend/src/main/java/com/courtly/api/booking/dto/CreateBookingRequest.java
+  backend/src/main/java/com/courtly/api/booking/dto/BookingDetailResponse.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/java/com/courtly/domain/booking/Booking.java
+  backend/src/main/java/com/courtly/domain/booking/BookingItem.java
+  backend/src/main/resources/db/migration/V4__booking.sql
+  backend/src/test/java/com/courtly/api/booking/BookingControllerTest.java
+  user-web/src/api/bookings.js

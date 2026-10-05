@@ -1,0 +1,105 @@
+===============================================================================
+2.1.36 - THANH TOÁN TIỀN SÂN QUA MÃ QR / CHUYỂN KHOẢN NGÂN HÀNG
+Giao diện: /payments/:paymentId
+API: GET /api/v1/payments/{paymentId}   (chung với 2.1.34)   Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người dùng ĐƯỜNG THỨ HAI để trả tiền: gõ tay thông tin chuyển khoản, không
+cần quét QR.
+
+Màn hình hiện bốn dòng — ngân hàng, số tài khoản, tên chủ tài khoản, nội dung
+chuyển khoản — kèm nút sao chép.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+
+2. VÌ SAO CẦN CẢ HAI ĐƯỜNG
+-------------------------------------------------------------------------------
+Quét QR tiện hơn, nhưng không phải lúc nào cũng dùng được:
+
+  - Người dùng đang xem trên điện thoại, không có máy thứ hai để quét.
+  - Ứng dụng ngân hàng của họ không hỗ trợ VietQR.
+  - Ảnh QR tải lỗi vì mạng, hoặc SePay đang sập.
+
+Nếu chỉ có QR thì mất luôn người dùng ở đúng bước cuối cùng. Vì vậy màn hình
+luôn hiện CẢ HAI cùng lúc.
+
+
+3. BỐN THÔNG TIN VÀ NGUỒN CỦA CHÚNG
+-------------------------------------------------------------------------------
+  Ngân hàng          bankName          từ cấu hình
+  Số tài khoản       bankAccountNo     từ cột payments.bank_account_no
+  Tên tài khoản      bankAccountName   từ cấu hình
+  Nội dung           transferContent   từ cột payments.transfer_content
+
+Chú ý sự khác nhau: số tài khoản LƯU TRONG BẢNG, hai trường tên lấy từ cấu
+hình lúc đọc.
+
+Chủ ý: đổi tài khoản nhận tiền thì các đơn CŨ vẫn hiện đúng số tài khoản đã
+hiện lúc tạo. Nếu lấy từ cấu hình thì người dùng mở lại trang cũ sẽ thấy số
+mới, chuyển tiền vào đó trong khi QR cũ trỏ số khác.
+
+
+4. NÚT SAO CHÉP CHỈ CÓ Ở HAI DÒNG
+-------------------------------------------------------------------------------
+Chỉ "Số tài khoản" và "Nội dung" có nút sao chép. Tên ngân hàng và tên chủ tài
+khoản thì không.
+
+Lý do: hai cái sau là để người dùng ĐỐI CHIẾU bằng mắt sau khi quét QR hoặc gõ
+số tài khoản, chứ không phải để dán vào đâu cả. Ứng dụng ngân hàng tự hiện tên
+chủ tài khoản.
+
+Hai cái trước thì bắt buộc phải chính xác từng ký tự, gõ tay dễ sai.
+
+
+5. SAI NỘI DUNG CHUYỂN KHOẢN THÌ SAO
+-------------------------------------------------------------------------------
+Đây là rủi ro lớn nhất của đường chuyển khoản tay.
+
+Nội dung chuyển khoản là thứ duy nhất nối tiền với đơn (2.1.34 mục 3). Gõ sai
+thì webhook về nhưng không tìm thấy đơn nào, và:
+
+  - Tiền VẪN VÀO tài khoản nền tảng.
+  - Đơn KHÔNG được xác nhận, 10 phút sau hết hạn.
+  - Webhook được ghi vào sepay_webhook_logs với trạng thái 'ignored' và ghi
+    chú "Khong tim thay don cho thanh toan".
+
+Nhờ bản ghi đó mà admin tìm lại được giao dịch lạc và xử lý tay.
+
+Giao diện có dòng cảnh báo "Không sửa nội dung chuyển khoản" ngay cạnh.
+
+
+6. NGÂN HÀNG CHÈN THÊM CHỮ THÌ VẪN NHẬN
+-------------------------------------------------------------------------------
+Nhiều ngân hàng tự thêm chữ vào nội dung, ví dụ:
+
+  "CK CT202609280001 noi dung chuyen tien"
+
+2.1.38 không so sánh bằng nhau mà TÁCH NỘI DUNG THÀNH TỪNG TỪ rồi tìm. Nên
+trường hợp trên vẫn khớp đúng đơn.
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  payments   bank_account_no, transfer_content, amount, status
+  bookings   mã đơn
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Giao dịch không tồn tại hoặc của người khác
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/dto/PaymentDetailResponse.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/service/payment/SepayWebhookService.java
+  user-web/src/App.jsx                     (thành phần PaymentPage)
+  user-web/src/api/payments.js

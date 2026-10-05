@@ -1,0 +1,87 @@
+===============================================================================
+2.1.25 - XEM ĐỊA CHỈ VÀ CHỈ ĐƯỜNG ĐẾN SÂN
+Giao diện: khối bản đồ trong /san/:venueId
+API: nằm trong GET /api/v1/venues/{slugOrId}               Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Hiển thị địa chỉ sân, một bản đồ nhỏ đánh dấu vị trí, nút "Mở chỉ đường" sang
+Google Maps và nút "Gọi sân".
+
+KHÔNG có API riêng và KHÔNG có xử lý nào ở backend. Tất cả dựng từ bốn trường
+đã có sẵn trong API chi tiết sân.
+
+
+2. BỐN TRƯỜNG ĐƯỢC DÙNG
+-------------------------------------------------------------------------------
+  address     "123 Nguyễn Thị Thập, Phường Tân Phú"   → dòng địa chỉ
+  latitude    10.7295000                              → bản đồ và chỉ đường
+  longitude   106.7215000                             → bản đồ và chỉ đường
+  phone       "0901234567"                            → nút gọi
+
+Ngoài ra còn ward, district, province để ghép thành địa chỉ đầy đủ.
+
+
+3. HAI NÚT HOẠT ĐỘNG THẾ NÀO
+-------------------------------------------------------------------------------
+Cả hai đều là liên kết do giao diện tự ghép, không gọi backend:
+
+  Mở chỉ đường
+    https://www.google.com/maps/dir/?api=1&destination={lat},{lng}
+    Google Maps tự lấy vị trí hiện tại của người dùng làm điểm xuất phát.
+    Dùng TOẠ ĐỘ chứ không dùng chuỗi địa chỉ — địa chỉ dạng chữ hay bị Google
+    hiểu sai sang một chỗ khác cùng tên đường.
+
+  Gọi sân
+    tel:{phone}
+    Trên điện thoại mở ứng dụng gọi; trên máy tính có thể không làm gì.
+
+
+4. TRƯỜNG HỢP THIẾU DỮ LIỆU
+-------------------------------------------------------------------------------
+Cả bốn cột đều cho phép NULL, nên giao diện phải chịu được:
+
+  Không có toạ độ    → ẩn hẳn bản đồ và nút chỉ đường, chỉ hiện địa chỉ chữ.
+                       KHÔNG được vẽ bản đồ ở toạ độ (0, 0) — đó là một điểm
+                       giữa Đại Tây Dương.
+  Không có số điện thoại → ẩn nút gọi, không hiện nút bấm vào không có gì xảy ra.
+
+
+5. CHUYỆN CÁI BẢN ĐỒ BỊ HỎNG
+-------------------------------------------------------------------------------
+Ghi lại vì mất thời gian tìm nguyên nhân, và vì bài học áp dụng được cho chỗ
+khác.
+
+Ban đầu bản đồ là một iframe nhúng từ www.openstreetmap.org. Trên máy phát
+triển nó không hiện gì cả. Nguyên nhân KHÔNG nằm trong code: bộ định tuyến
+mạng phân giải tên miền www.openstreetmap.org thành 127.0.0.1, nên trình duyệt
+tải về chính máy mình.
+
+Nhưng có một lỗi thật sự của giao diện: iframe không có đường xử lý khi tải
+thất bại, nên người dùng chỉ thấy một khoảng trắng, không biết chuyện gì.
+
+Đã đổi sang thư viện Leaflet với máy chủ ảnh bản đồ tile.openstreetmap.fr, và
+thêm trạng thái báo lỗi: sau 8 giây không tải được ô bản đồ nào thì hiện thông
+báo kèm liên kết mở bản đồ ở tab mới.
+
+Vì sao là "8 giây không ô nào" chứ không phải "một ô lỗi là báo hỏng": ban đầu
+làm cách thứ hai và bản đồ báo hỏng liên tục, vì một máy chủ phụ thỉnh thoảng
+trả lỗi một ô trong khi các ô khác vẫn về bình thường.
+
+Bài học: mọi thứ tải từ bên ngoài đều phải có đường xử lý khi thất bại, và
+ngưỡng báo lỗi phải đặt ở "toàn bộ hỏng" chứ không phải "có một phần hỏng".
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues   (address, ward, district, province, latitude, longitude, phone)
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueDetailResponse.java
+  user-web/src/components/VenueMap.jsx

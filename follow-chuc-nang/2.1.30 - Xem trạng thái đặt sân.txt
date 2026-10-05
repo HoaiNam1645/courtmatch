@@ -1,0 +1,121 @@
+===============================================================================
+2.1.30 - XEM TRẠNG THÁI ĐẶT SÂN
+Giao diện: /bookings/:bookingId
+API: GET /api/v1/bookings/{bookingId}   (chung với 2.1.29)   Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người dùng biết đơn đang ở đâu trong vòng đời, và ĐÃ ĐI QUA những bước nào.
+
+Không có API riêng. Dữ liệu nằm trong trường statusHistory của 2.1.29.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+
+2. SÁU TRẠNG THÁI
+-------------------------------------------------------------------------------
+  pending_payment   Đã tạo đơn, đang giữ chỗ, chờ tiền (tối đa 10 phút)
+  confirmed         Đã nhận tiền, lịch sân chắc chắn
+  completed         Đã chơi xong
+  cancelled         Người dùng tự huỷ (2.1.31)
+  expired           Quá hạn thanh toán, hệ thống tự huỷ (2.1.42)
+  refunded          Đã hoàn tiền
+
+Danh sách này được chốt ở database, không chỉ trong code:
+
+  CONSTRAINT bookings_status_check CHECK (
+      status IN ('pending_payment','confirmed','cancelled',
+                 'completed','expired','refunded'))
+
+Nghĩa là dù có lỗi ở tầng ứng dụng, một giá trị lạ cũng không ghi vào được.
+
+Phân biệt cancelled và expired rất quan trọng: cancelled là người dùng chủ
+động, expired là hệ thống tự làm vì hết giờ. Gộp chung thì sau này không thống
+kê được bao nhiêu phần trăm đơn bị bỏ vì chậm thanh toán.
+
+
+3. BẢNG LỊCH SỬ
+-------------------------------------------------------------------------------
+Mỗi lần đổi trạng thái ghi thêm MỘT dòng vào booking_status_history. Không ghi
+đè, không xoá — nhờ vậy luôn dựng lại được toàn bộ diễn biến.
+
+  id
+  booking_id
+  old_status     NULL ở dòng đầu tiên (đơn mới sinh, chưa có trạng thái trước)
+  new_status
+  reason         lý do, ví dụ "Qua han thanh toan 10 phut"
+  changed_by     NULL khi do HỆ THỐNG tự đổi
+  created_at
+
+
+4. changed_by = NULL NGHĨA LÀ GÌ
+-------------------------------------------------------------------------------
+Đây là chi tiết dễ hiểu nhầm. Cột này KHÔNG phải bị thiếu dữ liệu — NULL mang
+nghĩa "không có con người nào làm việc này, hệ thống tự đổi".
+
+Trong database còn ghi rõ:
+
+  COMMENT ON COLUMN booking_status_history.changed_by IS
+      'NULL khi trang thai do he thong tu dong cap nhat'
+
+API đổi NULL thành cờ bySystem = true cho dễ dùng:
+
+  history.getChangedBy() == null   ->   "bySystem": true
+
+Giao diện dựa vào cờ này để hiện "Hệ thống tự huỷ" thay vì "Bạn đã huỷ".
+
+
+5. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+"statusHistory": [
+  { "newStatus": "pending_payment",
+    "reason": "Tao yeu cau dat san",
+    "bySystem": false,
+    "createdAt": "2026-09-28T10:00:00Z" },
+
+  { "oldStatus": "pending_payment", "newStatus": "confirmed",
+    "reason": "Da nhan thanh toan qua SePay",
+    "bySystem": true,
+    "createdAt": "2026-09-28T10:03:12Z" }
+]
+
+Dòng đầu không có oldStatus vì giá trị là NULL và JSON lược bỏ trường null.
+
+Danh sách luôn được sắp xếp theo created_at tăng dần, nên giao diện vẽ thẳng
+thành timeline từ trên xuống.
+
+
+6. AI GHI VÀO BẢNG NÀY
+-------------------------------------------------------------------------------
+  2.1.28  tạo đơn        NULL -> pending_payment        changed_by = người đặt
+  2.1.31  người huỷ      pending_payment -> cancelled   changed_by = người đặt
+  2.1.38  webhook SePay  pending_payment -> confirmed   changed_by = NULL
+  2.1.42  job quá hạn    pending_payment -> expired     changed_by = NULL
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  bookings                 trạng thái hiện tại
+  booking_status_history   các bước đã đi qua
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+Giống hệt 2.1.29 vì dùng chung API.
+
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Đơn không tồn tại hoặc của người khác
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/dto/BookingDetailResponse.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/java/com/courtly/domain/booking/BookingStatusHistory.java
+  backend/src/main/java/com/courtly/common/enums/BookingStatus.java
+  backend/src/main/resources/db/migration/V4__booking.sql
+  user-web/src/api/bookings.js

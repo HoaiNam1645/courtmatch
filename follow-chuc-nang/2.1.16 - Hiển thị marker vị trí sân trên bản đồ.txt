@@ -1,0 +1,90 @@
+===============================================================================
+2.1.16 - HIỂN THỊ MARKER VỊ TRÍ SÂN TRÊN BẢN ĐỒ
+Giao diện: /map             API: GET /api/v1/venues        Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Vẽ một chấm đánh dấu (marker) cho mỗi sân lên bản đồ, kèm nhãn hiện tên sân và
+giá khi rê chuột vào.
+
+
+2. BA CHỨC NĂNG 2.1.15 – 2.1.17 DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Trang /map gọi đúng API tìm kiếm của 2.1.13:
+
+  GET /api/v1/venues
+
+Một lần gọi trả về mọi thứ mà cả ba chức năng cần. Backend không có endpoint
+riêng cho bản đồ, vì dữ liệu cần dùng y hệt danh sách trang chủ — tách ra chỉ
+làm hai chỗ dễ lệch nhau.
+
+Khác biệt giữa ba chức năng nằm ở CÁCH GIAO DIỆN VẼ, không nằm ở dữ liệu:
+
+  2.1.15  vẽ danh sách thẻ sân bên cạnh bản đồ
+  2.1.16  vẽ chấm đánh dấu lên bản đồ
+  2.1.17  bấm vào chấm thì mở bảng thông tin nhanh
+
+
+3. PHẦN BACKEND CHỈ LÀ HAI CON SỐ
+-------------------------------------------------------------------------------
+Marker cần đúng hai trường, đã có sẵn trong mỗi thẻ sân:
+
+  latitude    numeric(10,7)   ← venues.latitude
+  longitude   numeric(10,7)   ← venues.longitude
+
+Nhãn hiện khi rê chuột lấy từ name và minPricePerHour — cũng đã có sẵn, không
+phải gọi thêm.
+
+Không có API riêng cho marker.
+
+
+4. VÌ SAO CÓ TỚI BA CỘT TOẠ ĐỘ
+-------------------------------------------------------------------------------
+Bảng venues có latitude, longitude VÀ location. Nhìn thì thừa, thực ra mỗi cột
+một việc:
+
+  latitude, longitude   số thập phân, để TRẢ VỀ cho giao diện vẽ marker.
+                        Leaflet cần đúng hai số này.
+  location              kiểu geography(Point, 4326), để TÌM KIẾM theo khoảng
+                        cách (2.1.14). Có index GiST.
+
+Cột location do trigger venues_sync_location tự sinh từ hai cột kia mỗi lần
+INSERT/UPDATE — không ai ghi tay, nên không sợ lệch nhau.
+
+Độ chính xác numeric(10,7): 7 chữ số sau dấu phẩy tương đương khoảng 1 cm, quá
+đủ để định vị một sân cầu lông.
+
+
+5. SÂN KHÔNG CÓ TOẠ ĐỘ
+-------------------------------------------------------------------------------
+Hai cột này cho phép NULL. Sân nào chưa nhập toạ độ thì API vẫn trả về sân đó
+(nó vẫn hiện trong danh sách), nhưng latitude/longitude là null.
+
+Giao diện PHẢI bỏ qua những sân này khi vẽ marker. Truyền null vào Leaflet sẽ
+làm hỏng cả bản đồ, chứ không phải chỉ thiếu một chấm.
+
+
+6. GHI CHÚ VỀ PHÍA GIAO DIỆN
+-------------------------------------------------------------------------------
+Không thuộc backend nhưng hay gây mất thời gian nên ghi lại:
+
+Marker phải dùng L.divIcon với class CSS tự định nghĩa, KHÔNG dùng marker mặc
+định của Leaflet. Ảnh marker nằm trong package không được Vite đóng gói, nên
+sẽ hiện icon vỡ. Xem .leaflet-venue-pin trong user-web/src/index.css.
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues   (latitude, longitude, name, và giá lấy qua court_price_rules)
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/resources/db/migration/V3__venue.sql   (bảng venues)
+  backend/src/main/resources/db/migration/V1__extensions_and_helpers.sql
+                                                    (courtly_sync_location)
+  user-web/src/components/VenueMap.jsx

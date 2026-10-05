@@ -1,0 +1,281 @@
+===============================================================================
+2.1.1 - ĐĂNG KÝ TÀI KHOẢN TRÊN WEBSITE
+Giao diện: /register → /register/verify          Không cần đăng nhập
+API:       POST /api/v1/auth/register              (tạo tài khoản, gửi mã)
+           POST /api/v1/auth/verify-email          (nhập mã, kích hoạt)
+           POST /api/v1/auth/verify-email/resend   (gửi lại mã)
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Tạo một tài khoản người chơi mới, rồi xác minh email trước khi cho dùng.
+
+Người dùng nhập họ tên, email (bắt buộc), số điện thoại (tuỳ chọn) và mật khẩu.
+Đăng ký xong tài khoản CHƯA DÙNG ĐƯỢC: server gửi một mã 6 chữ số về email, nhập
+đúng mã thì tài khoản mới được kích hoạt.
+
+Một lần đăng ký tạo ra 4 dòng ở 4 bảng khác nhau:
+  · users                         → tài khoản, trạng thái 'pending'
+  · user_roles                    → gán vai trò "player"
+  · player_profiles               → hồ sơ người chơi, lúc này còn rỗng
+  · email_verification_requests   → hash của mã xác minh
+
+
+2. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{
+  "fullName":        "Nguyen Van A",
+  "email":           "a@example.com",     ← BẮT BUỘC, nơi nhận mã xác minh
+  "phone":           "0901234567",        ← tuỳ chọn
+  "password":        "Courtly@123",
+  "confirmPassword": "Courtly@123"
+}
+
+
+3. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. AuthController nhận JSON, đổi thành RegisterRequest.
+        Annotation @Valid kiểm tra cú pháp ngay tại đây: độ dài họ tên, email
+        bắt buộc và đúng định dạng, mật khẩu có chữ và số, hai ô mật khẩu khớp
+        nhau. Sai ở bước này → trả 400 luôn, chưa hề đụng tới database.
+
+Bước 2. AuthService.register() bắt đầu. Cả bước 2–8 nằm trong 1 transaction:
+        hoặc tất cả cùng thành công, hoặc không ghi gì cả.
+
+Bước 3. Chuẩn hoá số điện thoại về dạng 0xxxxxxxxx:
+          "+84 901 234 567"  →  "0901234567"
+          "84901234567"      →  "0901234567"
+        Rồi kiểm tra có đúng số di động Việt Nam không (10 số, đầu 03/05/07/
+        08/09).
+
+Bước 4. Hỏi database xem email đã có ai dùng chưa (không phân biệt hoa thường).
+        Rồi hỏi tiếp số điện thoại. Trùng → trả 409.
+
+Bước 5. Đọc bảng roles để lấy dòng có code = 'player'.
+        Nếu database chưa có vai trò này, server báo lỗi và yêu cầu chạy seeder
+        trước.
+
+Bước 6. Tạo đối tượng User và TỰ SINH UUID cho nó ngay tại Java.
+        (Xem mục 8 để biết vì sao không để database tự sinh id.)
+
+Bước 7. Mã hoá mật khẩu bằng BCrypt rồi cất vào cột password_hash.
+        Mật khẩu gốc không bao giờ được lưu, và không giải ngược ra được.
+
+Bước 8. Gắn thêm UserRole (vai trò player) và PlayerProfile (hồ sơ rỗng) vào
+        User, rồi gọi save() MỘT lần. Hibernate tự ghi cả 3 bảng nhờ cascade.
+
+Bước 9. Sinh mã 6 chữ số ngẫu nhiên, băm bằng BCrypt rồi ghi vào
+        email_verification_requests. Mã gốc KHÔNG được lưu ở đâu cả.
+
+Bước 10. Phát sự kiện gửi email. Việc gửi chạy SAU khi transaction commit và ở
+        luồng khác, nên người dùng không phải chờ máy chủ SMTP trả lời.
+
+Bước 11. Trả về 201, KHÔNG kèm token. Tài khoản chưa kích hoạt thì chưa được
+        cấp vé vào cửa.
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+users                                                            [THÊM 1 DÒNG]
+  id                 ← UUID sinh ở Java
+  full_name          ← từ form
+  email              ← từ form, hoặc NULL
+  phone              ← từ form đã chuẩn hoá, hoặc NULL
+  password_hash      ← chuỗi BCrypt, ví dụ $2a$10$...
+  status             ← 'pending'  (chờ xác minh email)
+  created_at         ← thời điểm hiện tại
+  updated_at         ← thời điểm hiện tại
+  ─── các cột để trống ───
+  avatar_url, email_verified_at, phone_verified_at, last_login_at
+
+user_roles                                                       [THÊM 1 DÒNG]
+  user_id            ← id vừa tạo
+  role_id            ← id của vai trò 'player'
+  assigned_at        ← thời điểm hiện tại
+
+player_profiles                                                  [THÊM 1 DÒNG]
+  user_id            ← id vừa tạo (dùng chung khoá chính với users)
+  created_at         ← thời điểm hiện tại
+  updated_at         ← thời điểm hiện tại
+  ─── tất cả cột còn lại đều NULL ───
+  gender, date_of_birth, skill_level, skill_score, dominant_hand,
+  playing_style, preferred_play_type, bio
+  Những cột này được điền ở chức năng 2.1.7 và 2.1.8 → 2.1.12.
+
+roles                                                            [CHỈ ĐỌC]
+
+
+5. DATABASE TỰ CHẶN NHỮNG GÌ
+-------------------------------------------------------------------------------
+Dù code Java có quên kiểm tra, database vẫn chặn:
+
+  users_identity_check   Phải có email HOẶC phone. Email đã bắt buộc ở tầng
+                         ứng dụng nên ràng buộc này luôn thoả, nhưng vẫn giữ
+                         để bảo vệ dữ liệu ghi vào bằng đường khác.
+  users_email_unique     Không hai tài khoản nào cùng email.
+                         Đặt trên lower(email) nên "A@X.com" và "a@x.com" bị
+                         coi là một. Chỉ áp dụng khi email khác NULL.
+  users_phone_unique     Tương tự với số điện thoại.
+  users_status_check     status chỉ được là active / inactive / banned / pending.
+  users_set_updated_at   Trigger tự cập nhật updated_at mỗi lần UPDATE.
+
+Bước 4 (kiểm tra trùng) chỉ để báo lỗi cho dễ hiểu. Nếu hai người bấm đăng ký
+cùng một email đúng cùng một lúc, cả hai đều vượt qua được bước 4 — và unique
+index mới là thứ chặn người thua lại.
+
+
+6. TRẢ VỀ SAU KHI ĐĂNG KÝ
+-------------------------------------------------------------------------------
+HTTP 201 Created
+
+{
+  "email":              "a@example.com",
+  "expiresInSeconds":   900,
+  "resendAfterSeconds": 60
+}
+
+KHÔNG có accessToken. Đây là điểm khác lớn nhất so với trước: tài khoản chưa xác
+minh thì chưa được cấp token, nên giao diện phải chuyển sang màn hình nhập mã
+chứ không đưa thẳng vào trang chủ.
+
+
+6b. BƯỚC NHẬP MÃ XÁC MINH
+-------------------------------------------------------------------------------
+POST /api/v1/auth/verify-email      { "email": "...", "code": "708599" }
+
+Các bước chạy:
+
+  1. Tìm mã còn hiệu lực mới nhất của email đó. Không có → lỗi.
+  2. Hết hạn → đánh dấu đã dùng, báo lỗi.
+  3. Đã sai quá 5 lần → huỷ mã, báo lỗi.
+  4. So mã bằng BCrypt.
+       Sai   → attempt_count + 1, báo còn mấy lần thử.
+       Đúng  → đi tiếp bước 5.
+  5. Ghi verified_at và used_at, đổi users.status thành 'active', ghi
+     users.email_verified_at.
+  6. Cấp token luôn.
+
+Trả về HTTP 200 với hình dạng y hệt lúc đăng nhập (accessToken + user).
+
+Vì sao cấp token luôn mà không bắt đăng nhập lại: người dùng vừa chứng minh họ
+sở hữu email đó, bắt gõ lại mật khẩu ngay sau đó là thừa.
+
+Bảng thay đổi ở bước này:
+
+  email_verification_requests   [SỬA 1 DÒNG]
+    verified_at    ← bây giờ
+    used_at        ← bây giờ (mã chỉ dùng được một lần)
+    attempt_count  ← + 1 nếu nhập sai
+
+  users                         [SỬA 1 DÒNG]
+    status             ← 'active'
+    email_verified_at  ← bây giờ
+    updated_at         ← trigger tự cập nhật
+
+
+6c. GỬI LẠI MÃ
+-------------------------------------------------------------------------------
+POST /api/v1/auth/verify-email/resend      { "email": "..." }
+
+Phát mã mới và đánh dấu mọi mã cũ của tài khoản đó là đã dùng — chỉ mã mới nhất
+còn hiệu lực.
+
+Email không tồn tại, hoặc tài khoản đã xác minh rồi, thì vẫn trả về y hệt như
+trường hợp thành công. Lý do xem mục 8.
+
+Ngưỡng giới hạn:
+  Mã sống                  15 phút
+  Nhập sai tối đa          5 lần, quá thì huỷ mã
+  Chờ giữa hai lần gửi     60 giây
+  Gửi tối đa mỗi giờ       5 lần
+
+Hạn mức này TÁCH RIÊNG khỏi luồng quên mật khẩu (2.1.5): xin lại mã đặt mật khẩu
+không được làm hết lượt gửi mã xác minh.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  code                     HTTP   Khi nào
+  ───────────────────────────────────────────────────────────────────────────
+  VALIDATION_FAILED        400    Thiếu họ tên, mật khẩu quá ngắn, email sai
+                                  định dạng, hai ô mật khẩu không khớp, hoặc
+                                  không nhập cả email lẫn số điện thoại.
+                                  Kèm fieldErrors chỉ rõ ô nào sai.
+  EMAIL_ALREADY_EXISTS     409    Email đã có người dùng
+  PHONE_ALREADY_EXISTS     409    Số điện thoại đã có người dùng
+  EMAIL_NOT_VERIFIED       403    Đăng nhập khi chưa xác minh email.
+                                  Giao diện phải đưa sang màn hình nhập mã,
+                                  không hiện lỗi rồi bỏ mặc người dùng.
+  VERIFICATION_CODE_INVALID
+                           400    Mã sai, hết hạn, hoặc chưa từng đăng ký
+  VERIFICATION_TOO_MANY_ATTEMPTS
+                           429    Nhập sai quá 5 lần, mã bị huỷ, phải gửi lại
+  INTERNAL_ERROR           500    Lỗi hệ thống
+
+
+8. NHỮNG ĐIỂM CẦN LƯU Ý
+-------------------------------------------------------------------------------
+· Vì sao id sinh ở Java chứ không để database tự sinh?
+  Vì player_profiles và user_roles dùng chính id của users làm khoá chính. Phải
+  biết id trước thì mới gán được cho cả 3 dòng trong cùng một lần lưu.
+
+· Vì sao tài khoản mới là 'pending' chứ không 'active' ngay?
+  Để chắc chắn email là có thật và thuộc về người đăng ký. Nếu cho dùng ngay,
+  người ta có thể đăng ký bằng email của người khác, và sau này mọi thông báo
+  đặt sân sẽ bay tới hộp thư của người không liên quan.
+
+· Vì sao email bắt buộc, trong khi trước đây chỉ cần email HOẶC số điện thoại?
+  Vì chưa gửi được SMS. Không có email thì không có đường nào gửi mã.
+  Khi nào có nhà cung cấp SMS thì mở lại đăng ký bằng số điện thoại.
+
+· Vì sao "chưa xác minh" và "bị khoá" là hai mã lỗi khác nhau?
+  Hai tình huống cần hai cách xử lý hoàn toàn khác: một bên người dùng tự giải
+  quyết được bằng cách nhập mã, một bên phải liên hệ quản trị viên. Gộp chung
+  một mã lỗi thì giao diện không biết nên dẫn họ đi đâu.
+
+· Vì sao có bảng riêng mà không dùng chung password_reset_requests?
+  Hai luồng có vòng đời khác nhau. Gộp chung thì phải thêm cột "purpose" và mọi
+  câu truy vấn đều phải nhớ lọc theo cột đó — sớm muộn sẽ quên một chỗ, và lúc
+  đó mã đặt lại mật khẩu có thể dùng để kích hoạt tài khoản.
+
+· Vì sao cột password_hash cho phép NULL?
+  Để dành cho tài khoản đăng nhập bằng Google (chức năng 2.1.3) — loại tài khoản
+  đó không có mật khẩu riêng.
+
+· Mật khẩu yêu cầu gì?
+  8 – 72 ký tự, có ít nhất một chữ cái và một chữ số.
+  Chức năng 2.1.5 (đặt lại mật khẩu) dùng đúng bộ quy tắc này.
+
+
+9. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+# Bước 1 - đăng ký
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"fullName":"Nguyen Van A","email":"a@example.com",
+       "password":"Courtly@123","confirmPassword":"Courtly@123"}'
+
+# Bước 2 - nhập mã (đặt MAIL_ENABLED=false thì mã in ra log của server)
+curl -X POST http://localhost:8080/api/v1/auth/verify-email \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"a@example.com","code":"708599"}'
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/auth/AuthController.java
+  backend/src/main/java/com/courtly/api/auth/dto/RegisterRequest.java
+  backend/src/main/java/com/courtly/api/auth/dto/AuthResponse.java
+  backend/src/main/java/com/courtly/api/auth/dto/UserResponse.java
+  backend/src/main/java/com/courtly/service/auth/AuthService.java
+  backend/src/main/java/com/courtly/service/auth/JwtService.java
+  backend/src/main/java/com/courtly/service/auth/EmailVerificationService.java
+  backend/src/main/java/com/courtly/service/auth/OtpRateLimiter.java
+  backend/src/main/java/com/courtly/service/mail/MailService.java
+  backend/src/main/java/com/courtly/domain/account/EmailVerificationRequest.java
+  backend/src/main/resources/db/migration/V14__email_verification.sql
+  backend/src/test/java/com/courtly/api/auth/EmailVerificationTest.java
+  backend/src/main/java/com/courtly/domain/account/User.java
+  backend/src/main/resources/db/migration/V2__account.sql
+  backend/src/test/java/com/courtly/api/auth/AuthControllerTest.java

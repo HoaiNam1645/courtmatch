@@ -1,0 +1,124 @@
+===============================================================================
+2.1.2 - ĐĂNG NHẬP TRÊN WEBSITE
+Giao diện: /login        API: POST /api/v1/auth/login        Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Kiểm tra tài khoản + mật khẩu, đúng thì cấp cho trình duyệt một "vé vào cửa"
+(access token) để các lần gọi API sau biết đây là ai.
+
+Người dùng gõ email HOẶC số điện thoại vào cùng một ô — server tự đoán đó là
+loại nào.
+
+
+2. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{
+  "emailOrPhone": "a@example.com",   ← hoặc "0901234567"
+  "password":     "Courtly@123"
+}
+
+
+3. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. Nhìn chuỗi người dùng nhập, nếu có dạng "gì đó @ gì đó . gì đó" thì coi
+        là email, ngược lại coi là số điện thoại.
+
+Bước 2. Nếu là số điện thoại thì chuẩn hoá về 0xxxxxxxxx trước khi tìm, vì
+        trong database chỉ lưu đúng một dạng đó.
+
+Bước 3. Tìm tài khoản trong bảng users.
+        Không tìm thấy → trả lỗi INVALID_CREDENTIALS.
+
+Bước 4. So mật khẩu người dùng gõ với password_hash bằng BCrypt.
+        Sai → cũng trả đúng lỗi INVALID_CREDENTIALS như bước 3.
+
+Bước 5. Kiểm tra status có phải 'active' không.
+        Không phải → trả ACCOUNT_DISABLED (403).
+
+Bước 6. Ghi lại thời điểm đăng nhập vào cột last_login_at.
+
+Bước 7. Sinh JWT giống hệt lúc đăng ký (sub = id, roles, hết hạn 24 giờ) và
+        trả về.
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+users                                                            [SỬA 1 DÒNG]
+  last_login_at      ← thời điểm hiện tại
+  updated_at         ← trigger users_set_updated_at tự cập nhật
+
+Không có bảng nào khác bị đụng tới. Đăng nhập không tạo dòng mới ở đâu cả —
+dự án cố ý không lưu phiên đăng nhập ở server (xem mục 6).
+
+
+5. VÌ SAO SAI TÀI KHOẢN VÀ SAI MẬT KHẨU CÙNG MỘT THÔNG BÁO
+-------------------------------------------------------------------------------
+Nếu tách ra:
+  "Email không tồn tại"   → kẻ xấu biết email nào CHƯA đăng ký
+  "Mật khẩu không đúng"   → kẻ xấu biết email nào ĐÃ đăng ký
+
+Chỉ cần thử lần lượt là dò ra được danh sách email có trong hệ thống, rồi đem
+danh sách đó đi thử mật khẩu hoặc gửi thư lừa đảo. Nên cả hai trường hợp đều
+trả về:
+
+  "Email, số điện thoại hoặc mật khẩu không đúng."
+
+Đây cũng là quy tắc bắt buộc ghi trong QUY-TAC-VIET-API.md.
+
+
+6. PHIÊN ĐĂNG NHẬP HOẠT ĐỘNG THẾ NÀO
+-------------------------------------------------------------------------------
+Access token là một chuỗi JWT, KHÔNG được lưu ở server. Bên trong nó có sẵn
+id người dùng, danh sách vai trò và thời điểm hết hạn, tất cả được ký bằng khoá
+bí mật của server.
+
+Mỗi lần trình duyệt gọi API, nó gửi kèm:
+
+  Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+
+Server chỉ cần kiểm tra chữ ký còn đúng và chưa hết hạn là tin — không phải
+tra database.
+
+Ưu điểm: nhanh, không cần bảng lưu phiên.
+Nhược điểm: token bị lộ thì vẫn dùng được cho tới khi hết hạn, không thu hồi
+được. Đây là đánh đổi đã chọn có chủ đích cho phạm vi đồ án.
+
+
+7. TRẢ VỀ
+-------------------------------------------------------------------------------
+HTTP 200 OK — hình dạng giống hệt lúc đăng ký:
+
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType":   "Bearer",
+  "expiresIn":   86400,
+  "user": { "id": ..., "fullName": ..., "roles": ["player"] }
+}
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  code                     HTTP   Khi nào
+  ───────────────────────────────────────────────────────────────────────────
+  VALIDATION_FAILED        400    Bỏ trống ô tài khoản hoặc ô mật khẩu
+  INVALID_CREDENTIALS      401    Không có tài khoản này, HOẶC sai mật khẩu
+  ACCOUNT_DISABLED         403    Tài khoản đang bị khoá (status khác 'active')
+
+
+9. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"emailOrPhone":"an.nguyen@example.com","password":"Courtly@123"}'
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/auth/AuthController.java
+  backend/src/main/java/com/courtly/api/auth/dto/LoginRequest.java
+  backend/src/main/java/com/courtly/service/auth/AuthService.java
+  backend/src/main/java/com/courtly/service/auth/JwtService.java
+  backend/src/main/java/com/courtly/common/config/SecurityConfig.java

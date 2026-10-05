@@ -1,0 +1,120 @@
+===============================================================================
+2.1.6 - XEM HỒ SƠ NGƯỜI CHƠI
+Giao diện: /profile     API: GET /api/v1/users/me/profile     Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Lấy toàn bộ thông tin hồ sơ của CHÍNH người đang đăng nhập, để dựng trang
+/profile: thông tin liên hệ, thông tin người chơi, thống kê thi đấu, khung giờ
+rảnh và khu vực chơi ưu tiên.
+
+Đây là API chỉ đọc — không sửa gì trong database.
+
+
+2. VÌ SAO ĐƯỜNG DẪN LÀ /users/me
+-------------------------------------------------------------------------------
+Đường dẫn KHÔNG nhận userId. Server lấy id từ token đang gửi kèm:
+
+  UUID.fromString(jwt.getSubject())
+
+Nếu API là /users/{userId}/profile thì phải thêm bước kiểm tra "id này có đúng
+là người đang đăng nhập không", và chỉ cần quên một lần là ai cũng đọc được hồ
+sơ người khác. Dùng /me thì sai lầm đó không xảy ra được.
+
+Quy tắc chung của dự án: userId LUÔN lấy từ token, không bao giờ nhận từ client.
+
+
+3. MỘT LẦN GỌI TRẢ VỀ 5 KHỐI
+-------------------------------------------------------------------------------
+{
+  "user":       { ... }   ← từ bảng users
+  "profile":    { ... }   ← từ bảng player_profiles
+  "statistics": { ... }   ← từ bảng player_statistics
+  "availability":      [] ← từ bảng player_availability_slots
+  "preferredLocations":[] ← từ bảng player_preferred_locations
+}
+
+Gộp một lần gọi để frontend không phải ghép 5 request. Cùng dữ liệu này phục vụ
+cả trang /profile lẫn trang /profile/preferences.
+
+Chi tiết từng khối:
+
+  user         id, fullName, email, phone, avatarUrl, status, roles
+  profile      gender, dateOfBirth, bio, skillLevel, skillScore,
+               dominantHand, playingStyle, preferredPlayType
+  statistics   totalMatches, totalWins, totalLosses, winRate,
+               ratingScore, lastPlayedAt
+  availability danh sách { dayOfWeek, startTime, endTime }, sắp xếp theo thứ
+               rồi theo giờ bắt đầu
+  preferredLocations
+               danh sách { id, label, address, latitude, longitude,
+               radiusKm, isDefault }, sắp xếp theo lúc tạo
+
+
+4. BẢNG NÀO ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  users                       thông tin tài khoản
+  player_profiles             thông tin người chơi
+  player_statistics           số liệu thi đấu
+  player_availability_slots   khung giờ rảnh
+  player_preferred_locations  khu vực ưu tiên
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+5. NGƯỜI CHƠI MỚI THÌ HIỆN GÌ
+-------------------------------------------------------------------------------
+Tài khoản vừa đăng ký chưa có dòng nào trong player_statistics. Thay vì trả
+null (khiến giao diện phải tự đoán), server trả về bộ số 0:
+
+  totalMatches 0, totalWins 0, totalLosses 0,
+  winRate 0, ratingScore 0, lastPlayedAt null
+
+Các cột trong player_profiles cũng đều NULL. Giao diện hiển thị "Chưa thiết
+lập" kèm gợi ý sang trang /profile/preferences.
+
+Một chi tiết an toàn: nếu tài khoản nào đó (tạo từ trước, hoặc do dữ liệu cũ)
+chưa có dòng player_profiles thì service tự tạo bổ sung khi truy cập, thay vì
+báo lỗi.
+
+
+6. GIÁ TRỊ NÀO NGƯỜI DÙNG KHÔNG SỬA ĐƯỢC
+-------------------------------------------------------------------------------
+  skillScore     điểm kỹ năng, do hệ thống tính từ kết quả trận đấu
+  statistics.*   toàn bộ số liệu thi đấu
+
+Chúng có trong response (để hiển thị) nhưng KHÔNG có trong request cập nhật của
+2.1.7 và 2.1.8–2.1.12. Người dùng không thể tự nâng điểm của mình.
+
+Lưu ý: hiện chưa có chức năng nào ghi vào player_statistics — bảng này chỉ có
+dữ liệu khi chạy seeder. Phần tính toán thuộc Sprint sau.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  code                HTTP   Khi nào
+  ───────────────────────────────────────────────────────────────────────────
+  UNAUTHORIZED        401    Thiếu token, token sai hoặc đã hết hạn
+  NOT_FOUND           404    Token hợp lệ nhưng tài khoản đã bị xoá
+
+
+8. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"emailOrPhone":"an.nguyen@example.com","password":"Courtly@123"}' \
+  | python3 -c "import json,sys; print(json.load(sys.stdin)['accessToken'])")
+
+curl -s http://localhost:8080/api/v1/users/me/profile \
+  -H "Authorization: Bearer $TOKEN"
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/profile/ProfileController.java
+  backend/src/main/java/com/courtly/api/profile/dto/ProfileResponse.java
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java
+  backend/src/main/resources/db/migration/V2__account.sql   (mục 1.8, 1.10, 1.11)
+  backend/src/main/resources/db/migration/V7__match.sql     (player_statistics)

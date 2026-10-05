@@ -1,0 +1,181 @@
+===============================================================================
+2.1.37 - NHẬN THÔNG BÁO GIAO DỊCH THANH TOÁN TỪ SEPAY (WEBHOOK)
+Giao diện: không có
+API: POST /api/v1/payments/sepay/webhook       KHÔNG dùng JWT — xem mục 3
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Điểm nhận thông báo từ SePay khi tài khoản ngân hàng của nền tảng có biến động
+số dư.
+
+Đây là CÁCH DUY NHẤT hệ thống biết tiền đã về. Người dùng bấm nút không làm
+đơn thành "đã thanh toán" được — không có endpoint nào cho phép điều đó.
+
+Địa chỉ cấu hình bên SePay:
+
+  https://courtmatch.tech/api/v1/payments/sepay/webhook
+
+
+2. SEPAY GỬI GÌ
+-------------------------------------------------------------------------------
+{
+  "id":              "92704",                  ← mã giao dịch, dùng chống trùng
+  "gateway":         "MBBank",
+  "transactionDate": "2026-09-28 17:03:12",
+  "accountNumber":   "0839857345",
+  "transferType":    "in",                     ← "in" tiền vào, "out" tiền ra
+  "transferAmount":  190000,
+  "content":         "CK CT202609280001 chuyen tien",
+  "referenceCode":   "FT26272xxxxx"
+}
+
+DTO khai báo @JsonIgnoreProperties(ignoreUnknown = true). Nghĩa là SePay thêm
+trường mới thì webhook vẫn chạy. Gãy ở đây đồng nghĩa với mất tiền của người
+dùng, nên không được phép khó tính.
+
+
+3. VÌ SAO KHÔNG DÙNG JWT
+-------------------------------------------------------------------------------
+SePay là máy chủ bên ngoài, không có tài khoản trong hệ thống, không đăng nhập
+được. Endpoint này nằm trong danh sách PUBLIC_POST_ENDPOINTS của SecurityConfig.
+
+Nhưng công khai không có nghĩa là ai gọi cũng được. Nó tự bảo vệ bằng một khoá
+riêng mà SePay gửi kèm:
+
+  Authorization: Apikey <SEPAY_API_KEY>
+
+Không có khoá hoặc sai khoá -> 401, không xử lý gì.
+
+
+4. BA ĐIỂM TRONG CÁCH KIỂM TRA KHOÁ
+-------------------------------------------------------------------------------
+(a) CHƯA CẤU HÌNH KHOÁ THÌ TỪ CHỐI HẾT.
+
+    if (expected == null || expected.isBlank()) return false;
+
+    Không mở cửa cho mọi request khi thiếu cấu hình. Mở nghĩa là bất kỳ ai
+    trên Internet cũng tự xác nhận đơn của họ được.
+
+    Lúc khởi động có cảnh báo nếu thiếu khoá, vì nếu không thì lỗi chỉ lộ ra
+    khi đã có người chuyển tiền thật — quá muộn.
+
+(b) SO SÁNH KHÔNG PHỤ THUỘC THỜI GIAN.
+
+    MessageDigest.isEqual(provided, expected)
+
+    So sánh chuỗi thông thường dừng ngay tại ký tự đầu tiên khác nhau. Kẻ tấn
+    công đo thời gian phản hồi có thể dò ra từng ký tự của khoá. Hàm trên luôn
+    chạy hết toàn bộ chuỗi.
+
+(c) CHẤP NHẬN CẢ CÓ VÀ KHÔNG CÓ TIỀN TỐ "Apikey ".
+
+    Tiền tố được cắt bỏ nếu có, không phân biệt hoa thường.
+
+
+5. LUÔN TRẢ 200, KỂ CẢ KHI BỎ QUA
+-------------------------------------------------------------------------------
+Khi đã qua được bước kiểm tra khoá, mọi kết cục đều trả HTTP 200 kèm
+success = true.
+
+Kể cả khi không tìm thấy đơn nào khớp, kể cả khi số tiền không đủ.
+
+Lý do: SePay GỬI LẠI webhook khi không nhận được 2xx. Trả lỗi cho một giao dịch
+không bao giờ khớp được sẽ khiến SePay gửi lại mãi mãi.
+
+Thông tin "không khớp" không mất đi — nó được ghi vào sepay_webhook_logs với
+trạng thái 'ignored'.
+
+
+6. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+sepay_webhook_logs           THÊM 1 dòng cho MỌI webhook qua được bước khoá
+  id
+  payment_id                 đơn khớp được, NULL nếu không khớp
+  transaction_code           chính là trường id của SePay, UNIQUE
+  payload_json               nguyên văn payload, kiểu jsonb
+  processed_status           received / processed / ignored / failed
+  error_message              lý do khi ignored hoặc failed
+  received_at                lúc nhận
+  processed_at               lúc xử lý xong
+
+Khi khớp và đủ tiền thì còn đụng tới payments, bookings, booking_items,
+booking_status_history — chi tiết ở 2.1.38.
+
+
+7. BỐN TRẠNG THÁI XỬ LÝ
+-------------------------------------------------------------------------------
+  received    giá trị mặc định của cột, thực tế không dùng tới
+  processed   đã khớp đơn và xác nhận thành công
+  ignored     bỏ qua có chủ ý: giao dịch tiền ra, hoặc không khớp đơn nào
+  failed      có khớp đơn nhưng số tiền không đủ
+
+Phân biệt ignored và failed quan trọng khi đối soát: 'failed' nghĩa là CÓ người
+định trả tiền cho đơn này nhưng chuyển thiếu — cần liên hệ. 'ignored' thường là
+giao dịch không liên quan.
+
+
+8. CHỐNG XỬ LÝ TRÙNG
+-------------------------------------------------------------------------------
+Dựa vào UNIQUE trên cột transaction_code ở DATABASE, không chỉ kiểm tra bằng
+code:
+
+  transaction_code varchar(255) NOT NULL UNIQUE
+
+Lớp một: trước khi ghi, kiểm tra existsByTransactionCode(). Đã có thì trả
+"Da xu ly truoc do" và dừng.
+
+Lớp hai: nếu hai bản sao của cùng một webhook tới gần như đồng thời, cả hai
+đều thấy "chưa có" rồi cùng ghi. Lúc đó UNIQUE ở database chặn bản thứ hai,
+service bắt DataIntegrityViolationException và cũng trả "Da xu ly truoc do".
+
+Chỉ kiểm tra bằng code là không đủ. Chỉ dựa vào database thì mỗi lần trùng lại
+sinh một ngoại lệ. Có cả hai thì trường hợp thường gặp xử lý êm, trường hợp
+hiếm vẫn an toàn.
+
+
+9. GIAO DỊCH TIỀN RA BỊ BỎ QUA
+-------------------------------------------------------------------------------
+  if (!"in".equalsIgnoreCase(request.transferType()))
+      -> ghi log 'ignored', dừng.
+
+Webhook của dự án đang bật chế độ "Cả hai" nên SePay gửi cả giao dịch chi ra.
+Không lọc thì một lần nền tảng chi tiền có thể bị hiểu nhầm thành ai đó vừa
+thanh toán.
+
+Về sau, khi làm chức năng chi trả cho chủ sân, chính các giao dịch 'out' này
+sẽ dùng để tự đánh dấu payout_transactions đã chi — nhưng chưa làm.
+
+
+10. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+  { "success": true,  "message": "Da xac nhan thanh toan" }
+  { "success": true,  "message": "Da ghi nhan" }
+  { "success": true,  "message": "Da xu ly truoc do" }
+  { "success": false, "message": "Khoa khong hop le" }      HTTP 401
+
+
+11. KIỂM THỬ
+-------------------------------------------------------------------------------
+curl -X POST https://courtmatch.tech/api/v1/payments/sepay/webhook \
+  -H "Authorization: Apikey <SEPAY_API_KEY>" \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"TEST-001","gateway":"MBBank",
+       "transactionDate":"2026-09-28 17:03:12",
+       "accountNumber":"0839857345","transferType":"in",
+       "transferAmount":190000,"content":"CT202609280001",
+       "referenceCode":"FT123"}'
+
+
+12. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/SepayWebhookController.java
+  backend/src/main/java/com/courtly/api/payment/dto/SepayWebhookRequest.java
+  backend/src/main/java/com/courtly/api/payment/dto/SepayWebhookAck.java
+  backend/src/main/java/com/courtly/service/payment/SepayWebhookService.java
+  backend/src/main/java/com/courtly/domain/payment/SepayWebhookLog.java
+  backend/src/main/java/com/courtly/domain/payment/SepayWebhookLogRepository.java
+  backend/src/main/java/com/courtly/common/config/SecurityConfig.java
+  backend/src/main/resources/db/migration/V5__payment.sql
+  backend/src/test/java/com/courtly/api/payment/PaymentControllerTest.java

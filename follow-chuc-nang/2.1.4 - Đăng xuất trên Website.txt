@@ -1,0 +1,69 @@
+===============================================================================
+2.1.4 - ĐĂNG XUẤT TRÊN WEBSITE
+Giao diện: nút trong header     API: POST /api/v1/auth/logout     Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Kết thúc phiên làm việc: xoá token khỏi trình duyệt để lần sau mở trang lên là
+ở trạng thái chưa đăng nhập.
+
+
+2. ĐIỀU BẤT NGỜ: SERVER KHÔNG LÀM GÌ CẢ
+-------------------------------------------------------------------------------
+Đây là chỗ hay gây thắc mắc nên nói rõ ngay.
+
+Access token của dự án là JWT và KHÔNG được lưu ở server (xem 2.1.2 mục 6).
+Server không giữ danh sách "ai đang đăng nhập", nên cũng không có gì để xoá.
+
+Việc đăng xuất thật sự diễn ra ở trình duyệt:
+  · xoá khoá courtly_access_token trong localStorage
+  · xoá bản sao thông tin người dùng đang cache
+  · chuyển về trang đăng nhập
+
+Endpoint /logout trả về 204 No Content và không đụng vào database.
+
+
+3. VẬY VÌ SAO VẪN LÀM ENDPOINT ĐÓ
+-------------------------------------------------------------------------------
+Hai lý do:
+
+  · Frontend có một chỗ gọi thống nhất. Sau này thêm việc cần làm lúc đăng xuất
+    (ghi log, thu hồi token, xoá thiết bị đã đăng ký nhận thông báo) thì chỉ sửa
+    backend, không phải sửa lại frontend.
+
+  · Nếu sau này dự án thêm bảng lưu refresh token thì endpoint này là nơi đánh
+    dấu thu hồi — hợp đồng API không phải đổi.
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+KHÔNG CÓ.
+
+
+5. HỆ QUẢ CẦN BIẾT
+-------------------------------------------------------------------------------
+Bấm đăng xuất KHÔNG làm token cũ mất hiệu lực. Nếu ai đó đã sao chép được
+token trước đó, họ vẫn dùng được cho tới khi token hết hạn (tối đa 24 giờ).
+
+Muốn thu hồi được thật thì phải thêm một bảng lưu token đang còn hiệu lực và
+tra bảng đó ở mỗi request — đổi lại là mỗi lần gọi API tốn thêm một truy vấn.
+Dự án chọn không làm, và ghi lại đánh đổi này để người đọc không hiểu nhầm là
+thiếu sót.
+
+Ở phía frontend còn một tình huống nữa: khi server trả 401 (token hết hạn),
+client.js tự xoá token và phát sự kiện courtly-unauthorized để ứng dụng đưa
+người dùng về trang đăng nhập — coi như đăng xuất tự động.
+
+
+6. TRẢ VỀ
+-------------------------------------------------------------------------------
+HTTP 204 No Content — không có nội dung.
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/auth/AuthController.java
+  user-web/src/api/auth.js       (hàm logout, luôn xoá token dù mạng lỗi)
+  user-web/src/api/client.js     (xử lý 401 → tự đăng xuất)

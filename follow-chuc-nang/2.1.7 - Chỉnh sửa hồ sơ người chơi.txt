@@ -1,0 +1,113 @@
+===============================================================================
+2.1.7 - CHỈNH SỬA HỒ SƠ NGƯỜI CHƠI
+Giao diện: /profile/edit  API: PUT /api/v1/users/me/profile  Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người dùng sửa thông tin liên hệ và thông tin cá nhân của mình.
+
+Sáu trường được sửa, nằm ở HAI bảng khác nhau:
+
+  users            fullName, email, phone
+  player_profiles  gender, dateOfBirth, bio
+
+
+2. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{
+  "fullName":    "Nguyen Van A",
+  "email":       "a@example.com",
+  "phone":       "0901234567",
+  "gender":      "male",          ← male | female | other, hoặc null
+  "dateOfBirth": "1998-05-20",
+  "bio":         "Chơi cầu lông 3 năm, thích đánh đôi."
+}
+
+Đây là PUT chứ không phải PATCH: gửi lên là TRẠNG THÁI ĐẦY ĐỦ sau khi sửa.
+Trường nào bỏ trống thì hiểu là người dùng muốn xoá trường đó, chứ không phải
+"giữ nguyên giá trị cũ".
+
+
+3. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. @Valid kiểm tra cú pháp:
+          · họ tên 2–150 ký tự, không để trống
+          · email đúng định dạng, tối đa 255 ký tự
+          · ngày sinh phải ở quá khứ, và tuổi từ 10 đến 100
+          · giới thiệu tối đa 240 ký tự (khớp textarea của giao diện)
+          · phải có ít nhất một trong hai: email hoặc số điện thoại
+
+Bước 2. Tìm tài khoản theo id lấy từ token.
+
+Bước 3. Chuẩn hoá số điện thoại về 0xxxxxxxxx rồi kiểm tra đúng số di động
+        Việt Nam.
+
+Bước 4. Kiểm tra trùng — chỗ này khác đăng ký một chút:
+        tìm xem email đó có thuộc về tài khoản NÀO KHÁC không.
+        Nếu email tìm được chính là tài khoản đang sửa thì bỏ qua, vì người
+        dùng lưu lại mà không đổi email là chuyện bình thường.
+
+Bước 5. Ghi giá trị mới vào User và PlayerProfile. Không cần gọi save():
+        cả hai đang là đối tượng được Hibernate quản lý trong transaction, nên
+        thay đổi tự được ghi xuống khi transaction kết thúc.
+
+Bước 6. Đọc lại toàn bộ hồ sơ và trả về, hình dạng giống hệt 2.1.6 — frontend
+        dùng luôn kết quả này để vẽ lại màn hình, không phải gọi thêm lần nữa.
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+users                                                            [SỬA 1 DÒNG]
+  full_name          ← từ form
+  email              ← từ form, hoặc NULL
+  phone              ← từ form đã chuẩn hoá, hoặc NULL
+  updated_at         ← trigger users_set_updated_at tự cập nhật
+
+player_profiles                                                  [SỬA 1 DÒNG]
+  gender             ← male | female | other | NULL
+  date_of_birth      ← ngày sinh, hoặc NULL
+  bio                ← giới thiệu, hoặc NULL
+  updated_at         ← trigger player_profiles_set_updated_at tự cập nhật
+
+Các cột KHÔNG bị chức năng này đụng tới: password_hash, status, avatar_url,
+skill_level, skill_score, dominant_hand, playing_style, preferred_play_type.
+
+
+5. DATABASE TỰ CHẶN NHỮNG GÌ
+-------------------------------------------------------------------------------
+  users_identity_check             phải còn ít nhất email hoặc phone
+  users_email_unique               email không trùng tài khoản khác
+  users_phone_unique               số điện thoại không trùng
+  player_profiles_gender_check     gender chỉ được male / female / other
+
+
+6. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  code                     HTTP   Khi nào
+  ───────────────────────────────────────────────────────────────────────────
+  VALIDATION_FAILED        400    Họ tên trống, ngày sinh ở tương lai, tuổi
+                                  dưới 10, giới thiệu quá 240 ký tự, xoá cả
+                                  email lẫn số điện thoại...
+  EMAIL_ALREADY_EXISTS     409    Email đã thuộc về tài khoản khác
+  PHONE_ALREADY_EXISTS     409    Số điện thoại đã thuộc về tài khoản khác
+  UNAUTHORIZED             401    Chưa đăng nhập
+  NOT_FOUND                404    Tài khoản trong token không còn tồn tại
+
+
+7. LƯU Ý VỀ GIAO DIỆN
+-------------------------------------------------------------------------------
+Form /profile/edit KHÔNG được đánh dấu bắt buộc cho cả hai ô email và số điện
+thoại. Backend chỉ đòi có ÍT NHẤT MỘT. Nếu giao diện bắt buộc cả hai thì người
+dùng chỉ có số điện thoại sẽ không lưu nổi hồ sơ của chính mình.
+
+Ảnh đại diện (avatar_url) chưa cho tải lên — chưa có chỗ lưu file.
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/profile/ProfileController.java
+  backend/src/main/java/com/courtly/api/profile/dto/UpdateProfileRequest.java
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java
+  backend/src/test/java/com/courtly/api/profile/ProfileControllerTest.java

@@ -1,0 +1,67 @@
+===============================================================================
+2.1.17 - XEM NHANH THÔNG TIN SÂN KHI CHỌN MARKER
+Giao diện: bảng thông tin trong /map                       Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Bấm vào một chấm trên bản đồ thì mở bảng thông tin nhanh: ảnh, tên, điểm đánh
+giá, khoảng cách, số sân, giá, kèm hai nút "Xem chi tiết sân" và "Chọn lịch
+đặt sân".
+
+
+2. BA CHỨC NĂNG 2.1.15 – 2.1.17 DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Trang /map gọi đúng API tìm kiếm của 2.1.13:
+
+  GET /api/v1/venues
+
+Một lần gọi trả về mọi thứ mà cả ba chức năng cần. Backend không có endpoint
+riêng cho bản đồ, vì dữ liệu cần dùng y hệt danh sách trang chủ — tách ra chỉ
+làm hai chỗ dễ lệch nhau.
+
+Khác biệt giữa ba chức năng nằm ở CÁCH GIAO DIỆN VẼ, không nằm ở dữ liệu:
+
+  2.1.15  vẽ danh sách thẻ sân bên cạnh bản đồ
+  2.1.16  vẽ chấm đánh dấu lên bản đồ
+  2.1.17  bấm vào chấm thì mở bảng thông tin nhanh
+
+
+3. BẢNG THÔNG TIN NÀY KHÔNG GỌI API NÀO CẢ
+-------------------------------------------------------------------------------
+Đây là điểm quan trọng nhất của chức năng này.
+
+Khi người dùng bấm vào marker, giao diện KHÔNG gửi thêm request nào. Nó lấy lại
+đúng thẻ sân đã có sẵn trong danh sách của lần gọi trước — cùng một đối tượng
+với thẻ ở cột bên cạnh (2.1.15), chỉ vẽ ra một hình dạng khác.
+
+Vì sao làm vậy:
+  · Bảng thông tin mở ra NGAY, không có khoảng chờ.
+  · Dữ liệu chắc chắn khớp với danh sách và với marker, không có cảnh ba chỗ
+    hiện ba giá khác nhau.
+  · Người dùng bấm thử 10 marker thì vẫn chỉ tốn 1 request.
+
+Đổi lại: mọi thứ bảng thông tin cần đều PHẢI có sẵn trong VenueSummaryResponse.
+Thêm một trường vào bảng thông tin nghĩa là phải thêm vào DTO đó, chứ không
+phải gọi thêm API.
+
+
+4. HAI NÚT DẪN ĐI ĐÂU
+-------------------------------------------------------------------------------
+  "Xem chi tiết sân"   → /san/{slug}        gọi API của 2.1.18
+  "Chọn lịch đặt sân"  → /san/{slug}#booking  cùng trang, cuộn tới khu chọn giờ
+
+Dùng slug (ví dụ "san-cau-long-minh-khai") chứ không dùng id, để đường dẫn dễ
+đọc. API chi tiết nhận cả hai — xem 2.1.18.
+
+
+5. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+KHÔNG CÓ — chức năng này không chạm tới database.
+
+
+6. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSummaryResponse.java
+  user-web/src/hooks/useVenueSearch.js

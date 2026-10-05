@@ -1,0 +1,113 @@
+===============================================================================
+2.1.22 - LỌC SÂN THEO TÌNH TRẠNG CÒN TRỐNG
+Giao diện: toggle "Chỉ hiện sân còn trống", chip "Còn sân hôm nay"
+API: GET /api/v1/venues?availableOnly=true                 Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Chỉ hiện những sân HÔM NAY còn ít nhất một khoảng thời gian chưa ai đặt.
+
+Đây là bộ lọc phức tạp nhất trong bốn bộ lọc, vì nó phải nhìn vào lịch đặt thật
+chứ không chỉ đọc một cột.
+
+Trả lời câu hỏi CÓ / KHÔNG, không đếm số lượng. Muốn biết còn trống khung giờ
+nào thì xem 2.1.26.
+
+
+2. CÙNG MỘT API VỚI 2.1.13
+-------------------------------------------------------------------------------
+Vẫn là tham số của GET /api/v1/venues, cộng dồn AND với các bộ lọc khác.
+Chỉ tính cho HÔM NAY, theo giờ Việt Nam (Asia/Ho_Chi_Minh).
+
+
+3. CÁCH TÍNH — GIẢI THÍCH BẰNG LỜI TRƯỚC
+-------------------------------------------------------------------------------
+Với mỗi sân con, làm ba bước:
+
+  Bước 1. Lấy KHOẢNG MỞ CỬA CÒN LẠI của hôm nay.
+          Từ max(giờ mở cửa, bây giờ) đến giờ đóng cửa.
+          Dùng "bây giờ" chứ không dùng giờ mở cửa, vì 8 giờ tối rồi thì khung
+          giờ sáng nay không còn là "còn trống" nữa.
+
+  Bước 2. Gom TẤT CẢ các khoảng đã bị chiếm trong ngày:
+            · booking_items đang pending hoặc confirmed
+            · court_blocks đang active (chủ sân khoá để bảo trì)
+
+  Bước 3. Hỏi: khoảng ở bước 1 có bị các khoảng ở bước 2 PHỦ KÍN HOÀN TOÀN
+          không? Còn hở chỗ nào thì sân này "còn trống".
+
+Chỉ cần MỘT sân con còn hở là cả sân được giữ lại trong kết quả.
+
+
+4. VÌ SAO KHÔNG CỘNG DỒN THỜI LƯỢNG
+-------------------------------------------------------------------------------
+Cách làm sai thường gặp: cộng tổng số giờ đã đặt rồi so với tổng số giờ mở cửa.
+
+Sai vì các lượt đặt có thể CHỒNG LÊN NHAU khi tính trên nhiều nguồn. Ví dụ một
+lượt đặt 18:00–20:00 và một khoảng khoá bảo trì 19:00–21:00: cộng lại thành 4
+giờ, trong khi thực tế chỉ chiếm 18:00–21:00 tức 3 giờ. Cộng dồn sẽ kết luận
+sân kín trong khi vẫn còn chỗ.
+
+PostgreSQL có sẵn công cụ đúng cho việc này:
+
+  range_agg(tstzrange(start_time, end_time))
+
+range_agg GỘP các khoảng chồng lấn thành một tập khoảng gọn (kiểu
+tstzmultirange), tự xử lý phần giao nhau. Sau đó chỉ cần một phép so sánh:
+
+  NOT (khoảng_mở_cửa <@ tập_khoảng_đã_chiếm)
+
+Toán tử <@ đọc là "nằm gọn bên trong". Thêm NOT ở trước: "không nằm gọn bên
+trong" = vẫn còn hở = còn trống.
+
+
+5. TRẠNG THÁI NÀO ĐƯỢC COI LÀ ĐÃ CHIẾM
+-------------------------------------------------------------------------------
+  booking_items.status IN ('pending', 'confirmed')
+  court_blocks.status  = 'active'
+
+Đây KHÔNG phải lựa chọn tuỳ tiện — đúng bằng tập trạng thái mà ràng buộc
+booking_items_no_overlap của database bảo vệ (xem 2.1.28).
+
+Giữ hai nơi khớp nhau là bắt buộc. Nếu bộ lọc coi 'pending' là còn trống trong
+khi database chặn đặt trùng với 'pending', người dùng sẽ thấy sân "còn trống",
+bấm đặt, rồi nhận lỗi trùng giờ — lỗi rất khó hiểu với họ.
+
+
+6. TOÀN BỘ CHẠY TRONG MỘT CÂU SQL
+-------------------------------------------------------------------------------
+Dù nghe phức tạp, tất cả nằm trong một điều kiện EXISTS của câu tìm kiếm, dùng
+CROSS JOIN LATERAL để dựng khoảng mở cửa còn lại cho từng sân con.
+
+Không có vòng lặp nào ở Java, không có truy vấn phụ cho từng sân. Tìm kiếm có
+bật bộ lọc này vẫn chỉ tốn 1 câu SQL.
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venue_operating_hours   giờ mở cửa hôm nay
+  courts                  sân con đang hoạt động
+  booking_items           các lượt đặt đang giữ chỗ
+  court_blocks            các khoảng chủ sân khoá
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. GIỚI HẠN CẦN BIẾT
+-------------------------------------------------------------------------------
+· Chỉ xét HÔM NAY. Không có tham số chọn ngày khác.
+· Chỉ hỏi "còn hở hay không", không quan tâm hở bao lâu. Sân còn đúng 15 phút
+  trống vẫn được tính là còn trống, dù không đặt được 60 phút.
+· Sân hôm nay nghỉ (is_closed = true) thì luôn bị loại.
+
+Muốn chính xác tới từng khung giờ thì phải dùng 2.1.26 cho một ngày cụ thể.
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java
+                                                  (hằng số SEARCH_FILTER)
+  backend/src/main/resources/db/migration/V4__booking.sql
+  backend/src/main/resources/db/migration/V3__venue.sql

@@ -1,0 +1,90 @@
+===============================================================================
+2.1.3 - ĐĂNG NHẬP BẰNG GOOGLE TRÊN WEBSITE
+Giao diện: nút trong /login                        ⚠ CHỨC NĂNG NÀY CHƯA LÀM
+===============================================================================
+
+
+1. TÌNH TRẠNG HIỆN TẠI
+-------------------------------------------------------------------------------
+CHƯA TRIỂN KHAI — đã thống nhất tạm bỏ qua để tập trung cho luồng chính.
+
+  · Backend: chưa có API nào.
+  · Giao diện: nút "Đăng nhập với Google" ở /login đang bị vô hiệu hoá
+    (mờ đi, không bấm được), kèm chú thích "Chức năng đang được phát triển".
+    Cố ý làm vậy thay vì để nút bấm được rồi không có gì xảy ra.
+  · Database: bảng đã dựng sẵn, chỉ chờ code.
+
+File này ghi lại phần đã chuẩn bị, để khi làm tiếp không phải dò lại từ đầu.
+
+
+2. DATABASE ĐÃ CHUẨN BỊ GÌ
+-------------------------------------------------------------------------------
+auth_providers — lưu danh tính từ nhà cung cấp bên ngoài (trước mắt là Google)
+
+  id                        khoá chính
+  user_id                   trỏ về users
+  provider_name             'google'
+  provider_user_id          id Google trả về (chuỗi "sub" trong token của họ)
+  provider_email            email lấy từ Google
+  provider_email_verified   Google đã xác minh email đó chưa
+  provider_avatar_url       ảnh đại diện
+  access_token_encrypted    token của Google, phải mã hoá trước khi lưu
+  refresh_token_encrypted   token làm mới, cũng phải mã hoá
+  token_expires_at          thời điểm token Google hết hạn
+  linked_at                 lúc liên kết tài khoản
+  last_used_at              lần gần nhất đăng nhập bằng cách này
+
+Hai ràng buộc quan trọng đã có sẵn:
+
+  auth_providers_provider_unique       (provider_name, provider_user_id)
+      Một tài khoản Google chỉ gắn được vào một tài khoản Courtly.
+
+  auth_providers_user_provider_unique  (user_id, provider_name)
+      Một tài khoản Courtly chỉ gắn được một tài khoản Google.
+
+Ngoài ra bảng users đã cho phép password_hash = NULL, đúng cho trường hợp người
+dùng chỉ đăng nhập bằng Google và không hề có mật khẩu riêng.
+
+
+3. KHI LÀM THÌ LUỒNG SẼ THẾ NÀO
+-------------------------------------------------------------------------------
+Bước 1. Trình duyệt lấy id_token từ Google (thư viện Google Identity Services).
+
+Bước 2. Gửi id_token lên backend.
+
+Bước 3. Backend xác minh chữ ký id_token với khoá công khai của Google.
+        KHÔNG được tin id_token mà chưa xác minh — ai cũng tự tạo chuỗi được.
+
+Bước 4. Lấy "sub" (id Google) và email từ token đã xác minh, rồi tra
+        auth_providers theo (provider_name = 'google', provider_user_id = sub).
+
+Bước 5. Ba tình huống:
+        a) Đã có dòng trong auth_providers  → đăng nhập ngay.
+        b) Chưa có, nhưng email đó đã có tài khoản Courtly
+           → gắn thêm dòng auth_providers vào tài khoản cũ.
+           Chỉ được làm vậy khi provider_email_verified = true, nếu không thì
+           kẻ xấu tạo tài khoản Google với email của người khác là chiếm được.
+        c) Chưa có gì cả → tạo mới users + user_roles + player_profiles đúng
+           như 2.1.1, nhưng password_hash để NULL.
+
+Bước 6. Cấp access token của Courtly như 2.1.2. Token của Google không dùng
+        để gọi API Courtly.
+
+
+4. NHỮNG ĐIỂM PHẢI CẨN THẬN KHI LÀM
+-------------------------------------------------------------------------------
+· Một người có thể đăng ký bằng mật khẩu trước, sau đó mới đăng nhập Google
+  bằng chính email đó. Phải gộp vào một tài khoản, không được tạo hai.
+
+· Ngược lại, người tạo tài khoản bằng Google trước rồi muốn đặt mật khẩu sau
+  thì đi qua luồng 2.1.5 (quên mật khẩu) là xong.
+
+· access_token / refresh_token của Google là dữ liệu nhạy cảm, tên cột đã ghi
+  rõ "_encrypted" — phải mã hoá, không lưu thô.
+
+
+5. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/domain/account/AuthProvider.java
+  backend/src/main/resources/db/migration/V2__account.sql   (mục 1.2)
+  user-web/src/App.jsx                                      (nút bị vô hiệu hoá)

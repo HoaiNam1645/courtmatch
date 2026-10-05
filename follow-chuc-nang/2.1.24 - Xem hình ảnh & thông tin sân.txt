@@ -1,0 +1,83 @@
+===============================================================================
+2.1.24 - XEM HÌNH ẢNH & THÔNG TIN SÂN
+Giao diện: gallery trong /san/:venueId
+API: nằm trong GET /api/v1/venues/{slugOrId}               Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Hiển thị bộ ảnh của sân: ảnh lớn, dải ảnh nhỏ để chọn, nút chuyển trước/sau và
+chế độ xem toàn màn hình.
+
+KHÔNG có API riêng. Ảnh nằm sẵn trong khối "images" của API chi tiết sân
+(2.1.18) — mở trang chi tiết là đã có đủ ảnh, bấm xem gallery không tải thêm.
+
+
+2. DỮ LIỆU MỖI ẢNH
+-------------------------------------------------------------------------------
+{
+  "id":           "...",
+  "imageUrl":     "https://.../anh-1.jpg",
+  "caption":      "Khu vực sân 1 và 2",
+  "displayOrder": 0,
+  "isCover":      true
+}
+
+Danh sách đã được sắp theo displayOrder tăng dần ngay trong câu truy vấn, giao
+diện không phải sắp lại.
+
+
+3. HAI CỘT ĐIỀU KHIỂN THỨ TỰ VÀ ẢNH BÌA
+-------------------------------------------------------------------------------
+display_order   int, mặc định 0
+    Chủ sân quyết định ảnh nào đứng trước. Số nhỏ hơn đứng trước.
+    Nhiều ảnh cùng số thì thứ tự giữa chúng không đảm bảo — không có quy tắc
+    phụ nào để phân định.
+
+is_cover        boolean, mặc định false
+    Ảnh đại diện, dùng làm ảnh bìa trên thẻ sân ở trang chủ và bản đồ.
+
+Câu truy vấn lấy ảnh bìa cho danh sách sân (2.1.13) chọn theo thứ tự ưu tiên:
+ảnh có is_cover = true trước; không có thì lấy ảnh display_order nhỏ nhất. Nhờ
+vậy sân nào cũng có ảnh bìa dù chủ sân quên đánh dấu.
+
+
+4. DATABASE KHÔNG CHẶN VIỆC CÓ HAI ẢNH BÌA
+-------------------------------------------------------------------------------
+Bảng venue_images không có ràng buộc nào bắt "mỗi sân chỉ một is_cover = true".
+
+Nếu dữ liệu có hai ảnh cùng đánh dấu bìa thì truy vấn vẫn chạy và lấy một trong
+hai, nhưng lấy cái nào thì không đoán trước được — hôm nay ảnh này, sau khi
+database sắp xếp lại có thể thành ảnh kia.
+
+Chức năng chủ sân quản lý ảnh (Sprint sau) phải tự đảm bảo điều này, hoặc thêm
+một unique index dạng lọc:
+
+  CREATE UNIQUE INDEX ... ON venue_images (venue_id) WHERE is_cover;
+
+Ghi lại ở đây để lúc làm chức năng đó không quên.
+
+
+5. ẢNH ĐƯỢC LƯU Ở ĐÂU
+-------------------------------------------------------------------------------
+Cột image_url là kiểu text — chỉ lưu ĐƯỜNG DẪN, không lưu file ảnh trong
+database.
+
+Dự án chưa có chức năng tải ảnh lên. Dữ liệu mẫu dùng đường dẫn tới ảnh có sẵn
+trên mạng. Khi làm chức năng tải ảnh thì cần thêm một nơi chứa file (thư mục
+trên máy chủ hoặc dịch vụ lưu trữ), còn cấu trúc bảng không phải đổi.
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venue_images   (có index venue_images_order_idx trên venue_id, display_order)
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueDetailResponse.java
+  backend/src/main/java/com/courtly/domain/venue/VenueImageRepository.java
+  backend/src/main/resources/db/migration/V3__venue.sql

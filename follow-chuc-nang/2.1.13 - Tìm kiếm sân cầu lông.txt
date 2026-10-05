@@ -1,0 +1,153 @@
+===============================================================================
+2.1.13 - TÌM KIẾM SÂN CẦU LÔNG
+Giao diện: /            API: GET /api/v1/venues            Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Trả về danh sách sân để hiển thị ở trang chủ. Gõ từ khoá thì tìm theo TÊN SÂN,
+QUẬN hoặc ĐỊA CHỈ; không gõ gì thì trả danh sách sân đang hoạt động, sắp theo
+điểm đánh giá giảm dần.
+
+Đây là API chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+API này còn phục vụ luôn 2.1.14 → 2.1.17 và các bộ lọc 2.1.19 → 2.1.22, chỉ
+khác ở tham số truyền vào.
+
+
+2. THAM SỐ
+-------------------------------------------------------------------------------
+  q                 từ khoá tìm, tối đa 150 ký tự          (2.1.13)
+  district          lọc theo khu vực                       (2.1.19)
+  lat, lng          toạ độ người dùng                      (2.1.14)
+  radiusKm          bán kính, 0.1 – 50, mặc định 5         (2.1.20)
+  maxPricePerHour   giá mỗi giờ tối đa                     (2.1.21)
+  minRating         điểm đánh giá tối thiểu, 0 – 5
+  availableOnly     chỉ sân hôm nay còn trống              (2.1.22)
+  page              từ 0, mặc định 0
+  size              mặc định 20, TỐI ĐA 100
+
+Ví dụ:  GET /api/v1/venues?q=minh%20khai&district=Quận%207&size=10
+
+
+3. TÌM KHÔNG DẤU HOẠT ĐỘNG THẾ NÀO
+-------------------------------------------------------------------------------
+Người Việt gõ tìm kiếm thường bỏ dấu: gõ "cau long minh khai" phải ra được
+"Sân Cầu Lông Minh Khai".
+
+Cách làm: bỏ dấu CẢ HAI VẾ rồi mới so sánh.
+
+  courtly_unaccent(v.name) ILIKE courtly_unaccent('%cau long%')
+
+courtly_unaccent là hàm tự định nghĩa trong migration V13, bọc quanh hàm
+unaccent của PostgreSQL. Phải tự bọc vì unaccent gốc không phải hàm IMMUTABLE
+nên không dùng để tạo index được.
+
+Có index cho việc này:
+
+  CREATE INDEX venues_name_unaccent_trgm_idx
+      ON venues USING gin (courtly_unaccent(name) gin_trgm_ops);
+
+gin_trgm_ops là index dạng "trigram" — cắt chuỗi thành từng cụm 3 ký tự, nhờ
+vậy tìm được cả khi từ khoá nằm GIỮA chuỗi (ILIKE '%...%'), điều mà index
+thường không làm được.
+
+ILIKE là LIKE không phân biệt hoa thường.
+
+
+4. CHỈ SÂN ĐÃ DUYỆT MỚI HIỆN RA
+-------------------------------------------------------------------------------
+Mọi truy vấn đều có hai điều kiện cố định:
+
+  v.status = 'active'            sân đang mở cửa hoạt động
+  v.approval_status = 'approved' quản trị viên đã duyệt
+
+Chủ sân tạo sân mới thì mặc định là pending/pending — sân đó KHÔNG lọt ra ngoài
+cho tới khi được duyệt. Đây là lý do hai cột tách riêng: một cột cho chủ sân tự
+bật tắt, một cột do quản trị viên quyết định.
+
+
+5. MỘT CÂU SQL LÀM HẾT MỌI VIỆC
+-------------------------------------------------------------------------------
+Mỗi thẻ sân trên trang chủ cần: ảnh bìa, số sân con, khoảng giá, giờ mở cửa
+hôm nay. Cách ngây thơ là lấy danh sách sân rồi với mỗi sân gọi thêm 4 truy vấn
+nữa — 20 sân thành 81 truy vấn (lỗi N+1 kinh điển).
+
+Ở đây tất cả gộp trong MỘT câu, dùng LEFT JOIN LATERAL:
+
+  cover   ảnh có is_cover = true, hoặc ảnh display_order nhỏ nhất
+  stats   COUNT sân con đang hoạt động + MIN/MAX giá theo bảng giá đang áp dụng
+  hours   giờ mở cửa của đúng thứ hôm nay
+
+LATERAL cho phép câu con nhìn thấy v.id của dòng đang xét — giống như viết một
+truy vấn con cho từng sân, nhưng database chạy một lần.
+
+Điều kiện lọc được viết một lần thành hằng số SEARCH_FILTER rồi dùng chung cho
+cả câu lấy dữ liệu và câu đếm tổng. Chép làm hai bản thì sớm muộn sẽ lệch nhau,
+và lúc đó tổng số trang sẽ không khớp với danh sách.
+
+
+6. CÁCH SẮP XẾP
+-------------------------------------------------------------------------------
+  Không có toạ độ  →  điểm đánh giá giảm dần, rồi tới số lượt đánh giá
+  Có toạ độ        →  khoảng cách gần nhất trước (xem 2.1.14)
+
+
+7. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "content": [
+    {
+      "id": "...", "slug": "san-cau-long-minh-khai",
+      "name": "Sân Cầu Lông Minh Khai",
+      "district": "Quận 7", "address": "...", "phone": "...",
+      "latitude": 10.73, "longitude": 106.72,
+      "coverImageUrl": "...",
+      "averageRating": 4.6, "reviewCount": 128,
+      "courtCount": 6,
+      "minPricePerHour": 90000, "maxPricePerHour": 150000,
+      "todayOpenTime": "06:00", "todayCloseTime": "22:00",
+      "closedToday": false,
+      "distanceKm": null
+    }
+  ],
+  "page": 0, "size": 20, "totalElements": 6, "totalPages": 1
+}
+
+  courtCount   SỐ SÂN CON ĐANG HOẠT ĐỘNG, không phải số sân còn trống.
+               Muốn biết còn trống thì phải hỏi 2.1.26 cho một ngày cụ thể.
+  distanceKm   null khi lần gọi không kèm toạ độ.
+  closedToday  true thì hôm nay sân nghỉ, hai cột giờ có thể null.
+
+
+8. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues                  thông tin sân
+  venue_images            ảnh bìa
+  courts                  đếm sân con
+  court_price_rules       khoảng giá
+  venue_operating_hours   giờ mở cửa hôm nay
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   size > 100, page âm, từ khoá quá 150 ký tự, toạ độ
+                            ngoài khoảng hợp lệ
+  (không có 401)            endpoint công khai, xem sân không cần đăng nhập
+
+Gửi ?lat=abc (không phải số) cũng trả 400 với thông báo "Giá trị không hợp lệ",
+KHÔNG lộ ra tên class Java như "required type 'java.lang.Double'".
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/VenueController.java
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSearchQuery.java
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSummaryResponse.java
+  backend/src/main/java/com/courtly/service/venue/VenueQueryService.java
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java
+  backend/src/main/resources/db/migration/V13__venue_search_index.sql
+  backend/src/test/java/com/courtly/api/venue/VenueControllerTest.java

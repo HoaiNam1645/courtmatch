@@ -1,0 +1,102 @@
+===============================================================================
+2.1.23 - XEM CHI TIẾT SÂN
+Giao diện: /san/:venueId
+API: GET /api/v1/venues/{slugOrId}                         Không cần đăng nhập
+     GET /api/v1/venues/{slugOrId}/reviews  (đánh giá, có phân trang)
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Hiển thị đầy đủ một sân: sân con, bảng giá, tiện ích, giờ hoạt động, đánh giá
+và thông tin liên hệ.
+
+Phần thông tin sân dùng chung API với 2.1.18 — đọc file đó để biết cách nhận
+slug/id, cách lọc sân đã duyệt và 5 khối dữ liệu trả về.
+
+File này nói riêng về ĐÁNH GIÁ, phần mà 2.1.18 không có.
+
+
+2. VÌ SAO ĐÁNH GIÁ TÁCH RA ENDPOINT RIÊNG
+-------------------------------------------------------------------------------
+Một sân có thể có hàng trăm đánh giá. Nhét hết vào API chi tiết thì:
+  · Trang chi tiết tải chậm vì phải chờ cả đống dữ liệu không ai đọc hết.
+  · Không phân trang được, trong khi quy tắc API của dự án bắt buộc MỌI danh
+    sách đều phải phân trang.
+
+Nên tách:
+
+  GET /api/v1/venues/{slugOrId}/reviews?page=0&size=10
+
+  page   từ 0, mặc định 0
+  size   mặc định 10, tối đa 50
+
+Giao diện tải thông tin sân trước để vẽ ngay, rồi tải đánh giá sau.
+
+
+3. DỮ LIỆU ĐÁNH GIÁ TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "content": [
+    {
+      "id": "...",
+      "userFullName": "Nguyen Van A",
+      "userAvatarUrl": "...",
+      "rating": 5,
+      "comment": "Sân sạch, đèn sáng.",
+      "createdAt": "2026-09-20T10:15:00Z"
+    }
+  ],
+  "page": 0, "size": 10, "totalElements": 128, "totalPages": 13
+}
+
+
+4. CHỈ HIỆN ĐÁNH GIÁ ĐANG HIỂN THỊ
+-------------------------------------------------------------------------------
+Cột venue_reviews.status có ba giá trị:
+
+  visible    hiện bình thường
+  hidden     quản trị viên đã ẩn
+  reported   bị báo cáo, chờ xử lý
+
+API chỉ lấy status = 'visible'. Đánh giá bị ẩn vẫn nằm trong database (để còn
+xem lại khi xử lý khiếu nại) nhưng không lọt ra ngoài.
+
+
+5. ĐIỂM TRUNG BÌNH KHÔNG TÍNH LẠI MỖI LẦN ĐỌC
+-------------------------------------------------------------------------------
+Bảng venues có sẵn hai cột average_rating và review_count.
+
+Trang chi tiết đọc thẳng hai cột đó, KHÔNG chạy AVG() trên bảng đánh giá. Lý do:
+điểm trung bình được hiển thị ở mọi thẻ sân trong danh sách — tính lại mỗi lần
+nghĩa là mỗi lần tải trang chủ phải quét bảng đánh giá cho cả 20 sân.
+
+Đổi lại, hai cột này phải được cập nhật mỗi khi có đánh giá mới. Chức năng viết
+đánh giá thuộc Sprint sau; hiện dữ liệu trong hai cột do seeder đặt.
+
+Đây là đánh đổi quen thuộc: lưu sẵn kết quả tính toán thì đọc nhanh nhưng phải
+nhớ cập nhật, tính lại mỗi lần thì luôn đúng nhưng chậm.
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  Thông tin sân   venues, venue_images, venue_services, services,
+                  venue_operating_hours, courts, court_price_rules
+  Đánh giá        venue_reviews, users (lấy tên và ảnh người đánh giá)
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  NOT_FOUND           404   Sân không tồn tại hoặc chưa được duyệt
+  VALIDATION_FAILED   400   size > 50 hoặc page âm
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/VenueController.java
+  backend/src/main/java/com/courtly/api/venue/dto/VenueReviewResponse.java
+  backend/src/main/java/com/courtly/service/venue/VenueQueryService.java
+  backend/src/main/resources/db/migration/V9__review.sql
+  user-web/src/hooks/useVenueReviews.js

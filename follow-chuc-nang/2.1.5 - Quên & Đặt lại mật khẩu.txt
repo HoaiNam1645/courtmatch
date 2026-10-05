@@ -1,0 +1,240 @@
+===============================================================================
+2.1.5 - QUÊN & ĐẶT LẠI MẬT KHẨU
+Giao diện: /forgot-password → /forgot-password/verify → /reset-password
+           → /reset-password/success
+API:       POST /api/v1/auth/password-reset          (bước 1 - gửi mã)
+           POST /api/v1/auth/password-reset/verify   (bước 2 - nhập mã)
+           POST /api/v1/auth/password-reset/confirm  (bước 3 - mật khẩu mới)
+Cả ba đều không cần đăng nhập — người quên mật khẩu thì đăng nhập sao được.
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Giúp người quên mật khẩu lấy lại tài khoản qua email, không cần nhờ quản trị
+viên.
+
+Ý tưởng: gửi một mã 6 chữ số vào hộp thư. Ai đọc được mã đó thì coi như chứng
+minh được mình sở hữu email, và được quyền đặt mật khẩu mới.
+
+Hiện CHỈ hỗ trợ email. Gửi mã qua SMS chưa làm vì chưa có nhà cung cấp — chọn
+kênh "phone" sẽ bị từ chối, và giao diện để ô đó ở trạng thái "Sắp có".
+
+
+2. TOÀN BỘ LUỒNG NHÌN TỪ TRÊN XUỐNG
+-------------------------------------------------------------------------------
+  Người dùng nhập email
+        │
+        ▼
+  [Bước 1] Server sinh mã 6 số → lưu HASH của mã → gửi mã vào email
+        │
+        ▼
+  Người dùng mở hộp thư, gõ mã vào web
+        │
+        ▼
+  [Bước 2] Server so mã → đúng thì đổi lấy một "token đặt lại"
+        │
+        ▼
+  Người dùng gõ mật khẩu mới
+        │
+        ▼
+  [Bước 3] Server đổi password_hash, đánh dấu yêu cầu đã dùng xong
+
+
+3. BƯỚC 1 — GỬI MÃ
+-------------------------------------------------------------------------------
+Gửi lên:  { "channel": "email", "destination": "a@example.com" }
+
+Các bước chạy:
+
+  1. Kênh phải là "email". Là "phone" → trả RESET_CHANNEL_UNSUPPORTED.
+  2. Chuẩn hoá email: cắt khoảng trắng, đổi hết về chữ thường.
+  3. Kiểm tra giới hạn số lần gửi (xem mục 7) — làm TRƯỚC khi tra tài khoản.
+  4. Tìm tài khoản theo email.
+       · Không có → không làm gì thêm, nhưng vẫn trả về như bình thường.
+       · Có nhưng status khác 'active' → cũng không làm gì thêm.
+       · Có và đang hoạt động → đi tiếp bước 5.
+  5. Đánh dấu tất cả mã cũ của tài khoản này là đã dùng (used_at = bây giờ),
+     để chỉ mã mới nhất còn hiệu lực.
+  6. Sinh mã 6 chữ số ngẫu nhiên, băm bằng BCrypt rồi lưu vào
+     verification_hash. Mã gốc KHÔNG được lưu ở đâu cả.
+  7. Ghi một dòng mới vào password_reset_requests.
+  8. Phát sự kiện để gửi email — việc gửi chạy SAU khi transaction commit và
+     ở luồng khác (xem mục 8).
+
+Trả về (luôn giống nhau, dù email có thật hay không):
+
+  { "expiresInSeconds": 600, "resendAfterSeconds": 60 }
+
+
+4. BƯỚC 2 — NHẬP MÃ
+-------------------------------------------------------------------------------
+Gửi lên:  { "destination": "a@example.com", "code": "416828" }
+
+Các bước chạy:
+
+  1. Tìm yêu cầu còn hiệu lực mới nhất của email đó (used_at còn trống).
+     Không có → RESET_CODE_INVALID.
+  2. Hết hạn → đánh dấu đã dùng, trả RESET_CODE_INVALID.
+  3. Đã xác minh rồi (một mã chỉ đổi được một token) → RESET_CODE_INVALID.
+  4. Đã sai quá 5 lần → huỷ mã, trả RESET_TOO_MANY_ATTEMPTS.
+  5. So mã bằng BCrypt.
+     · Sai   → attempt_count + 1, báo còn mấy lần thử.
+     · Đúng  → đi tiếp bước 6.
+  6. Sinh một chuỗi bí mật ngẫu nhiên 32 byte, băm rồi GHI ĐÈ lên
+     verification_hash. Mã 6 số chết ngay tại đây.
+  7. verified_at = bây giờ, expires_at = bây giờ + 10 phút (đồng hồ giờ đếm cho
+     bước 3).
+
+Trả về:
+
+  { "resetToken": "<id yêu cầu>.<chuỗi bí mật>", "expiresInSeconds": 600 }
+
+
+5. BƯỚC 3 — ĐẶT MẬT KHẨU MỚI
+-------------------------------------------------------------------------------
+Gửi lên:  { "resetToken": "...", "password": "...", "confirmPassword": "..." }
+
+Các bước chạy:
+
+  1. Tách token thành hai phần theo dấu chấm: id yêu cầu và chuỗi bí mật.
+     Sai định dạng → RESET_TOKEN_INVALID.
+  2. Tìm yêu cầu theo id. Kiểm tra đủ 4 điều kiện, thiếu một là từ chối:
+       · đã xác minh (verified_at khác NULL)
+       · chưa dùng   (used_at còn NULL)
+       · chưa hết hạn
+       · chuỗi bí mật khớp hash
+  3. Mật khẩu mới trùng mật khẩu hiện tại → PASSWORD_SAME_AS_OLD.
+  4. Băm mật khẩu mới bằng BCrypt, ghi vào users.password_hash.
+  5. used_at = bây giờ → token thành vô dụng ngay.
+  6. Đánh dấu mọi yêu cầu khác của tài khoản này cũng đã dùng.
+
+Trả về: HTTP 204 No Content.
+
+Người dùng phải tự đăng nhập lại — bước này không cấp access token.
+
+
+6. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+password_reset_requests                          [BƯỚC 1: THÊM 1 DÒNG]
+  id                  ← UUID sinh ở Java
+  user_id             ← tài khoản tương ứng
+  channel             ← 'email'
+  destination         ← email đã chuẩn hoá về chữ thường
+  verification_hash   ← hash BCrypt CỦA MÃ 6 SỐ
+  expires_at          ← bây giờ + 10 phút
+  attempt_count       ← 0
+  resend_count        ← số lần đã gửi cho địa chỉ này trong 1 giờ qua
+  requested_ip        ← địa chỉ IP người gửi yêu cầu (kiểu inet)
+  user_agent          ← trình duyệt nào gửi
+  created_at          ← bây giờ
+
+password_reset_requests                          [BƯỚC 1: SỬA CÁC DÒNG CŨ]
+  used_at             ← bây giờ (huỷ mọi mã cũ của tài khoản đó)
+
+password_reset_requests                          [BƯỚC 2: SỬA 1 DÒNG]
+  verification_hash   ← GHI ĐÈ bằng hash của chuỗi bí mật
+  verified_at         ← bây giờ
+  expires_at          ← bây giờ + 10 phút
+  attempt_count       ← + 1 nếu nhập sai
+
+password_reset_requests                          [BƯỚC 3: SỬA 1 DÒNG]
+  used_at             ← bây giờ
+
+users                                            [BƯỚC 3: SỬA 1 DÒNG]
+  password_hash       ← hash BCrypt của mật khẩu mới
+  updated_at          ← trigger tự cập nhật
+
+
+7. CÁC NGƯỠNG GIỚI HẠN
+-------------------------------------------------------------------------------
+  Mã sống                        10 phút
+  Token sống sau khi xác minh    10 phút
+  Nhập sai tối đa                5 lần, quá thì mã bị huỷ hẳn
+  Chờ giữa hai lần gửi           60 giây
+  Gửi tối đa mỗi giờ             5 lần cho cùng một địa chỉ
+
+Sửa ở application.yml, mục courtly.auth.password-reset.
+
+Bộ đếm số lần gửi nằm trong BỘ NHỚ của server (không phải database), nên khởi
+động lại là mất và chỉ đúng khi chạy một máy chủ. Chạy nhiều máy thì phải chuyển
+sang Redis hoặc một bảng riêng.
+
+Lớp đếm này (OtpRateLimiter) dùng chung với luồng xác minh email khi đăng ký
+(2.1.1), nhưng mỗi luồng một "scope" riêng — "reset" và "verify". Nhờ vậy xin lại
+mã đặt mật khẩu không làm hết lượt gửi mã xác minh và ngược lại.
+
+
+8. BA ĐIỂM THIẾT KẾ QUAN TRỌNG
+-------------------------------------------------------------------------------
+a) KHÔNG TIẾT LỘ EMAIL NÀO ĐÃ ĐĂNG KÝ
+
+   Bước 1 luôn trả về y hệt nhau. Bước 2 gộp cả ba lý do thất bại (chưa từng
+   xin mã / hết hạn / gõ sai) vào chung một mã lỗi.
+
+   Đặc biệt: giới hạn số lần gửi đếm theo địa chỉ NGƯỜI DÙNG GÕ VÀO, trước khi
+   tra database. Nếu chỉ chặn khi tài khoản có thật thì kẻ xấu gửi hai lần liên
+   tiếp rồi so kết quả: 429 nghĩa là email tồn tại, 200 nghĩa là không.
+
+b) MÃ GỐC KHÔNG BAO GIỜ ĐƯỢC LƯU
+
+   Cột chỉ giữ hash BCrypt. Người có quyền đọc database cũng không đọc được mã
+   để chiếm tài khoản người khác. Sau khi xác minh xong, hash của mã bị ghi đè
+   bằng hash của token — nên một yêu cầu đổi được đúng một token.
+
+c) GỬI MAIL CHẠY NGOÀI TRANSACTION
+
+   Gọi máy chủ SMTP có thể mất vài giây. Nếu gọi trong lúc đang giữ transaction
+   ghi database thì khoá dữ liệu bị giữ suốt thời gian đó — quy tắc dự án cấm
+   (QUY-TAC-VIET-API.md mục 7). Nên dùng @TransactionalEventListener kết hợp
+   @Async: transaction ghi xong, commit, rồi mới gửi mail ở luồng khác.
+
+   Gửi mail lỗi thì chỉ ghi log. Người dùng đã nhận phản hồi từ trước và vẫn có
+   nút "Gửi lại mã".
+
+
+9. CẤU HÌNH GỬI EMAIL
+-------------------------------------------------------------------------------
+Thông tin SMTP để ở backend/.env (không commit, xem .env.example).
+
+  MAIL_ENABLED=true
+  MAIL_HOST=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USERNAME=...
+  MAIL_PASSWORD=...          ← Gmail bắt buộc dùng App Password 16 ký tự
+  MAIL_FROM_ADDRESS=...
+  MAIL_FROM_NAME=Courtly
+
+Đặt MAIL_ENABLED=false thì không gọi SMTP mà in mã ra log — dùng khi chạy test
+hoặc máy chưa cấu hình:
+
+  WARN  MailService : MAIL TAT - ma dat lai mat khau cho a@example.com la 416828
+
+
+10. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  code                        HTTP   Khi nào
+  ───────────────────────────────────────────────────────────────────────────
+  RESET_CHANNEL_UNSUPPORTED   400    Xin gửi mã qua SMS
+  RESET_CODE_INVALID          400    Mã sai / hết hạn / chưa từng xin mã
+  RESET_TOO_MANY_ATTEMPTS     429    Nhập sai quá 5 lần, phải xin mã mới
+  RESET_TOO_MANY_REQUESTS     429    Gửi lại quá sớm hoặc quá nhiều lần.
+                                     fieldErrors.retryAfterSeconds cho biết
+                                     còn phải đợi bao nhiêu giây.
+  RESET_TOKEN_INVALID         400    Token sai, hết hạn, hoặc đã dùng rồi
+  PASSWORD_SAME_AS_OLD        400    Mật khẩu mới trùng mật khẩu hiện tại
+  VALIDATION_FAILED           400    Mã không phải 6 chữ số, mật khẩu quá yếu,
+                                     hai ô mật khẩu không khớp...
+
+
+11. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/auth/PasswordResetController.java
+  backend/src/main/java/com/courtly/api/auth/dto/PasswordResetSendRequest.java
+  backend/src/main/java/com/courtly/api/auth/dto/PasswordResetVerifyRequest.java
+  backend/src/main/java/com/courtly/api/auth/dto/PasswordResetConfirmRequest.java
+  backend/src/main/java/com/courtly/service/auth/PasswordResetService.java
+  backend/src/main/java/com/courtly/service/auth/OtpRateLimiter.java
+  backend/src/main/java/com/courtly/service/mail/MailService.java
+  backend/src/main/resources/db/migration/V2__account.sql   (mục 1.3)
+  backend/src/test/java/com/courtly/api/auth/PasswordResetControllerTest.java

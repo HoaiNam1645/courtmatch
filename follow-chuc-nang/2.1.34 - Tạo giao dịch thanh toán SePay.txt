@@ -1,0 +1,156 @@
+===============================================================================
+2.1.34 - TẠO GIAO DỊCH THANH TOÁN SEPAY
+Giao diện: /payments/:paymentId
+API: GET /api/v1/payments/{paymentId}                          Cần đăng nhập
+     (việc TẠO nằm trong POST /api/v1/bookings)
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Sinh một bản ghi payments gắn với đơn, chứa đủ mọi thứ người dùng cần để
+chuyển tiền: số tiền, số tài khoản, nội dung chuyển khoản, mã QR và hạn chót.
+
+Việc TẠO chạy tự động trong 2.1.28, không có endpoint riêng.
+Việc ĐỌC qua GET /api/v1/payments/{paymentId}.
+
+
+2. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+payments                     THÊM 1 dòng
+  id                         UUID sinh ở tầng ứng dụng
+  booking_id                 đơn vừa tạo
+  provider                   'sepay'
+  amount                     bằng bookings.total_amount
+  status                     'pending'
+  qr_url                     địa chỉ ảnh VietQR (mục 4)
+  bank_account_no            số tài khoản nền tảng, từ cấu hình
+  transfer_content           mã đơn bỏ ký tự đặc biệt (mục 3)
+  provider_transaction_id    NULL  <- chỉ có khi webhook báo tiền về
+  paid_at                    NULL
+  expired_at                 BẰNG bookings.expires_at
+  created_at                 bằng bookings.created_at
+
+Không bảng nào khác bị đụng tới.
+
+
+3. NỘI DUNG CHUYỂN KHOẢN — PHẦN QUAN TRỌNG NHẤT
+-------------------------------------------------------------------------------
+  CT-20260928-0001   ->   CT202609280001
+
+Sinh bằng cách bỏ mọi ký tự không phải chữ và số:
+
+  bookingCode.replaceAll("[^A-Za-z0-9]", "")
+
+Vì sao phải bỏ dấu gạch: nhiều ngân hàng cắt ký tự đặc biệt trong nội dung
+chuyển khoản. Nội dung đến nơi bị biến dạng thì không đối chiếu được.
+
+Đây là SỢI DÂY DUY NHẤT nối tiền với đơn. Webhook SePay không biết gì về
+bookingId hay paymentId — nó chỉ thấy một dòng tiền vào kèm nội dung. Toàn bộ
+việc đối chiếu ở 2.1.38 dựa vào chuỗi này.
+
+Vì bookingCode là UNIQUE nên transfer_content cũng duy nhất.
+
+
+4. MÃ QR SINH THẾ NÀO
+-------------------------------------------------------------------------------
+  https://qr.sepay.vn/img?acc=0839857345&bank=MBBank
+                          &amount=190000&des=CT202609280001
+
+Đây chỉ là bộ sinh ảnh VietQR, KHÔNG cần xác thực, không tạo giao dịch. Truyền
+số tài khoản nào cũng ra ảnh.
+
+Backend chỉ lưu ĐỊA CHỈ ảnh vào qr_url, không tải ảnh về. Trình duyệt người
+dùng tự tải từ SePay khi hiện trang.
+
+Các giá trị acc, bank lấy từ cấu hình, được mã hoá URL trước khi ghép chuỗi.
+
+
+5. CẤU HÌNH
+-------------------------------------------------------------------------------
+  courtly.payment.sepay.api-key        khoá webhook (2.1.37)
+  courtly.payment.sepay.bank-code      mã ngân hàng cho QR, ví dụ MBBank
+  courtly.payment.sepay.bank-name      tên hiển thị, ví dụ MB Bank
+  courtly.payment.sepay.account-no     số tài khoản nhận tiền
+  courtly.payment.sepay.account-name   tên chủ tài khoản để hiển thị
+  courtly.payment.sepay.qr-base-url    mặc định https://qr.sepay.vn/img
+
+Giá trị mặc định là tài khoản demo 0359000111, TRÙNG với BookingSeeder để dữ
+liệu mẫu và đơn tạo mới khi chạy dev nhất quán. Môi trường thật BẮT BUỘC ghi đè
+bằng biến môi trường, nếu không tiền chảy vào tài khoản demo.
+
+Nếu account-no, bank-code hoặc qr-base-url để trống thì tạo đơn bị chặn với
+409 PAYMENT_GATEWAY_NOT_CONFIGURED — thà không cho đặt còn hơn đưa người dùng
+một mã QR trỏ vào hư không.
+
+
+6. SỐ TÀI KHOẢN PHẢI KHỚP VỚI TÀI KHOẢN KẾT NỐI TRONG SEPAY
+-------------------------------------------------------------------------------
+SePay KHÔNG đẩy số tài khoản sang ứng dụng. Mã QR do backend tự ghép từ cấu
+hình, còn SePay chỉ theo dõi tài khoản mà bạn đã kết nối trong tài khoản SePay.
+
+Hai bên phải tự khớp bằng tay. Lệch nhau thì tiền vào một tài khoản SePay
+không nhìn thấy, webhook không bao giờ chạy, và KHÔNG CÓ GÌ BÁO LỖI — đơn chỉ
+lặng lẽ hết hạn.
+
+Đây là cái bẫy nguy hiểm nhất của chức năng này.
+
+
+7. BA TRƯỜNG KHÔNG NẰM TRONG BẢNG payments
+-------------------------------------------------------------------------------
+API trả về bankName, bankAccountName và secondsRemaining, nhưng bảng payments
+không có ba cột này.
+
+  bankName, bankAccountName   lấy từ cấu hình lúc đọc
+  secondsRemaining            tính từ expired_at trừ thời điểm hiện tại
+
+Hệ quả cần biết: đổi tên hiển thị trong cấu hình thì các đơn CŨ cũng hiện tên
+mới. Riêng SỐ TÀI KHOẢN thì được lưu vào bank_account_no, nên đơn cũ giữ đúng
+số đã hiện lúc tạo — tránh chuyện người dùng quét QR cũ rồi chuyển vào tài
+khoản đã đổi.
+
+
+8. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "id": "...", "bookingId": "...", "bookingCode": "CT-20260928-0001",
+  "provider": "sepay",
+  "amount": 190000,
+  "status": "pending",
+  "qrUrl": "https://qr.sepay.vn/img?acc=...&des=CT202609280001",
+  "bankName": "MB Bank",
+  "bankAccountNo": "0839857345",
+  "bankAccountName": "COURTLY",
+  "transferContent": "CT202609280001",
+  "providerTransactionId": null,
+  "paidAt": null,
+  "expiredAt": "2026-09-28T10:10:00Z",
+  "secondsRemaining": 567,
+  "createdAt": "...", "updatedAt": "..."
+}
+
+Có thêm GET /api/v1/payments/by-booking/{bookingId} trả về cùng cấu trúc, dùng
+cho màn hình chỉ biết mã đơn (2.1.40).
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED                     401   Chưa đăng nhập
+  NOT_FOUND                        404   Giao dịch không tồn tại HOẶC của
+                                         người khác
+  PAYMENT_GATEWAY_NOT_CONFIGURED   409   Thiếu cấu hình tài khoản (lúc tạo đơn)
+
+Xem giao dịch của người khác trả 404 chứ không phải 403, cùng lý do với 2.1.29.
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/PaymentController.java
+  backend/src/main/java/com/courtly/api/payment/dto/PaymentDetailResponse.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/domain/payment/Payment.java
+  backend/src/main/java/com/courtly/domain/payment/PaymentRepository.java
+  backend/src/main/java/com/courtly/common/config/SepayProperties.java
+  backend/src/main/resources/db/migration/V5__payment.sql
+  backend/src/test/java/com/courtly/api/payment/PaymentControllerTest.java
+  user-web/src/api/payments.js

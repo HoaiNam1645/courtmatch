@@ -1,0 +1,87 @@
+===============================================================================
+2.1.19 - LỌC SÂN THEO VỊ TRÍ (KHU VỰC)
+Giao diện: modal "Bộ lọc sân" ở / và /map
+API: GET /api/v1/venues?district=...                       Không cần đăng nhập
+     GET /api/v1/venues/districts   (lấy danh sách khu vực)
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người dùng chọn một quận/huyện để chỉ xem sân trong khu vực đó.
+
+Khác với 2.1.20 (lọc theo khoảng cách): lọc theo khu vực dựa trên TÊN HÀNH
+CHÍNH, không cần biết người dùng đang đứng ở đâu.
+
+
+2. BỐN BỘ LỌC 2.1.19 – 2.1.22 ĐỀU LÀ THAM SỐ CỦA MỘT API
+-------------------------------------------------------------------------------
+Không có endpoint riêng cho từng bộ lọc. Tất cả đều là tham số của API tìm kiếm
+đã mô tả ở 2.1.13:
+
+  GET /api/v1/venues?district=...&radiusKm=...&maxPricePerHour=...&availableOnly=...
+
+Các bộ lọc CỘNG DỒN với nhau (điều kiện AND). Chọn "Quận 7" + "dưới 120.000đ"
+thì chỉ ra sân thoả cả hai.
+
+Toàn bộ việc lọc chạy Ở DATABASE, không phải tải hết danh sách về rồi lọc trong
+Java. Lọc ở Java thì phân trang sẽ sai: trang 1 lấy 20 sân, lọc xong còn 3 sân,
+người dùng thấy trang 1 có 3 sân mà tổng vẫn ghi 50.
+
+
+3. CÁCH LỌC
+-------------------------------------------------------------------------------
+Điều kiện trong câu SQL rất đơn giản:
+
+  AND (:district IS NULL OR v.district = :district)
+
+So sánh CHÍNH XÁC, phân biệt hoa thường. Đây là lý do danh sách khu vực phải
+lấy từ database chứ không gõ cứng trong giao diện — gõ "Quận 7" mà database
+lưu "Quan 7" là không ra kết quả nào.
+
+Truyền district rỗng hoặc không truyền = không lọc theo khu vực.
+
+
+4. DANH SÁCH KHU VỰC LẤY TỪ ĐÂU
+-------------------------------------------------------------------------------
+Endpoint riêng:  GET /api/v1/venues/districts
+
+Trả về:
+
+  [
+    { "district": "Quận 7",     "venueCount": 3 },
+    { "district": "Quận Bình Thạnh", "venueCount": 2 }
+  ]
+
+Danh sách này sinh ra từ chính bảng venues (GROUP BY district), chỉ đếm sân
+đang hoạt động và đã duyệt.
+
+Ba cái lợi:
+  · Khu vực nào không có sân nào thì không hiện ra — người dùng không chọn
+    trúng một lựa chọn chắc chắn ra 0 kết quả.
+  · Chủ sân mở sân ở quận mới, bộ lọc tự có thêm lựa chọn, không phải sửa code.
+  · Số đếm bên cạnh giúp người dùng biết chỗ nào nhiều sân.
+
+
+5. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues   (cột district)
+
+Có index venues_area_idx trên (province, district).
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+6. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Tên khu vực dài quá 100 ký tự
+
+Chọn khu vực không có sân nào KHÔNG phải lỗi — trả về danh sách rỗng, giao diện
+hiện trạng thái "không tìm thấy".
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/DistrictResponse.java
+  backend/src/main/java/com/courtly/service/venue/VenueQueryService.java
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java

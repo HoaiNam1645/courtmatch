@@ -1,0 +1,90 @@
+===============================================================================
+2.1.40 - XÁC NHẬN ĐẶT SÂN THÀNH CÔNG
+Giao diện: /booking/success/:bookingId
+API: GET /api/v1/bookings/{bookingId}
+     GET /api/v1/payments/by-booking/{bookingId}              Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Màn hình cuối của luồng đặt sân: báo cho người dùng biết lịch sân đã chắc chắn,
+hiện mã booking, sân, ngày giờ, số tiền và lối sang chi tiết đơn.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+Lưu ý: màn hình này KHÔNG xác nhận gì cả. Đơn đã được xác nhận từ trước bởi
+webhook ở 2.1.38. Đây chỉ là nơi báo tin.
+
+
+2. ĐẾN ĐÂY BẰNG CÁCH NÀO
+-------------------------------------------------------------------------------
+  (a) Tự động: 2.1.39 thấy status = 'paid' thì chuyển hướng sang đây.
+  (b) Bấm tay: từ màn hình thanh toán khi đã trả xong.
+
+Không có bước nào người dùng tự bấm để "xác nhận".
+
+
+3. VÌ SAO CÓ API by-booking
+-------------------------------------------------------------------------------
+  GET /api/v1/payments/by-booking/{bookingId}
+
+Màn hình này nhận bookingId trên URL, không nhận paymentId. Nếu chỉ có
+GET /payments/{paymentId} thì nó không có cách nào tra ra giao dịch.
+
+Trả về đúng cấu trúc PaymentDetailResponse như 2.1.34.
+
+Khi một đơn có nhiều giao dịch (do thử lại), API lấy giao dịch MỚI NHẤT:
+
+  findFirstByBookingIdOrderByCreatedAtDesc
+
+
+4. DỮ LIỆU HIỂN THỊ
+-------------------------------------------------------------------------------
+Lấy từ chi tiết đơn (2.1.29):
+
+  bookingCode        mã booking, chữ to ở giữa
+  status             badge "đã xác nhận"
+  venue.name         tên sân
+  venue.address      địa chỉ
+  items[0].courtName sân con
+  items[0].startTime ngày chơi và khung giờ
+  totalAmount        số tiền đã trả
+
+Hai nút: "Xem chi tiết booking" sang 2.1.29, và "Về trang chủ".
+
+
+5. KHÔNG TỰ KIỂM TRA ĐƠN ĐÃ TRẢ TIỀN CHƯA
+-------------------------------------------------------------------------------
+Màn hình hiện badge trạng thái thật của đơn chứ không mặc định "thành công".
+
+Nếu người dùng mở thẳng URL này cho một đơn chưa trả tiền thì họ thấy badge
+"chờ thanh toán" chứ không bị lừa là đã xong.
+
+Quyền xem vẫn do API quyết định: đơn của người khác trả 404.
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  bookings, booking_items, booking_status_history
+  venues, courts, venue_images
+  payments                 qua API by-booking
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Đơn không tồn tại, của người khác, hoặc đơn chưa có
+                       giao dịch thanh toán nào
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/PaymentController.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/api/booking/BookingController.java
+  user-web/src/App.jsx                     (thành phần BookingSuccessPage)
+  user-web/src/hooks/useBookingDetail.js
+  user-web/src/api/payments.js

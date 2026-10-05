@@ -1,0 +1,176 @@
+===============================================================================
+2.1.26 - XEM CÁC KHUNG GIỜ SÂN CÒN TRỐNG
+Giao diện: /san/:venueId#booking
+API: GET /api/v1/venues/{venueId}/availability
+         ?date=2026-09-28&durationMinutes=60            Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Dựng lưới khung giờ cho MỘT SÂN trong MỘT NGÀY: mỗi sân con một hàng, mỗi khung
+giờ một ô, kèm trạng thái và giá tiền.
+
+Đây là nơi trả lời chính xác câu "còn trống lúc mấy giờ" — khác với bộ lọc
+2.1.22 chỉ trả lời có/không cho hôm nay.
+
+Chỉ đọc, KHÔNG bảng nào bị thay đổi.
+
+
+2. THAM SỐ
+-------------------------------------------------------------------------------
+  venueId           id của sân (trên đường dẫn)
+  date              ngày muốn xem, dạng 2026-09-28
+  durationMinutes   thời lượng mỗi khung, mặc định 60, nhận 30–300
+
+durationMinutes ảnh hưởng tới CÁCH CHIA khung giờ: chọn 90 phút thì mỗi ô là
+một khoảng 90 phút, và giá hiện trên ô là giá cho trọn 90 phút đó.
+
+
+3. MỘT LẦN GỌI TRẢ VỀ TẤT CẢ SÂN CON
+-------------------------------------------------------------------------------
+Không có tham số courtId. API trả lịch của MỌI sân con đang hoạt động.
+
+Lý do: người dùng hay đổi qua đổi lại giữa các sân con để tìm giờ phù hợp. Nếu
+mỗi lần đổi lại gọi API thì màn hình nhấp nháy và tốn request. Lấy hết một lần
+thì đổi sân con là đổi tức thì.
+
+
+4. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. Kiểm tra ngày: không được ở quá khứ, không quá 60 ngày tới.
+        Chặn 60 ngày để một request không dựng lịch quá xa.
+
+Bước 2. Tìm sân, phải đang hoạt động và đã được duyệt, nếu không thì 404.
+
+Bước 3. Đọc giờ mở cửa của ĐÚNG THỨ trong tuần của ngày đó.
+        Hôm đó nghỉ → trả về ngay với closed = true và danh sách sân con rỗng.
+
+Bước 4. Lấy danh sách sân con đang hoạt động kèm bảng giá (một truy vấn).
+
+Bước 5. HAI truy vấn cho cả sân, không phải mỗi sân con một truy vấn:
+          · các khoảng bị khoá (court_blocks) giao với ngày đó
+          · các lượt đặt đang giữ chỗ (booking_items) giao với ngày đó
+        Rồi nhóm theo sân con ở tầng Java.
+
+Bước 6. Với mỗi sân con, chạy từ giờ mở cửa, mỗi lần nhảy 60 phút, dựng các
+        khung giờ cho tới khi khung tiếp theo vượt quá giờ đóng cửa.
+
+Bước 7. Mỗi khung giờ xác định trạng thái, và nếu còn trống thì tính giá.
+
+Tổng cộng 5 truy vấn cố định, không phụ thuộc sân có bao nhiêu sân con.
+
+
+5. BỐN TRẠNG THÁI, XÉT THEO THỨ TỰ ƯU TIÊN
+-------------------------------------------------------------------------------
+  1. past        Giờ bắt đầu đã trôi qua. Xét đầu tiên — giờ đã qua thì dù
+                 trống hay bị đặt cũng không đặt được nữa.
+  2. blocked     Giao với một khoảng trong court_blocks đang active.
+                 Chủ sân khoá để bảo trì, dọn dẹp, hoặc giải đấu.
+  3. booked      Giao với một booking_items đang pending hoặc confirmed.
+  4. available   Không rơi vào ba trường hợp trên.
+
+Thứ tự này quan trọng. Một khung giờ vừa bị khoá vừa có người đặt thì hiện
+"blocked" — cho người dùng thông tin đúng bản chất hơn.
+
+Chỉ khung available mới có totalPrice; ba trạng thái kia trả null vì không đặt
+được thì không cần biết giá.
+
+
+6. HAI KHOẢNG THỜI GIAN "GIAO NHAU" NGHĨA LÀ GÌ
+-------------------------------------------------------------------------------
+  startA < endB  VÀ  startB < endA
+
+Dùng dấu nhỏ hơn thật sự (không phải nhỏ hơn hoặc bằng), nghĩa là khoảng thời
+gian tính theo kiểu NỬA MỞ: [bắt đầu, kết thúc).
+
+Hệ quả thực tế: lượt đặt 18:00–19:00 và lượt đặt 19:00–20:00 KHÔNG coi là
+trùng nhau. Đúng như mong đợi — hai người chơi nối tiếp nhau.
+
+Quy ước này giống hệt quy ước của ràng buộc booking_items_no_overlap trong
+database. Hai nơi phải khớp, nếu không thì lưới khung giờ sẽ nói một đằng còn
+database cho phép một nẻo.
+
+
+7. CÁCH TÍNH GIÁ
+-------------------------------------------------------------------------------
+Giá do lớp PricingCalculator tính, CỘNG THEO TỪNG ĐOẠN chứ không lấy giá tại
+giờ bắt đầu rồi nhân lên.
+
+Ví dụ khung 15:30–17:00 (90 phút), bảng giá 100.000đ/giờ tới 16:00 rồi
+140.000đ/giờ sau đó:
+
+  15:30 – 16:00   30 phút × 100.000đ/giờ  =  50.000đ
+  16:00 – 17:00   60 phút × 140.000đ/giờ  = 140.000đ
+  ────────────────────────────────────────────────────
+  Tổng                                      190.000đ
+
+Lấy giá tại 15:30 rồi nhân 1.5 giờ sẽ ra 150.000đ — thiếu 40.000đ.
+
+Đoạn giờ nào không có bảng giá thì KHÔNG đoán bừa: trả null, và giao diện hiện
+"chưa có giá" thay vì một con số sai.
+
+
+8. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "venueId": "...", "date": "2026-09-28",
+  "closed": false,
+  "openTime": "06:00", "closeTime": "22:00",
+  "durationMinutes": 60,
+  "courts": [
+    {
+      "courtId": "...", "courtName": "Sân 1", "courtCode": "S1",
+      "availableCount": 9,
+      "slots": [
+        { "startTime": "06:00", "endTime": "07:00",
+          "startAt": "2026-09-27T23:00:00Z",
+          "endAt":   "2026-09-28T00:00:00Z",
+          "status": "available", "totalPrice": 90000 }
+      ]
+    }
+  ]
+}
+
+Mỗi khung giờ có HAI dạng thời gian, mỗi dạng một việc:
+  startTime / endTime   "06:00" — để HIỂN THỊ cho người dùng
+  startAt / endAt       mốc thời gian tuyệt đối — để GỬI LẠI cho server khi đặt
+
+Giao diện phải gửi startAt khi đặt sân, không tự ghép ngày với giờ. Ghép ở
+client dễ sai múi giờ; startAt do server tính sẵn theo giờ Việt Nam.
+
+
+9. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues                  kiểm tra sân đã duyệt
+  venue_operating_hours   giờ mở cửa của thứ đó
+  courts                  sân con đang hoạt động
+  court_price_rules       tính giá
+  court_blocks            khoảng bị khoá
+  booking_items           lượt đặt đang giữ chỗ
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+10. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Ngày ở quá khứ, ngày quá 60 ngày tới,
+                            durationMinutes ngoài 30–300, thiếu date
+  NOT_FOUND           404   Sân không tồn tại hoặc chưa được duyệt
+
+
+11. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+curl -s "http://localhost:8080/api/v1/venues/<venueId>/availability\
+?date=2026-09-28&durationMinutes=60"
+
+
+12. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/VenueController.java
+  backend/src/main/java/com/courtly/api/booking/dto/AvailabilityResponse.java
+  backend/src/main/java/com/courtly/api/booking/dto/SlotStatus.java
+  backend/src/main/java/com/courtly/service/booking/AvailabilityService.java
+  backend/src/main/java/com/courtly/service/booking/PricingCalculator.java
+  backend/src/test/java/com/courtly/api/booking/AvailabilityAndQuoteTest.java
+  user-web/src/hooks/useAvailability.js

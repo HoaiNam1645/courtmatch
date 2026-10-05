@@ -1,0 +1,87 @@
+===============================================================================
+2.1.21 - LỌC SÂN THEO GIÁ
+Giao diện: modal "Bộ lọc sân" ở / và /map
+API: GET /api/v1/venues?maxPricePerHour=...                Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Chỉ hiện những sân có giá thuê không vượt quá mức người dùng chọn. Giao diện
+cho các mức 100.000đ, 120.000đ, 150.000đ và "không giới hạn". Chip nhanh
+"Giá tốt" áp mức 120.000đ.
+
+
+2. BỐN BỘ LỌC 2.1.19 – 2.1.22 ĐỀU LÀ THAM SỐ CỦA MỘT API
+-------------------------------------------------------------------------------
+Không có endpoint riêng cho từng bộ lọc. Tất cả đều là tham số của API tìm kiếm
+đã mô tả ở 2.1.13:
+
+  GET /api/v1/venues?district=...&radiusKm=...&maxPricePerHour=...&availableOnly=...
+
+Các bộ lọc CỘNG DỒN với nhau (điều kiện AND). Chọn "Quận 7" + "dưới 120.000đ"
+thì chỉ ra sân thoả cả hai.
+
+Toàn bộ việc lọc chạy Ở DATABASE, không phải tải hết danh sách về rồi lọc trong
+Java. Lọc ở Java thì phân trang sẽ sai: trang 1 lấy 20 sân, lọc xong còn 3 sân,
+người dùng thấy trang 1 có 3 sân mà tổng vẫn ghi 50.
+
+
+3. "GIÁ CỦA MỘT SÂN" LÀ GIÁ NÀO
+-------------------------------------------------------------------------------
+Đây là chỗ dễ hiểu nhầm nhất, cần đọc kỹ.
+
+Một sân (venue) có nhiều sân con (court). Mỗi sân con có nhiều mức giá theo
+khung giờ — sáng rẻ, tối đắt, cuối tuần đắt hơn. Vậy "sân này giá bao nhiêu"
+không có một câu trả lời duy nhất.
+
+Cách lọc đã chọn: GIỮ LẠI SÂN NÀO CÓ ÍT NHẤT MỘT MỨC GIÁ THOẢ ĐIỀU KIỆN.
+
+  AND EXISTS (SELECT 1 FROM courts c2
+              JOIN court_price_rules r2 ON r2.court_id = c2.id
+                   AND r2.status = 'active'
+              WHERE c2.venue_id = v.id AND c2.status = 'active'
+                AND r2.price_per_hour <= :maxPricePerHour)
+
+Nghĩa thực tế: lọc "dưới 120.000đ" trả về cả sân có khung giờ tối giá
+150.000đ — miễn là nó có MỘT khung giờ nào đó từ 120.000đ trở xuống.
+
+Vì sao chọn cách này: người dùng lọc theo giá là đang hỏi "chỗ nào tôi đủ tiền
+chơi", chứ không phải "chỗ nào mọi khung giờ đều rẻ". Loại bỏ sân chỉ vì khung
+giờ vàng của nó đắt là cắt mất lựa chọn hợp lý của họ.
+
+Đổi lại, giao diện phải hiện KHOẢNG giá (minPricePerHour – maxPricePerHour) chứ
+không hiện một con số, để người dùng không bất ngờ khi vào xem chi tiết.
+
+
+4. CHỈ TÍNH BẢNG GIÁ VÀ SÂN CON ĐANG HOẠT ĐỘNG
+-------------------------------------------------------------------------------
+Hai điều kiện dễ quên:
+
+  c2.status = 'active'   sân con tạm ngưng thì giá của nó không tính
+  r2.status = 'active'   bảng giá cũ đã tắt thì không tính
+
+Thiếu hai dòng này thì một sân đã tăng giá từ lâu vẫn lọt vào bộ lọc "giá rẻ"
+nhờ bảng giá cũ còn nằm trong database.
+
+
+5. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  courts              lọc sân con đang hoạt động
+  court_price_rules   giá mỗi giờ
+
+Có index cpr_lookup_idx trên (court_id, status, effective_from, effective_to).
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+6. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   maxPricePerHour là số âm
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java
+                                                  (hằng số SEARCH_FILTER)
+  backend/src/main/resources/db/migration/V3__venue.sql

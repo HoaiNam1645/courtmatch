@@ -1,0 +1,129 @@
+===============================================================================
+2.1.29 - XEM CHI TIẾT ĐẶT SÂN
+Giao diện: /bookings/:bookingId
+API: GET /api/v1/bookings/{bookingId}                          Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Trả về toàn bộ thông tin của MỘT đơn: mã đơn, sân, sân con, khung giờ, số tiền,
+ghi chú, trạng thái và lịch sử trạng thái.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+Cùng một API này phục vụ luôn 2.1.30 (trạng thái) và được gọi lại sau khi huỷ
+đơn ở 2.1.31.
+
+
+2. CHỈ CHỦ ĐƠN MỚI XEM ĐƯỢC
+-------------------------------------------------------------------------------
+Service so sánh user_id của đơn với id lấy từ token:
+
+  if (!booking.getUser().getId().equals(userId)) {
+      throw ApiException.notFound("Khong tim thay don dat san.");
+  }
+
+Chú ý trả 404 chứ KHÔNG phải 403.
+
+Lý do: trả 403 "bạn không có quyền" là gián tiếp xác nhận đơn đó CÓ TỒN TẠI.
+Người lạ có thể dò từng id để biết hệ thống có bao nhiêu đơn. Trả 404 thì câu
+trả lời giống hệt nhau dù đơn không tồn tại hay đơn của người khác.
+
+
+3. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "id": "...",
+  "bookingCode": "CT-20260928-0001",
+  "status": "pending_payment",
+  "totalAmount": 190000,
+  "note": "Nhớ chuẩn bị cầu",
+  "expiresAt": "2026-09-28T10:10:00Z",
+  "confirmedAt": null,
+  "cancelledAt": null,
+  "cancellationReason": null,
+  "createdAt": "2026-09-28T10:00:00Z",
+  "cancellable": true,
+
+  "venue": {
+    "id": "...", "slug": "san-cau-long-minh-khai",
+    "name": "Sân Cầu Lông Minh Khai",
+    "address": "12 Minh Khai, Hai Bà Trưng, Hà Nội",
+    "phone": "0901234567",
+    "coverImageUrl": "https://...",
+    "latitude": 21.0021, "longitude": 105.8601
+  },
+
+  "items": [
+    { "id": "...", "courtId": "...", "courtName": "Sân 1",
+      "startTime": "2026-09-28T11:00:00Z",
+      "endTime":   "2026-09-28T12:30:00Z",
+      "price": 190000, "status": "pending" }
+  ],
+
+  "statusHistory": [ ... ]    ← xem 2.1.30
+}
+
+Các trường null bị lược bỏ khỏi JSON (cấu hình jackson non_null), nên đơn chưa
+huỷ sẽ không thấy cancelledAt trong phản hồi thật.
+
+
+4. VÌ SAO TRẢ VỀ cancellable THAY VÌ ĐỂ GIAO DIỆN TỰ SUY
+-------------------------------------------------------------------------------
+Điều kiện huỷ được gồm hai vế: trạng thái phải là pending_payment hoặc
+confirmed, VÀ chưa tới giờ chơi.
+
+Nếu để giao diện tự suy thì logic này bị chép ở hai nơi, và khi đổi quy tắc
+(ví dụ thêm "phải trước giờ chơi 2 tiếng") sẽ phải sửa cả hai, dễ lệch nhau.
+
+Server quyết định, giao diện chỉ hiện hay ẩn nút theo cờ này.
+
+Lưu ý: cờ này chỉ để hiện nút cho đẹp. Khi bấm huỷ thật, 2.1.31 vẫn kiểm tra
+lại từ đầu — không tin cờ đã gửi đi.
+
+
+5. phone VÀ latitude/longitude DÙNG LÀM GÌ
+-------------------------------------------------------------------------------
+Giao diện có hai nút "Gọi sân" và "Chỉ đường". Hai nút này cần số điện thoại và
+toạ độ, nên API trả kèm trong khối venue.
+
+Nếu không trả kèm, giao diện phải gọi thêm API chi tiết sân chỉ để lấy hai
+trường này.
+
+
+6. ẢNH BÌA LẤY THẾ NÀO
+-------------------------------------------------------------------------------
+Ảnh bìa không nằm trong bảng venues mà ở venue_images. Service gọi coversFor()
+để lấy, cùng một hàm mà danh sách ở 2.1.32 dùng.
+
+Ở danh sách, hàm này lấy ảnh bìa của TẤT CẢ đơn trong một câu truy vấn thay vì
+mỗi đơn một câu.
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  bookings                 đơn
+  booking_items            khung giờ, sắp xếp theo start_time
+  booking_status_history   lịch sử, sắp xếp theo created_at
+  venues                   tên, địa chỉ, điện thoại, toạ độ
+  courts                   tên sân con
+  venue_images             ảnh bìa
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Đơn không tồn tại, HOẶC đơn của người khác
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/BookingController.java
+  backend/src/main/java/com/courtly/api/booking/dto/BookingDetailResponse.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/test/java/com/courtly/api/booking/BookingControllerTest.java
+  user-web/src/hooks/useBookingDetail.js
+  user-web/src/api/bookings.js

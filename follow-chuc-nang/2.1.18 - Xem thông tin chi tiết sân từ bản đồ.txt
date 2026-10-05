@@ -1,0 +1,137 @@
+===============================================================================
+2.1.18 - XEM THÔNG TIN CHI TIẾT SÂN
+Giao diện: /san/:venueId
+API: GET /api/v1/venues/{slugOrId}                         Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Trả về toàn bộ thông tin của MỘT sân để dựng trang chi tiết: mô tả, địa chỉ,
+ảnh, tiện ích, giờ hoạt động, danh sách sân con và bảng giá của từng sân con.
+
+Đây là API chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+Đánh giá của người chơi KHÔNG nằm trong API này. Chúng có endpoint riêng và
+phân trang: GET /api/v1/venues/{slugOrId}/reviews (thuộc 2.1.23).
+
+
+2. NHẬN CẢ SLUG LẪN ID
+-------------------------------------------------------------------------------
+Đường dẫn nhận một trong hai:
+
+  /api/v1/venues/san-cau-long-minh-khai              ← slug, dễ đọc
+  /api/v1/venues/3fa85f64-5717-4562-b3fc-2c963f66afa6 ← id
+
+Cách xử lý: thử tìm theo slug trước. Không thấy thì thử đổi chuỗi sang UUID —
+đổi được thì tìm theo id, không đổi được thì coi như không tìm thấy.
+
+Vì sao nhận cả hai: đường dẫn có slug thì thân thiện và tốt cho tìm kiếm, nhưng
+các liên kết cũ đang dùng id vẫn phải chạy được.
+
+
+3. CHỈ SÂN ĐÃ DUYỆT MỚI XEM ĐƯỢC
+-------------------------------------------------------------------------------
+Sau khi tìm thấy, còn một bước lọc nữa:
+
+  status = 'active'  VÀ  approval_status = 'approved'
+
+Không thoả → trả 404 "Không tìm thấy sân này", GIỐNG HỆT trường hợp sân không
+tồn tại.
+
+Cố ý trả 404 chứ không phải 403: nếu trả 403 thì người ngoài biết được "có tồn
+tại một sân với slug này, chỉ là chưa duyệt" — thông tin nội bộ của chủ sân
+không nên lộ ra.
+
+
+4. DỮ LIỆU TRẢ VỀ GỒM 5 KHỐI
+-------------------------------------------------------------------------------
+{
+  thông tin sân:  id, slug, name, description, address, ward, district,
+                  province, latitude, longitude, phone, email,
+                  averageRating, reviewCount,
+                  minPricePerHour, maxPricePerHour
+
+  "images":       [ { id, imageUrl, caption, displayOrder, isCover } ]
+                  sắp theo displayOrder                          (2.1.24)
+
+  "services":     [ { code, name, description, price, note } ]
+                  tiện ích: gửi xe, nước uống, thuê vợt...
+
+  "operatingHours": [ { dayOfWeek, openTime, closeTime, isClosed } ]
+                  7 dòng, sắp theo thứ trong tuần
+
+  "courts":       [ { id, name, courtCode, courtType, surfaceType, indoor,
+                      priceRules: [ { dayOfWeek, startTime, endTime,
+                                      pricePerHour } ] } ]
+                  chỉ sân con đang hoạt động; bảng giá sắp theo giờ bắt đầu
+}
+
+
+5. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues                  thông tin chung
+  venue_images            ảnh, sắp theo display_order
+  venue_services          tiện ích của sân này (giá riêng, ghi chú riêng)
+  services                tên và mô tả chuẩn của tiện ích
+  venue_operating_hours   giờ mở cửa 7 ngày
+  courts                  sân con
+  court_price_rules       bảng giá theo khung giờ của từng sân con
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+Vì sao tiện ích tách hai bảng: services là danh mục chuẩn dùng chung ("Gửi xe"
+chỉ khai một lần cho cả hệ thống), venue_services là việc sân nào có tiện ích
+nào, với giá bao nhiêu. Sân A tính gửi xe 5.000đ, sân B miễn phí — cùng một
+dịch vụ, hai mức giá.
+
+
+6. TỪ 12 TRUY VẤN XUỐNG CÒN 5
+-------------------------------------------------------------------------------
+Bản đầu tiên để Hibernate tự nạp dữ liệu liên quan theo kiểu lười (lazy), và
+mỗi sân con lại sinh thêm một truy vấn lấy bảng giá, mỗi tiện ích lại thêm một
+truy vấn lấy tên dịch vụ. Một sân 6 sân con tốn 12 truy vấn.
+
+Sửa bằng cách viết truy vấn có chủ đích cho từng nhóm:
+
+  1. venues                      tìm sân
+  2. courts + court_price_rules  một câu, JOIN FETCH bảng giá
+  3. venue_images
+  4. venue_services + services   một câu, JOIN FETCH dịch vụ
+  5. venue_operating_hours
+
+Luôn đúng 5 truy vấn, không phụ thuộc sân có bao nhiêu sân con. Đây là lỗi N+1
+kinh điển — đáng nhớ vì nó không gây sai kết quả, chỉ làm chậm dần khi dữ liệu
+lớn lên, nên rất dễ lọt qua giai đoạn thử nghiệm.
+
+
+7. KHOẢNG GIÁ ĐƯỢC TÍNH Ở ĐÂU
+-------------------------------------------------------------------------------
+minPricePerHour và maxPricePerHour KHÔNG phải cột trong database. Chúng được
+tính trong Java: gom hết bảng giá đang áp dụng của mọi sân con, lấy giá nhỏ
+nhất và lớn nhất.
+
+Sân chưa khai bảng giá nào thì cả hai đều null — giao diện phải chịu được
+trường hợp này, không hiện "0đ".
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  NOT_FOUND   404   Không có sân nào với slug/id đó, HOẶC sân chưa được duyệt,
+                    HOẶC sân đang tạm ngưng hoạt động
+
+
+9. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+curl -s http://localhost:8080/api/v1/venues/san-cau-long-minh-khai
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/VenueController.java
+  backend/src/main/java/com/courtly/api/venue/dto/VenueDetailResponse.java
+  backend/src/main/java/com/courtly/service/venue/VenueQueryService.java
+                                                          (hàm getDetail)
+  backend/src/main/java/com/courtly/domain/venue/CourtRepository.java
+  backend/src/main/resources/db/migration/V3__venue.sql
+  user-web/src/hooks/useVenueDetail.js

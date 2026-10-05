@@ -1,0 +1,146 @@
+===============================================================================
+2.1.31 - HỦY ĐẶT SÂN
+Giao diện: /bookings/:bookingId  (modal chọn lý do)
+API: POST /api/v1/bookings/{bookingId}/cancel                  Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Người đặt tự huỷ đơn của mình và GIẢI PHÓNG khung giờ cho người khác đặt.
+
+Việc giải phóng khung giờ mới là phần quan trọng. Chỉ đổi trạng thái đơn mà
+quên đổi trạng thái booking_items thì khung giờ vẫn bị giữ vĩnh viễn.
+
+
+2. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{ "reason": "Đổi lịch" }
+
+  reason   BẮT BUỘC, tối đa 255 ký tự
+
+Vì sao bắt buộc lý do: giao diện có modal cho chọn sẵn vài lý do. Dữ liệu này
+dùng để sau này biết người dùng bỏ đơn vì sao — hết tiền, đổi lịch, hay đặt
+nhầm. Cho huỷ không lý do thì mất hẳn thông tin đó.
+
+
+3. HAI ĐIỀU KIỆN MỚI HUỶ ĐƯỢC
+-------------------------------------------------------------------------------
+  (a) Trạng thái là pending_payment HOẶC confirmed
+  (b) Giờ bắt đầu sớm nhất của đơn CÒN Ở TƯƠNG LAI
+
+Cả hai phải cùng đúng.
+
+Điều kiện (a) loại các đơn đã kết thúc vòng đời: completed, cancelled, expired,
+refunded. Huỷ một đơn đã huỷ là vô nghĩa, huỷ đơn đã chơi xong lại càng vô lý.
+
+Điều kiện (b) chặn việc huỷ sau khi đã đến giờ — lúc đó sân đã bị chiếm thật,
+chủ sân đã mất cơ hội cho người khác thuê.
+
+
+4. KIỂM TRA LẠI DÙ GIAO DIỆN ĐÃ ẨN NÚT
+-------------------------------------------------------------------------------
+2.1.29 đã trả về cờ cancellable và giao diện ẩn nút khi cờ là false.
+
+Nhưng service vẫn kiểm tra lại từ đầu. Hai lý do:
+
+  - Người dùng có thể gọi thẳng API, không qua giao diện.
+  - Cờ cancellable được tính lúc TẢI TRANG. Người dùng mở trang lúc 17:59 cho
+    đơn 18:00, ngồi đó 5 phút rồi mới bấm huỷ. Lúc tải thì huỷ được, lúc bấm
+    thì không còn.
+
+Giao diện ẩn nút là để cho đẹp. Server mới là nơi quyết định.
+
+
+5. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. Tìm đơn, kiểm tra đúng chủ (sai chủ -> 404, không phải 403).
+Bước 2. Kiểm tra hai điều kiện ở mục 3, không đạt -> 409.
+Bước 3. Đổi bookings.status sang 'cancelled', ghi cancelled_at và lý do.
+Bước 4. Đổi TẤT CẢ booking_items sang 'cancelled'  <- giải phóng khung giờ.
+Bước 5. Ghi một dòng vào booking_status_history.
+Bước 6. Trả về chi tiết đơn đã cập nhật.
+
+Cả 6 bước nằm trong MỘT transaction. Hỏng giữa chừng thì không có chuyện đơn
+đã huỷ mà khung giờ vẫn bị giữ.
+
+
+6. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+bookings                 SỬA 1 dòng
+  status                 'pending_payment'/'confirmed'  ->  'cancelled'
+  cancelled_at           NULL  ->  thời điểm huỷ
+  cancellation_reason    NULL  ->  lý do người dùng chọn
+  updated_at             trigger tự cập nhật
+
+booking_items            SỬA tất cả dòng của đơn
+  status                 'pending'  ->  'cancelled'
+
+booking_status_history   THÊM 1 dòng
+  old_status             trạng thái cũ
+  new_status             'cancelled'
+  reason                 lý do
+  changed_by             người đặt (KHÁC với 2.1.42 là NULL)
+
+
+7. VÌ SAO ĐỔI booking_items MỚI GIẢI PHÓNG ĐƯỢC KHUNG GIỜ
+-------------------------------------------------------------------------------
+Ràng buộc chống trùng giờ chỉ xét các dòng pending/confirmed:
+
+  CONSTRAINT booking_items_no_overlap EXCLUDE USING gist (...)
+      WHERE (status IN ('pending', 'confirmed'))
+
+Khi item chuyển sang 'cancelled' thì nó rơi ra khỏi phạm vi ràng buộc, và
+người khác đặt vào đúng khung giờ đó được ngay.
+
+Chỉ đổi bookings.status mà quên booking_items thì ràng buộc vẫn thấy dòng
+'pending' và tiếp tục chặn — khung giờ bị khoá vĩnh viễn mà không ai hiểu vì
+sao. Đây là lỗi dễ mắc nhất của chức năng này.
+
+
+8. CHƯA XỬ LÝ HOÀN TIỀN
+-------------------------------------------------------------------------------
+Huỷ một đơn ĐÃ THANH TOÁN hiện chỉ đổi trạng thái, KHÔNG tự hoàn tiền.
+
+Bảng refunds đã có trong thiết kế nhưng chưa có luồng nào ghi vào. Việc hoàn
+tiền thuộc Sprint 3 (2.3.52 và nhóm báo cáo/tranh chấp 2.3.77+).
+
+Hiện tại nếu người dùng huỷ đơn đã trả tiền thì phải xử lý tay.
+
+
+9. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+HTTP 200, cùng cấu trúc với 2.1.29:
+
+{
+  "status": "cancelled",
+  "cancelledAt": "2026-09-28T10:05:00Z",
+  "cancellationReason": "Đổi lịch",
+  "cancellable": false,
+  "items": [ { "status": "cancelled", ... } ],
+  "statusHistory": [ ..., { "oldStatus": "pending_payment",
+                            "newStatus": "cancelled",
+                            "bySystem": false } ]
+}
+
+
+10. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED             401   Chưa đăng nhập
+  VALIDATION_FAILED        400   Thiếu lý do, hoặc lý do quá 255 ký tự
+  NOT_FOUND                404   Đơn không tồn tại hoặc của người khác
+  BOOKING_NOT_CANCELLABLE  409   Đã huỷ trước đó, hoặc đã tới giờ chơi,
+                                 hoặc trạng thái không cho huỷ
+
+Thông báo của 409 phân biệt hai trường hợp: "Don nay da duoc huy truoc do."
+và "Don nay khong con huy duoc."
+
+
+11. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/BookingController.java
+  backend/src/main/java/com/courtly/api/booking/dto/CancelBookingRequest.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/resources/db/migration/V4__booking.sql
+  backend/src/test/java/com/courtly/api/booking/BookingControllerTest.java
+  user-web/src/api/bookings.js

@@ -1,0 +1,144 @@
+===============================================================================
+2.1.32 - XEM LỊCH SỬ ĐẶT SÂN
+Giao diện: /bookings
+API: GET /api/v1/bookings?tab=&q=&page=&size=                  Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Danh sách các đơn của CHÍNH người đang đăng nhập, chia theo tab, có tìm kiếm và
+phân trang.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+
+2. THAM SỐ
+-------------------------------------------------------------------------------
+  tab    mặc định "all"
+  q      từ khoá, tối đa 100 ký tự, có thể bỏ trống
+  page   mặc định 0, nhỏ nhất 0
+  size   mặc định 20, từ 1 đến 100
+
+Giới hạn size tối đa 100 là để không ai gọi size=1000000 kéo sập server.
+
+
+3. BỐN TAB VÀ TRẠNG THÁI TƯƠNG ỨNG
+-------------------------------------------------------------------------------
+  upcoming    confirmed
+  pending     pending_payment
+  completed   completed
+  cancelled   cancelled, expired, refunded
+  all         tất cả
+
+Chú ý tab "cancelled" gom BA trạng thái. Với người dùng thì "đơn không thành"
+là một nhóm, không cần phân biệt tự huỷ hay hết hạn. Nhưng database vẫn lưu
+riêng để thống kê được (xem 2.1.30 mục 2).
+
+Tab lạ -> 400 VALIDATION_FAILED, không âm thầm trả về tất cả.
+
+
+4. TÌM KIẾM KHÔNG DẤU
+-------------------------------------------------------------------------------
+Tìm theo MÃ ĐƠN hoặc TÊN SÂN, và bỏ qua dấu tiếng Việt:
+
+  lower(function('courtly_unaccent', v.name))
+      LIKE lower(function('courtly_unaccent', :keyword))
+
+Nghĩa là gõ "minh khai" vẫn ra "Sân Cầu Lông Minh Khai". Người dùng trên điện
+thoại thường gõ không dấu.
+
+courtly_unaccent là hàm tự định nghĩa trong V1, dùng chung với tìm kiếm sân ở
+2.1.13 để hai chỗ cho kết quả giống nhau.
+
+
+5. VÌ SAO KHÔNG BAO GIỜ TRUYỀN NULL CHO keyword
+-------------------------------------------------------------------------------
+Khi không tìm gì, service truyền "%" chứ không phải NULL:
+
+  String keyword = q == null || q.isBlank() ? "%" : "%" + q.trim() + "%";
+
+Lý do kỹ thuật: PostgreSQL không suy được kiểu dữ liệu của một tham số NULL
+nằm trong lower(), và sẽ báo lỗi. Truyền "%" vừa tránh lỗi vừa có nghĩa đúng
+là "khớp mọi thứ".
+
+Ghi chú này được để lại ngay trong BookingRepository vì rất dễ bị sửa nhầm
+thành NULL khi dọn code.
+
+
+6. BA KỸ THUẬT TRÁNH TRUY VẤN THỪA
+-------------------------------------------------------------------------------
+(a) JOIN FETCH b.venue — lấy sân ngay trong câu chính. Không có nó thì mỗi đơn
+    sinh thêm một câu truy vấn để lấy tên sân (vấn đề N+1).
+
+(b) countQuery viết riêng — câu đếm KHÔNG có JOIN FETCH, vì đếm thì không cần
+    nạp dữ liệu sân.
+
+(c) coversFor() — lấy ảnh bìa của TẤT CẢ đơn trong một câu, thay vì mỗi đơn
+    một câu.
+
+Trang 20 đơn: không có ba kỹ thuật này thì tốn khoảng 41 câu truy vấn, có thì
+chỉ 3.
+
+
+7. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "content": [
+    { "id": "...", "bookingCode": "CT-20260928-0001",
+      "status": "pending_payment",
+      "totalAmount": 190000,
+      "venueId": "...", "venueSlug": "...", "venueName": "...",
+      "venueAddress": "...", "venueCoverImageUrl": "...",
+      "courtName": "Sân 1",
+      "startTime": "...", "endTime": "...",
+      "expiresAt": "...", "createdAt": "..." }
+  ],
+  "page": 0, "size": 20, "totalElements": 7, "totalPages": 1
+}
+
+Đây là bản RÚT GỌN, không có statusHistory và danh sách items đầy đủ — danh
+sách không cần tới chúng. Muốn xem đủ thì mở 2.1.29.
+
+Sắp xếp theo created_at giảm dần: đơn mới nhất lên đầu.
+
+
+8. CHỈ THẤY ĐƠN CỦA MÌNH
+-------------------------------------------------------------------------------
+Điều kiện b.user.id = :userId nằm NGAY TRONG CÂU TRUY VẤN, với userId lấy từ
+token.
+
+Lọc ở tầng truy vấn chứ không phải lấy hết rồi lọc trong Java. Nếu lọc sau thì
+phân trang sẽ sai hoàn toàn: trang 1 lấy 20 đơn của mọi người rồi lọc còn 2 đơn
+của mình.
+
+
+9. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  bookings        lọc theo người dùng, trạng thái, từ khoá
+  venues          tên, địa chỉ (JOIN FETCH)
+  booking_items   khung giờ và tên sân con
+  venue_images    ảnh bìa
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+10. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED        401   Chưa đăng nhập
+  VALIDATION_FAILED   400   Tab không hợp lệ, từ khoá quá 100 ký tự,
+                            page âm, size ngoài khoảng 1-100
+
+Không có đơn nào KHÔNG phải lỗi — trả 200 với content rỗng.
+
+
+11. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/BookingController.java
+  backend/src/main/java/com/courtly/api/booking/dto/BookingSummaryResponse.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/java/com/courtly/domain/booking/BookingRepository.java
+  backend/src/main/java/com/courtly/common/PageResponse.java
+  backend/src/test/java/com/courtly/api/booking/BookingControllerTest.java
+  user-web/src/hooks/useBookings.js
+  user-web/src/api/bookings.js

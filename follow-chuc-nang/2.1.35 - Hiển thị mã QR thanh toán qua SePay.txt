@@ -1,0 +1,110 @@
+===============================================================================
+2.1.35 - HIỂN THỊ MÃ QR THANH TOÁN QUA SEPAY
+Giao diện: /payments/:paymentId
+API: GET /api/v1/payments/{paymentId}   (chung với 2.1.34)   Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Hiện mã QR để người dùng mở ứng dụng ngân hàng quét và chuyển tiền.
+
+Không có API riêng. Backend chỉ trả về trường qrUrl trong 2.1.34, giao diện
+hiện bằng một thẻ img.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+
+2. ĐÃ THAY QR GIẢ BẰNG QR THẬT
+-------------------------------------------------------------------------------
+Bản dựng giao diện trước đây vẽ một mã QR GIẢ bằng hàm DemoQrCode(): nó nhận
+một chuỗi seed rồi vẽ ra các ô vuông trông giống QR nhưng quét không ra gì.
+Dưới ảnh có dòng chữ "QR giao diện mẫu, chưa phát sinh giao dịch thật".
+
+Nay đã thay bằng ảnh thật do SePay sinh:
+
+  <img src={payment.qrUrl} alt={`Mã QR chuyển khoản ${...}`} />
+
+Hàm DemoQrCode đã bị xoá khỏi mã nguồn vì không còn ai gọi.
+
+
+3. BACKEND KHÔNG TỰ VẼ QR
+-------------------------------------------------------------------------------
+Backend chỉ GHÉP CHUỖI địa chỉ, không sinh ảnh, không tải ảnh về:
+
+  https://qr.sepay.vn/img?acc=...&bank=...&amount=...&des=...
+
+Trình duyệt người dùng tự tải ảnh trực tiếp từ SePay.
+
+Vì sao làm vậy:
+  - Không phải thêm thư viện vẽ QR vào backend.
+  - Không phải lưu trữ ảnh, không tốn dung lượng đĩa.
+  - SePay đảm bảo ảnh đúng chuẩn VietQR, đúng định dạng mà các app ngân hàng
+    Việt Nam đọc được.
+
+Đánh đổi: SePay sập thì ảnh QR không hiện. Khi đó người dùng vẫn chuyển khoản
+tay được nhờ thông tin ở 2.1.36 — đó là lý do màn hình luôn hiện cả hai.
+
+
+4. MÃ QR CHỨA GÌ
+-------------------------------------------------------------------------------
+Chuẩn VietQR, mã hoá bốn thứ:
+
+  acc      số tài khoản nhận
+  bank     mã ngân hàng
+  amount   số tiền, đơn vị đồng, không thập phân
+  des      nội dung chuyển khoản
+
+Người dùng quét xong, app ngân hàng điền sẵn cả bốn. Họ chỉ cần bấm xác nhận.
+
+Điền sẵn quan trọng vì gõ tay dễ sai: sai số tiền thì 2.1.38 từ chối xác nhận,
+sai nội dung thì không đối chiếu được với đơn nào.
+
+Tên chủ tài khoản KHÔNG nằm trong QR — app ngân hàng tự lấy tên thật từ phía
+ngân hàng khi quét. Nhờ vậy người dùng đối chiếu được trước khi bấm.
+
+
+5. amount DÙNG SỐ NGUYÊN
+-------------------------------------------------------------------------------
+  amount.toBigInteger()
+
+Số tiền trong database là numeric(12,2), ví dụ 190000.00. Nếu ghép thẳng vào
+URL sẽ thành amount=190000.00 và app ngân hàng có thể đọc sai.
+
+Tiền Việt không dùng phần lẻ, nên cắt về số nguyên.
+
+
+6. QR CHỈ HIỆN KHI ĐANG CHỜ
+-------------------------------------------------------------------------------
+Giao diện chỉ vẽ khối QR khi status là 'pending'. Các trạng thái khác hiện
+màn hình kết quả tương ứng (2.1.39, 2.1.41, 2.1.42).
+
+Để QR hiện khi đơn đã thanh toán hoặc đã hết hạn sẽ khiến người dùng chuyển
+tiền lần nữa.
+
+
+7. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  payments   cột qr_url, amount, status
+  bookings   mã đơn hiển thị kèm
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+Giống 2.1.34 vì dùng chung API.
+
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Giao dịch không tồn tại hoặc của người khác
+
+Ảnh QR tải lỗi KHÔNG phải lỗi API — đó là lỗi mạng giữa trình duyệt và SePay.
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/api/payment/dto/PaymentDetailResponse.java
+  backend/src/main/java/com/courtly/common/config/SepayProperties.java
+  user-web/src/App.jsx                     (thành phần PaymentPage)
+  user-web/src/api/payments.js

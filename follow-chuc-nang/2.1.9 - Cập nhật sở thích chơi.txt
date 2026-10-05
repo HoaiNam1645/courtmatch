@@ -1,0 +1,81 @@
+===============================================================================
+2.1.9 - CẬP NHẬT SỞ THÍCH CHƠI (PHONG CÁCH CHƠI)
+Giao diện: /profile/preferences  API: PUT /api/v1/users/me/preferences
+Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người chơi khai phong cách chơi của mình: thiên về tấn công, cân bằng, hay
+phòng thủ. Dùng cho việc gợi ý bạn chơi hợp gu ở Sprint 2.
+
+
+2. ĐIỀU CẦN BIẾT TRƯỚC: NĂM CHỨC NĂNG DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Màn hình /profile/preferences chỉ có MỘT nút "Lưu thiết lập". Người dùng chỉnh
+vài chỗ rồi bấm lưu một lần, nên API cũng nhận trọn một lần:
+
+  PUT /api/v1/users/me/preferences
+  {
+    "skillLevel":        "intermediate",   ← 2.1.8
+    "dominantHand":      "right",          ← 2.1.8
+    "playingStyle":      "balanced",       ← 2.1.9
+    "preferredPlayType": "double",         ← 2.1.12
+    "availability":        [ ... ],        ← 2.1.10
+    "preferredLocations":  [ ... ]         ← 2.1.11
+  }
+
+Nếu tách thành 5 API riêng thì bấm lưu một lần sẽ gọi 5 request, và nửa chừng
+lỗi mạng là dữ liệu rơi vào trạng thái dở dang. Gộp một lần thì hoặc lưu hết,
+hoặc không lưu gì.
+
+Trường nào không gửi lên thì hiểu là NULL (xoá thiết lập), vì đây là PUT chứ
+không phải PATCH.
+
+Trả về: toàn bộ hồ sơ, hình dạng giống hệt 2.1.6.
+
+
+3. PHẦN THUỘC VỀ 2.1.9
+-------------------------------------------------------------------------------
+Một trường duy nhất:
+
+  playingStyle   attacking   Tấn công   — ưu tiên tốc độ, những pha cầu chủ động
+                 balanced    Cân bằng   — linh hoạt giữa công và thủ
+                 defensive   Phòng thủ  — bền bỉ, điều cầu, chờ phản công
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+player_profiles                                                  [SỬA 1 DÒNG]
+  playing_style      ← attacking | balanced | defensive | NULL
+  updated_at         ← trigger tự cập nhật
+
+
+5. CÂU CHUYỆN CỦA CỘT NÀY
+-------------------------------------------------------------------------------
+Lúc đầu cột playing_style là varchar tự do, không có ràng buộc. Dữ liệu mẫu có
+giá trị 'all_round' — trong khi giao diện chỉ có ba lựa chọn tấn công / cân
+bằng / phòng thủ. Kết quả: người chơi đó mở trang hồ sơ lên thấy "Chưa thiết
+lập" dù database đang có dữ liệu.
+
+Migration V12 sửa lại:
+  · đổi 'all_round' thành 'balanced'
+  · thêm CHECK constraint player_profiles_playing_style_check
+
+Bài học chung cho cả dự án: mọi cột kiểu "chọn một trong N giá trị" đều phải có
+CHECK constraint ở database, và giao diện phải liệt kê ĐỦ N giá trị đó. Thiếu
+một trong hai là dữ liệu và màn hình lệch nhau mà không ai biết.
+
+
+6. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Giá trị không nằm trong ba lựa chọn
+  UNAUTHORIZED        401   Chưa đăng nhập
+
+
+7. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/common/enums/PlayingStyle.java
+  backend/src/main/resources/db/migration/V12__playing_style_constraint.sql
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java

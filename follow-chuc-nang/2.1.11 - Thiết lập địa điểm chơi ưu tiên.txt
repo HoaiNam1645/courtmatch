@@ -1,0 +1,131 @@
+===============================================================================
+2.1.11 - THIẾT LẬP ĐỊA ĐIỂM CHƠI ƯU TIÊN
+Giao diện: /profile/preferences#locations
+API: PUT /api/v1/users/me/preferences                           Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người chơi khai những khu vực mình hay chơi, ví dụ "Gần nhà — Quận 7, bán
+kính 5 km". Dùng để gợi ý sân và tìm bạn chơi ở gần (Sprint 2).
+
+Mỗi địa điểm gồm một cái tên, địa chỉ, một điểm toạ độ trên bản đồ, và bán kính
+chấp nhận được.
+
+
+2. ĐIỀU CẦN BIẾT TRƯỚC: NĂM CHỨC NĂNG DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Màn hình /profile/preferences chỉ có MỘT nút "Lưu thiết lập", nên API nhận trọn
+một lần cho cả 2.1.8 → 2.1.12:
+
+  PUT /api/v1/users/me/preferences
+
+Gộp lại để bấm lưu một lần không bị gọi 5 request và rơi vào trạng thái lưu dở.
+
+Trả về: toàn bộ hồ sơ, hình dạng giống hệt 2.1.6.
+
+
+3. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+"preferredLocations": [
+  {
+    "label":     "Gần nhà",
+    "address":   "Quận 7, TP.HCM",
+    "latitude":  10.7295000,
+    "longitude": 106.7215000,
+    "radiusKm":  5,
+    "isDefault": true
+  }
+]
+
+  label       bắt buộc, tối đa 100 ký tự
+  address     tối đa 500 ký tự, có thể bỏ trống
+  latitude    -90 đến 90, có thể bỏ trống
+  longitude   -180 đến 180, có thể bỏ trống
+  radiusKm    bắt buộc, từ 1 đến 30
+  isDefault   chỉ MỘT địa điểm được đánh dấu mặc định
+
+Trường id chỉ có trong response, request bỏ qua — vì mỗi lần lưu là thay toàn
+bộ danh sách (giống 2.1.10).
+
+
+4. CỘT location ĐƯỢC SINH TỰ ĐỘNG
+-------------------------------------------------------------------------------
+Đây là điểm đặc biệt nhất của bảng này.
+
+Bảng có 3 cột liên quan tới vị trí:
+
+  latitude    numeric   ← Java ghi vào
+  longitude   numeric   ← Java ghi vào
+  location    geography(Point, 4326)   ← KHÔNG ai ghi vào, database tự sinh
+
+Trigger ppl_sync_location chạy trước mỗi lần INSERT/UPDATE, đọc latitude và
+longitude rồi dựng ra điểm toạ độ kiểu PostGIS cho cột location.
+
+Vì sao cần cột thứ ba: muốn hỏi "tìm sân trong bán kính 5 km quanh đây" thì
+phải dùng hàm PostGIS như ST_DWithin, và hàm đó cần kiểu geography chứ không
+chạy trên hai cột số rời rạc. Cột location còn có index dạng GiST
+(ppl_location_gix) để truy vấn theo khoảng cách chạy nhanh.
+
+Đặt việc sinh toạ độ ở trigger thay vì ở Java để dữ liệu luôn đồng bộ, kể cả
+khi có ai đó sửa thẳng bằng câu SQL.
+
+
+5. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+player_preferred_locations                       [XOÁ HẾT RỒI THÊM LẠI]
+  id            ← UUID sinh ở Java
+  user_id       ← id người đang đăng nhập
+  label         ← tên địa điểm
+  address       ← địa chỉ dạng chữ, hoặc NULL
+  latitude      ← vĩ độ, hoặc NULL
+  longitude     ← kinh độ, hoặc NULL
+  location      ← TRIGGER tự sinh từ latitude/longitude
+  radius_km     ← 1..30
+  is_default    ← true/false
+  created_at    ← bây giờ
+
+Cách lưu giống hệt 2.1.10: xoá hết của người dùng đó rồi chèn lại toàn bộ.
+
+
+6. KIỂM TRA DỮ LIỆU
+-------------------------------------------------------------------------------
+Ở tầng Java (@Valid):
+  · tối đa 10 địa điểm
+  · label bắt buộc
+  · latitude / longitude phải nằm trong khoảng hợp lệ
+  · radiusKm bắt buộc, 1–30
+  · chỉ một địa điểm được isDefault = true
+
+Ở tầng database:
+  ppl_radius_check   radius_km > 0
+
+
+7. NẾU KHÔNG GHIM TOẠ ĐỘ THÌ SAO
+-------------------------------------------------------------------------------
+latitude / longitude được phép để trống. Khi đó cột location cũng rỗng, và địa
+điểm này KHÔNG dùng được cho việc tính khoảng cách — chỉ là một dòng chữ.
+
+Giao diện /profile/preferences#locations có bản đồ để ghim toạ độ. Địa điểm nào
+chưa ghim sẽ hiện chú thích "Chưa ghim toạ độ nên chưa tính được khoảng cách",
+để người dùng hiểu vì sao tính năng gợi ý sân gần chưa hoạt động với địa điểm
+đó, thay vì tưởng hệ thống hỏng.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Quá 10 địa điểm, thiếu tên, bán kính ngoài 1–30,
+                            toạ độ vô lý, chọn hai địa điểm mặc định
+  UNAUTHORIZED        401   Chưa đăng nhập
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/profile/dto/PreferredLocationDto.java
+  backend/src/main/java/com/courtly/domain/account/PlayerPreferredLocation.java
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java
+                                              (hàm replacePreferredLocations)
+  backend/src/main/resources/db/migration/V1__extensions_and_helpers.sql (courtly_sync_location)
+  backend/src/main/resources/db/migration/V2__account.sql    (mục 1.11)
+  user-web/src/components/LocationPicker.jsx                 (bản đồ ghim toạ độ)

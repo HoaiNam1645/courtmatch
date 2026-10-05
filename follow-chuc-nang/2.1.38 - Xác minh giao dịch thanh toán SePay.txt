@@ -1,0 +1,171 @@
+===============================================================================
+2.1.38 - XÁC MINH GIAO DỊCH THANH TOÁN SEPAY (ĐỐI SOÁT)
+Giao diện: không có
+API: không có — chạy bên trong webhook 2.1.37
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Trả lời hai câu hỏi cho mỗi webhook nhận được:
+
+  (a) Khoản tiền này của ĐƠN NÀO?
+  (b) Có ĐỦ TIỀN để xác nhận đơn không?
+
+Chỉ khi cả hai đều đạt thì đơn mới chuyển sang "đã xác nhận".
+
+Đây là chỗ tiền thật gặp dữ liệu, nên cũng là chỗ dễ gây thiệt hại nhất nếu
+làm sai.
+
+
+2. BƯỚC 1 — TÌM ĐƠN THEO NỘI DUNG CHUYỂN KHOẢN
+-------------------------------------------------------------------------------
+SePay không biết gì về bookingId hay paymentId. Nó chỉ gửi một dòng tiền kèm
+nội dung chuyển khoản. Toàn bộ việc nối tiền với đơn dựa vào chuỗi đó.
+
+Vấn đề: ngân hàng hay chèn thêm chữ.
+
+  Đơn cần:    "CT202609280001"
+  Thực nhận:  "CK CT202609280001 chuyen tien GD 123"
+
+So sánh bằng nhau sẽ trượt. Nên cách làm là TÁCH NỘI DUNG THÀNH TỪNG TỪ rồi
+tra từng từ một:
+
+  for (String token : content.split("\\s+")) {
+      if (token.length() < 6) continue;
+      ... tìm payment có transfer_content = token ...
+  }
+
+Bỏ qua từ ngắn hơn 6 ký tự để không tra vô ích với "CK", "GD", "chuyen".
+
+
+3. CHỈ TÌM TRONG CÁC ĐƠN ĐANG CHỜ
+-------------------------------------------------------------------------------
+Câu truy vấn lọc thêm status = 'pending':
+
+  where p.transferContent = :transferContent and p.status = :status
+
+Vì sao: không được ghi đè lên một đơn ĐÃ thanh toán. Nếu ai đó vô tình chuyển
+tiền hai lần với cùng nội dung, lần thứ hai không khớp đơn nào và được ghi vào
+nhật ký với trạng thái 'ignored' để admin xử lý — thay vì âm thầm cập nhật lại
+một đơn đã xong.
+
+Hệ quả cần biết: tiền về SAU KHI đơn đã hết hạn thì cũng không khớp. Khung giờ
+đã được nhả cho người khác, không thể tự hồi sinh. Trường hợp này phải hoàn
+tiền tay, và bản ghi trong sepay_webhook_logs là bằng chứng.
+
+
+4. BƯỚC 2 — KIỂM TRA SỐ TIỀN
+-------------------------------------------------------------------------------
+  if (transferAmount == null || transferAmount < payment.getAmount())
+      -> ghi log 'failed', KHÔNG xác nhận đơn.
+
+Chuyển THIẾU thì không xác nhận. Chuyển THỪA thì vẫn nhận, phần dư xử lý tay.
+
+Vì sao không chặn khi thừa: người dùng chuyển dư vài nghìn vì gõ nhầm mà bị từ
+chối cả đơn thì tệ hơn nhiều so với việc nền tảng giữ lại phần dư và hoàn sau.
+
+Dùng compareTo chứ không dùng == vì đây là BigDecimal — so sánh bằng == trên
+BigDecimal là so sánh tham chiếu đối tượng, gần như luôn sai.
+
+
+5. BƯỚC 3 — CẬP NHẬT
+-------------------------------------------------------------------------------
+payments                 SỬA 1 dòng
+  status                 'pending'  ->  'paid'
+  paid_at                NULL  ->  thời điểm nhận
+  provider_transaction_id  NULL  ->  mã giao dịch SePay
+  updated_at             trigger tự cập nhật
+
+bookings                 SỬA 1 dòng
+  status                 'pending_payment'  ->  'confirmed'
+  expires_at             đặt về NULL  <- đã trả tiền, hết hạn giữ chỗ
+
+booking_items            SỬA tất cả dòng
+  status                 'pending'  ->  'confirmed'
+
+booking_status_history   THÊM 1 dòng
+  old_status             'pending_payment'
+  new_status             'confirmed'
+  reason                 'Da nhan thanh toan qua SePay'
+  changed_by             NULL  <- hệ thống làm, không phải người
+
+sepay_webhook_logs       THÊM 1 dòng, processed_status = 'processed'
+
+Tất cả nằm trong MỘT transaction. Hỏng giữa chừng thì không có chuyện tiền ghi
+nhận mà đơn chưa xác nhận.
+
+
+6. VÌ SAO expires_at ĐẶT VỀ NULL
+-------------------------------------------------------------------------------
+Job huỷ đơn quá hạn (2.1.42) quét theo điều kiện:
+
+  status = 'pending_payment' AND expires_at < now()
+
+Trạng thái đã đổi sang 'confirmed' nên về lý thuyết job không đụng tới. Nhưng
+đặt expires_at về NULL là lớp bảo vệ thứ hai: kể cả nếu sau này có chỗ nào đổi
+nhầm trạng thái, đơn đã trả tiền vẫn không bị job huỷ.
+
+Mất tiền của người dùng là loại lỗi phải phòng hai lớp.
+
+
+7. VIỆC ĐỔI TRẠNG THÁI ĐƠN NẰM Ở TẦNG BOOKING
+-------------------------------------------------------------------------------
+SepayWebhookService không tự sửa bookings mà gọi:
+
+  bookingService.confirmPaid(booking, now);
+
+Vì đổi trạng thái đơn và khung giờ là NGHIỆP VỤ CỦA BOOKING, không phải của
+thanh toán. Để tầng thanh toán tự sửa thì cùng một quy tắc bị chép ở hai nơi.
+
+Hàm này không tự lưu — nó chạy trong transaction của webhook, JPA tự ghi khi
+transaction kết thúc.
+
+Nó cũng không làm gì nếu đơn không còn ở trạng thái pending_payment:
+
+  if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) return false;
+
+
+8. CHƯA LÀM: CỘNG VÍ CHỦ SÂN
+-------------------------------------------------------------------------------
+Sau khi xác nhận, hệ thống CHƯA ghi gì vào owner_balance_transactions.
+
+Nghĩa là chủ sân chưa được cộng doanh thu và phí nền tảng 10% chưa được trừ.
+Kiểm chứng: đơn đã thanh toán có 0 dòng sổ cái tương ứng.
+
+Phần còn thiếu là hai dòng sổ cái trong cùng transaction này:
+
+  earning        +190.000    doanh thu đơn
+  platform_fee    -19.000    phí nền tảng, đọc từ platform_fee_configs
+
+Thuộc Sprint 3: 2.3.17, 2.3.20, 2.3.23-26, 2.3.42, 2.3.45-48.
+
+
+9. BA KẾT CỤC
+-------------------------------------------------------------------------------
+  processed   khớp đơn, đủ tiền      -> đơn confirmed
+  failed      khớp đơn, thiếu tiền   -> đơn giữ nguyên pending_payment
+  ignored     không khớp đơn nào     -> không đụng đơn nào
+
+Cả ba đều trả HTTP 200 cho SePay. Xem 2.1.37 mục 5.
+
+
+10. KIỂM THỬ ĐÃ CÓ
+-------------------------------------------------------------------------------
+  matchingWebhookConfirmsBooking      đúng nội dung, đủ tiền -> confirmed
+  matchesWhenBankAppendsExtraWords    ngân hàng chèn thêm chữ vẫn khớp
+  underpaymentDoesNotConfirm          thiếu tiền -> failed, đơn giữ nguyên
+  unmatchedWebhookIsLogged            không khớp -> ignored, payment_id NULL
+  duplicateWebhookIsProcessedOnce     gửi lại không xử lý hai lần
+  outgoingTransferIsIgnored           giao dịch tiền ra bị bỏ qua
+
+
+11. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/payment/SepayWebhookService.java
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/java/com/courtly/domain/payment/PaymentRepository.java
+  backend/src/main/java/com/courtly/domain/payment/SepayWebhookLog.java
+  backend/src/main/java/com/courtly/common/enums/WebhookProcessStatus.java
+  backend/src/main/resources/db/migration/V5__payment.sql
+  backend/src/test/java/com/courtly/api/payment/PaymentControllerTest.java

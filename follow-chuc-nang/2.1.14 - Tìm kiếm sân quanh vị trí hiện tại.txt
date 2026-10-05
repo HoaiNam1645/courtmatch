@@ -1,0 +1,119 @@
+===============================================================================
+2.1.14 - TÌM KIẾM SÂN QUANH VỊ TRÍ HIỆN TẠI
+Giao diện: /map, nút "Lấy vị trí của tôi"
+API: GET /api/v1/venues?lat=...&lng=...&radiusKm=...       Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Tìm những sân nằm trong một bán kính quanh chỗ người dùng đang đứng, và sắp
+sân gần nhất lên đầu.
+
+Vẫn là API tìm kiếm của 2.1.13, chỉ thêm ba tham số lat, lng, radiusKm.
+
+
+2. AI LÀM VIỆC GÌ
+-------------------------------------------------------------------------------
+TRÌNH DUYỆT lấy toạ độ:
+
+  navigator.geolocation.getCurrentPosition(...)
+
+Backend KHÔNG biết người dùng đang ở đâu và cũng không đoán được. Trình duyệt
+phải hỏi người dùng cho phép, rồi gửi lat/lng lên.
+
+Bốn trạng thái mà giao diện phải xử lý — backend không liên quan tới ba cái đầu:
+
+  locating      đang chờ người dùng bấm Cho phép
+  granted       có toạ độ → gọi API kèm lat/lng
+  denied        người dùng từ chối → quay về danh sách thường, không có
+                khoảng cách. KHÔNG được chặn màn hình.
+  unsupported   trình duyệt cũ không hỗ trợ
+
+BACKEND nhận toạ độ và làm phần việc tính toán không gian.
+
+
+3. LỌC THEO BÁN KÍNH CHẠY THẾ NÀO
+-------------------------------------------------------------------------------
+Bảng venues có cột location kiểu geography(Point, 4326) — một điểm trên mặt cầu
+Trái Đất. Cột này do trigger venues_sync_location tự sinh từ latitude/longitude,
+không ai ghi tay vào (giống cột location của 2.1.11).
+
+Điều kiện lọc:
+
+  ST_DWithin(v.location,
+             ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+             :radiusMeters)
+
+Đọc là: "khoảng cách từ sân tới điểm này có nhỏ hơn bán kính không".
+
+Vì sao dùng geography chứ không tự tính bằng công thức trên hai cột số:
+  · geography tính theo mặt cầu, ra mét thật, không cần quy đổi độ sang km.
+  · ST_DWithin dùng được INDEX venues_location_gix (dạng GiST), nên không phải
+    duyệt hết bảng. Tự tính bằng biểu thức toán học thì index vô dụng.
+
+Lưu ý thứ tự tham số: ST_MakePoint nhận (KINH ĐỘ, VĨ ĐỘ) — longitude trước,
+latitude sau. Đảo nhầm là ra giữa biển.
+
+
+4. KHOẢNG CÁCH ĐƯỢC TÍNH VÀ SẮP XẾP
+-------------------------------------------------------------------------------
+Câu SELECT có thêm một cột:
+
+  ST_Distance(v.location, <điểm của người dùng>)   → ra MÉT
+
+Java đổi sang km và làm tròn 1 chữ số thập phân, đúng như giao diện hiển thị
+("2.3 km"). Làm tròn ở backend để mọi màn hình hiện giống nhau.
+
+ORDER BY cũng dùng chính biểu thức khoảng cách đó, nên sân gần nhất lên đầu.
+Khi không truyền lat thì biểu thức không được tính, và danh sách quay về sắp
+theo điểm đánh giá.
+
+
+5. QUY TẮC VỀ THAM SỐ
+-------------------------------------------------------------------------------
+  · lat và lng phải đi CÙNG NHAU. Gửi mỗi lat → 400.
+    Có toạ độ một nửa thì không tính được gì, báo lỗi rõ hơn là lặng lẽ bỏ qua.
+  · lat trong khoảng -90..90, lng trong -180..180.
+  · radiusKm từ 0.1 đến 50. Không gửi thì mặc định 5 km — đúng bằng chip nhanh
+    "Gần tôi" ở giao diện.
+  · radiusKm chỉ có tác dụng khi có toạ độ. Gửi radiusKm mà không có lat/lng thì
+    bị bỏ qua, không báo lỗi.
+
+
+6. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+Giống hệt 2.1.13. KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+Cột được dùng thêm:
+  venues.location    điểm toạ độ kiểu geography
+  index venues_location_gix
+
+
+7. SÂN CHƯA CÓ TOẠ ĐỘ THÌ SAO
+-------------------------------------------------------------------------------
+Sân nào có latitude/longitude để trống thì cột location cũng rỗng, và
+ST_DWithin trả về NULL — tức là sân đó KHÔNG BAO GIỜ xuất hiện trong kết quả
+tìm theo bán kính.
+
+Đây là hành vi đúng (không biết ở đâu thì không thể nói là gần), nhưng phải
+biết để không hoang mang khi thấy sân "biến mất" lúc bật định vị.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Chỉ gửi lat mà thiếu lng (hoặc ngược lại), toạ độ
+                            ngoài khoảng, bán kính ngoài 0.1–50
+
+
+9. THỬ NHANH BẰNG CURL
+-------------------------------------------------------------------------------
+curl -s "http://localhost:8080/api/v1/venues?lat=10.7295&lng=106.7215&radiusKm=5"
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSearchQuery.java
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java
+  backend/src/main/resources/db/migration/V1__extensions_and_helpers.sql
+  backend/src/main/resources/db/migration/V3__venue.sql

@@ -1,0 +1,125 @@
+===============================================================================
+2.1.41 - XỬ LÝ THANH TOÁN THẤT BẠI
+Giao diện: /payments/:paymentId  (trạng thái failed)
+API: POST /api/v1/payments/{paymentId}/retry                   Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Khi giao dịch ở trạng thái 'failed' hoặc 'expired', cho người dùng MỞ LẠI cửa
+sổ thanh toán trên chính giao dịch cũ thay vì phải đặt sân lại từ đầu.
+
+
+2. KHI NÀO MỘT GIAO DỊCH THÀNH 'failed'
+-------------------------------------------------------------------------------
+Hiện chỉ có một đường: webhook báo tiền về nhưng SỐ TIỀN KHÔNG ĐỦ (2.1.38).
+Khi đó nhật ký ghi 'failed' kèm "So tien chuyen khong du".
+
+Chú ý: trong trường hợp này payments.status vẫn giữ 'pending' — chính nhật ký
+webhook mới mang trạng thái 'failed'. Đơn chưa bị đóng, người dùng vẫn chuyển
+bù được trong thời gian còn lại.
+
+Trạng thái 'failed' trên bảng payments hiện chưa có luồng tự động nào đặt vào.
+Nó dành cho các trường hợp sau này và cho việc can thiệp tay.
+
+Đường phổ biến hơn trong thực tế là 'expired' — xem 2.1.42.
+
+
+3. MỞ LẠI CHỨ KHÔNG TẠO GIAO DỊCH MỚI
+-------------------------------------------------------------------------------
+Đây là quyết định thiết kế quan trọng nhất của chức năng này.
+
+Tạo giao dịch mới nghĩa là nội dung chuyển khoản mới. Nhưng người dùng có thể
+ĐÃ quét mã QR cũ và đang chuyển tiền. Tiền về với nội dung cũ, trong khi hệ
+thống chỉ chờ nội dung mới -> tiền lạc, phải xử lý tay.
+
+Nên hàm retry sửa chính dòng cũ và GIỮ NGUYÊN transfer_content:
+
+  payment.setStatus(PaymentStatus.PENDING);
+  payment.setExpiredAt(newDeadline);
+  payment.setQrUrl(buildQrUrl(payment.getAmount(), payment.getTransferContent()));
+  booking.setExpiresAt(newDeadline);
+
+Mã QR được sinh lại vì cấu hình tài khoản có thể đã đổi, nhưng nội dung chuyển
+khoản thì không bao giờ đổi.
+
+
+4. HAI ĐIỀU KIỆN MỚI THỬ LẠI ĐƯỢC
+-------------------------------------------------------------------------------
+  (a) payments.status là 'failed' hoặc 'expired'
+  (b) bookings.status vẫn là 'pending_payment'
+
+Điều kiện (b) dễ bị quên. Giao dịch hết hạn thì job cũng huỷ đơn và NHẢ KHUNG
+GIỜ cho người khác (2.1.42). Nếu cho thử lại mà không kiểm tra đơn thì có thể
+hồi sinh một khung giờ đã có người khác đặt.
+
+Khi đơn không còn giữ chỗ, API trả 409 kèm thông báo "Don nay khong con giu
+cho nua, vui long chon lich moi." Giao diện hiện nút "Chọn lịch mới".
+
+
+5. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+payments        SỬA 1 dòng
+  status        'failed'/'expired'  ->  'pending'
+  expired_at    bây giờ + 10 phút
+  qr_url        sinh lại
+  updated_at    trigger tự cập nhật
+  transfer_content  GIỮ NGUYÊN
+
+bookings        SỬA 1 dòng
+  expires_at    bây giờ + 10 phút
+
+KHÔNG ghi dòng nào vào booking_status_history: trạng thái đơn không đổi, vẫn
+là pending_payment từ đầu đến giờ.
+
+
+6. KHÔNG THỬ LẠI ĐƯỢC GIAO DỊCH ĐANG CHỜ
+-------------------------------------------------------------------------------
+Gọi retry khi status = 'pending' thì nhận 409 PAYMENT_NOT_RETRYABLE.
+
+Nếu cho phép, người dùng bấm liên tục sẽ gia hạn giữ chỗ vô thời hạn, chiếm
+khung giờ mà không trả tiền.
+
+Cũng không thử lại được giao dịch đã 'paid' — đã trả rồi thì không có gì để
+thử.
+
+
+7. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+HTTP 200, cùng cấu trúc PaymentDetailResponse:
+
+{
+  "status": "pending",
+  "transferContent": "CT202609280001",    ← y hệt trước khi thử lại
+  "expiredAt": "...",
+  "secondsRemaining": 600,
+  "qrUrl": "..."
+}
+
+Giao diện nhận xong là quay về màn hình QR với đồng hồ đếm ngược mới.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED            401   Chưa đăng nhập
+  NOT_FOUND               404   Giao dịch không tồn tại hoặc của người khác
+  PAYMENT_NOT_RETRYABLE   409   Giao dịch đang chờ hoặc đã thanh toán,
+                                HOẶC đơn không còn giữ chỗ
+
+
+9. KIỂM THỬ ĐÃ CÓ
+-------------------------------------------------------------------------------
+  retryReopensPaymentWindow   mở lại được, nội dung chuyển khoản giữ nguyên,
+                              secondsRemaining > 0
+  cannotRetryPendingPayment   giao dịch đang chờ -> 409 PAYMENT_NOT_RETRYABLE
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/PaymentController.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/common/exception/ErrorCode.java
+  backend/src/test/java/com/courtly/api/payment/PaymentControllerTest.java
+  user-web/src/api/payments.js
+  user-web/src/App.jsx                     (thành phần PaymentPage)

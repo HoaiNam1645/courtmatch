@@ -1,0 +1,163 @@
+===============================================================================
+2.1.27 - CHỌN NGÀY & GIỜ ĐẶT SÂN (TẠM TÍNH TIỀN)
+Giao diện: /san/:venueId#booking
+API: POST /api/v1/bookings/quote                           Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Sau khi người dùng chọn sân con, ngày, giờ bắt đầu và thời lượng, API này trả
+về SỐ TIỀN TẠM TÍNH kèm giải thích cách ra số đó, và cho biết khung giờ còn đặt
+được không.
+
+Chỉ đọc — KHÔNG tạo đơn, KHÔNG giữ chỗ, KHÔNG bảng nào bị thay đổi.
+
+Muốn đặt thật thì sang 2.1.28.
+
+
+2. VÌ SAO LÀ POST MÀ KHÔNG PHẢI GET
+-------------------------------------------------------------------------------
+API này chỉ đọc nên theo lẽ thường phải là GET. Chọn POST vì dữ liệu gửi lên là
+một đối tượng có cấu trúc (sân con + mốc thời gian + thời lượng), đặt trong
+thân request thì rõ ràng hơn là nhồi vào chuỗi tham số trên URL.
+
+Quy tắc API của dự án cho phép: POST dùng cho "thực hiện một hành động", không
+chỉ riêng việc tạo mới.
+
+
+3. VÌ SAO KHÔNG CẦN ĐĂNG NHẬP
+-------------------------------------------------------------------------------
+Xem giá là việc của người đang cân nhắc. Bắt đăng nhập mới cho xem giá sẽ làm
+mất người dùng ngay trước bước quan trọng nhất.
+
+Chỉ bước TẠO ĐƠN THẬT (2.1.28) mới cần đăng nhập.
+
+
+4. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+{
+  "courtId":         "...",
+  "startTime":       "2026-09-28T11:00:00Z",   ← mốc thời gian tuyệt đối
+  "durationMinutes": 90
+}
+
+  startTime         phải ở tương lai. Lấy đúng trường startAt mà 2.1.26 trả về,
+                    không tự ghép ngày với giờ ở client.
+  durationMinutes   CHỈ nhận 60, 90 hoặc 120 — đúng ba lựa chọn của giao diện.
+
+Chú ý: DTO khai báo tối thiểu 30 phút, nhưng service chặn lại chỉ còn ba giá
+trị kể trên. Hai lớp kiểm tra khác nhau: lớp DTO chặn giá trị vô lý, lớp service
+chặn theo quy tắc nghiệp vụ.
+
+
+5. KHÔNG BAO GIỜ NHẬN GIÁ TỪ CLIENT
+-------------------------------------------------------------------------------
+Đây là nguyên tắc quan trọng nhất của chức năng này.
+
+Request KHÔNG có trường nào cho số tiền. Server tự tính từ court_price_rules.
+
+Nếu nhận giá từ client thì ai cũng sửa được request thành 1.000đ rồi đặt sân.
+Và ngay cả khi client tính đúng, đây vẫn là dữ liệu do người ngoài gửi vào —
+không được tin.
+
+Chưa hết: khi tạo đơn thật ở 2.1.28, server TÍNH LẠI MỘT LẦN NỮA chứ không tin
+cả con số mà chính nó vừa trả về ở bước này. Lý do là giữa lúc xem giá và lúc
+bấm đặt, chủ sân có thể đã đổi bảng giá.
+
+
+6. CÁC BƯỚC CHẠY
+-------------------------------------------------------------------------------
+Bước 1. Thời lượng phải là 60, 90 hoặc 120.
+Bước 2. Tìm sân con; sân cha phải đang hoạt động và đã duyệt, nếu không thì 404.
+Bước 3. Đổi startTime sang ngày/giờ theo giờ Việt Nam, tính giờ kết thúc.
+Bước 4. Kiểm tra lần lượt 5 điều kiện (xem mục 7).
+Bước 5. Tính tiền bằng PricingCalculator, cộng theo từng đoạn giá.
+Bước 6. Dựng danh sách "đoạn giá" để giao diện giải thích được số tiền.
+
+
+7. NĂM LÝ DO KHÔNG ĐẶT ĐƯỢC
+-------------------------------------------------------------------------------
+Khi không đặt được, API vẫn trả HTTP 200 kèm available = false và
+unavailableReason nói rõ lý do:
+
+  "Khung giờ vượt qua nửa đêm, vui lòng chọn giờ khác."
+  "Sân nghỉ vào ngày này."
+  "Khung giờ nằm ngoài giờ mở cửa."
+  "Sân đang bị khoá trong khung giờ này."
+  "Khung giờ này vừa có người đặt."
+
+Thêm một trường hợp nữa: khung giờ hợp lệ nhưng chưa khai bảng giá thì
+totalAmount = null và lý do là "Khung giờ này chưa có bảng giá."
+
+Vì sao trả 200 chứ không phải 400: người dùng chọn một khung giờ đã có người
+đặt KHÔNG PHẢI là gửi dữ liệu sai — họ gửi một câu hỏi hợp lệ và nhận câu trả
+lời "chỗ này hết rồi". Giao diện hiện lời nhắc và mời chọn giờ khác, không hiện
+màn hình lỗi.
+
+
+8. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "venueId": "...", "venueName": "Sân Cầu Lông Minh Khai",
+  "courtId": "...", "courtName": "Sân 1",
+  "date": "2026-09-28",
+  "startTime": "2026-09-28T11:00:00Z", "endTime": "2026-09-28T12:30:00Z",
+  "startTimeOfDay": "18:00", "endTimeOfDay": "19:30",
+  "durationMinutes": 90,
+  "totalAmount": 190000,
+  "available": true,
+  "unavailableReason": null,
+  "segments": [
+    { "startTime": "18:00", "endTime": "19:00",
+      "pricePerHour": 100000, "amount": 100000 },
+    { "startTime": "19:00", "endTime": "19:30",
+      "pricePerHour": 180000, "amount": 90000 }
+  ]
+}
+
+segments là phần đáng giá nhất: nó cho phép giao diện hiện "18:00–19:00:
+100.000đ, 19:00–19:30: 90.000đ" thay vì chỉ một con số tổng. Người dùng thấy
+190.000đ cho 90 phút mà không hiểu vì sao sẽ nghi ngờ hệ thống tính sai.
+
+
+9. CHI TIẾT QUAN TRỌNG: PHÍ NỀN TẢNG KHÔNG CỘNG VÀO ĐÂY
+-------------------------------------------------------------------------------
+Bản dựng giao diện ban đầu cộng thêm 5.000đ "phí nền tảng" vào tổng tiền người
+chơi phải trả. Sai so với thiết kế.
+
+Theo thiết kế, phí nền tảng TRỪ VÀO DOANH THU CHỦ SÂN, ghi ở bảng
+owner_balance_transactions. Người chơi trả đúng tiền sân, không hơn.
+
+Đã bỏ khỏi giao diện. totalAmount ở đây chính là số tiền cuối cùng.
+
+
+10. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  courts                  sân con và sân cha
+  venues                  kiểm tra đã duyệt
+  venue_operating_hours   giờ mở cửa
+  court_price_rules       tính tiền
+  court_blocks            kiểm tra bị khoá
+  booking_items           kiểm tra đã có người đặt
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+11. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Thời lượng không phải 60/90/120, giờ bắt đầu ở
+                            quá khứ, thiếu courtId
+  NOT_FOUND           404   Sân con không tồn tại, hoặc sân cha chưa được duyệt
+
+Khung giờ đã có người đặt KHÔNG phải lỗi — trả 200 với available = false.
+
+
+12. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/booking/BookingQuoteController.java
+  backend/src/main/java/com/courtly/api/booking/dto/QuoteRequest.java
+  backend/src/main/java/com/courtly/api/booking/dto/QuoteResponse.java
+  backend/src/main/java/com/courtly/service/booking/QuoteService.java
+  backend/src/main/java/com/courtly/service/booking/PricingCalculator.java
+  backend/src/test/java/com/courtly/service/booking/PricingCalculatorTest.java

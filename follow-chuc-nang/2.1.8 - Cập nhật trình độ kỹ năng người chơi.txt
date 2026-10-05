@@ -1,0 +1,101 @@
+===============================================================================
+2.1.8 - CẬP NHẬT TRÌNH ĐỘ KỸ NĂNG NGƯỜI CHƠI
+Giao diện: /profile/preferences  API: PUT /api/v1/users/me/preferences
+Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người chơi tự khai trình độ của mình và tay thuận. Hai thông tin này dùng
+để sau này ghép cặp người chơi ngang sức (Sprint 2).
+
+
+2. ĐIỀU CẦN BIẾT TRƯỚC: NĂM CHỨC NĂNG DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Màn hình /profile/preferences chỉ có MỘT nút "Lưu thiết lập". Người dùng chỉnh
+vài chỗ rồi bấm lưu một lần, nên API cũng nhận trọn một lần:
+
+  PUT /api/v1/users/me/preferences
+  {
+    "skillLevel":        "intermediate",   ← 2.1.8
+    "dominantHand":      "right",          ← 2.1.8
+    "playingStyle":      "balanced",       ← 2.1.9
+    "preferredPlayType": "double",         ← 2.1.12
+    "availability":        [ ... ],        ← 2.1.10
+    "preferredLocations":  [ ... ]         ← 2.1.11
+  }
+
+Nếu tách thành 5 API riêng thì bấm lưu một lần sẽ gọi 5 request, và nửa chừng
+lỗi mạng là dữ liệu rơi vào trạng thái dở dang. Gộp một lần thì hoặc lưu hết,
+hoặc không lưu gì.
+
+Trường nào không gửi lên thì hiểu là NULL (xoá thiết lập), vì đây là PUT chứ
+không phải PATCH.
+
+Trả về: toàn bộ hồ sơ, hình dạng giống hệt 2.1.6.
+
+
+3. PHẦN THUỘC VỀ 2.1.8
+-------------------------------------------------------------------------------
+Hai trường:
+
+  skillLevel     Trình độ tự đánh giá
+  dominantHand   Tay thuận
+
+Giá trị hợp lệ — giao diện phải hiện ĐÚNG những giá trị này, không thiếu cái
+nào, nếu không người dùng sẽ thấy "Chưa thiết lập" dù database đang có dữ liệu:
+
+  skillLevel     beginner       Mới chơi
+                 intermediate   Trung bình
+                 advanced       Nâng cao
+                 professional   Chuyên nghiệp
+
+  dominantHand   right          Tay phải
+                 left           Tay trái
+                 both           Cả hai tay
+
+
+4. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+player_profiles                                                  [SỬA 1 DÒNG]
+  skill_level        ← beginner | intermediate | advanced | professional | NULL
+  dominant_hand      ← right | left | both | NULL
+  updated_at         ← trigger tự cập nhật
+
+
+5. DATABASE TỰ CHẶN NHỮNG GÌ
+-------------------------------------------------------------------------------
+  player_profiles_skill_level_check
+      skill_level chỉ được NULL hoặc 4 giá trị kể trên
+  player_profiles_hand_check
+      dominant_hand chỉ được NULL hoặc left / right / both
+
+Ngoài ra Java cũng chặn từ vòng ngoài: gửi giá trị lạ (ví dụ "super_pro") thì
+Jackson không đổi được sang enum và trả 400 ngay, chưa tới database.
+
+
+6. PHÂN BIỆT skill_level VỚI skill_score
+-------------------------------------------------------------------------------
+Đây là hai thứ khác nhau, hay bị nhầm:
+
+  skill_level   NGƯỜI DÙNG tự chọn. Sửa được ở màn hình này.
+  skill_score   HỆ THỐNG tính từ kết quả trận đấu. Người dùng không sửa được,
+                nên nó không có trong request — chỉ xuất hiện ở response để
+                hiển thị.
+
+Hiện chưa chức năng nào ghi vào skill_score; phần tính điểm thuộc Sprint sau.
+
+
+7. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Giá trị không nằm trong danh sách cho phép
+  UNAUTHORIZED        401   Chưa đăng nhập
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/profile/dto/UpdatePreferencesRequest.java
+  backend/src/main/java/com/courtly/common/enums/SkillLevel.java
+  backend/src/main/java/com/courtly/common/enums/DominantHand.java
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java

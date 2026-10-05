@@ -1,0 +1,82 @@
+===============================================================================
+2.1.15 - HIỂN THỊ DANH SÁCH SÂN TRÊN BẢN ĐỒ
+Giao diện: /map             API: GET /api/v1/venues        Không cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Hiển thị danh sách sân ở cột bên cạnh bản đồ, đồng bộ với các chấm trên bản đồ.
+Bật bộ lọc thì cả danh sách lẫn các chấm cùng đổi theo.
+
+
+2. BA CHỨC NĂNG 2.1.15 – 2.1.17 DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Trang /map gọi đúng API tìm kiếm của 2.1.13:
+
+  GET /api/v1/venues
+
+Một lần gọi trả về mọi thứ mà cả ba chức năng cần. Backend không có endpoint
+riêng cho bản đồ, vì dữ liệu cần dùng y hệt danh sách trang chủ — tách ra chỉ
+làm hai chỗ dễ lệch nhau.
+
+Khác biệt giữa ba chức năng nằm ở CÁCH GIAO DIỆN VẼ, không nằm ở dữ liệu:
+
+  2.1.15  vẽ danh sách thẻ sân bên cạnh bản đồ
+  2.1.16  vẽ chấm đánh dấu lên bản đồ
+  2.1.17  bấm vào chấm thì mở bảng thông tin nhanh
+
+
+3. MỖI THẺ SÂN LẤY DỮ LIỆU TỪ ĐÂU
+-------------------------------------------------------------------------------
+  Ảnh            coverImageUrl        ← venue_images (ảnh is_cover, hoặc
+                                        display_order nhỏ nhất)
+  Tên, khu vực   name, district       ← venues
+  Điểm đánh giá  averageRating,       ← venues (cột sẵn có, không tính lại
+                 reviewCount            từ bảng đánh giá mỗi lần đọc)
+  Khoảng cách    distanceKm           ← ST_Distance, chỉ có khi gửi lat/lng
+  Số sân         courtCount           ← đếm courts đang hoạt động
+  Giá            minPricePerHour,     ← MIN/MAX của court_price_rules
+                 maxPricePerHour        đang áp dụng
+  Giờ hôm nay    todayOpenTime,       ← venue_operating_hours của thứ hôm nay
+                 todayCloseTime,
+                 closedToday
+
+Tất cả nằm trong MỘT câu SQL, xem 2.1.13 mục 5.
+
+
+4. HAI CHỖ BẢN MÔ TẢ GIAO DIỆN KHÔNG KHỚP THỰC TẾ
+-------------------------------------------------------------------------------
+Bản mô tả giao diện ghi thẻ sân hiện "số sân trống" và "lịch gần nhất". Cả hai
+đều là số liệu cứng trong bản dựng giao diện, API không trả về:
+
+a) "SỐ SÂN TRỐNG" → thực tế trả về courtCount = TỔNG SỐ SÂN CON ĐANG HOẠT ĐỘNG.
+
+   Muốn biết còn trống bao nhiêu thì phải biết HỎI CHO NGÀY NÀO và KHUNG GIỜ
+   NÀO — một sân "còn trống" lúc 8 giờ sáng có thể kín lúc 7 giờ tối. Tính sẵn
+   cho mọi sân trong danh sách sẽ rất nặng mà lại không chính xác.
+
+   Việc đó là của 2.1.26 (lịch trống theo ngày). Giao diện đã sửa nhãn thành
+   "6 sân" thay vì "6 sân trống".
+
+   Riêng bộ lọc "chỉ hiện sân còn trống" (2.1.22) thì CÓ tính thật, nhưng chỉ
+   trả lời câu hỏi có/không cho hôm nay, không đếm số lượng.
+
+b) "LỊCH GẦN NHẤT" → chưa có. Đã gỡ khỏi giao diện thay vì hiện số giả.
+
+Quy tắc chung: giao diện không được hiện con số mà backend không có thật. Người
+dùng tin con số đó rồi đi tới sân mới biết sai thì tệ hơn là không hiện gì.
+
+
+5. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  venues, venue_images, courts, court_price_rules, venue_operating_hours
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+6. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/venue/dto/VenueSummaryResponse.java
+  backend/src/main/java/com/courtly/domain/venue/VenueRepository.java
+  user-web/src/hooks/useVenueSearch.js

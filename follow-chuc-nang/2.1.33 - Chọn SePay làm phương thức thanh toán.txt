@@ -1,0 +1,104 @@
+===============================================================================
+2.1.33 - CHỌN SEPAY LÀM PHƯƠNG THỨC THANH TOÁN
+Giao diện: /booking/checkout
+API: không có API riêng — nằm trong POST /api/v1/bookings (2.1.28)
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Quyết định: khi tạo đơn thì sinh luôn một giao dịch thanh toán SePay.
+
+Hiện SePay/VietQR là phương thức DUY NHẤT. Giao diện vẫn vẽ ô chọn phương thức
+nhưng chỉ có một lựa chọn và nó được chọn sẵn.
+
+Không có API riêng, cũng không có trường nào trong request để chọn phương thức.
+
+
+2. VÌ SAO KHÔNG CÓ TRƯỜNG "paymentMethod" TRONG REQUEST
+-------------------------------------------------------------------------------
+Thêm một trường chỉ nhận đúng một giá trị là thêm chỗ để sai mà không đem lại
+gì. Khi nào có phương thức thứ hai thì thêm, lúc đó mới biết cần hình dạng nào.
+
+Đây là quy tắc của dự án: không viết sẵn cho tương lai. Code chưa ai gọi là
+code chết.
+
+Giá trị 'sepay' được ghi cố định vào cột payments.provider:
+
+  public static final String PROVIDER_SEPAY = "sepay";
+
+
+3. VÌ SAO TẠO ĐƠN VÀ TẠO GIAO DỊCH PHẢI ĐI CÙNG NHAU
+-------------------------------------------------------------------------------
+Trong BookingService.create(), ngay trước khi trả về:
+
+  paymentService.createFor(booking);
+
+Hai việc nằm trong CÙNG MỘT transaction. Nếu tách rời, có hai hỏng hóc:
+
+  - Tạo đơn xong, tạo giao dịch lỗi  ->  đơn treo, giữ chỗ 10 phút mà người
+    dùng không có đường nào trả tiền.
+  - Tạo giao dịch xong, tạo đơn lỗi  ->  giao dịch mồ côi không thuộc đơn nào.
+
+Cùng transaction thì hoặc có cả hai, hoặc không có gì.
+
+
+4. VỊ TRÍ TRONG LUỒNG
+-------------------------------------------------------------------------------
+  2.1.27  xem giá tạm tính        chưa ghi gì
+  2.1.28  tạo đơn                 ghi bookings + booking_items
+  2.1.33  chọn SePay              <- quyết định sinh payment
+  2.1.34  tạo giao dịch           ghi payments
+  2.1.35  hiện mã QR
+  2.1.36  người dùng chuyển khoản
+  2.1.37  SePay gọi webhook
+  2.1.38  đối chiếu, xác nhận đơn
+  2.1.40  màn hình thành công
+
+
+5. TIỀN CHẢY VỀ TÀI KHOẢN NÀO
+-------------------------------------------------------------------------------
+Tài khoản nhận tiền là của NỀN TẢNG, không phải của chủ sân. Cấu hình ở
+courtly.payment.sepay trong application.yml, đọc từ biến môi trường.
+
+Mô hình này là KÝ QUỸ: nền tảng giữ tiền trước, đối soát xong mới chi cho chủ
+sân qua owner_balances và withdrawal_requests.
+
+Ba lý do không cho tiền chảy thẳng vào tài khoản chủ sân:
+
+  (a) SePay chỉ nhìn thấy tài khoản đã kết nối trong tài khoản SePay của nền
+      tảng. Tiền vào tài khoản riêng của chủ sân thì SePay không thấy, webhook
+      không chạy, đơn không bao giờ tự xác nhận.
+  (b) Phí nền tảng 10% trừ vào doanh thu chủ sân. Tiền vào thẳng túi chủ sân
+      thì không thu lại được.
+  (c) Nghiệp vụ tranh chấp hoàn tiền chỉ làm được khi nền tảng đang giữ tiền.
+
+Tài khoản ngân hàng của CHỦ SÂN (court_owner_profiles) chỉ dùng lúc CHI TRẢ
+khi chủ sân rút tiền — thuộc Sprint 3.
+
+
+6. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+Chức năng này không tự ghi gì. Nó khiến 2.1.28 ghi thêm 1 dòng vào bảng
+payments — chi tiết ở 2.1.34.
+
+
+7. CHƯA LÀM: CỘNG VÍ CHỦ SÂN
+-------------------------------------------------------------------------------
+Khi webhook xác nhận đã nhận tiền, hệ thống đổi trạng thái đơn nhưng CHƯA ghi
+gì vào owner_balance_transactions.
+
+Nghĩa là chủ sân chưa được cộng doanh thu, phí nền tảng chưa được trừ. Phần đó
+thuộc Sprint 3 (2.3.17, 2.3.20, 2.3.23-26, 2.3.42, 2.3.45-48).
+
+Hiện phải đối soát tay bằng cách đọc bảng payments.
+
+
+8. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/booking/BookingService.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/domain/payment/Payment.java
+  backend/src/main/java/com/courtly/common/config/SepayProperties.java
+  backend/src/main/resources/application.yml
+  backend/src/test/java/com/courtly/api/payment/PaymentControllerTest.java

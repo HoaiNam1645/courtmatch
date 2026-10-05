@@ -1,0 +1,113 @@
+===============================================================================
+2.1.10 - THIẾT LẬP THỜI GIAN CHƠI ƯU TIÊN
+Giao diện: /profile/preferences#availability
+API: PUT /api/v1/users/me/preferences                           Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người chơi khai những khung giờ mình thường rảnh trong tuần, ví dụ "Thứ ba
+19:00–21:00". Dùng để gợi ý bạn chơi cùng khung giờ (Sprint 2).
+
+Đây là chức năng đầu tiên trong nhóm hồ sơ ghi vào MỘT BẢNG RIÊNG chứ không
+phải một cột.
+
+
+2. ĐIỀU CẦN BIẾT TRƯỚC: NĂM CHỨC NĂNG DÙNG CHUNG MỘT API
+-------------------------------------------------------------------------------
+Màn hình /profile/preferences chỉ có MỘT nút "Lưu thiết lập", nên API nhận trọn
+một lần cho cả 2.1.8 → 2.1.12:
+
+  PUT /api/v1/users/me/preferences
+
+Gộp lại để bấm lưu một lần không bị gọi 5 request và rơi vào trạng thái lưu dở.
+
+Trả về: toàn bộ hồ sơ, hình dạng giống hệt 2.1.6.
+
+
+3. DỮ LIỆU GỬI LÊN
+-------------------------------------------------------------------------------
+"availability": [
+  { "dayOfWeek": 2, "startTime": "19:00", "endTime": "21:00" },
+  { "dayOfWeek": 7, "startTime": "07:00", "endTime": "09:30" }
+]
+
+  dayOfWeek   1 = Thứ hai, 2 = Thứ ba, ... 7 = Chủ nhật
+  startTime   giờ bắt đầu, dạng HH:mm
+  endTime     giờ kết thúc, dạng HH:mm
+
+Gửi mảng rỗng [] nghĩa là xoá hết khung giờ đã khai.
+
+
+4. CÁCH LƯU: XOÁ HẾT RỒI GHI LẠI
+-------------------------------------------------------------------------------
+Service KHÔNG so sánh từng dòng để biết dòng nào thêm, dòng nào sửa, dòng nào
+xoá. Nó làm đơn giản hơn nhiều:
+
+  Bước 1. DELETE toàn bộ khung giờ của người dùng này
+  Bước 2. flush() — đẩy lệnh xoá xuống database ngay
+  Bước 3. INSERT lại toàn bộ danh sách vừa gửi lên
+
+Vì sao làm được như vậy:
+  · Giao diện gửi lên trạng thái đầy đủ sau khi bấm lưu, không gửi từng thay đổi.
+  · Không bảng nào tham chiếu tới player_availability_slots, nên xoá đi tạo lại
+    không làm hỏng dữ liệu ở đâu khác.
+  · Số dòng rất ít (tối đa 7).
+
+Vì sao phải flush() ở giữa: nếu để Hibernate tự sắp xếp, nó có thể chạy lệnh
+INSERT trước lệnh DELETE, và lúc đó ràng buộc của dòng cũ vẫn còn nên sẽ báo
+lỗi. flush() ép xoá xong mới chèn.
+
+
+5. BẢNG NÀO THAY ĐỔI
+-------------------------------------------------------------------------------
+player_availability_slots                        [XOÁ HẾT RỒI THÊM LẠI]
+  id            ← UUID sinh ở Java
+  user_id       ← id người đang đăng nhập
+  day_of_week   ← 1..7
+  start_time    ← kiểu time, ví dụ 19:00:00
+  end_time      ← kiểu time, ví dụ 21:00:00
+  created_at    ← bây giờ
+
+Bảng này KHÔNG có cột updated_at — mỗi lần lưu là dòng mới hoàn toàn.
+
+
+6. KIỂM TRA DỮ LIỆU
+-------------------------------------------------------------------------------
+Ở tầng Java (@Valid):
+  · tối đa 7 khung giờ
+  · dayOfWeek bắt buộc, từ 1 đến 7
+  · startTime và endTime bắt buộc
+  · endTime phải sau startTime
+  · MỖI THỨ CHỈ ĐƯỢC MỘT KHUNG — gửi hai dòng cùng dayOfWeek = 2 sẽ bị từ chối
+
+Ở tầng database:
+  pas_day_check    day_of_week BETWEEN 1 AND 7
+  pas_time_check   end_time > start_time
+
+
+7. LƯU Ý VỀ KIỂU DỮ LIỆU time
+-------------------------------------------------------------------------------
+Cột start_time / end_time là kiểu "time" của PostgreSQL — chỉ có giờ, không có
+ngày và không có múi giờ. "19:00" nghĩa là 7 giờ tối theo giờ địa phương.
+
+Đây là lý do cấu hình Hibernate của dự án KHÔNG đặt hibernate.jdbc.time_zone.
+Thuộc tính đó áp cả lên cột time và từng làm 07:00 bị lưu thành 23:00. Xem chú
+thích trong application.yml.
+
+
+8. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  VALIDATION_FAILED   400   Quá 7 khung, trùng thứ, giờ kết thúc trước giờ bắt
+                            đầu, thiếu trường bắt buộc
+  UNAUTHORIZED        401   Chưa đăng nhập
+
+
+9. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/profile/dto/AvailabilitySlotDto.java
+  backend/src/main/java/com/courtly/domain/account/PlayerAvailabilitySlot.java
+  backend/src/main/java/com/courtly/service/profile/ProfileService.java
+                                                    (hàm replaceAvailability)
+  backend/src/main/resources/db/migration/V2__account.sql   (mục 1.10)

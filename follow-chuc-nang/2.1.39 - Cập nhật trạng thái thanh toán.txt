@@ -1,0 +1,117 @@
+===============================================================================
+2.1.39 - CẬP NHẬT TRẠNG THÁI THANH TOÁN
+Giao diện: /payments/:paymentId
+API: GET /api/v1/payments/{paymentId}   (hỏi lại định kỳ)   Cần đăng nhập
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Làm cho màn hình thanh toán TỰ CHUYỂN khi tiền về, không cần người dùng tải
+lại trang.
+
+Chỉ đọc — KHÔNG bảng nào bị thay đổi.
+
+
+2. VÌ SAO PHẢI HỎI LẠI
+-------------------------------------------------------------------------------
+Người dùng mở trang thanh toán, chuyển sang ứng dụng ngân hàng, chuyển tiền,
+rồi quay lại tab cũ.
+
+Trong lúc đó SePay gọi webhook và backend đã đổi trạng thái. Nhưng KHÔNG CÓ GÌ
+báo cho trình duyệt biết — webhook đi từ SePay tới server, không đi tới trình
+duyệt.
+
+Nên trình duyệt phải chủ động hỏi lại.
+
+
+3. HỎI LẠI MỖI 5 GIÂY, VÀ DỪNG KHI XONG
+-------------------------------------------------------------------------------
+  const POLL_INTERVAL_MS = 5000
+
+Chỉ hỏi khi trạng thái còn là 'pending'. Chuyển sang paid/failed/expired là
+dừng hẳn, không gọi API vô ích.
+
+Trạng thái mới nhất giữ trong một useRef chứ không phải state, để bộ đếm không
+phải dựng lại mỗi lần dữ liệu đổi.
+
+5 giây là cân bằng: nhanh hơn thì tốn tài nguyên, chậm hơn thì người dùng ngồi
+chờ tự hỏi đã xong chưa.
+
+Màn hình còn có nút "Kiểm tra lại ngay" cho người sốt ruột.
+
+
+4. NĂM TRẠNG THÁI
+-------------------------------------------------------------------------------
+  pending    Chờ thanh toán      hiện QR + thông tin chuyển khoản + đếm ngược
+  paid       Đã thanh toán       tự chuyển sang màn xác nhận (2.1.40)
+  failed     Thanh toán thất bại hiện nút thử lại (2.1.41)
+  expired    Giao dịch hết hạn   hiện nút thử lại và chọn lịch mới (2.1.42)
+  refunded   Đã hoàn tiền        chưa có luồng nào tạo ra
+
+Chốt ở database:
+
+  CONSTRAINT payments_status_check CHECK (
+      status IN ('pending','paid','failed','expired','refunded'))
+
+
+5. ĐẾM NGƯỢC DO SERVER TÍNH
+-------------------------------------------------------------------------------
+API trả về secondsRemaining, không để giao diện tự lấy expiredAt trừ đồng hồ
+máy mình.
+
+Lý do: đồng hồ máy người dùng có thể lệch vài phút. Lệch thì họ thấy "còn 3
+phút" trong khi server đã cho hết hạn, hoặc ngược lại thấy hết hạn trong khi
+vẫn còn trả được.
+
+Giao diện vẫn tự trừ 1 mỗi giây cho mượt, nhưng cứ 5 giây lại được server
+chỉnh lại. Mốc quyết định luôn là của server.
+
+  secondsRemaining chỉ khác 0 khi status = 'pending'.
+
+
+6. TỰ CHUYỂN TRANG KHI ĐÃ TRẢ
+-------------------------------------------------------------------------------
+  useEffect(() => {
+    if (payment?.status === 'paid' && payment.bookingId) {
+      window.location.href = `/booking/success/${payment.bookingId}`
+    }
+  }, [payment?.status, payment?.bookingId])
+
+Người dùng chuyển khoản xong quay lại tab, trong vòng 5 giây màn hình tự nhảy
+sang trang xác nhận đặt sân.
+
+
+7. ĐÃ BỎ PHẦN GIẢ LẬP CỦA BẢN DỰNG
+-------------------------------------------------------------------------------
+Bản dựng giao diện trước đây có khối "Điều khiển bản prototype" với hai nút
+"Giả lập thành công" và "Giả lập thất bại", ghi thẳng vào localStorage.
+
+Đã xoá toàn bộ. Lý do: chỉ webhook SePay mới được phép đổi trạng thái thanh
+toán. Để lại nút cho người dùng tự đánh dấu đã trả tiền là lỗ hổng nghiêm trọng.
+
+Backend cũng không có endpoint nào làm việc đó.
+
+
+8. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  payments   status, expired_at, paid_at, provider_transaction_id
+  bookings   mã đơn
+
+KHÔNG BẢNG NÀO BỊ THAY ĐỔI.
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập (hoặc token hết hạn giữa chừng)
+  NOT_FOUND      404   Giao dịch không tồn tại hoặc của người khác
+
+
+10. FILE LIÊN QUAN
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/payment/PaymentController.java
+  backend/src/main/java/com/courtly/service/payment/PaymentService.java
+  backend/src/main/java/com/courtly/common/enums/PaymentStatus.java
+  user-web/src/hooks/usePayment.js
+  user-web/src/api/payments.js
+  user-web/src/App.jsx                     (thành phần PaymentPage)
