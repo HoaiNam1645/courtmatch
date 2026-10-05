@@ -1,0 +1,359 @@
+{
+  "today": "Thứ năm, 17/09/2026",
+  "hero": {
+    "title": "Đặt sân cầu lông gần bạn, nhanh và rõ lịch.",
+    "subtitle": "Tìm sân trống theo khu vực, xem giá theo khung giờ và giữ lịch trước khi đến sân.",
+    "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85"
+  },
+  "slides": [
+    {
+      "id": "slide-01",
+      "eyebrow": "Gợi ý hôm nay",
+      "title": "Giữ lịch 18:00 ở sân gần bạn",
+      "subtitle": "42 sân còn khung giờ đẹp quanh bạn.",
+      "cta": "Xem lịch trống",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85"
+    },
+    {
+      "id": "slide-02",
+      "eyebrow": "Đặt nhanh",
+      "title": "So giá và chọn sân trong một màn",
+      "subtitle": "Lọc theo khoảng cách, giá và sân còn trống.",
+      "cta": "Tìm sân phù hợp",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85"
+    },
+    {
+      "id": "slide-03",
+      "eyebrow": "Bản đồ",
+      "title": "Xem sân quanh bạn trên bản đồ",
+      "subtitle": "Chọn marker để xem địa chỉ và lịch trống.",
+      "cta": "Mở bản đồ",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85"
+    }
+  ],
+  "metrics": [
+    { "label": "Sân mở", "value": "128" },
+    { "label": "Lịch trống", "value": "842" },
+    { "label": "Điểm TB", "value": "4.8" }
+  ],
+  "promotions": [
+    {
+      "id": "promo-01",
+      "title": "Giảm 20% khung giờ sáng",
+      "tag": "05:00 - 09:00",
+      "cta": "Xem sân",
+      "tone": "green"
+    },
+    {
+      "id": "promo-02",
+      "title": "Đặt 2 giờ, giữ sân liền mạch",
+      "tag": "Tối nay",
+      "cta": "Đặt nhanh",
+      "tone": "gold"
+    },
+    {
+      "id": "promo-03",
+      "title": "Sân mái che còn lịch đẹp",
+      "tag": "Gần bạn",
+      "cta": "Khám phá",
+      "tone": "dark"
+    }
+  ],
+  "areas": [
+    { "name": "Thanh Khê", "count": "18 sân" },
+    { "name": "Sơn Trà", "count": "22 sân" },
+    { "name": "Hải Châu", "count": "15 sân" },
+    { "name": "Ngũ Hành Sơn", "count": "19 sân" },
+    { "name": "Liên Chiểu", "count": "16 sân" }
+  ],
+  "venue_images": [
+    {
+      "id": "img-venue-01-01",
+      "venue_id": "venue-01",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Mặt sân chính",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-01-02",
+      "venue_id": "venue-01",
+      "image_url": "https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu sân buổi tối",
+      "display_order": 2,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-01-03",
+      "venue_id": "venue-01",
+      "image_url": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu chờ người chơi",
+      "display_order": 3,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-01-04",
+      "venue_id": "venue-01",
+      "image_url": "https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Không gian tập luyện",
+      "display_order": 4,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-02-01",
+      "venue_id": "venue-02",
+      "image_url": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Sân Thanh Khê",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-02-02",
+      "venue_id": "venue-02",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu thi đấu",
+      "display_order": 2,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-03-01",
+      "venue_id": "venue-03",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Sân Sơn Trà",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-03-02",
+      "venue_id": "venue-03",
+      "image_url": "https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu sân trong nhà",
+      "display_order": 2,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-04-01",
+      "venue_id": "venue-04",
+      "image_url": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Badminton House Ngũ Hành Sơn",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-04-02",
+      "venue_id": "venue-04",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu thi đấu buổi tối",
+      "display_order": 2,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-05-01",
+      "venue_id": "venue-05",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Green Court",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-05-02",
+      "venue_id": "venue-05",
+      "image_url": "https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Mặt sân tiêu chuẩn",
+      "display_order": 2,
+      "is_cover": false
+    },
+    {
+      "id": "img-venue-06-01",
+      "venue_id": "venue-06",
+      "image_url": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85",
+      "caption": "Sân Cẩm Lệ",
+      "display_order": 1,
+      "is_cover": true
+    },
+    {
+      "id": "img-venue-06-02",
+      "venue_id": "venue-06",
+      "image_url": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85",
+      "caption": "Khu vực thi đấu",
+      "display_order": 2,
+      "is_cover": false
+    }
+  ],
+  "services": [
+    { "id": "service-parking", "code": "parking", "name": "Bãi xe", "description": "Giữ xe trong khuôn viên" },
+    { "id": "service-shower", "code": "shower", "name": "Phòng tắm", "description": "Khu tắm và thay đồ" },
+    { "id": "service-racket", "code": "racket_rental", "name": "Thuê vợt", "description": "Vợt cầu lông theo giờ" },
+    { "id": "service-water", "code": "drinking_water", "name": "Nước uống", "description": "Quầy nước tại sân" }
+  ],
+  "venue_services": [
+    { "venue_id": "venue-01", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-01", "service_id": "service-shower", "price": 0, "note": "Có sẵn" },
+    { "venue_id": "venue-01", "service_id": "service-racket", "price": 30000, "note": "Theo buổi" },
+    { "venue_id": "venue-01", "service_id": "service-water", "price": null, "note": "Tại quầy" },
+    { "venue_id": "venue-02", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-02", "service_id": "service-racket", "price": 25000, "note": "Theo buổi" },
+    { "venue_id": "venue-03", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-03", "service_id": "service-water", "price": null, "note": "Tại quầy" },
+    { "venue_id": "venue-04", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-04", "service_id": "service-shower", "price": 0, "note": "Có sẵn" },
+    { "venue_id": "venue-04", "service_id": "service-racket", "price": 30000, "note": "Theo buổi" },
+    { "venue_id": "venue-05", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-05", "service_id": "service-water", "price": null, "note": "Tại quầy" },
+    { "venue_id": "venue-06", "service_id": "service-parking", "price": 0, "note": "Miễn phí" },
+    { "venue_id": "venue-06", "service_id": "service-racket", "price": 20000, "note": "Theo buổi" }
+  ],
+  "venue_operating_hours": [
+    { "venue_id": "venue-01", "day_of_week": 1, "open_time": "05:00", "close_time": "23:00", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 2, "open_time": "05:00", "close_time": "23:00", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 3, "open_time": "05:00", "close_time": "23:00", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 4, "open_time": "05:00", "close_time": "23:00", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 5, "open_time": "05:00", "close_time": "23:00", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 6, "open_time": "06:00", "close_time": "22:30", "is_closed": false },
+    { "venue_id": "venue-01", "day_of_week": 7, "open_time": "06:00", "close_time": "22:30", "is_closed": false }
+  ],
+  "courts": [
+    { "id": "court-01-a", "venue_id": "venue-01", "name": "Sân A", "court_code": "A", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-01-b", "venue_id": "venue-01", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-01-vip", "venue_id": "venue-01", "name": "Sân VIP", "court_code": "VIP", "court_type": "vip", "surface_type": "wood", "indoor": true, "status": "active" },
+    { "id": "court-02-a", "venue_id": "venue-02", "name": "Sân A", "court_code": "A", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-02-b", "venue_id": "venue-02", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-03-a", "venue_id": "venue-03", "name": "Sân A", "court_code": "A", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-03-b", "venue_id": "venue-03", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "wood", "indoor": true, "status": "active" },
+    { "id": "court-04-a", "venue_id": "venue-04", "name": "Sân A", "court_code": "A", "court_type": "vip", "surface_type": "wood", "indoor": true, "status": "active" },
+    { "id": "court-04-b", "venue_id": "venue-04", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-05-a", "venue_id": "venue-05", "name": "Sân A", "court_code": "A", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-05-b", "venue_id": "venue-05", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-06-a", "venue_id": "venue-06", "name": "Sân A", "court_code": "A", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" },
+    { "id": "court-06-b", "venue_id": "venue-06", "name": "Sân B", "court_code": "B", "court_type": "standard", "surface_type": "vinyl", "indoor": true, "status": "active" }
+  ],
+  "court_price_rules": [
+    { "court_id": "court-01-a", "day_of_week": null, "start_time": "05:00", "end_time": "16:00", "price_per_hour": 100000, "status": "active" },
+    { "court_id": "court-01-a", "day_of_week": null, "start_time": "16:00", "end_time": "23:00", "price_per_hour": 140000, "status": "active" },
+    { "court_id": "court-01-b", "day_of_week": null, "start_time": "05:00", "end_time": "16:00", "price_per_hour": 100000, "status": "active" },
+    { "court_id": "court-01-b", "day_of_week": null, "start_time": "16:00", "end_time": "23:00", "price_per_hour": 140000, "status": "active" },
+    { "court_id": "court-01-vip", "day_of_week": null, "start_time": "05:00", "end_time": "23:00", "price_per_hour": 180000, "status": "active" },
+    { "court_id": "court-02-a", "day_of_week": null, "start_time": "05:30", "end_time": "16:00", "price_per_hour": 100000, "status": "active" },
+    { "court_id": "court-02-a", "day_of_week": null, "start_time": "16:00", "end_time": "22:30", "price_per_hour": 130000, "status": "active" },
+    { "court_id": "court-02-b", "day_of_week": null, "start_time": "05:30", "end_time": "22:30", "price_per_hour": 110000, "status": "active" },
+    { "court_id": "court-03-a", "day_of_week": null, "start_time": "06:00", "end_time": "16:00", "price_per_hour": 110000, "status": "active" },
+    { "court_id": "court-03-a", "day_of_week": null, "start_time": "16:00", "end_time": "23:30", "price_per_hour": 140000, "status": "active" },
+    { "court_id": "court-03-b", "day_of_week": null, "start_time": "06:00", "end_time": "23:30", "price_per_hour": 130000, "status": "active" },
+    { "court_id": "court-04-a", "day_of_week": null, "start_time": "05:00", "end_time": "24:00", "price_per_hour": 170000, "status": "active" },
+    { "court_id": "court-04-b", "day_of_week": null, "start_time": "05:00", "end_time": "24:00", "price_per_hour": 150000, "status": "active" },
+    { "court_id": "court-05-a", "day_of_week": null, "start_time": "05:00", "end_time": "22:00", "price_per_hour": 110000, "status": "active" },
+    { "court_id": "court-05-b", "day_of_week": null, "start_time": "05:00", "end_time": "22:00", "price_per_hour": 120000, "status": "active" },
+    { "court_id": "court-06-a", "day_of_week": null, "start_time": "06:00", "end_time": "22:00", "price_per_hour": 95000, "status": "active" },
+    { "court_id": "court-06-b", "day_of_week": null, "start_time": "06:00", "end_time": "22:00", "price_per_hour": 105000, "status": "active" }
+  ],
+  "venues": [
+    {
+      "id": "venue-01",
+      "name": "Sân Cầu Lông Hải Châu",
+      "district": "Hải Châu",
+      "address": "38 Nguyễn Chí Thanh, Hải Châu, Đà Nẵng",
+      "phone": "024 3821 8899",
+      "latitude": 16.0609,
+      "longitude": 108.2237,
+      "distanceKm": 2.1,
+      "rating": 4.8,
+      "reviewCount": 126,
+      "openHours": "05:00 - 23:00",
+      "availableCourts": 4,
+      "priceLabel": "120.000đ/giờ",
+      "nextSlot": "18:00",
+      "status": "Đơn ngày",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    },
+    {
+      "id": "venue-02",
+      "name": "CLB Cầu Lông Thanh Khê",
+      "district": "Thanh Khê",
+      "address": "12 Điện Biên Phủ, Thanh Khê, Đà Nẵng",
+      "phone": "024 3555 1200",
+      "latitude": 16.0655,
+      "longitude": 108.1858,
+      "distanceKm": 3.4,
+      "rating": 4.7,
+      "reviewCount": 98,
+      "openHours": "05:30 - 22:30",
+      "availableCourts": 3,
+      "priceLabel": "100.000đ/giờ",
+      "nextSlot": "19:00",
+      "status": "Đơn ngày",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    },
+    {
+      "id": "venue-03",
+      "name": "Sân Cầu Lông Sơn Trà",
+      "district": "Sơn Trà",
+      "address": "66 Phạm Văn Đồng, Sơn Trà, Đà Nẵng",
+      "phone": "024 3768 6688",
+      "latitude": 16.0837,
+      "longitude": 108.2372,
+      "distanceKm": 4.8,
+      "rating": 4.6,
+      "reviewCount": 74,
+      "openHours": "06:00 - 23:30",
+      "availableCourts": 2,
+      "priceLabel": "130.000đ/giờ",
+      "nextSlot": "20:00",
+      "status": "Đơn ngày",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    },
+    {
+      "id": "venue-04",
+      "name": "Badminton House Ngũ Hành Sơn",
+      "district": "Ngũ Hành Sơn",
+      "address": "21 Lê Văn Hiến, Ngũ Hành Sơn, Đà Nẵng",
+      "phone": "024 3775 9900",
+      "latitude": 16.0042,
+      "longitude": 108.2522,
+      "distanceKm": 5.2,
+      "rating": 4.9,
+      "reviewCount": 143,
+      "openHours": "05:00 - 24:00",
+      "availableCourts": 5,
+      "priceLabel": "150.000đ/giờ",
+      "nextSlot": "17:00",
+      "status": "Có sự kiện",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    },
+    {
+      "id": "venue-05",
+      "name": "Sân Cầu Lông Green Court",
+      "district": "Liên Chiểu",
+      "address": "9 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng",
+      "phone": "024 3200 5511",
+      "latitude": 16.0747,
+      "longitude": 108.1497,
+      "distanceKm": 6.7,
+      "rating": 4.7,
+      "reviewCount": 81,
+      "openHours": "05:00 - 22:00",
+      "availableCourts": 6,
+      "priceLabel": "110.000đ/giờ",
+      "nextSlot": "18:30",
+      "status": "Đơn ngày",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    },
+    {
+      "id": "venue-06",
+      "name": "Sân Cầu Lông Cẩm Lệ",
+      "district": "Cẩm Lệ",
+      "address": "18 Ông Ích Đường, Cẩm Lệ, Đà Nẵng",
+      "phone": "024 3872 7788",
+      "latitude": 16.0192,
+      "longitude": 108.1995,
+      "distanceKm": 7.3,
+      "rating": 4.5,
+      "reviewCount": 64,
+      "openHours": "06:00 - 22:00",
+      "availableCourts": 2,
+      "priceLabel": "95.000đ/giờ",
+      "nextSlot": "21:00",
+      "status": "Đơn ngày",
+      "image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=85"
+    }
+  ]
+}
