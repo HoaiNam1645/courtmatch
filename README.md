@@ -27,7 +27,7 @@ trỏ về máy của bạn. Chỉ cần làm đúng 4 bước dưới.
 | PostgreSQL | 17 hoặc 18 | ✅ |
 | PostGIS | 3.4+ | ✅ extension riêng, không đi kèm Postgres |
 | Node.js | 20.19+ hoặc 22.12+ | ✅ Vite 8 yêu cầu |
-| Maven | — | ❌ dùng `./mvnw` có sẵn trong repo |
+| Maven | — | ❌ dùng `./mvnw` (Windows: `mvnw.cmd`) có sẵn trong repo |
 
 ## Bước 1 — Cài phụ thuộc
 
@@ -51,6 +51,32 @@ sudo apt install openjdk-21-jdk postgresql-16 postgresql-16-postgis-3 \
 
 > PostGIS phải khớp phiên bản Postgres. Cài Postgres 16 thì lấy `postgresql-16-postgis-3`.
 
+**Windows**
+
+```powershell
+winget install EclipseAdoptium.Temurin.21.JDK
+winget install OpenJS.NodeJS.LTS
+winget install PostgreSQL.PostgreSQL.17
+```
+
+PostGIS **không** đi kèm bản cài Postgres, phải thêm riêng:
+
+1. Mở **Stack Builder** (có trong Start Menu sau khi cài Postgres)
+2. Chọn server `PostgreSQL 17`
+3. Vào **Spatial Extensions** → tick **PostGIS** → Next → cài
+
+Sau đó thêm `psql` vào PATH (nếu lúc cài chưa tick):
+
+```powershell
+$env:Path += ";C:\Program Files\PostgreSQL\17\bin"
+```
+
+Muốn khỏi set lại mỗi lần mở cửa sổ mới thì thêm đường dẫn đó vào
+*Settings → System → About → Advanced system settings → Environment Variables → Path*.
+
+> Không có `winget`? Tải trực tiếp: [Temurin 21](https://adoptium.net/temurin/releases/?version=21),
+> [PostgreSQL](https://www.postgresql.org/download/windows/), [Node.js](https://nodejs.org/).
+
 ## Bước 2 — Tạo database
 
 ```bash
@@ -64,11 +90,32 @@ psql -d courtly -c "GRANT ALL ON SCHEMA public TO courtly;"
 
 Các extension còn lại (`pgcrypto`, `citext`) do Flyway tự bật khi chạy.
 
+> **Windows:** ba lệnh trên chạy y hệt trong PowerShell hoặc trong **SQL Shell (psql)**
+> ở Start Menu. Nếu bị hỏi mật khẩu thì đó là mật khẩu `postgres` bạn đặt lúc cài.
+
 ## Bước 3 — Chạy backend
+
+**macOS / Linux**
 
 ```bash
 cd backend
 SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+```
+
+**Windows (PowerShell)**
+
+```powershell
+cd backend
+$env:SPRING_PROFILES_ACTIVE = "dev"
+.\mvnw.cmd spring-boot:run
+```
+
+**Windows (Command Prompt)**
+
+```cmd
+cd backend
+set SPRING_PROFILES_ACTIVE=dev
+mvnw.cmd spring-boot:run
 ```
 
 Lần đầu mất khoảng 2–3 phút: Maven tải thư viện, Flyway tạo 50 bảng, seeder nạp
@@ -80,8 +127,12 @@ Xong thì kiểm tra:
 curl http://localhost:8080/actuator/health     # {"status":"UP"}
 ```
 
-> Profile `dev` bật sẵn seeder. Muốn chạy không nạp dữ liệu mẫu thì bỏ
-> `SPRING_PROFILES_ACTIVE=dev`, chỉ `./mvnw spring-boot:run`.
+> **Windows:** gõ `curl.exe` chứ không phải `curl` — trong PowerShell, `curl` là tên
+> gọi khác của `Invoke-WebRequest` và cho kết quả khác hẳn. Hoặc mở thẳng địa chỉ
+> đó bằng trình duyệt.
+
+> Profile `dev` bật sẵn seeder. Muốn chạy không nạp dữ liệu mẫu thì bỏ dòng
+> `SPRING_PROFILES_ACTIVE`.
 
 ## Bước 4 — Chạy frontend
 
@@ -118,6 +169,10 @@ Mọi tài khoản mẫu đều dùng chung mật khẩu này.
 | Frontend trắng trang, console báo CORS | Backend chưa chạy hoặc chạy khác cổng 8080 | Kiểm tra `curl localhost:8080/actuator/health` |
 | `Unsupported class file major version` | Đang dùng JDK khác 21 | `java -version` phải ra 21, chỉnh lại `JAVA_HOME` |
 | Đăng ký xong không nhận được email | Bình thường — mail tắt mặc định | Mã xác minh in ra **log của backend**, tìm dòng bắt đầu bằng `MAIL TAT` |
+| `psql: command not found` / `không nhận dạng được` | **Windows** — `psql` chưa có trong PATH | Thêm `C:\Program Files\PostgreSQL\17\bin` vào PATH, hoặc dùng **SQL Shell (psql)** ở Start Menu |
+| `./mvnw : The term './mvnw' is not recognized` | **Windows** — đang dùng lệnh của macOS/Linux | Gõ `.\mvnw.cmd` (PowerShell) hoặc `mvnw.cmd` (CMD) |
+| `curl` trả về HTML lạ thay vì JSON | **Windows** — PowerShell hiểu `curl` là `Invoke-WebRequest` | Gõ `curl.exe`, hoặc mở địa chỉ bằng trình duyệt |
+| `CREATE EXTENSION postgis` báo không tìm thấy | **Windows** — chưa chạy Stack Builder | Làm lại bước cài PostGIS ở Bước 1 |
 
 ---
 
