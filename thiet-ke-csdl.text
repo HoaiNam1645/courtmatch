@@ -1,0 +1,966 @@
+THIET KE CO SO DU LIEU - HE THONG DAT SAN CAU LONG
+
+Huong thiet ke:
+- DBMS de xuat: PostgreSQL.
+- Extension nen dung: PostGIS, btree_gist, pgcrypto/citext neu can.
+- Kieu khoa chinh: UUID.
+- Thoi gian: timestamptz.
+- Tien te: numeric(12,2).
+- Vi tri ban do: geography(Point, 4326).
+- Du lieu linh hoat nhu cau hinh thuat toan, payload webhook, metadata thong bao: JSONB.
+
+
+1. NHOM TAI KHOAN, DANG NHAP, PHAN QUYEN
+
+1.1. users
+Muc dich: luu thong tin tai khoan chung cua moi nguoi dung.
+
+Cot chinh:
+- id uuid PK
+- full_name varchar(150)
+- email varchar(255) unique, nullable neu chi dang nhap bang phone
+- phone varchar(20) unique, nullable
+- password_hash text, nullable neu tai khoan tao bang Google
+- avatar_url text
+- email_verified_at timestamptz
+- phone_verified_at timestamptz
+- status varchar(30) -- active, inactive, banned, pending
+- last_login_at timestamptz
+- created_at timestamptz
+- updated_at timestamptz
+
+Index/constraint:
+- unique lower(email) where email is not null
+- unique phone where phone is not null
+
+1.2. auth_providers
+Muc dich: luu tai khoan dang nhap ben ngoai nhu Google OAuth.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- provider_name varchar(50) -- google
+- provider_user_id varchar(255) -- Google sub
+- provider_email varchar(255)
+- provider_email_verified boolean
+- provider_avatar_url text
+- access_token_encrypted text, nullable
+- refresh_token_encrypted text, nullable
+- token_expires_at timestamptz, nullable
+- linked_at timestamptz
+- last_used_at timestamptz
+- created_at timestamptz
+- updated_at timestamptz
+
+Index/constraint:
+- unique(provider_name, provider_user_id)
+- unique(user_id, provider_name)
+- index user_id
+
+Ghi chu:
+- Neu chi dung Google de dang nhap, khong bat buoc luu access_token/refresh_token.
+- Neu co luu token thi phai ma hoa, khong luu plain text.
+
+1.3. password_reset_requests
+Muc dich: luu yeu cau xac minh va dat lai mat khau qua email hoac so dien thoai.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- channel varchar(20) -- email, phone
+- destination varchar(255) -- email hoac so dien thoai nhan ma
+- verification_hash text -- chi luu hash cua OTP/token, khong luu ma goc
+- expires_at timestamptz
+- verified_at timestamptz, nullable
+- used_at timestamptz, nullable
+- attempt_count smallint default 0
+- resend_count smallint default 0
+- requested_ip inet, nullable
+- user_agent text, nullable
+- created_at timestamptz
+
+Index/constraint:
+- index(user_id, created_at desc)
+- index(destination, created_at desc)
+- index(expires_at) where used_at is null
+- check channel in ('email', 'phone')
+- check attempt_count >= 0
+- check resend_count >= 0
+
+Ghi chu:
+- Moi OTP/token chi duoc su dung mot lan; danh dau used_at sau khi doi mat khau thanh cong.
+- Nen gioi han so lan thu, so lan gui lai va tan suat yeu cau theo tai khoan/IP.
+- Khong tra ve thong tin cho biet email/so dien thoai co ton tai hay khong.
+
+1.4. roles
+Muc dich: dinh nghia vai tro.
+
+Cot chinh:
+- id uuid PK
+- code varchar(50) unique -- player, owner, staff, admin
+- name varchar(100)
+- description text
+- created_at timestamptz
+
+1.5. permissions
+Muc dich: dinh nghia quyen he thong.
+
+Cot chinh:
+- id uuid PK
+- code varchar(100) unique
+- name varchar(150)
+- description text
+- created_at timestamptz
+
+1.6. role_permissions
+Muc dich: gan quyen cho vai tro.
+
+Cot chinh:
+- role_id uuid FK -> roles.id
+- permission_id uuid FK -> permissions.id
+
+Constraint:
+- PK(role_id, permission_id)
+
+1.7. user_roles
+Muc dich: mot user co the co nhieu vai tro.
+
+Cot chinh:
+- user_id uuid FK -> users.id
+- role_id uuid FK -> roles.id
+- assigned_at timestamptz
+
+Constraint:
+- PK(user_id, role_id)
+
+1.8. player_profiles
+Muc dich: ho so rieng cua nguoi choi.
+
+Cot chinh:
+- user_id uuid PK FK -> users.id
+- gender varchar(20)
+- date_of_birth date
+- skill_level varchar(30) -- beginner, intermediate, advanced, professional
+- skill_score numeric(8,2)
+- dominant_hand varchar(20)
+- playing_style varchar(50)
+- preferred_play_type varchar(30) -- single, double, mixed
+- bio text
+- created_at timestamptz
+- updated_at timestamptz
+
+1.9. court_owner_profiles
+Muc dich: ho so chu san.
+
+Cot chinh:
+- user_id uuid PK FK -> users.id
+- business_name varchar(200)
+- tax_code varchar(50)
+- identity_number varchar(50)
+- bank_name varchar(100)
+- bank_account_no varchar(50)
+- bank_account_name varchar(150)
+- verification_status varchar(30) -- pending, verified, rejected
+- verified_at timestamptz
+- created_at timestamptz
+- updated_at timestamptz
+
+1.10. player_availability_slots
+Muc dich: luu khung gio ranh cua nguoi choi de ghep cap.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- day_of_week smallint -- 1-7
+- start_time time
+- end_time time
+- created_at timestamptz
+
+Constraint:
+- check day_of_week between 1 and 7
+- check end_time > start_time
+
+1.11. player_preferred_locations
+Muc dich: luu khu vuc uu tien choi cua nguoi choi.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- label varchar(100)
+- address text
+- latitude numeric(10,7)
+- longitude numeric(10,7)
+- location geography(Point, 4326)
+- radius_km numeric(6,2)
+- is_default boolean
+- created_at timestamptz
+
+Index:
+- gist(location)
+
+1.12. email_verification_requests
+Muc dich: ma OTP xac minh email luc dang ky tai khoan.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- email varchar(255) -- dia chi da gui, nguoi dung co the doi email sau do
+- verification_hash text -- chi luu hash cua OTP, khong bao gio luu ma goc
+- expires_at timestamptz
+- verified_at timestamptz, nullable -- chi dat khi day dung la ma xac minh thanh cong
+- used_at timestamptz, nullable -- da dung xong hoac bi ma moi hon thay the
+- attempt_count smallint
+- resend_count smallint
+- requested_ip inet
+- user_agent text
+- created_at timestamptz
+
+Index:
+- index(user_id, created_at desc)
+- index(email, created_at desc)
+- index(expires_at) where used_at is null
+
+Ghi chu:
+- Bang rieng chu khong dung chung password_reset_requests: hai luong co vong doi va
+  y nghia khac nhau. Gop chung thi phai them cot purpose va moi cau truy van deu phai
+  nho loc theo cot do, som muon se quen mot cho.
+- Tai khoan moi tao o trang thai pending va khong dang nhap duoc. Nhap dung ma thi
+  chuyen sang active, dat users.email_verified_at va cap token luon.
+- Moi ma chi dung mot lan; gui ma moi thi danh dau cac ma cu la da dung.
+
+
+2. NHOM SAN CAU LONG, BAN DO, TIM KIEM
+
+2.1. venues
+Muc dich: luu dia diem/cum san cau long.
+
+Cot chinh:
+- id uuid PK
+- owner_id uuid FK -> users.id
+- name varchar(200)
+- slug varchar(220) unique
+- description text
+- address text
+- ward varchar(100)
+- district varchar(100)
+- province varchar(100)
+- country varchar(100)
+- latitude numeric(10,7)
+- longitude numeric(10,7)
+- location geography(Point, 4326)
+- phone varchar(30)
+- email varchar(255)
+- status varchar(30) -- pending, active, inactive, rejected
+- approval_status varchar(30) -- pending, approved, rejected
+- average_rating numeric(3,2)
+- review_count int
+- created_at timestamptz
+- updated_at timestamptz
+
+Index:
+- gist(location)
+- index(owner_id)
+- index(status, approval_status)
+- index(province, district)
+
+2.2. courts
+Muc dich: luu tung san con trong mot dia diem.
+
+Cot chinh:
+- id uuid PK
+- venue_id uuid FK -> venues.id
+- name varchar(100)
+- court_code varchar(50)
+- court_type varchar(50) -- standard, vip
+- surface_type varchar(50)
+- indoor boolean
+- status varchar(30) -- active, inactive, maintenance
+- created_at timestamptz
+- updated_at timestamptz
+
+Index/constraint:
+- unique(venue_id, court_code)
+- index(venue_id, status)
+
+2.3. venue_images
+Muc dich: hinh anh san.
+
+Cot chinh:
+- id uuid PK
+- venue_id uuid FK -> venues.id
+- image_url text
+- caption varchar(255)
+- display_order int
+- is_cover boolean
+- created_at timestamptz
+
+Index:
+- index(venue_id, display_order)
+
+2.4. services
+Muc dich: danh muc dich vu/tien ich.
+
+Cot chinh:
+- id uuid PK
+- code varchar(80) unique -- parking, shower, racket_rental, drinking_water
+- name varchar(150)
+- description text
+
+2.5. venue_services
+Muc dich: gan dich vu cho tung san.
+
+Cot chinh:
+- venue_id uuid FK -> venues.id
+- service_id uuid FK -> services.id
+- price numeric(12,2), nullable
+- note text
+
+Constraint:
+- PK(venue_id, service_id)
+
+2.6. venue_operating_hours
+Muc dich: gio hoat dong theo thu.
+
+Cot chinh:
+- id uuid PK
+- venue_id uuid FK -> venues.id
+- day_of_week smallint -- 1-7
+- open_time time
+- close_time time
+- is_closed boolean
+
+Constraint:
+- unique(venue_id, day_of_week)
+- check day_of_week between 1 and 7
+
+2.7. court_price_rules
+Muc dich: cau hinh gia theo san, ngay, gio.
+
+Cot chinh:
+- id uuid PK
+- court_id uuid FK -> courts.id
+- day_of_week smallint, nullable
+- start_time time
+- end_time time
+- price_per_hour numeric(12,2)
+- effective_from date
+- effective_to date, nullable
+- status varchar(30) -- active, inactive
+- created_at timestamptz
+
+Index:
+- index(court_id, status, effective_from, effective_to)
+
+2.8. court_blocks
+Muc dich: khoa san do bao tri, su kien, chu san khoa khung gio.
+
+Cot chinh:
+- id uuid PK
+- court_id uuid FK -> courts.id
+- start_time timestamptz
+- end_time timestamptz
+- reason text
+- status varchar(30) -- active, cancelled
+- created_by uuid FK -> users.id
+- created_at timestamptz
+
+Constraint:
+- check end_time > start_time
+
+2.9. favorite_venues
+Muc dich: nguoi choi luu san yeu thich.
+
+Cot chinh:
+- user_id uuid FK -> users.id
+- venue_id uuid FK -> venues.id
+- created_at timestamptz
+
+Constraint:
+- PK(user_id, venue_id)
+
+
+3. NHOM DAT SAN
+
+3.1. bookings
+Muc dich: don dat san.
+
+Cot chinh:
+- id uuid PK
+- booking_code varchar(50) unique
+- user_id uuid FK -> users.id
+- venue_id uuid FK -> venues.id
+- status varchar(30) -- pending_payment, confirmed, cancelled, completed, expired, refunded
+- total_amount numeric(12,2)
+- note text
+- expires_at timestamptz
+- confirmed_at timestamptz
+- cancelled_at timestamptz
+- cancellation_reason text
+- created_at timestamptz
+- updated_at timestamptz
+
+Index:
+- index(user_id, created_at)
+- index(venue_id, created_at)
+- index(status)
+
+3.2. booking_items
+Muc dich: chi tiet tung san/tung khung gio trong don.
+
+Cot chinh:
+- id uuid PK
+- booking_id uuid FK -> bookings.id
+- court_id uuid FK -> courts.id
+- start_time timestamptz
+- end_time timestamptz
+- price numeric(12,2)
+- status varchar(30) -- pending, confirmed, cancelled, completed, expired
+- created_at timestamptz
+
+Constraint:
+- check end_time > start_time
+- Exclusion constraint chong trung lich:
+  court_id WITH = va tstzrange(start_time, end_time, '[)') WITH &&
+  ap dung khi status in ('pending', 'confirmed')
+
+Index:
+- index(court_id, start_time, end_time)
+- index(booking_id)
+
+3.3. booking_status_history
+Muc dich: lich su thay doi trang thai don.
+
+Cot chinh:
+- id uuid PK
+- booking_id uuid FK -> bookings.id
+- old_status varchar(30)
+- new_status varchar(30)
+- reason text
+- changed_by uuid FK -> users.id, nullable neu he thong tu dong
+- created_at timestamptz
+
+
+4. NHOM THANH TOAN SEPAY, HOAN TIEN
+
+4.1. payments
+Muc dich: giao dich thanh toan cho booking.
+
+Cot chinh:
+- id uuid PK
+- booking_id uuid FK -> bookings.id
+- provider varchar(50) -- sepay
+- amount numeric(12,2)
+- status varchar(30) -- pending, paid, failed, expired, refunded
+- qr_url text
+- bank_account_no varchar(50)
+- transfer_content varchar(255)
+- provider_transaction_id varchar(255)
+- paid_at timestamptz
+- expired_at timestamptz
+- created_at timestamptz
+- updated_at timestamptz
+
+Index/constraint:
+- unique(provider, provider_transaction_id) where provider_transaction_id is not null
+- index(booking_id)
+- index(status)
+
+4.2. sepay_webhook_logs
+Muc dich: luu webhook tu SePay de doi soat va debug.
+
+Cot chinh:
+- id uuid PK
+- payment_id uuid FK -> payments.id, nullable luc chua match duoc
+- transaction_code varchar(255)
+- payload_json jsonb
+- processed_status varchar(30) -- received, processed, ignored, failed
+- error_message text
+- received_at timestamptz
+- processed_at timestamptz
+
+Index/constraint:
+- unique(transaction_code)
+- index(payment_id)
+
+4.3. refunds
+Muc dich: hoan tien booking.
+
+Cot chinh:
+- id uuid PK
+- payment_id uuid FK -> payments.id
+- booking_id uuid FK -> bookings.id
+- amount numeric(12,2)
+- reason text
+- status varchar(30) -- requested, approved, rejected, processed, failed
+- requested_by uuid FK -> users.id
+- processed_by uuid FK -> users.id, nullable
+- processed_at timestamptz
+- created_at timestamptz
+
+
+5. NHOM DOANH THU, PHI NEN TANG, RUT TIEN
+
+5.1. platform_fee_configs
+Muc dich: cau hinh phi nen tang.
+
+Cot chinh:
+- id uuid PK
+- fee_type varchar(30) -- percentage, fixed
+- fee_value numeric(12,2)
+- effective_from timestamptz
+- effective_to timestamptz, nullable
+- status varchar(30) -- active, inactive
+- created_by uuid FK -> users.id
+- created_at timestamptz
+
+5.2. owner_balance_transactions
+Muc dich: so cai so du cua chu san.
+
+Cot chinh:
+- id uuid PK
+- owner_id uuid FK -> users.id
+- booking_id uuid FK -> bookings.id, nullable
+- payment_id uuid FK -> payments.id, nullable
+- type varchar(30) -- earning, platform_fee, withdrawal, refund_adjustment, manual_adjustment
+- amount numeric(12,2)
+- balance_after numeric(12,2)
+- note text
+- created_at timestamptz
+
+Index:
+- index(owner_id, created_at)
+
+5.3. withdrawal_requests
+Muc dich: chu san gui yeu cau rut tien.
+
+Cot chinh:
+- id uuid PK
+- owner_id uuid FK -> users.id
+- amount numeric(12,2)
+- bank_name varchar(100)
+- bank_account_no varchar(50)
+- bank_account_name varchar(150)
+- status varchar(30) -- pending, approved, rejected, paid, cancelled
+- requested_at timestamptz
+- reviewed_by uuid FK -> users.id, nullable
+- reviewed_at timestamptz
+- rejection_reason text
+
+5.4. payout_transactions
+Muc dich: giao dich chi tra cho chu san.
+
+Cot chinh:
+- id uuid PK
+- withdrawal_request_id uuid FK -> withdrawal_requests.id
+- owner_id uuid FK -> users.id
+- amount numeric(12,2)
+- provider varchar(50)
+- provider_transaction_id varchar(255)
+- status varchar(30) -- pending, success, failed
+- paid_at timestamptz
+- created_at timestamptz
+
+
+6. NHOM TRAN DAU, THONG KE NGUOI CHOI
+
+6.1. matches
+Muc dich: tran dau trong he thong.
+
+Cot chinh:
+- id uuid PK
+- booking_id uuid FK -> bookings.id, nullable
+- venue_id uuid FK -> venues.id, nullable
+- match_type varchar(30) -- single, double, mixed_double
+- scheduled_at timestamptz
+- status varchar(30) -- scheduled, completed, cancelled
+- created_by uuid FK -> users.id
+- created_at timestamptz
+- updated_at timestamptz
+
+6.2. match_players
+Muc dich: nguoi choi tham gia tran.
+
+Cot chinh:
+- id uuid PK
+- match_id uuid FK -> matches.id
+- user_id uuid FK -> users.id
+- team_no smallint -- 1 hoac 2
+- position_no smallint
+- joined_status varchar(30) -- invited, accepted, declined, joined
+- created_at timestamptz
+
+Constraint:
+- unique(match_id, user_id)
+
+6.3. match_games
+Muc dich: diem tung set/game cua tran.
+
+Cot chinh:
+- id uuid PK
+- match_id uuid FK -> matches.id
+- game_no smallint
+- team1_score int
+- team2_score int
+
+Constraint:
+- unique(match_id, game_no)
+
+6.4. match_results
+Muc dich: ket qua tong cua tran.
+
+Cot chinh:
+- match_id uuid PK FK -> matches.id
+- winning_team smallint
+- recorded_by uuid FK -> users.id
+- confirmed_at timestamptz
+- note text
+
+6.5. player_statistics
+Muc dich: bang tong hop doc nhanh cho ho so va thuat toan.
+
+Cot chinh:
+- user_id uuid PK FK -> users.id
+- total_matches int
+- total_wins int
+- total_losses int
+- win_rate numeric(5,2)
+- rating_score numeric(8,2)
+- avg_points_scored numeric(8,2)
+- avg_points_conceded numeric(8,2)
+- last_played_at timestamptz
+- updated_at timestamptz
+
+6.6. player_rating_history
+Muc dich: lich su thay doi diem xep hang.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- match_id uuid FK -> matches.id, nullable
+- old_rating numeric(8,2)
+- new_rating numeric(8,2)
+- change_amount numeric(8,2)
+- reason varchar(100)
+- created_at timestamptz
+
+
+7. NHOM GHEP CAP, PHAN CUM, GOI Y DOI TAC
+
+7.1. player_match_profiles
+Muc dich: vector dac trung phuc vu ghep cap.
+
+Cot chinh:
+- user_id uuid PK FK -> users.id
+- skill_score numeric(8,2)
+- win_rate numeric(5,2)
+- total_matches int
+- preferred_location geography(Point, 4326), nullable
+- preferred_radius_km numeric(6,2)
+- availability_score jsonb
+- playing_style varchar(50)
+- cluster_label varchar(50)
+- updated_at timestamptz
+
+Index:
+- gist(preferred_location)
+- index(cluster_label)
+
+7.2. algorithm_runs
+Muc dich: luu moi lan chay thuat toan clustering/matching.
+
+Cot chinh:
+- id uuid PK
+- algorithm_type varchar(50) -- kmeans, dbscan, partner_matching, double_team_matching
+- algorithm_version varchar(50)
+- parameters_json jsonb
+- metrics_json jsonb
+- started_at timestamptz
+- finished_at timestamptz
+- status varchar(30) -- running, success, failed
+
+7.3. player_clusters
+Muc dich: ket qua phan cum nguoi choi.
+
+Cot chinh:
+- id uuid PK
+- run_id uuid FK -> algorithm_runs.id
+- user_id uuid FK -> users.id
+- cluster_label varchar(50)
+- distance_to_centroid numeric(10,4)
+- created_at timestamptz
+
+Index/constraint:
+- unique(run_id, user_id)
+- index(cluster_label)
+
+7.4. partner_suggestions
+Muc dich: danh sach doi tac de xuat.
+
+Cot chinh:
+- id uuid PK
+- run_id uuid FK -> algorithm_runs.id, nullable
+- user_id uuid FK -> users.id
+- suggested_user_id uuid FK -> users.id
+- skill_score numeric(6,2)
+- location_score numeric(6,2)
+- time_score numeric(6,2)
+- style_score numeric(6,2)
+- total_score numeric(6,2)
+- reason_json jsonb
+- status varchar(30) -- active, hidden, expired
+- created_at timestamptz
+
+Index/constraint:
+- unique(user_id, suggested_user_id, created_at)
+- index(user_id, total_score desc)
+
+7.5. partner_requests
+Muc dich: yeu cau ghep cap giua nguoi choi.
+
+Cot chinh:
+- id uuid PK
+- requester_id uuid FK -> users.id
+- receiver_id uuid FK -> users.id
+- message text
+- status varchar(30) -- pending, accepted, rejected, cancelled, expired
+- responded_at timestamptz
+- created_at timestamptz
+
+Index:
+- index(receiver_id, status)
+- index(requester_id, status)
+
+7.6. player_connections
+Muc dich: danh sach doi tac da ghep cap.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- partner_id uuid FK -> users.id
+- source_request_id uuid FK -> partner_requests.id, nullable
+- status varchar(30) -- active, blocked, removed
+- created_at timestamptz
+
+Constraint:
+- unique(user_id, partner_id)
+
+7.7. double_team_suggestions
+Muc dich: goi y chia doi doi nam/nu can bang.
+
+Cot chinh:
+- id uuid PK
+- run_id uuid FK -> algorithm_runs.id
+- match_id uuid FK -> matches.id, nullable
+- team1_players jsonb
+- team2_players jsonb
+- team1_strength numeric(8,2)
+- team2_strength numeric(8,2)
+- balance_score numeric(8,2)
+- created_at timestamptz
+
+
+8. NHOM DANH GIA, BAO CAO
+
+8.1. venue_reviews
+Muc dich: danh gia san.
+
+Cot chinh:
+- id uuid PK
+- venue_id uuid FK -> venues.id
+- user_id uuid FK -> users.id
+- booking_id uuid FK -> bookings.id, nullable
+- rating smallint
+- comment text
+- status varchar(30) -- visible, hidden, reported
+- created_at timestamptz
+- updated_at timestamptz
+
+Constraint:
+- check rating between 1 and 5
+- unique(venue_id, user_id, booking_id)
+
+8.2. partner_reviews
+Muc dich: danh gia doi tac choi.
+
+Cot chinh:
+- id uuid PK
+- reviewer_id uuid FK -> users.id
+- reviewed_user_id uuid FK -> users.id
+- match_id uuid FK -> matches.id, nullable
+- rating smallint
+- comment text
+- status varchar(30) -- visible, hidden, reported
+- created_at timestamptz
+
+Constraint:
+- check rating between 1 and 5
+
+8.3. reports
+Muc dich: bao cao nguoi dung, danh gia, noi dung vi pham.
+
+Cot chinh:
+- id uuid PK
+- reporter_id uuid FK -> users.id
+- target_type varchar(50) -- user, venue_review, partner_review, venue
+- target_id uuid
+- reason varchar(100)
+- description text
+- status varchar(30) -- pending, reviewing, resolved, rejected
+- handled_by uuid FK -> users.id, nullable
+- handled_at timestamptz
+- created_at timestamptz
+
+9. NHOM THONG BAO
+
+9.1. notifications
+Muc dich: thong bao trong he thong.
+
+Cot chinh:
+- id uuid PK
+- user_id uuid FK -> users.id
+- type varchar(80) -- booking_confirmed, payment_status, partner_request, match_reminder
+- title varchar(255)
+- content text
+- data_json jsonb
+- read_at timestamptz
+- created_at timestamptz
+
+Index:
+- index(user_id, read_at, created_at)
+
+9.2. notification_preferences
+Muc dich: cau hinh nhan thong bao.
+
+Cot chinh:
+- user_id uuid FK -> users.id
+- type varchar(80)
+- in_app_enabled boolean
+- email_enabled boolean
+- push_enabled boolean
+- updated_at timestamptz
+
+Constraint:
+- PK(user_id, type)
+
+
+10. NHOM HE THONG, AUDIT
+
+10.1. audit_logs
+Muc dich: log hanh dong quan trong cua admin/owner/he thong.
+
+Cot chinh:
+- id uuid PK
+- actor_id uuid FK -> users.id, nullable
+- action varchar(100)
+- entity_type varchar(80)
+- entity_id uuid
+- old_data jsonb
+- new_data jsonb
+- ip_address varchar(60)
+- user_agent text
+- created_at timestamptz
+
+Index:
+- index(actor_id, created_at)
+- index(entity_type, entity_id)
+
+
+11. CAC QUAN HE CHINH CAN NHO
+
+- users 1-n auth_providers
+- users n-n roles qua user_roles
+- users 1-1 player_profiles
+- users 1-1 court_owner_profiles
+- users 1-n venues neu user la chu san
+- venues 1-n courts
+- venues 1-n venue_images
+- venues n-n services qua venue_services
+- courts 1-n court_price_rules
+- courts 1-n booking_items
+- bookings 1-n booking_items
+- bookings 1-n payments
+- payments 1-n sepay_webhook_logs
+- users 1-n partner_requests vai tro requester/receiver
+- matches 1-n match_players
+- matches 1-n match_games
+- users 1-1 player_statistics
+- algorithm_runs 1-n player_clusters
+- algorithm_runs 1-n partner_suggestions
+
+
+12. CAC INDEX BAT BUOC DE TOI UU
+
+- venues.location: GiST index de tim san quanh vi tri hien tai.
+- player_preferred_locations.location: GiST index de ghep cap theo khoang cach.
+- player_match_profiles.preferred_location: GiST index neu dung vi tri uu tien trong matching.
+- booking_items(court_id, start_time, end_time): tim lich trong.
+- booking_items exclusion constraint: chan dat trung san cung khung gio.
+- payments(provider, provider_transaction_id): chan xu ly webhook trung.
+- auth_providers(provider_name, provider_user_id): dang nhap Google nhanh va an toan.
+- notifications(user_id, read_at, created_at): doc thong bao nhanh.
+- partner_suggestions(user_id, total_score desc): lay danh sach de xuat nhanh.
+
+
+13. CAC BANG NEN UU TIEN TRIEN KHAI MVP
+
+MVP bat buoc:
+- users
+- auth_providers
+- email_verification_requests
+- password_reset_requests
+- roles
+- user_roles
+- player_profiles
+- court_owner_profiles
+- venues
+- courts
+- venue_images
+- services
+- venue_services
+- venue_operating_hours
+- court_price_rules
+- court_blocks
+- bookings
+- booking_items
+- booking_status_history
+- payments
+- sepay_webhook_logs
+- notifications
+- notification_preferences
+- venue_reviews
+
+MVP nang cao/Sprint 2:
+- player_availability_slots
+- player_preferred_locations
+- matches
+- match_players
+- match_games
+- match_results
+- player_statistics
+- player_rating_history
+- player_match_profiles
+- algorithm_runs
+- player_clusters
+- partner_suggestions
+- partner_requests
+- player_connections
+
+Giai doan quan tri/doanh thu:
+- platform_fee_configs
+- owner_balance_transactions
+- withdrawal_requests
+- payout_transactions
+- refunds
+- reports
+- audit_logs
+
+
+14. QUY TAC THIET KE QUAN TRONG
+
+- Khong luu du lieu Google OAuth truc tiep vao users, ma luu trong auth_providers.
+- password_hash trong users cho phep nullable de ho tro tai khoan Google-only.
+- Khong tinh lai thong ke nguoi choi moi lan mo man hinh; doc tu player_statistics.
+- Du lieu BWF duoc lam sach va chuyen doi bang script truoc khi ghi vao cac bang Courtly hien co; khong tao nhom bang BWF rieng trong database.
+- Booking phai co rang buoc chong trung lich o database, khong chi check bang code.
+- Map search nen dung PostGIS thay vi chi loc latitude/longitude thu cong.
+- JSONB chi dung cho payload/cau hinh/metadata linh hoat; cac quan he chinh van nen chuan hoa bang FK.

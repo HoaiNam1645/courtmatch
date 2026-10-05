@@ -1,0 +1,358 @@
+Danh Sách Chức Năng
+
+2. User Stories
+
+2.1. Sprint 1 — Hệ Thống Cốt Lõi
+
+Tài khoản & Hồ sơ Người chơi
+
+Quy ước router:
+- (router: /duong-dan) = giao diện đã có.
+- [UI hoàn thiện] = giao diện và luồng điều hướng đã được rà soát, sẵn sàng tích hợp API.
+- (router dự kiến: /duong-dan) = chưa có giao diện, dùng để định hướng khi thiết kế và tích hợp API.
+- (action tại: /duong-dan) = thao tác nằm trong màn hình, không cần router riêng.
+
+2.1.1. Đăng ký tài khoản trên Website (router: /register)
+2.1.2. Đăng nhập trên Website (router: /login)
+2.1.3. Đăng nhập bằng Google trên Website (action tại: /login)
+2.1.4. Đăng xuất trên Website (action tại: header dùng chung)
+2.1.5. Quên & Đặt lại mật khẩu (router: /forgot-password, /forgot-password/verify, /reset-password, /reset-password/success)
+2.1.6. Xem hồ sơ người chơi (router: /profile)
+2.1.7. Chỉnh sửa hồ sơ người chơi (router: /profile/edit)
+2.1.8. Cập nhật trình độ kỹ năng người chơi (router: /profile/preferences)
+2.1.9. Cập nhật sở thích chơi (router: /profile/preferences)
+2.1.10. Thiết lập thời gian chơi ưu tiên (router: /profile/preferences#availability)
+2.1.11. Thiết lập địa điểm chơi ưu tiên (router: /profile/preferences#locations)
+2.1.12. Thiết lập hình thức chơi ưu tiên (router: /profile/preferences)
+
+Tìm kiếm Sân cầu lông
+
+2.1.13. Tìm kiếm sân cầu lông (router: /) [UI hoàn thiện]
+  - Tìm theo tên sân, quận hoặc địa chỉ.
+  - Có trạng thái không tìm thấy và thao tác xóa từ khóa.
+  - Dữ liệu giao diện hiện tại: public/api/home.json -> venues.
+2.1.14. Tìm kiếm sân quanh vị trí hiện tại (router: /map) [UI hoàn thiện]
+  - Action định vị tại nút "Lấy vị trí của tôi".
+  - Có trạng thái locating, granted, denied và unsupported.
+2.1.15. Hiển thị danh sách sân trên bản đồ (router: /map) [UI hoàn thiện]
+  - Hiển thị ảnh, rating, khoảng cách, số sân trống, giá và lịch gần nhất.
+  - Dùng chung venue.id với trang chủ và trang chi tiết sân.
+2.1.16. Hiển thị marker vị trí sân trên bản đồ (router: /map) [UI hoàn thiện]
+  - Marker lấy latitude/longitude từ venues.
+  - Tooltip hiển thị tên sân và giá.
+2.1.17. Xem nhanh thông tin sân khi chọn marker (action tại: /map) [UI hoàn thiện]
+  - Panel xem nhanh có thông tin sân, rating, khoảng cách, sân trống và giá.
+  - Action "Xem chi tiết sân" -> /san/:venueId.
+  - Action "Chọn lịch đặt sân" -> /san/:venueId#booking.
+2.1.18. Xem thông tin chi tiết sân từ bản đồ (router: /san/:venueId) [UI hoàn thiện]
+  - venueId hiện dùng: venue-01 đến venue-06.
+  - Khu vực chọn lịch có anchor: /san/:venueId#booking.
+2.1.19. Lọc sân theo vị trí (action tại: / và /map) [UI hoàn thiện]
+  - Chọn một district hoặc tất cả khu vực trong modal "Bộ lọc sân".
+  - Danh sách khu vực được lấy từ venues, không khai báo cứng trong giao diện.
+2.1.20. Lọc sân theo khoảng cách (action tại: / và /map) [UI hoàn thiện]
+  - Chọn bán kính từ 2 km đến 15 km.
+  - Chip nhanh "Gần tôi" áp dụng bán kính 5 km.
+2.1.21. Lọc sân theo giá (action tại: / và /map) [UI hoàn thiện]
+  - Các mức giá: 100.000đ, 120.000đ, 150.000đ và không giới hạn.
+  - Chip nhanh "Giá tốt" áp dụng mức tối đa 120.000đ/giờ.
+2.1.22. Lọc sân theo tình trạng còn trống (action tại: / và /map) [UI hoàn thiện]
+  - Toggle "Chỉ hiện sân còn trống" trong modal bộ lọc.
+  - Chip nhanh "Còn sân hôm nay" tại trang chủ và "Còn sân" tại bản đồ.
+  - Trạng thái lọc cập nhật đồng thời card trang chủ, marker và danh sách bản đồ.
+2.1.23. Xem chi tiết sân (router: /san/:venueId) [UI hoàn thiện]
+  - Hiển thị sân con, bảng giá, tiện ích, giờ hoạt động, đánh giá và thông tin liên hệ.
+  - Có nút quay lại danh sách sân.
+  - Dữ liệu liên quan: venues, courts, services, venue_services, venue_operating_hours, court_price_rules.
+2.1.24. Xem hình ảnh & thông tin sân (router: /san/:venueId) [UI hoàn thiện]
+  - Gallery có chọn thumbnail, chuyển ảnh trước/sau và lightbox toàn màn hình.
+  - Dữ liệu liên quan: venue_images theo venue_id và display_order.
+2.1.25. Xem địa chỉ và chỉ đường đến sân (action tại: /san/:venueId) [UI hoàn thiện]
+  - Có bản đồ OpenStreetMap nhúng theo latitude/longitude.
+  - Action "Mở chỉ đường" mở Google Maps với tọa độ sân.
+  - Action "Gọi sân" dùng phone của venues.
+2.1.26. Xem các khung giờ sân còn trống (router: /san/:venueId#booking) [UI hoàn thiện]
+  - Hiển thị lịch 7 ngày và trạng thái slot: available, booked, blocked.
+  - Khi tích hợp API, slot được tính từ venue_operating_hours + court_price_rules - court_blocks - booking_items pending/confirmed.
+2.1.27. Chọn ngày & giờ đặt sân (action tại: /san/:venueId#booking) [UI hoàn thiện]
+  - Chọn sân con, ngày, giờ bắt đầu và thời lượng 60/90/120 phút.
+  - Tính giờ kết thúc và tạm tính theo court_price_rules.
+  - Lựa chọn tạm được lưu tại sessionStorage key courtly_pending_booking để dùng cho /booking/checkout.
+
+Đặt sân
+
+2.1.28. Tạo yêu cầu đặt sân (router: /booking/checkout) [UI hoàn thiện]
+  - Đọc lựa chọn từ sessionStorage key courtly_pending_booking.
+  - Hiển thị sân, sân con, ngày giờ, người đặt, ghi chú, phương thức thanh toán và chi tiết tiền.
+  - Tạo booking giả vào localStorage key courtly_fake_bookings.
+  - Dữ liệu API sau này: bookings + booking_items.
+2.1.29. Xem chi tiết đặt sân (router: /bookings/:bookingId) [UI hoàn thiện]
+  - Hiển thị mã booking, sân, sân con, lịch chơi, ghi chú, chi phí và trạng thái thanh toán.
+  - Có action chỉ đường và gọi sân.
+2.1.30. Xem trạng thái đặt sân (router: /bookings/:bookingId) [UI hoàn thiện]
+  - Badge hỗ trợ pending_payment, confirmed, cancelled, completed, expired và refunded.
+  - Timeline giao diện khớp với booking_status_history.
+2.1.31. Hủy đặt sân (action tại: /bookings/:bookingId) [UI hoàn thiện]
+  - Chỉ hiển thị khi booking pending_payment/confirmed và chưa tới giờ chơi.
+  - Modal chọn lý do hủy; cập nhật status, cancelledAt, cancellationReason và timeline.
+2.1.32. Xem lịch sử đặt sân (router: /bookings) [UI hoàn thiện]
+  - Các tab: Sắp tới, Chờ thanh toán, Đã hoàn thành và Đã hủy.
+  - Tìm theo mã booking hoặc tên sân.
+  - Có dữ liệu booking mẫu và tự cập nhật booking vừa tạo/hủy từ localStorage.
+
+Thanh toán trực tuyến qua SePay
+
+2.1.33. Chọn SePay làm phương thức thanh toán (action tại: /booking/checkout) [UI hoàn thiện]
+  - SePay/VietQR đang là phương thức được chọn; tạo booking và payment cùng lúc khi xác nhận.
+2.1.34. Tạo giao dịch thanh toán SePay (router: /payments/:paymentId) [UI hoàn thiện]
+  - Dữ liệu giao diện giả lưu tại localStorage key courtly_fake_payments.
+  - Cấu trúc bám bảng payments: bookingId, provider, amount, status, qrUrl, thông tin ngân hàng, transferContent, providerTransactionId, paidAt, expiredAt.
+2.1.35. Hiển thị mã QR thanh toán qua SePay (router: /payments/:paymentId) [UI hoàn thiện]
+  - QR hiện là hình mẫu không phát sinh giao dịch thật; khi tích hợp API thay bằng payments.qr_url do backend trả về.
+2.1.36. Thanh toán tiền sân qua mã QR / chuyển khoản ngân hàng (router: /payments/:paymentId) [UI hoàn thiện]
+  - Hiển thị số tiền, ngân hàng, số tài khoản, chủ tài khoản, nội dung chuyển khoản và nút sao chép.
+2.1.37. Nhận thông báo giao dịch thanh toán từ SePay (backend webhook, không có router giao diện) [Chờ backend]
+  - Payload webhook dự kiến lưu tại sepay_webhook_logs; unique transaction_code để chống xử lý trùng.
+2.1.38. Xác minh giao dịch thanh toán SePay (backend service, không có router giao diện) [Chờ backend]
+  - Backend cần đối chiếu payment, số tiền, nội dung chuyển khoản và provider_transaction_id trước khi xác nhận booking.
+2.1.39. Cập nhật trạng thái thanh toán (router: /payments/:paymentId) [UI hoàn thiện]
+  - Hỗ trợ pending, paid, failed, expired; prototype có điều khiển giả lập callback để kiểm tra giao diện.
+2.1.40. Xác nhận đặt sân thành công (router: /booking/success/:bookingId) [UI hoàn thiện]
+  - Hiển thị mã booking, sân, ngày giờ, tổng tiền và liên kết đến chi tiết booking.
+2.1.41. Xử lý thanh toán thất bại (trạng thái tại: /payments/:paymentId) [UI hoàn thiện]
+  - Hiển thị lỗi và cho phép thử lại, đồng thời đặt paymentStatus của booking thành failed.
+2.1.42. Xử lý thanh toán hết hạn (trạng thái tại: /payments/:paymentId) [UI hoàn thiện]
+  - Đếm ngược 10 phút; hết hạn tự chuyển payment và booking sang expired, đề nghị chọn lịch mới.
+
+Ma trận độ ưu tiên theo Tác nhân: Sprint 1
+
+
+2.2. Sprint 2 — Ghép cặp Người chơi Thông minh
+
+Đây là Sprint được đề xuất tập trung mạnh nhất vào phần nghiên cứu của đề tài.
+
+Dữ liệu & Hiệu suất Người chơi
+
+2.2.1. Thu thập bộ dữ liệu trận đấu của người chơi
+2.2.2. Nhập dữ liệu trận đấu của người chơi
+2.2.3. Tiền xử lý bộ dữ liệu người chơi
+2.2.4. Làm sạch dữ liệu bị thiếu & không hợp lệ
+2.2.5. Trích xuất các đặc trưng kỹ năng của người chơi
+2.2.6. Tính toán điểm xếp hạng kỹ năng của người chơi
+2.2.7. Tính tỷ lệ thắng của người chơi
+2.2.8. Tính toán thống kê trận đấu của người chơi
+2.2.9. Xem lịch sử trận đấu của người chơi
+2.2.10. Xem thống kê hiệu suất của người chơi
+
+Phân cụm Người chơi
+
+2.2.11. Xác định các đặc trưng dùng để phân cụm người chơi
+2.2.12. Chuẩn hóa dữ liệu đặc trưng của người chơi
+2.2.13. Thực hiện phân cụm người chơi bằng K-Means
+2.2.14. Xác định số lượng cụm tối ưu
+2.2.15. Thực hiện phân cụm người chơi bằng DBSCAN
+2.2.16. So sánh kết quả K-Means & DBSCAN
+2.2.17. Đánh giá chất lượng phân cụm
+2.2.18. Gán người chơi vào cụm kỹ năng
+2.2.19. Xem thông tin cụm của người chơi
+
+Ghép cặp Đối tác chơi thông minh
+
+2.2.20. Tìm kiếm đối tác chơi
+2.2.21. Lọc ứng viên ghép cặp theo vị trí
+2.2.22. Lọc ứng viên ghép cặp theo thời gian rảnh
+2.2.23. Lọc ứng viên ghép cặp theo trình độ kỹ năng
+2.2.24. Tính điểm tương đồng về kỹ năng
+2.2.25. Tính điểm tương thích về vị trí
+2.2.26. Tính điểm tương thích về thời gian
+2.2.27. Tính điểm tương thích về phong cách chơi
+2.2.28. Tính điểm tương thích tổng thể
+2.2.29. Tạo danh sách đề xuất đối tác theo thứ hạng
+2.2.30. Xem chi tiết đề xuất đối tác
+
+Yêu cầu Ghép cặp Đối tác
+
+2.2.31. Gửi yêu cầu ghép cặp
+2.2.32. Xem các yêu cầu ghép cặp đã nhận
+2.2.33. Chấp nhận yêu cầu ghép cặp
+2.2.34. Từ chối yêu cầu ghép cặp
+2.2.35. Hủy yêu cầu ghép cặp
+2.2.36. Xem danh sách đối tác đã ghép cặp
+
+Quản lý Trận đấu
+
+2.2.37. Tạo trận đấu
+2.2.38. Ghi nhận kết quả trận đấu
+2.2.39. Cập nhật điểm xếp hạng người chơi sau trận đấu
+2.2.40. Cập nhật thống kê hiệu suất người chơi
+2.2.41. Xem kết quả trận đấu
+2.2.42. Xem lịch sử trận đấu
+
+Đánh giá Đối tác
+
+2.2.43. Đánh giá đối tác chơi
+2.2.44. Viết nhận xét về đối tác
+2.2.45. Xem đánh giá & nhận xét về đối tác
+
+Ma trận độ ưu tiên theo Tác nhân: Sprint 2
+
+
+2.3. Sprint 3 — Quản lý, Thông báo & Tối ưu hóa
+
+Chủ sân / Nhân viên sân
+
+2.3.1. Đăng ký tài khoản chủ sân
+2.3.2. Gửi yêu cầu xác minh sân
+2.3.3. Thêm sân cầu lông mới
+2.3.4. Cập nhật thông tin sân
+2.3.5. Cập nhật giá sân
+2.3.6. Tải lên hình ảnh sân
+2.3.7. Quản lý giờ hoạt động của sân
+2.3.8. Quản lý lịch sân
+2.3.9. Tạo các khung giờ sân
+2.3.10. Khóa khung giờ sân
+2.3.11. Mở khóa khung giờ sân
+2.3.12. Xem các yêu cầu đặt sân
+2.3.13. Xác nhận yêu cầu đặt sân
+2.3.14. Từ chối yêu cầu đặt sân
+2.3.15. Xem lịch sử đặt sân
+2.3.16. Xem lịch sử thanh toán của sân
+2.3.17. Xem thống kê doanh thu của sân
+2.3.18. Xem phí nền tảng của booking
+2.3.19. Xem số tiền thực nhận của booking
+2.3.20. Xem số dư tài khoản
+2.3.21. Xem lịch sử giao dịch
+2.3.22. Xem lịch sử đối soát booking
+2.3.23. Gửi yêu cầu rút tiền
+2.3.24. Xem trạng thái yêu cầu rút tiền
+2.3.25. Hủy yêu cầu rút tiền
+2.3.26. Xem lịch sử rút tiền
+2.3.27. Xem chi tiết giao dịch chi trả
+
+Quản trị viên
+
+2.3.28. Quản lý tài khoản người dùng
+2.3.29. Phân quyền vai trò người dùng
+2.3.30. Quản lý quyền của người dùng
+2.3.31. Quản lý tài khoản người chơi
+2.3.32. Quản lý tài khoản chủ sân
+2.3.33. Xác minh tài khoản chủ sân
+2.3.34. Phê duyệt sân cầu lông
+2.3.35. Từ chối sân cầu lông
+2.3.36. Quản lý người dùng bị báo cáo
+2.3.37. Quản lý báo cáo về đánh giá đối tác
+2.3.38. Xem thống kê hệ thống
+2.3.39. Thiết lập phí nền tảng
+2.3.40. Cập nhật phí nền tảng
+2.3.41. Xem cấu hình phí nền tảng
+2.3.42. Xem tổng doanh thu phí nền tảng
+2.3.43. Xem danh sách giao dịch đối soát
+2.3.44. Xem chi tiết đối soát booking
+2.3.45. Xem danh sách yêu cầu rút tiền
+2.3.46. Xem chi tiết yêu cầu rút tiền
+2.3.47. Duyệt yêu cầu rút tiền
+2.3.48. Từ chối yêu cầu rút tiền
+2.3.49. Xác nhận giao dịch chi trả cho chủ sân
+2.3.50. Xem lịch sử chi trả
+2.3.51. Điều chỉnh giao dịch đối soát
+2.3.52. Xử lý hoàn tiền ảnh hưởng đến doanh thu chủ sân
+
+Quản lý Thông báo
+
+2.3.53. Thông báo xác nhận đặt sân
+2.3.54. Thông báo hủy đặt sân
+2.3.55. Thông báo trạng thái thanh toán
+2.3.56. Thông báo yêu cầu ghép cặp
+2.3.57. Thông báo phản hồi yêu cầu ghép cặp
+2.3.58. Thông báo lịch thi đấu
+2.3.59. Thông báo nhắc nhở đặt sân
+2.3.60. Thông báo nhắc nhở trận đấu
+2.3.61. Xem lịch sử thông báo
+2.3.62. Quản lý tùy chọn nhận thông báo
+
+Ghép đội Đôi Nam/Nữ thông minh
+
+Đây là phần nên giữ vì giúp đề tài có chiều sâu hơn so với việc chỉ tìm một đối tác chơi.
+
+2.3.63. Chọn người chơi để thành lập đội đôi
+2.3.64. Tính toán sức mạnh đội của từng người chơi
+2.3.65. Tính toán mức độ tương thích giữa các cặp người chơi
+2.3.66. Tạo các đội đôi cân bằng
+2.3.67. Tính điểm sức mạnh của đội
+2.3.68. So sánh mức độ cân bằng kỹ năng giữa các đội
+2.3.69. Đề xuất đội đôi tối ưu
+
+Phân tích & Đánh giá Hệ thống Ghép cặp
+
+2.3.70. Đánh giá độ chính xác của ghép cặp người chơi
+2.3.71. Đánh giá độ chính xác của ghép đội
+2.3.72. Phân tích kết quả phân cụm người chơi
+2.3.73. Phân tích hiệu suất thuật toán ghép cặp
+2.3.74. Xem thống kê hiệu suất ghép cặp
+2.3.75. Xem lịch sử ghép cặp người chơi
+2.3.76. Xem lịch sử ghép đội
+
+Đánh giá Sân cầu lông
+
+2.3.77. Viết đánh giá sân sau khi chơi (router dự kiến: /san/:venueId#danh-gia)
+  - Chỉ người có đơn đặt sân đã hoàn thành ở sân đó mới viết được.
+  - Mỗi đơn chỉ đánh giá một lần, theo ràng buộc unique(venue_id, user_id, booking_id).
+2.3.78. Chỉnh sửa đánh giá sân của mình
+2.3.79. Xoá đánh giá sân của mình
+2.3.80. Xem danh sách đánh giá của một sân (router: /san/:venueId)
+  - Có phân trang, chỉ hiện đánh giá đang ở trạng thái visible.
+2.3.81. Chủ sân trả lời công khai một đánh giá
+  - Mỗi đánh giá chỉ có một câu trả lời, hiện ngay bên dưới.
+2.3.82. Chủ sân chỉnh sửa câu trả lời
+2.3.83. Báo cáo đánh giá có nội dung không phù hợp
+  - Dùng khi đánh giá có lời lẽ xúc phạm hoặc vu khống, không dùng cho tranh chấp tiền.
+2.3.84. Quản trị viên ẩn hoặc khôi phục đánh giá bị báo cáo
+
+Báo cáo & Tranh chấp Hoàn tiền — Người chơi
+
+2.3.85. Tạo báo cáo về một đơn đặt sân (router dự kiến: /bookings/:bookingId/bao-cao)
+2.3.86. Chọn loại báo cáo theo danh mục có sẵn
+  - Năm loại: sân đóng cửa, sân khác mô tả, chủ sân tự huỷ, bị thu thêm tiền, lý do khác.
+2.3.87. Đánh dấu yêu cầu hoàn tiền khi tạo báo cáo
+  - Không tick thì chỉ là phản ánh, không ảnh hưởng dòng tiền của chủ sân.
+  - Chỉ tick được trong vòng 7 ngày kể từ giờ chơi.
+2.3.88. Đính kèm ảnh bằng chứng vào báo cáo
+2.3.89. Xem danh sách báo cáo đã gửi (router dự kiến: /bao-cao)
+2.3.90. Xem chi tiết báo cáo và toàn bộ nội dung trao đổi (router dự kiến: /bao-cao/:reportId)
+2.3.91. Bổ sung thông tin cho báo cáo đang xử lý
+2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình
+
+Báo cáo & Tranh chấp Hoàn tiền — Chủ sân
+
+2.3.93. Xem danh sách báo cáo liên quan tới sân của mình
+2.3.94. Xem chi tiết báo cáo kèm bằng chứng của người chơi
+2.3.95. Gửi giải trình cho báo cáo
+  - Hạn 48 giờ kể từ khi báo cáo được tạo.
+2.3.96. Đính kèm ảnh bằng chứng vào giải trình
+2.3.97. Xem số tiền đang bị tạm giữ do tranh chấp
+
+Báo cáo & Tranh chấp Hoàn tiền — Quản trị viên
+
+2.3.98. Xem danh sách báo cáo chờ xử lý
+2.3.99. Xem chi tiết báo cáo kèm bằng chứng của cả hai phía
+2.3.100. Quyết định hoàn tiền toàn phần cho người chơi
+2.3.101. Quyết định hoàn tiền một nửa cho người chơi
+2.3.102. Bác bỏ yêu cầu hoàn tiền
+2.3.103. Xem thống kê báo cáo theo từng sân
+2.3.104. Tạm ngưng hoạt động sân bị xử thua nhiều lần
+
+Xử lý Tự động cho Tranh chấp
+
+2.3.105. Tạm giữ tiền của đơn khi có yêu cầu hoàn tiền
+  - Chỉ giữ tiền của đúng đơn đang tranh chấp, không khoá toàn bộ tài khoản chủ sân.
+2.3.106. Trừ số tiền đang tạm giữ khỏi hạn mức rút tiền của chủ sân
+2.3.107. Tự động xử thua chủ sân khi quá hạn giải trình
+  - Quá 48 giờ không phản hồi thì hoàn 100% cho người chơi.
+  - Gửi email nhắc ở giờ thứ 24.
+2.3.108. Thực hiện hoàn tiền cho người chơi theo quyết định của quản trị viên
+2.3.109. Hoàn lại phí nền tảng của đơn bị hoàn tiền
+  - Người chơi nhận đủ số tiền đã trả, nền tảng không giữ phí trên giao dịch hỏng.
+2.3.110. Mở khoá số tiền tạm giữ khi báo cáo bị bác bỏ
+2.3.111. Thông báo cho các bên liên quan ở mỗi bước xử lý
+
+Ma trận độ ưu tiên theo Tác nhân: Sprint 3
