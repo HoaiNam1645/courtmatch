@@ -20,5 +20,6 @@ node_modules/
 # là bản phân phối lại của bên thứ ba. Không đẩy lên repo.
 # Bản đã bóc tách và chuẩn hoá nằm ở backend/src/main/resources/seed/bwf-*.json
 # Cách lấy lại: xem data/bwf-match-data/README.md
-data/bwf-match-data/*.csv
-data/bwf-match-data/index.json
+# Thu muc nay la mot repo rieng tai ve tu ben ngoai (co .git cua no),
+# nen bo qua toan bo. Xuat xu duoc chep ra data/NGUON-DU-LIEU-BWF.md
+data/bwf-match-data/

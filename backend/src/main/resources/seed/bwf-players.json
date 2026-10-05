@@ -1,0 +1,3589 @@
+{
+ "meta": {
+  "source": "BWF Badminton Match Results 2007-2026 (data/bwf-match-data)",
+  "generatedBy": "data/bwf-to-seed.py",
+  "filter": "vong dau chinh, tu 2024-01-01",
+  "referenceDate": "2026-07-06",
+  "eloParams": {
+   "initial": 1000.0,
+   "floor": 100.0,
+   "k": "40 duoi 10 tran, 24 tu 10-29, 16 tu 30 tran"
+  },
+  "playerCount": 188,
+  "matchCount": 2555
+ },
+ "players": [
+  {
+   "key": "bwf-an-se-young",
+   "fullName": "AN Se Young",
+   "email": "an.se.young@bwf.example",
+   "phone": "0970000001",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 69,
+    "totalWins": 61,
+    "totalLosses": 8,
+    "winRate": "88.41",
+    "ratingScore": "1330.09",
+    "avgPointsScored": "46.81",
+    "avgPointsConceded": "35.26",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-aaron-chia",
+   "fullName": "Aaron CHIA",
+   "email": "aaron.chia@bwf.example",
+   "phone": "0970000002",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 62,
+    "totalWins": 40,
+    "totalLosses": 22,
+    "winRate": "64.52",
+    "ratingScore": "1102.27",
+    "avgPointsScored": "45.73",
+    "avgPointsConceded": "43.77",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-akane-yamaguchi",
+   "fullName": "Akane YAMAGUCHI",
+   "email": "akane.yamaguchi@bwf.example",
+   "phone": "0970000003",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 63,
+    "totalWins": 45,
+    "totalLosses": 18,
+    "winRate": "71.43",
+    "ratingScore": "1183.27",
+    "avgPointsScored": "43.86",
+    "avgPointsConceded": "38.41",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-alex-lanier",
+   "fullName": "Alex LANIER",
+   "email": "alex.lanier@bwf.example",
+   "phone": "0970000004",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 27,
+    "totalLosses": 16,
+    "winRate": "62.79",
+    "ratingScore": "1096.34",
+    "avgPointsScored": "47.77",
+    "avgPointsConceded": "45.47",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-alexander-dunn",
+   "fullName": "Alexander DUNN",
+   "email": "alexander.dunn@bwf.example",
+   "phone": "0970000005",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 20,
+    "totalWins": 4,
+    "totalLosses": 16,
+    "winRate": "20.00",
+    "ratingScore": "898.94",
+    "avgPointsScored": "35.00",
+    "avgPointsConceded": "43.60",
+    "lastPlayedDaysAgo": 54
+   }
+  },
+  {
+   "key": "bwf-alexandra-bje",
+   "fullName": "Alexandra BØJE",
+   "email": "alexandra.bje@bwf.example",
+   "phone": "0970000006",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 21,
+    "totalLosses": 11,
+    "winRate": "65.62",
+    "ratingScore": "1111.07",
+    "avgPointsScored": "47.56",
+    "avgPointsConceded": "42.81",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-allison-quynh-lee",
+   "fullName": "Allison Quynh LEE",
+   "email": "allison.quynh.lee@bwf.example",
+   "phone": "0970000007",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 7,
+    "totalLosses": 17,
+    "winRate": "29.17",
+    "ratingScore": "913.41",
+    "avgPointsScored": "39.08",
+    "avgPointsConceded": "44.75",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-alwi-farhan",
+   "fullName": "Alwi FARHAN",
+   "email": "alwi.farhan@bwf.example",
+   "phone": "0970000008",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 14,
+    "totalLosses": 18,
+    "winRate": "43.75",
+    "ratingScore": "989.08",
+    "avgPointsScored": "45.34",
+    "avgPointsConceded": "44.72",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-amalie-magelund",
+   "fullName": "Amalie MAGELUND",
+   "email": "amalie.magelund@bwf.example",
+   "phone": "0970000009",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 19,
+    "totalLosses": 15,
+    "winRate": "55.88",
+    "ratingScore": "1006.23",
+    "avgPointsScored": "44.82",
+    "avgPointsConceded": "44.56",
+    "lastPlayedDaysAgo": 124
+   }
+  },
+  {
+   "key": "bwf-amallia-cahaya-pratiwi",
+   "fullName": "Amallia Cahaya PRATIWI",
+   "email": "amallia.cahaya.pratiwi@bwf.example",
+   "phone": "0970000010",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 13,
+    "totalLosses": 19,
+    "winRate": "40.62",
+    "ratingScore": "974.50",
+    "avgPointsScored": "41.81",
+    "avgPointsConceded": "44.38",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-anders-antonsen",
+   "fullName": "Anders ANTONSEN",
+   "email": "anders.antonsen@bwf.example",
+   "phone": "0970000011",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 68,
+    "totalWins": 46,
+    "totalLosses": 22,
+    "winRate": "67.65",
+    "ratingScore": "1113.31",
+    "avgPointsScored": "46.22",
+    "avgPointsConceded": "42.38",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-anders-skaarup-rasmussen",
+   "fullName": "Anders Skaarup RASMUSSEN",
+   "email": "anders.skaarup.rasmussen@bwf.example",
+   "phone": "0970000012",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 29,
+    "totalLosses": 19,
+    "winRate": "60.42",
+    "ratingScore": "1056.56",
+    "avgPointsScored": "46.40",
+    "avgPointsConceded": "43.48",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-baek-ha-na",
+   "fullName": "BAEK Ha Na",
+   "email": "baek.ha.na@bwf.example",
+   "phone": "0970000013",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 27,
+    "totalLosses": 16,
+    "winRate": "62.79",
+    "ratingScore": "1106.73",
+    "avgPointsScored": "42.05",
+    "avgPointsConceded": "37.40",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-bao-li-jing",
+   "fullName": "BAO Li Jing",
+   "email": "bao.li.jing@bwf.example",
+   "phone": "0970000014",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 9,
+    "totalWins": 4,
+    "totalLosses": 5,
+    "winRate": "44.44",
+    "ratingScore": "967.26",
+    "avgPointsScored": "42.33",
+    "avgPointsConceded": "37.78",
+    "lastPlayedDaysAgo": 111
+   }
+  },
+  {
+   "key": "bwf-bagas-maulana",
+   "fullName": "Bagas MAULANA",
+   "email": "bagas.maulana@bwf.example",
+   "phone": "0970000015",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 14,
+    "totalLosses": 25,
+    "winRate": "35.90",
+    "ratingScore": "910.25",
+    "avgPointsScored": "44.49",
+    "avgPointsConceded": "46.54",
+    "lastPlayedDaysAgo": 111
+   }
+  },
+  {
+   "key": "bwf-beiwen-zhang",
+   "fullName": "Beiwen ZHANG",
+   "email": "beiwen.zhang@bwf.example",
+   "phone": "0970000016",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 31,
+    "totalWins": 14,
+    "totalLosses": 17,
+    "winRate": "45.16",
+    "ratingScore": "957.78",
+    "avgPointsScored": "46.77",
+    "avgPointsConceded": "46.94",
+    "lastPlayedDaysAgo": 124
+   }
+  },
+  {
+   "key": "bwf-ben-lane",
+   "fullName": "Ben LANE",
+   "email": "ben.lane@bwf.example",
+   "phone": "0970000017",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 30,
+    "totalWins": 12,
+    "totalLosses": 18,
+    "winRate": "40.00",
+    "ratingScore": "976.10",
+    "avgPointsScored": "45.90",
+    "avgPointsConceded": "45.63",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-brian-yang",
+   "fullName": "Brian YANG",
+   "email": "brian.yang@bwf.example",
+   "phone": "0970000018",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 6,
+    "totalLosses": 28,
+    "winRate": "17.65",
+    "ratingScore": "827.29",
+    "avgPointsScored": "40.06",
+    "avgPointsConceded": "47.74",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-busanan-ongbamrungphan",
+   "fullName": "Busanan ONGBAMRUNGPHAN",
+   "email": "busanan.ongbamrungphan@bwf.example",
+   "phone": "0970000019",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 14,
+    "totalLosses": 20,
+    "winRate": "41.18",
+    "ratingScore": "964.46",
+    "avgPointsScored": "38.85",
+    "avgPointsConceded": "42.24",
+    "lastPlayedDaysAgo": 53
+   }
+  },
+  {
+   "key": "bwf-chang-ching-hui",
+   "fullName": "CHANG Ching  Hui",
+   "email": "chang.ching.hui@bwf.example",
+   "phone": "0970000020",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 38,
+    "totalWins": 8,
+    "totalLosses": 30,
+    "winRate": "21.05",
+    "ratingScore": "815.93",
+    "avgPointsScored": "33.16",
+    "avgPointsConceded": "43.58",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-chang-ko-chi",
+   "fullName": "CHANG Ko-Chi",
+   "email": "chang.ko.chi@bwf.example",
+   "phone": "0970000021",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 15,
+    "totalWins": 1,
+    "totalLosses": 14,
+    "winRate": "6.67",
+    "ratingScore": "859.11",
+    "avgPointsScored": "37.27",
+    "avgPointsConceded": "47.13",
+    "lastPlayedDaysAgo": 167
+   }
+  },
+  {
+   "key": "bwf-chen-bo-yang",
+   "fullName": "CHEN Bo Yang",
+   "email": "chen.bo.yang@bwf.example",
+   "phone": "0970000022",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 37,
+    "totalWins": 12,
+    "totalLosses": 25,
+    "winRate": "32.43",
+    "ratingScore": "921.10",
+    "avgPointsScored": "45.68",
+    "avgPointsConceded": "48.16",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-chen-cheng-kuan",
+   "fullName": "CHEN Cheng Kuan",
+   "email": "chen.cheng.kuan@bwf.example",
+   "phone": "0970000023",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 47,
+    "totalWins": 10,
+    "totalLosses": 37,
+    "winRate": "21.28",
+    "ratingScore": "837.44",
+    "avgPointsScored": "38.79",
+    "avgPointsConceded": "45.91",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-chen-fang-hui",
+   "fullName": "CHEN Fang Hui",
+   "email": "chen.fang.hui@bwf.example",
+   "phone": "0970000024",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 56,
+    "totalWins": 34,
+    "totalLosses": 22,
+    "winRate": "60.71",
+    "ratingScore": "1054.58",
+    "avgPointsScored": "44.73",
+    "avgPointsConceded": "41.32",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-chen-su-yu",
+   "fullName": "CHEN Su Yu",
+   "email": "chen.su.yu@bwf.example",
+   "phone": "0970000025",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 12,
+    "totalWins": 3,
+    "totalLosses": 9,
+    "winRate": "25.00",
+    "ratingScore": "907.42",
+    "avgPointsScored": "36.75",
+    "avgPointsConceded": "45.67",
+    "lastPlayedDaysAgo": 5
+   }
+  },
+  {
+   "key": "bwf-chen-tang-jie",
+   "fullName": "CHEN Tang Jie",
+   "email": "chen.tang.jie@bwf.example",
+   "phone": "0970000026",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 39,
+    "totalLosses": 21,
+    "winRate": "65.00",
+    "ratingScore": "1124.38",
+    "avgPointsScored": "42.97",
+    "avgPointsConceded": "39.22",
+    "lastPlayedDaysAgo": 162
+   }
+  },
+  {
+   "key": "bwf-chen-yu-fei",
+   "fullName": "CHEN Yu Fei",
+   "email": "chen.yu.fei@bwf.example",
+   "phone": "0970000027",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 47,
+    "totalWins": 36,
+    "totalLosses": 11,
+    "winRate": "76.60",
+    "ratingScore": "1192.80",
+    "avgPointsScored": "45.38",
+    "avgPointsConceded": "37.87",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-chen-zhi-ray",
+   "fullName": "CHEN Zhi  Ray",
+   "email": "chen.zhi.ray@bwf.example",
+   "phone": "0970000028",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 30,
+    "totalWins": 6,
+    "totalLosses": 24,
+    "winRate": "20.00",
+    "ratingScore": "826.02",
+    "avgPointsScored": "38.40",
+    "avgPointsConceded": "46.10",
+    "lastPlayedDaysAgo": 53
+   }
+  },
+  {
+   "key": "bwf-cheng-su-yin",
+   "fullName": "CHENG Su Yin",
+   "email": "cheng.su.yin@bwf.example",
+   "phone": "0970000029",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 33,
+    "totalWins": 14,
+    "totalLosses": 19,
+    "winRate": "42.42",
+    "ratingScore": "980.28",
+    "avgPointsScored": "46.39",
+    "avgPointsConceded": "49.09",
+    "lastPlayedDaysAgo": 165
+   }
+  },
+  {
+   "key": "bwf-cheng-xing",
+   "fullName": "CHENG Xing",
+   "email": "cheng.xing@bwf.example",
+   "phone": "0970000030",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 50,
+    "totalWins": 29,
+    "totalLosses": 21,
+    "winRate": "58.00",
+    "ratingScore": "1052.08",
+    "avgPointsScored": "45.40",
+    "avgPointsConceded": "43.76",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-chi-yu-jen",
+   "fullName": "CHI Yu Jen",
+   "email": "chi.yu.jen@bwf.example",
+   "phone": "0970000031",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 19,
+    "totalLosses": 24,
+    "winRate": "44.19",
+    "ratingScore": "956.58",
+    "avgPointsScored": "44.16",
+    "avgPointsConceded": "44.28",
+    "lastPlayedDaysAgo": 26
+   }
+  },
+  {
+   "key": "bwf-chiu-pin-chian",
+   "fullName": "CHIU Pin-Chian",
+   "email": "chiu.pin.chian@bwf.example",
+   "phone": "0970000032",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 16,
+    "totalLosses": 27,
+    "winRate": "37.21",
+    "ratingScore": "905.30",
+    "avgPointsScored": "39.58",
+    "avgPointsConceded": "42.67",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-chou-tien-chen",
+   "fullName": "CHOU Tien Chen",
+   "email": "chou.tien.chen@bwf.example",
+   "phone": "0970000033",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 78,
+    "totalWins": 44,
+    "totalLosses": 34,
+    "winRate": "56.41",
+    "ratingScore": "1015.31",
+    "avgPointsScored": "46.24",
+    "avgPointsConceded": "45.29",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-chia-hao-lee",
+   "fullName": "Chia Hao LEE",
+   "email": "chia.hao.lee@bwf.example",
+   "phone": "0970000034",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 54,
+    "totalWins": 20,
+    "totalLosses": 34,
+    "winRate": "37.04",
+    "ratingScore": "926.73",
+    "avgPointsScored": "41.19",
+    "avgPointsConceded": "44.31",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-chirag-shetty",
+   "fullName": "Chirag SHETTY",
+   "email": "chirag.shetty@bwf.example",
+   "phone": "0970000035",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 52,
+    "totalWins": 37,
+    "totalLosses": 15,
+    "winRate": "71.15",
+    "ratingScore": "1153.97",
+    "avgPointsScored": "47.02",
+    "avgPointsConceded": "42.71",
+    "lastPlayedDaysAgo": 36
+   }
+  },
+  {
+   "key": "bwf-christo-popov",
+   "fullName": "Christo POPOV",
+   "email": "christo.popov@bwf.example",
+   "phone": "0970000036",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 101,
+    "totalWins": 40,
+    "totalLosses": 61,
+    "winRate": "39.60",
+    "ratingScore": "994.36",
+    "avgPointsScored": "43.08",
+    "avgPointsConceded": "44.87",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-daniel-lundgaard",
+   "fullName": "Daniel LUNDGAARD",
+   "email": "daniel.lundgaard@bwf.example",
+   "phone": "0970000037",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 12,
+    "totalLosses": 27,
+    "winRate": "30.77",
+    "ratingScore": "916.07",
+    "avgPointsScored": "43.36",
+    "avgPointsConceded": "48.10",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-dechapol-puavaranukroh",
+   "fullName": "Dechapol PUAVARANUKROH",
+   "email": "dechapol.puavaranukroh@bwf.example",
+   "phone": "0970000038",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 89,
+    "totalWins": 58,
+    "totalLosses": 31,
+    "winRate": "65.17",
+    "ratingScore": "1154.88",
+    "avgPointsScored": "46.11",
+    "avgPointsConceded": "42.43",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-dejan-ferdinansyah",
+   "fullName": "Dejan FERDINANSYAH",
+   "email": "dejan.ferdinansyah@bwf.example",
+   "phone": "0970000039",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 33,
+    "totalWins": 12,
+    "totalLosses": 21,
+    "winRate": "36.36",
+    "ratingScore": "933.67",
+    "avgPointsScored": "39.76",
+    "avgPointsConceded": "42.24",
+    "lastPlayedDaysAgo": 397
+   }
+  },
+  {
+   "key": "bwf-delphine-delrue",
+   "fullName": "Delphine DELRUE",
+   "email": "delphine.delrue@bwf.example",
+   "phone": "0970000040",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 49,
+    "totalWins": 28,
+    "totalLosses": 21,
+    "winRate": "57.14",
+    "ratingScore": "1058.28",
+    "avgPointsScored": "46.37",
+    "avgPointsConceded": "43.82",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-feng-yan-zhe",
+   "fullName": "FENG Yan Zhe",
+   "email": "feng.yan.zhe@bwf.example",
+   "phone": "0970000041",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 67,
+    "totalWins": 54,
+    "totalLosses": 13,
+    "winRate": "80.60",
+    "ratingScore": "1246.29",
+    "avgPointsScored": "47.87",
+    "avgPointsConceded": "39.21",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-fajar-alfian",
+   "fullName": "Fajar ALFIAN",
+   "email": "fajar.alfian@bwf.example",
+   "phone": "0970000042",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 64,
+    "totalWins": 46,
+    "totalLosses": 18,
+    "winRate": "71.88",
+    "ratingScore": "1176.26",
+    "avgPointsScored": "47.12",
+    "avgPointsConceded": "41.88",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-fang-chih-lee",
+   "fullName": "Fang-Chih LEE",
+   "email": "fang.chih.lee@bwf.example",
+   "phone": "0970000043",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 17,
+    "totalLosses": 31,
+    "winRate": "35.42",
+    "ratingScore": "913.33",
+    "avgPointsScored": "42.54",
+    "avgPointsConceded": "46.04",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-fang-jen-lee",
+   "fullName": "Fang-Jen LEE",
+   "email": "fang.jen.lee@bwf.example",
+   "phone": "0970000044",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 17,
+    "totalLosses": 31,
+    "winRate": "35.42",
+    "ratingScore": "913.33",
+    "avgPointsScored": "42.54",
+    "avgPointsConceded": "46.04",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-febriana-dwipuji-kusuma",
+   "fullName": "Febriana Dwipuji KUSUMA",
+   "email": "febriana.dwipuji.kusuma@bwf.example",
+   "phone": "0970000045",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 20,
+    "totalWins": 9,
+    "totalLosses": 11,
+    "winRate": "45.00",
+    "ratingScore": "990.57",
+    "avgPointsScored": "42.15",
+    "avgPointsConceded": "43.45",
+    "lastPlayedDaysAgo": 312
+   }
+  },
+  {
+   "key": "bwf-francesca-corbett",
+   "fullName": "Francesca CORBETT",
+   "email": "francesca.corbett@bwf.example",
+   "phone": "0970000046",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 35,
+    "totalWins": 7,
+    "totalLosses": 28,
+    "winRate": "20.00",
+    "ratingScore": "839.31",
+    "avgPointsScored": "34.51",
+    "avgPointsConceded": "44.49",
+    "lastPlayedDaysAgo": 4
+   }
+  },
+  {
+   "key": "bwf-goh-soon-huat",
+   "fullName": "GOH Soon Huat",
+   "email": "goh.soon.huat@bwf.example",
+   "phone": "0970000047",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 54,
+    "totalWins": 29,
+    "totalLosses": 25,
+    "winRate": "53.70",
+    "ratingScore": "1015.71",
+    "avgPointsScored": "42.72",
+    "avgPointsConceded": "41.67",
+    "lastPlayedDaysAgo": 46
+   }
+  },
+  {
+   "key": "bwf-goh-sze-fei",
+   "fullName": "GOH Sze Fei",
+   "email": "goh.sze.fei@bwf.example",
+   "phone": "0970000048",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 55,
+    "totalWins": 36,
+    "totalLosses": 19,
+    "winRate": "65.45",
+    "ratingScore": "1097.33",
+    "avgPointsScored": "47.35",
+    "avgPointsConceded": "44.64",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-guo-xin-wa",
+   "fullName": "GUO Xin Wa",
+   "email": "guo.xin.wa@bwf.example",
+   "phone": "0970000049",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 56,
+    "totalWins": 34,
+    "totalLosses": 22,
+    "winRate": "60.71",
+    "ratingScore": "1054.58",
+    "avgPointsScored": "44.73",
+    "avgPointsConceded": "41.32",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-gloria-emanuelle-widjaja",
+   "fullName": "Gloria Emanuelle WIDJAJA",
+   "email": "gloria.emanuelle.widjaja@bwf.example",
+   "phone": "0970000050",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 9,
+    "totalLosses": 15,
+    "winRate": "37.50",
+    "ratingScore": "940.35",
+    "avgPointsScored": "41.04",
+    "avgPointsConceded": "42.42",
+    "lastPlayedDaysAgo": 543
+   }
+  },
+  {
+   "key": "bwf-han-yue",
+   "fullName": "HAN Yue",
+   "email": "han.yue@bwf.example",
+   "phone": "0970000051",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 25,
+    "totalLosses": 18,
+    "winRate": "58.14",
+    "ratingScore": "1070.03",
+    "avgPointsScored": "41.70",
+    "avgPointsConceded": "40.74",
+    "lastPlayedDaysAgo": 130
+   }
+  },
+  {
+   "key": "bwf-hoo-pang-ron",
+   "fullName": "HOO Pang Ron",
+   "email": "hoo.pang.ron@bwf.example",
+   "phone": "0970000052",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 33,
+    "totalWins": 14,
+    "totalLosses": 19,
+    "winRate": "42.42",
+    "ratingScore": "980.28",
+    "avgPointsScored": "46.39",
+    "avgPointsConceded": "49.09",
+    "lastPlayedDaysAgo": 165
+   }
+  },
+  {
+   "key": "bwf-hsieh-pei-shan",
+   "fullName": "HSIEH Pei Shan",
+   "email": "hsieh.pei.shan@bwf.example",
+   "phone": "0970000053",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 29,
+    "totalWins": 9,
+    "totalLosses": 20,
+    "winRate": "31.03",
+    "ratingScore": "940.57",
+    "avgPointsScored": "41.48",
+    "avgPointsConceded": "45.21",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-hsu-ya-ching",
+   "fullName": "HSU Ya Ching",
+   "email": "hsu.ya.ching@bwf.example",
+   "phone": "0970000054",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 16,
+    "totalWins": 7,
+    "totalLosses": 9,
+    "winRate": "43.75",
+    "ratingScore": "960.06",
+    "avgPointsScored": "39.75",
+    "avgPointsConceded": "41.75",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-hsu-yin-hui",
+   "fullName": "HSU Yin-Hui",
+   "email": "hsu.yin.hui@bwf.example",
+   "phone": "0970000055",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 71,
+    "totalWins": 19,
+    "totalLosses": 52,
+    "winRate": "26.76",
+    "ratingScore": "853.58",
+    "avgPointsScored": "37.99",
+    "avgPointsConceded": "44.73",
+    "lastPlayedDaysAgo": 2
+   }
+  },
+  {
+   "key": "bwf-hu-ling-fang",
+   "fullName": "HU Ling Fang",
+   "email": "hu.ling.fang@bwf.example",
+   "phone": "0970000056",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 19,
+    "totalLosses": 41,
+    "winRate": "31.67",
+    "ratingScore": "870.59",
+    "avgPointsScored": "40.08",
+    "avgPointsConceded": "44.78",
+    "lastPlayedDaysAgo": 27
+   }
+  },
+  {
+   "key": "bwf-huang-dong-ping",
+   "fullName": "HUANG Dong Ping",
+   "email": "huang.dong.ping@bwf.example",
+   "phone": "0970000057",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 62,
+    "totalWins": 51,
+    "totalLosses": 11,
+    "winRate": "82.26",
+    "ratingScore": "1248.24",
+    "avgPointsScored": "48.65",
+    "avgPointsConceded": "40.02",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-huang-yu-hsun",
+   "fullName": "HUANG Yu-Hsun",
+   "email": "huang.yu.hsun@bwf.example",
+   "phone": "0970000058",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 18,
+    "totalWins": 4,
+    "totalLosses": 14,
+    "winRate": "22.22",
+    "ratingScore": "874.60",
+    "avgPointsScored": "32.33",
+    "avgPointsConceded": "41.44",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-hung-en-tzu",
+   "fullName": "HUNG En-Tzu",
+   "email": "hung.en.tzu@bwf.example",
+   "phone": "0970000059",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 12,
+    "totalLosses": 36,
+    "winRate": "25.00",
+    "ratingScore": "835.44",
+    "avgPointsScored": "38.81",
+    "avgPointsConceded": "45.27",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-hiroki-midorikawa",
+   "fullName": "Hiroki MIDORIKAWA",
+   "email": "hiroki.midorikawa@bwf.example",
+   "phone": "0970000060",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 18,
+    "totalLosses": 14,
+    "winRate": "56.25",
+    "ratingScore": "1054.79",
+    "avgPointsScored": "43.44",
+    "avgPointsConceded": "44.19",
+    "lastPlayedDaysAgo": 198
+   }
+  },
+  {
+   "key": "bwf-hsiang-chieh-chiu",
+   "fullName": "Hsiang Chieh CHIU",
+   "email": "hsiang.chieh.chiu@bwf.example",
+   "phone": "0970000061",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 50,
+    "totalWins": 20,
+    "totalLosses": 30,
+    "winRate": "40.00",
+    "ratingScore": "924.93",
+    "avgPointsScored": "43.42",
+    "avgPointsConceded": "46.38",
+    "lastPlayedDaysAgo": 27
+   }
+  },
+  {
+   "key": "bwf-jeong-na-eun",
+   "fullName": "JEONG Na Eun",
+   "email": "jeong.na.eun@bwf.example",
+   "phone": "0970000062",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 16,
+    "totalWins": 10,
+    "totalLosses": 6,
+    "winRate": "62.50",
+    "ratingScore": "1049.34",
+    "avgPointsScored": "43.19",
+    "avgPointsConceded": "39.50",
+    "lastPlayedDaysAgo": 625
+   }
+  },
+  {
+   "key": "bwf-jheng-yu-chieh",
+   "fullName": "JHENG Yu Chieh",
+   "email": "jheng.yu.chieh@bwf.example",
+   "phone": "0970000063",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 13,
+    "totalLosses": 35,
+    "winRate": "27.08",
+    "ratingScore": "845.54",
+    "avgPointsScored": "40.50",
+    "avgPointsConceded": "46.04",
+    "lastPlayedDaysAgo": 27
+   }
+  },
+  {
+   "key": "bwf-jia-yi-fan",
+   "fullName": "JIA Yi Fan",
+   "email": "jia.yi.fan@bwf.example",
+   "phone": "0970000064",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 27,
+    "totalLosses": 12,
+    "winRate": "69.23",
+    "ratingScore": "1147.23",
+    "avgPointsScored": "46.10",
+    "avgPointsConceded": "40.72",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-jiang-zhen-bang",
+   "fullName": "JIANG Zhen Bang",
+   "email": "jiang.zhen.bang@bwf.example",
+   "phone": "0970000065",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 72,
+    "totalWins": 52,
+    "totalLosses": 20,
+    "winRate": "72.22",
+    "ratingScore": "1169.90",
+    "avgPointsScored": "45.58",
+    "avgPointsConceded": "39.10",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-jennie-gai",
+   "fullName": "Jennie GAI",
+   "email": "jennie.gai@bwf.example",
+   "phone": "0970000066",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 45,
+    "totalWins": 11,
+    "totalLosses": 34,
+    "winRate": "24.44",
+    "ratingScore": "897.00",
+    "avgPointsScored": "37.47",
+    "avgPointsConceded": "45.00",
+    "lastPlayedDaysAgo": 2
+   }
+  },
+  {
+   "key": "bwf-jesper-toft",
+   "fullName": "Jesper TOFT",
+   "email": "jesper.toft@bwf.example",
+   "phone": "0970000067",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 19,
+    "totalLosses": 15,
+    "winRate": "55.88",
+    "ratingScore": "1006.23",
+    "avgPointsScored": "44.82",
+    "avgPointsConceded": "44.56",
+    "lastPlayedDaysAgo": 124
+   }
+  },
+  {
+   "key": "bwf-jhenicha-sudjaipraparat",
+   "fullName": "Jhenicha SUDJAIPRAPARAT",
+   "email": "jhenicha.sudjaipraparat@bwf.example",
+   "phone": "0970000068",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 46,
+    "totalWins": 22,
+    "totalLosses": 24,
+    "winRate": "47.83",
+    "ratingScore": "981.75",
+    "avgPointsScored": "44.20",
+    "avgPointsConceded": "44.83",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-jia-heng-jason-teh",
+   "fullName": "Jia Heng Jason TEH",
+   "email": "jia.heng.jason.teh@bwf.example",
+   "phone": "0970000069",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 31,
+    "totalWins": 4,
+    "totalLosses": 27,
+    "winRate": "12.90",
+    "ratingScore": "818.33",
+    "avgPointsScored": "39.81",
+    "avgPointsConceded": "46.77",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-jonatan-christie",
+   "fullName": "Jonatan CHRISTIE",
+   "email": "jonatan.christie@bwf.example",
+   "phone": "0970000070",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 68,
+    "totalWins": 43,
+    "totalLosses": 25,
+    "winRate": "63.24",
+    "ratingScore": "1081.42",
+    "avgPointsScored": "44.25",
+    "avgPointsConceded": "41.15",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-julie-macpherson",
+   "fullName": "Julie MACPHERSON",
+   "email": "julie.macpherson@bwf.example",
+   "phone": "0970000071",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 20,
+    "totalWins": 4,
+    "totalLosses": 16,
+    "winRate": "20.00",
+    "ratingScore": "898.94",
+    "avgPointsScored": "35.00",
+    "avgPointsConceded": "43.60",
+    "lastPlayedDaysAgo": 54
+   }
+  },
+  {
+   "key": "bwf-junaidi-arif",
+   "fullName": "Junaidi ARIF",
+   "email": "junaidi.arif@bwf.example",
+   "phone": "0970000072",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 38,
+    "totalWins": 13,
+    "totalLosses": 25,
+    "winRate": "34.21",
+    "ratingScore": "922.25",
+    "avgPointsScored": "41.29",
+    "avgPointsConceded": "44.87",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-kang-min-hyuk",
+   "fullName": "KANG Min Hyuk",
+   "email": "kang.min.hyuk@bwf.example",
+   "phone": "0970000073",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 18,
+    "totalWins": 12,
+    "totalLosses": 6,
+    "winRate": "66.67",
+    "ratingScore": "1067.37",
+    "avgPointsScored": "46.33",
+    "avgPointsConceded": "42.50",
+    "lastPlayedDaysAgo": 530
+   }
+  },
+  {
+   "key": "bwf-kim-hye-jeong",
+   "fullName": "KIM Hye Jeong",
+   "email": "kim.hye.jeong@bwf.example",
+   "phone": "0970000074",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 26,
+    "totalLosses": 8,
+    "winRate": "76.47",
+    "ratingScore": "1151.11",
+    "avgPointsScored": "46.82",
+    "avgPointsConceded": "41.79",
+    "lastPlayedDaysAgo": 199
+   }
+  },
+  {
+   "key": "bwf-kim-won-ho",
+   "fullName": "KIM Won Ho",
+   "email": "kim.won.ho@bwf.example",
+   "phone": "0970000075",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 62,
+    "totalWins": 52,
+    "totalLosses": 10,
+    "winRate": "83.87",
+    "ratingScore": "1232.95",
+    "avgPointsScored": "46.77",
+    "avgPointsConceded": "39.40",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-kong-hee-yong",
+   "fullName": "KONG Hee Yong",
+   "email": "kong.hee.yong@bwf.example",
+   "phone": "0970000076",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 29,
+    "totalWins": 22,
+    "totalLosses": 7,
+    "winRate": "75.86",
+    "ratingScore": "1136.98",
+    "avgPointsScored": "47.59",
+    "avgPointsConceded": "43.28",
+    "lastPlayedDaysAgo": 199
+   }
+  },
+  {
+   "key": "bwf-kai-wun-tee",
+   "fullName": "Kai Wun TEE",
+   "email": "kai.wun.tee@bwf.example",
+   "phone": "0970000077",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 53,
+    "totalWins": 35,
+    "totalLosses": 18,
+    "winRate": "66.04",
+    "ratingScore": "1104.56",
+    "avgPointsScored": "48.64",
+    "avgPointsConceded": "44.51",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-kenta-nishimoto",
+   "fullName": "Kenta NISHIMOTO",
+   "email": "kenta.nishimoto@bwf.example",
+   "phone": "0970000078",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 40,
+    "totalWins": 16,
+    "totalLosses": 24,
+    "winRate": "40.00",
+    "ratingScore": "947.31",
+    "avgPointsScored": "43.30",
+    "avgPointsConceded": "45.27",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-kie-nakanishi",
+   "fullName": "Kie NAKANISHI",
+   "email": "kie.nakanishi@bwf.example",
+   "phone": "0970000079",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 44,
+    "totalWins": 25,
+    "totalLosses": 19,
+    "winRate": "56.82",
+    "ratingScore": "1063.07",
+    "avgPointsScored": "39.66",
+    "avgPointsConceded": "38.34",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-kim-astrup",
+   "fullName": "Kim ASTRUP",
+   "email": "kim.astrup@bwf.example",
+   "phone": "0970000080",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 29,
+    "totalLosses": 19,
+    "winRate": "60.42",
+    "ratingScore": "1056.56",
+    "avgPointsScored": "46.40",
+    "avgPointsConceded": "43.48",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-kittinupong-kedren",
+   "fullName": "Kittinupong KEDREN",
+   "email": "kittinupong.kedren@bwf.example",
+   "phone": "0970000081",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 16,
+    "totalLosses": 16,
+    "winRate": "50.00",
+    "ratingScore": "960.58",
+    "avgPointsScored": "42.72",
+    "avgPointsConceded": "45.28",
+    "lastPlayedDaysAgo": 258
+   }
+  },
+  {
+   "key": "bwf-kodai-naraoka",
+   "fullName": "Kodai NARAOKA",
+   "email": "kodai.naraoka@bwf.example",
+   "phone": "0970000082",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 54,
+    "totalWins": 31,
+    "totalLosses": 23,
+    "winRate": "57.41",
+    "ratingScore": "1039.93",
+    "avgPointsScored": "40.24",
+    "avgPointsConceded": "39.35",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-koki-watanabe",
+   "fullName": "Koki WATANABE",
+   "email": "koki.watanabe@bwf.example",
+   "phone": "0970000083",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 45,
+    "totalWins": 23,
+    "totalLosses": 22,
+    "winRate": "51.11",
+    "ratingScore": "1011.49",
+    "avgPointsScored": "44.22",
+    "avgPointsConceded": "43.42",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-kunlavut-vitidsarn",
+   "fullName": "Kunlavut VITIDSARN",
+   "email": "kunlavut.vitidsarn@bwf.example",
+   "phone": "0970000084",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 78,
+    "totalWins": 55,
+    "totalLosses": 23,
+    "winRate": "70.51",
+    "ratingScore": "1152.48",
+    "avgPointsScored": "46.94",
+    "avgPointsConceded": "41.19",
+    "lastPlayedDaysAgo": 50
+   }
+  },
+  {
+   "key": "bwf-lai-shevon-jemie",
+   "fullName": "LAI Shevon Jemie",
+   "email": "lai.shevon.jemie@bwf.example",
+   "phone": "0970000085",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 54,
+    "totalWins": 29,
+    "totalLosses": 25,
+    "winRate": "53.70",
+    "ratingScore": "1015.71",
+    "avgPointsScored": "42.72",
+    "avgPointsConceded": "41.67",
+    "lastPlayedDaysAgo": 46
+   }
+  },
+  {
+   "key": "bwf-lee-cheuk-yiu",
+   "fullName": "LEE Cheuk Yiu",
+   "email": "lee.cheuk.yiu@bwf.example",
+   "phone": "0970000086",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 41,
+    "totalWins": 17,
+    "totalLosses": 24,
+    "winRate": "41.46",
+    "ratingScore": "969.94",
+    "avgPointsScored": "44.00",
+    "avgPointsConceded": "47.39",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-lee-chia-hsin",
+   "fullName": "LEE Chia Hsin",
+   "email": "lee.chia.hsin@bwf.example",
+   "phone": "0970000087",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 20,
+    "totalWins": 5,
+    "totalLosses": 15,
+    "winRate": "25.00",
+    "ratingScore": "875.74",
+    "avgPointsScored": "42.10",
+    "avgPointsConceded": "48.25",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-lee-jhe-huei",
+   "fullName": "LEE Jhe-Huei",
+   "email": "lee.jhe.huei@bwf.example",
+   "phone": "0970000088",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 53,
+    "totalWins": 24,
+    "totalLosses": 29,
+    "winRate": "45.28",
+    "ratingScore": "988.65",
+    "avgPointsScored": "43.89",
+    "avgPointsConceded": "44.04",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-lee-so-hee",
+   "fullName": "LEE So Hee",
+   "email": "lee.so.hee@bwf.example",
+   "phone": "0970000089",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 27,
+    "totalLosses": 16,
+    "winRate": "62.79",
+    "ratingScore": "1106.73",
+    "avgPointsScored": "42.05",
+    "avgPointsConceded": "37.40",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-li-shi-feng",
+   "fullName": "LI Shi Feng",
+   "email": "li.shi.feng@bwf.example",
+   "phone": "0970000090",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 52,
+    "totalWins": 31,
+    "totalLosses": 21,
+    "winRate": "59.62",
+    "ratingScore": "1048.42",
+    "avgPointsScored": "44.15",
+    "avgPointsConceded": "41.56",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-li-yi-jing",
+   "fullName": "LI Yi Jing",
+   "email": "li.yi.jing@bwf.example",
+   "phone": "0970000091",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 17,
+    "totalLosses": 15,
+    "winRate": "53.12",
+    "ratingScore": "997.30",
+    "avgPointsScored": "42.22",
+    "avgPointsConceded": "38.66",
+    "lastPlayedDaysAgo": 155
+   }
+  },
+  {
+   "key": "bwf-liang-wei-keng",
+   "fullName": "LIANG Wei Keng",
+   "email": "liang.wei.keng@bwf.example",
+   "phone": "0970000092",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 50,
+    "totalWins": 33,
+    "totalLosses": 17,
+    "winRate": "66.00",
+    "ratingScore": "1085.69",
+    "avgPointsScored": "44.96",
+    "avgPointsConceded": "42.32",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-lim-chiew-sien",
+   "fullName": "LIM Chiew Sien",
+   "email": "lim.chiew.sien@bwf.example",
+   "phone": "0970000093",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 28,
+    "totalWins": 5,
+    "totalLosses": 23,
+    "winRate": "17.86",
+    "ratingScore": "831.85",
+    "avgPointsScored": "37.25",
+    "avgPointsConceded": "46.18",
+    "lastPlayedDaysAgo": 117
+   }
+  },
+  {
+   "key": "bwf-lin-bing-wei",
+   "fullName": "LIN Bing-Wei",
+   "email": "lin.bing.wei@bwf.example",
+   "phone": "0970000094",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 8,
+    "totalWins": 3,
+    "totalLosses": 5,
+    "winRate": "37.50",
+    "ratingScore": "968.11",
+    "avgPointsScored": "45.25",
+    "avgPointsConceded": "46.62",
+    "lastPlayedDaysAgo": 111
+   }
+  },
+  {
+   "key": "bwf-lin-chun-yi",
+   "fullName": "LIN Chun-Yi",
+   "email": "lin.chun.yi@bwf.example",
+   "phone": "0970000095",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 59,
+    "totalWins": 32,
+    "totalLosses": 27,
+    "winRate": "54.24",
+    "ratingScore": "1028.12",
+    "avgPointsScored": "42.42",
+    "avgPointsConceded": "41.25",
+    "lastPlayedDaysAgo": 40
+   }
+  },
+  {
+   "key": "bwf-lin-hsiang-ti",
+   "fullName": "LIN Hsiang Ti",
+   "email": "lin.hsiang.ti@bwf.example",
+   "phone": "0970000096",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 10,
+    "totalLosses": 24,
+    "winRate": "29.41",
+    "ratingScore": "891.14",
+    "avgPointsScored": "37.09",
+    "avgPointsConceded": "43.41",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-lin-jhih-yun",
+   "fullName": "LIN Jhih Yun",
+   "email": "lin.jhih.yun@bwf.example",
+   "phone": "0970000097",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 36,
+    "totalWins": 8,
+    "totalLosses": 28,
+    "winRate": "22.22",
+    "ratingScore": "849.43",
+    "avgPointsScored": "39.14",
+    "avgPointsConceded": "47.36",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-lin-yu-chieh",
+   "fullName": "LIN Yu Chieh",
+   "email": "lin.yu.chieh@bwf.example",
+   "phone": "0970000098",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 26,
+    "totalWins": 6,
+    "totalLosses": 20,
+    "winRate": "23.08",
+    "ratingScore": "874.70",
+    "avgPointsScored": "39.50",
+    "avgPointsConceded": "46.73",
+    "lastPlayedDaysAgo": 53
+   }
+  },
+  {
+   "key": "bwf-liu-kuang-heng",
+   "fullName": "LIU Kuang Heng",
+   "email": "liu.kuang.heng@bwf.example",
+   "phone": "0970000099",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 21,
+    "totalLosses": 39,
+    "winRate": "35.00",
+    "ratingScore": "889.12",
+    "avgPointsScored": "43.27",
+    "avgPointsConceded": "44.62",
+    "lastPlayedDaysAgo": 2
+   }
+  },
+  {
+   "key": "bwf-liu-sheng-shu",
+   "fullName": "LIU Sheng Shu",
+   "email": "liu.sheng.shu@bwf.example",
+   "phone": "0970000100",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 49,
+    "totalLosses": 11,
+    "winRate": "81.67",
+    "ratingScore": "1224.42",
+    "avgPointsScored": "44.73",
+    "avgPointsConceded": "34.22",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-liu-yi",
+   "fullName": "LIU Yi",
+   "email": "liu.yi@bwf.example",
+   "phone": "0970000101",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 14,
+    "totalLosses": 25,
+    "winRate": "35.90",
+    "ratingScore": "941.78",
+    "avgPointsScored": "45.95",
+    "avgPointsConceded": "47.69",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-loh-kean-yew",
+   "fullName": "LOH Kean Yew",
+   "email": "loh.kean.yew@bwf.example",
+   "phone": "0970000102",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 45,
+    "totalWins": 27,
+    "totalLosses": 18,
+    "winRate": "60.00",
+    "ratingScore": "1056.72",
+    "avgPointsScored": "46.49",
+    "avgPointsConceded": "45.16",
+    "lastPlayedDaysAgo": 36
+   }
+  },
+  {
+   "key": "bwf-lu-guang-zu",
+   "fullName": "LU Guang Zu",
+   "email": "lu.guang.zu@bwf.example",
+   "phone": "0970000103",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 50,
+    "totalWins": 22,
+    "totalLosses": 28,
+    "winRate": "44.00",
+    "ratingScore": "954.71",
+    "avgPointsScored": "44.94",
+    "avgPointsConceded": "48.38",
+    "lastPlayedDaysAgo": 40
+   }
+  },
+  {
+   "key": "bwf-luo-xu-min",
+   "fullName": "LUO Xu Min",
+   "email": "luo.xu.min@bwf.example",
+   "phone": "0970000104",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 36,
+    "totalWins": 21,
+    "totalLosses": 15,
+    "winRate": "58.33",
+    "ratingScore": "1023.01",
+    "avgPointsScored": "41.42",
+    "avgPointsConceded": "36.36",
+    "lastPlayedDaysAgo": 111
+   }
+  },
+  {
+   "key": "bwf-lakshya-sen",
+   "fullName": "Lakshya SEN",
+   "email": "lakshya.sen@bwf.example",
+   "phone": "0970000105",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 26,
+    "totalLosses": 22,
+    "winRate": "54.17",
+    "ratingScore": "1023.98",
+    "avgPointsScored": "43.77",
+    "avgPointsConceded": "42.79",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-lanny-tria-mayasari",
+   "fullName": "Lanny Tria MAYASARI",
+   "email": "lanny.tria.mayasari@bwf.example",
+   "phone": "0970000106",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 12,
+    "totalWins": 2,
+    "totalLosses": 10,
+    "winRate": "16.67",
+    "ratingScore": "889.85",
+    "avgPointsScored": "41.67",
+    "avgPointsConceded": "49.33",
+    "lastPlayedDaysAgo": 173
+   }
+  },
+  {
+   "key": "bwf-lauren-lam",
+   "fullName": "Lauren LAM",
+   "email": "lauren.lam@bwf.example",
+   "phone": "0970000107",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 5,
+    "totalLosses": 19,
+    "winRate": "20.83",
+    "ratingScore": "828.21",
+    "avgPointsScored": "39.62",
+    "avgPointsConceded": "47.75",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-leo-rolly-carnando",
+   "fullName": "Leo Rolly CARNANDO",
+   "email": "leo.rolly.carnando@bwf.example",
+   "phone": "0970000108",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 31,
+    "totalWins": 11,
+    "totalLosses": 20,
+    "winRate": "35.48",
+    "ratingScore": "938.20",
+    "avgPointsScored": "44.84",
+    "avgPointsConceded": "46.65",
+    "lastPlayedDaysAgo": 111
+   }
+  },
+  {
+   "key": "bwf-line-christophersen",
+   "fullName": "Line CHRISTOPHERSEN",
+   "email": "line.christophersen@bwf.example",
+   "phone": "0970000109",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 9,
+    "totalLosses": 23,
+    "winRate": "28.12",
+    "ratingScore": "897.37",
+    "avgPointsScored": "41.50",
+    "avgPointsConceded": "46.88",
+    "lastPlayedDaysAgo": 5
+   }
+  },
+  {
+   "key": "bwf-line-hjmark-kjaersfeldt",
+   "fullName": "Line Højmark KJAERSFELDT",
+   "email": "line.hjmark.kjaersfeldt@bwf.example",
+   "phone": "0970000110",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 28,
+    "totalWins": 9,
+    "totalLosses": 19,
+    "winRate": "32.14",
+    "ratingScore": "908.89",
+    "avgPointsScored": "41.79",
+    "avgPointsConceded": "45.89",
+    "lastPlayedDaysAgo": 40
+   }
+  },
+  {
+   "key": "bwf-man-wei-chong",
+   "fullName": "MAN Wei Chong",
+   "email": "man.wei.chong@bwf.example",
+   "phone": "0970000111",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 53,
+    "totalWins": 35,
+    "totalLosses": 18,
+    "winRate": "66.04",
+    "ratingScore": "1104.56",
+    "avgPointsScored": "48.64",
+    "avgPointsConceded": "44.51",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-mads-vestergaard",
+   "fullName": "Mads VESTERGAARD",
+   "email": "mads.vestergaard@bwf.example",
+   "phone": "0970000112",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 12,
+    "totalLosses": 27,
+    "winRate": "30.77",
+    "ratingScore": "916.07",
+    "avgPointsScored": "43.36",
+    "avgPointsConceded": "48.10",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-mathias-christiansen",
+   "fullName": "Mathias CHRISTIANSEN",
+   "email": "mathias.christiansen@bwf.example",
+   "phone": "0970000113",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 21,
+    "totalLosses": 11,
+    "winRate": "65.62",
+    "ratingScore": "1111.07",
+    "avgPointsScored": "47.56",
+    "avgPointsConceded": "42.81",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-mayu-matsumoto",
+   "fullName": "Mayu MATSUMOTO",
+   "email": "mayu.matsumoto@bwf.example",
+   "phone": "0970000114",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 37,
+    "totalWins": 27,
+    "totalLosses": 10,
+    "winRate": "72.97",
+    "ratingScore": "1146.78",
+    "avgPointsScored": "44.19",
+    "avgPointsConceded": "38.84",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-michelle-li",
+   "fullName": "Michelle LI",
+   "email": "michelle.li@bwf.example",
+   "phone": "0970000115",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 36,
+    "totalWins": 16,
+    "totalLosses": 20,
+    "winRate": "44.44",
+    "ratingScore": "984.51",
+    "avgPointsScored": "44.33",
+    "avgPointsConceded": "45.06",
+    "lastPlayedDaysAgo": 12
+   }
+  },
+  {
+   "key": "bwf-ming-che-lu",
+   "fullName": "Ming Che LU",
+   "email": "ming.che.lu@bwf.example",
+   "phone": "0970000116",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 19,
+    "totalWins": 3,
+    "totalLosses": 16,
+    "winRate": "15.79",
+    "ratingScore": "888.55",
+    "avgPointsScored": "34.74",
+    "avgPointsConceded": "45.37",
+    "lastPlayedDaysAgo": 229
+   }
+  },
+  {
+   "key": "bwf-moh-reza-pahlevi-isfahani",
+   "fullName": "Moh Reza Pahlevi ISFAHANI",
+   "email": "moh.reza.pahlevi.isfahani@bwf.example",
+   "phone": "0970000117",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 51,
+    "totalWins": 24,
+    "totalLosses": 27,
+    "winRate": "47.06",
+    "ratingScore": "990.02",
+    "avgPointsScored": "42.75",
+    "avgPointsConceded": "44.71",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-muhammad-rian-ardianto",
+   "fullName": "Muhammad Rian ARDIANTO",
+   "email": "muhammad.rian.ardianto@bwf.example",
+   "phone": "0970000118",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 33,
+    "totalWins": 25,
+    "totalLosses": 8,
+    "winRate": "75.76",
+    "ratingScore": "1142.81",
+    "avgPointsScored": "48.18",
+    "avgPointsConceded": "42.88",
+    "lastPlayedDaysAgo": 312
+   }
+  },
+  {
+   "key": "bwf-muhammad-shohibul-fikri",
+   "fullName": "Muhammad Shohibul FIKRI",
+   "email": "muhammad.shohibul.fikri@bwf.example",
+   "phone": "0970000119",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 24,
+    "totalLosses": 15,
+    "winRate": "61.54",
+    "ratingScore": "1032.70",
+    "avgPointsScored": "45.41",
+    "avgPointsConceded": "41.90",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-ng-ka-long-angus",
+   "fullName": "NG Ka Long Angus",
+   "email": "ng.ka.long.angus@bwf.example",
+   "phone": "0970000120",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 49,
+    "totalWins": 19,
+    "totalLosses": 30,
+    "winRate": "38.78",
+    "ratingScore": "920.82",
+    "avgPointsScored": "42.08",
+    "avgPointsConceded": "45.73",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-natsu-saito",
+   "fullName": "Natsu SAITO",
+   "email": "natsu.saito@bwf.example",
+   "phone": "0970000121",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 32,
+    "totalWins": 18,
+    "totalLosses": 14,
+    "winRate": "56.25",
+    "ratingScore": "1054.79",
+    "avgPointsScored": "43.44",
+    "avgPointsConceded": "44.19",
+    "lastPlayedDaysAgo": 198
+   }
+  },
+  {
+   "key": "bwf-natsuki-nidaira",
+   "fullName": "Natsuki NIDAIRA",
+   "email": "natsuki.nidaira@bwf.example",
+   "phone": "0970000122",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 38,
+    "totalWins": 17,
+    "totalLosses": 21,
+    "winRate": "44.74",
+    "ratingScore": "978.28",
+    "avgPointsScored": "40.89",
+    "avgPointsConceded": "43.26",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-nicole-gonzales-chan",
+   "fullName": "Nicole Gonzales CHAN",
+   "email": "nicole.gonzales.chan@bwf.example",
+   "phone": "0970000123",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 39,
+    "totalWins": 19,
+    "totalLosses": 20,
+    "winRate": "48.72",
+    "ratingScore": "995.84",
+    "avgPointsScored": "42.72",
+    "avgPointsConceded": "43.72",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-nozomi-okuhara",
+   "fullName": "Nozomi OKUHARA",
+   "email": "nozomi.okuhara@bwf.example",
+   "phone": "0970000124",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 8,
+    "totalLosses": 16,
+    "winRate": "33.33",
+    "ratingScore": "932.84",
+    "avgPointsScored": "40.17",
+    "avgPointsConceded": "43.96",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-nur-izzuddin",
+   "fullName": "Nur IZZUDDIN",
+   "email": "nur.izzuddin@bwf.example",
+   "phone": "0970000125",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 55,
+    "totalWins": 36,
+    "totalLosses": 19,
+    "winRate": "65.45",
+    "ratingScore": "1097.33",
+    "avgPointsScored": "47.35",
+    "avgPointsConceded": "44.64",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-nur-mohd-azriyn-ayub-azriyn",
+   "fullName": "Nur Mohd Azriyn Ayub AZRIYN",
+   "email": "nur.mohd.azriyn.ayub.azriyn@bwf.example",
+   "phone": "0970000126",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 9,
+    "totalLosses": 25,
+    "winRate": "26.47",
+    "ratingScore": "881.37",
+    "avgPointsScored": "38.94",
+    "avgPointsConceded": "44.26",
+    "lastPlayedDaysAgo": 46
+   }
+  },
+  {
+   "key": "bwf-po-li-wei",
+   "fullName": "PO Li-Wei",
+   "email": "po.li.wei@bwf.example",
+   "phone": "0970000127",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 2,
+    "totalLosses": 22,
+    "winRate": "8.33",
+    "ratingScore": "772.40",
+    "avgPointsScored": "34.50",
+    "avgPointsConceded": "45.38",
+    "lastPlayedDaysAgo": 167
+   }
+  },
+  {
+   "key": "bwf-pakkapon-teeraratsakul",
+   "fullName": "Pakkapon TEERARATSAKUL",
+   "email": "pakkapon.teeraratsakul@bwf.example",
+   "phone": "0970000128",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 19,
+    "totalWins": 6,
+    "totalLosses": 13,
+    "winRate": "31.58",
+    "ratingScore": "911.25",
+    "avgPointsScored": "40.26",
+    "avgPointsConceded": "46.00",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-polina-buhrova",
+   "fullName": "Polina BUHROVA",
+   "email": "polina.buhrova@bwf.example",
+   "phone": "0970000129",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 37,
+    "totalWins": 1,
+    "totalLosses": 36,
+    "winRate": "2.70",
+    "ratingScore": "715.17",
+    "avgPointsScored": "30.65",
+    "avgPointsConceded": "44.22",
+    "lastPlayedDaysAgo": 11
+   }
+  },
+  {
+   "key": "bwf-pornpawee-chochuwong",
+   "fullName": "Pornpawee CHOCHUWONG",
+   "email": "pornpawee.chochuwong@bwf.example",
+   "phone": "0970000130",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 46,
+    "totalWins": 29,
+    "totalLosses": 17,
+    "winRate": "63.04",
+    "ratingScore": "1084.38",
+    "avgPointsScored": "43.93",
+    "avgPointsConceded": "39.78",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-presley-smith",
+   "fullName": "Presley SMITH",
+   "email": "presley.smith@bwf.example",
+   "phone": "0970000131",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 47,
+    "totalWins": 8,
+    "totalLosses": 39,
+    "winRate": "17.02",
+    "ratingScore": "807.54",
+    "avgPointsScored": "37.51",
+    "avgPointsConceded": "45.34",
+    "lastPlayedDaysAgo": 2
+   }
+  },
+  {
+   "key": "bwf-putri-kusuma-wardani",
+   "fullName": "Putri Kusuma WARDANI",
+   "email": "putri.kusuma.wardani@bwf.example",
+   "phone": "0970000132",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 45,
+    "totalWins": 25,
+    "totalLosses": 20,
+    "winRate": "55.56",
+    "ratingScore": "1043.30",
+    "avgPointsScored": "42.31",
+    "avgPointsConceded": "40.76",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-rasmus-gemke",
+   "fullName": "Rasmus GEMKE",
+   "email": "rasmus.gemke@bwf.example",
+   "phone": "0970000133",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 16,
+    "totalLosses": 32,
+    "winRate": "33.33",
+    "ratingScore": "905.52",
+    "avgPointsScored": "42.44",
+    "avgPointsConceded": "45.73",
+    "lastPlayedDaysAgo": 124
+   }
+  },
+  {
+   "key": "bwf-ratchanok-intanon",
+   "fullName": "Ratchanok INTANON",
+   "email": "ratchanok.intanon@bwf.example",
+   "phone": "0970000134",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 46,
+    "totalWins": 19,
+    "totalLosses": 27,
+    "winRate": "41.30",
+    "ratingScore": "975.59",
+    "avgPointsScored": "42.78",
+    "avgPointsConceded": "42.65",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-rin-iwanaga",
+   "fullName": "Rin IWANAGA",
+   "email": "rin.iwanaga@bwf.example",
+   "phone": "0970000135",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 44,
+    "totalWins": 25,
+    "totalLosses": 19,
+    "winRate": "56.82",
+    "ratingScore": "1063.07",
+    "avgPointsScored": "39.66",
+    "avgPointsConceded": "38.34",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-roy-king-yap",
+   "fullName": "Roy King YAP",
+   "email": "roy.king.yap@bwf.example",
+   "phone": "0970000136",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 38,
+    "totalWins": 13,
+    "totalLosses": 25,
+    "winRate": "34.21",
+    "ratingScore": "922.25",
+    "avgPointsScored": "41.29",
+    "avgPointsConceded": "44.87",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-ruttanapak-oupthong",
+   "fullName": "Ruttanapak OUPTHONG",
+   "email": "ruttanapak.oupthong@bwf.example",
+   "phone": "0970000137",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 46,
+    "totalWins": 22,
+    "totalLosses": 24,
+    "winRate": "47.83",
+    "ratingScore": "981.75",
+    "avgPointsScored": "44.20",
+    "avgPointsConceded": "44.83",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-seo-seung-jae",
+   "fullName": "SEO Seung Jae",
+   "email": "seo.seung.jae@bwf.example",
+   "phone": "0970000138",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 67,
+    "totalWins": 56,
+    "totalLosses": 11,
+    "winRate": "83.58",
+    "ratingScore": "1254.70",
+    "avgPointsScored": "46.88",
+    "avgPointsConceded": "39.04",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-shi-yu-qi",
+   "fullName": "SHI Yu Qi",
+   "email": "shi.yu.qi@bwf.example",
+   "phone": "0970000139",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 64,
+    "totalWins": 52,
+    "totalLosses": 12,
+    "winRate": "81.25",
+    "ratingScore": "1210.21",
+    "avgPointsScored": "47.23",
+    "avgPointsConceded": "39.48",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-soh-wooi-yik",
+   "fullName": "SOH Wooi Yik",
+   "email": "soh.wooi.yik@bwf.example",
+   "phone": "0970000140",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 62,
+    "totalWins": 40,
+    "totalLosses": 22,
+    "winRate": "64.52",
+    "ratingScore": "1102.27",
+    "avgPointsScored": "45.73",
+    "avgPointsConceded": "43.77",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-su-li-yang",
+   "fullName": "SU Li  Yang",
+   "email": "su.li.yang@bwf.example",
+   "phone": "0970000141",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 35,
+    "totalWins": 9,
+    "totalLosses": 26,
+    "winRate": "25.71",
+    "ratingScore": "860.16",
+    "avgPointsScored": "41.31",
+    "avgPointsConceded": "47.94",
+    "lastPlayedDaysAgo": 54
+   }
+  },
+  {
+   "key": "bwf-sung-shuo-yun",
+   "fullName": "SUNG Shuo Yun",
+   "email": "sung.shuo.yun@bwf.example",
+   "phone": "0970000142",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 59,
+    "totalWins": 12,
+    "totalLosses": 47,
+    "winRate": "20.34",
+    "ratingScore": "804.61",
+    "avgPointsScored": "36.51",
+    "avgPointsConceded": "44.66",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-sung-yu-hsuan",
+   "fullName": "SUNG Yu-Hsuan",
+   "email": "sung.yu.hsuan@bwf.example",
+   "phone": "0970000143",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 16,
+    "totalWins": 7,
+    "totalLosses": 9,
+    "winRate": "43.75",
+    "ratingScore": "960.06",
+    "avgPointsScored": "39.75",
+    "avgPointsConceded": "41.75",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-sabar-karyaman-gutama",
+   "fullName": "Sabar Karyaman GUTAMA",
+   "email": "sabar.karyaman.gutama@bwf.example",
+   "phone": "0970000144",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 51,
+    "totalWins": 24,
+    "totalLosses": 27,
+    "winRate": "47.06",
+    "ratingScore": "990.02",
+    "avgPointsScored": "42.75",
+    "avgPointsConceded": "44.71",
+    "lastPlayedDaysAgo": 22
+   }
+  },
+  {
+   "key": "bwf-sapsiree-taerattanachai",
+   "fullName": "Sapsiree TAERATTANACHAI",
+   "email": "sapsiree.taerattanachai@bwf.example",
+   "phone": "0970000145",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 17,
+    "totalLosses": 17,
+    "winRate": "50.00",
+    "ratingScore": "1048.99",
+    "avgPointsScored": "42.88",
+    "avgPointsConceded": "43.65",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-satwiksairaj-rankireddy",
+   "fullName": "Satwiksairaj RANKIREDDY",
+   "email": "satwiksairaj.rankireddy@bwf.example",
+   "phone": "0970000146",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 52,
+    "totalWins": 37,
+    "totalLosses": 15,
+    "winRate": "71.15",
+    "ratingScore": "1153.97",
+    "avgPointsScored": "47.02",
+    "avgPointsConceded": "42.71",
+    "lastPlayedDaysAgo": 36
+   }
+  },
+  {
+   "key": "bwf-sayaka-hobara",
+   "fullName": "Sayaka HOBARA",
+   "email": "sayaka.hobara@bwf.example",
+   "phone": "0970000147",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 28,
+    "totalWins": 12,
+    "totalLosses": 16,
+    "winRate": "42.86",
+    "ratingScore": "991.51",
+    "avgPointsScored": "42.43",
+    "avgPointsConceded": "42.89",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-sean-vendy",
+   "fullName": "Sean VENDY",
+   "email": "sean.vendy@bwf.example",
+   "phone": "0970000148",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 30,
+    "totalWins": 12,
+    "totalLosses": 18,
+    "winRate": "40.00",
+    "ratingScore": "976.10",
+    "avgPointsScored": "45.90",
+    "avgPointsConceded": "45.63",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-siti-fadia-silva-ramadhanti",
+   "fullName": "Siti Fadia Silva RAMADHANTI",
+   "email": "siti.fadia.silva.ramadhanti@bwf.example",
+   "phone": "0970000149",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 23,
+    "totalWins": 9,
+    "totalLosses": 14,
+    "winRate": "39.13",
+    "ratingScore": "984.55",
+    "avgPointsScored": "41.91",
+    "avgPointsConceded": "44.57",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-supak-jomkoh",
+   "fullName": "Supak JOMKOH",
+   "email": "supak.jomkoh@bwf.example",
+   "phone": "0970000150",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 14,
+    "totalLosses": 10,
+    "winRate": "58.33",
+    "ratingScore": "1048.70",
+    "avgPointsScored": "43.92",
+    "avgPointsConceded": "44.88",
+    "lastPlayedDaysAgo": 592
+   }
+  },
+  {
+   "key": "bwf-supanida-katethong",
+   "fullName": "Supanida KATETHONG",
+   "email": "supanida.katethong@bwf.example",
+   "phone": "0970000151",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 40,
+    "totalWins": 18,
+    "totalLosses": 22,
+    "winRate": "45.00",
+    "ratingScore": "966.71",
+    "avgPointsScored": "40.55",
+    "avgPointsConceded": "44.40",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-supissara-paewsampran",
+   "fullName": "Supissara PAEWSAMPRAN",
+   "email": "supissara.paewsampran@bwf.example",
+   "phone": "0970000152",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 66,
+    "totalWins": 45,
+    "totalLosses": 21,
+    "winRate": "68.18",
+    "ratingScore": "1130.40",
+    "avgPointsScored": "46.94",
+    "avgPointsConceded": "42.33",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-tan-ning",
+   "fullName": "TAN Ning",
+   "email": "tan.ning@bwf.example",
+   "phone": "0970000153",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 49,
+    "totalLosses": 11,
+    "winRate": "81.67",
+    "ratingScore": "1224.42",
+    "avgPointsScored": "44.73",
+    "avgPointsConceded": "34.22",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-tan-pearly",
+   "fullName": "TAN Pearly",
+   "email": "tan.pearly@bwf.example",
+   "phone": "0970000154",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 47,
+    "totalWins": 27,
+    "totalLosses": 20,
+    "winRate": "57.45",
+    "ratingScore": "1080.82",
+    "avgPointsScored": "44.79",
+    "avgPointsConceded": "43.96",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-tan-wee-kiong",
+   "fullName": "TAN Wee Kiong",
+   "email": "tan.wee.kiong@bwf.example",
+   "phone": "0970000155",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 34,
+    "totalWins": 9,
+    "totalLosses": 25,
+    "winRate": "26.47",
+    "ratingScore": "881.37",
+    "avgPointsScored": "38.94",
+    "avgPointsConceded": "44.26",
+    "lastPlayedDaysAgo": 46
+   }
+  },
+  {
+   "key": "bwf-tang-chun-man",
+   "fullName": "TANG Chun Man",
+   "email": "tang.chun.man@bwf.example",
+   "phone": "0970000156",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 25,
+    "totalLosses": 18,
+    "winRate": "58.14",
+    "ratingScore": "1056.02",
+    "avgPointsScored": "45.72",
+    "avgPointsConceded": "44.12",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-thinaah-muralitharan",
+   "fullName": "THINAAH Muralitharan",
+   "email": "thinaah.muralitharan@bwf.example",
+   "phone": "0970000157",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 47,
+    "totalWins": 27,
+    "totalLosses": 20,
+    "winRate": "57.45",
+    "ratingScore": "1080.82",
+    "avgPointsScored": "44.79",
+    "avgPointsConceded": "43.96",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-toh-ee-wei",
+   "fullName": "TOH Ee Wei",
+   "email": "toh.ee.wei@bwf.example",
+   "phone": "0970000158",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 60,
+    "totalWins": 39,
+    "totalLosses": 21,
+    "winRate": "65.00",
+    "ratingScore": "1124.38",
+    "avgPointsScored": "42.97",
+    "avgPointsConceded": "39.22",
+    "lastPlayedDaysAgo": 162
+   }
+  },
+  {
+   "key": "bwf-tse-ying-suet",
+   "fullName": "TSE Ying Suet",
+   "email": "tse.ying.suet@bwf.example",
+   "phone": "0970000159",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 43,
+    "totalWins": 25,
+    "totalLosses": 18,
+    "winRate": "58.14",
+    "ratingScore": "1056.02",
+    "avgPointsScored": "45.72",
+    "avgPointsConceded": "44.12",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-takuro-hoki",
+   "fullName": "Takuro HOKI",
+   "email": "takuro.hoki@bwf.example",
+   "phone": "0970000160",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 40,
+    "totalWins": 24,
+    "totalLosses": 16,
+    "winRate": "60.00",
+    "ratingScore": "1063.86",
+    "avgPointsScored": "45.05",
+    "avgPointsConceded": "42.52",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-thom-gicquel",
+   "fullName": "Thom GICQUEL",
+   "email": "thom.gicquel@bwf.example",
+   "phone": "0970000161",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 49,
+    "totalWins": 28,
+    "totalLosses": 21,
+    "winRate": "57.14",
+    "ratingScore": "1058.28",
+    "avgPointsScored": "46.37",
+    "avgPointsConceded": "43.82",
+    "lastPlayedDaysAgo": 30
+   }
+  },
+  {
+   "key": "bwf-thuy-linh-nguyen",
+   "fullName": "Thuy Linh NGUYEN",
+   "email": "thuy.linh.nguyen@bwf.example",
+   "phone": "0970000162",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 9,
+    "totalLosses": 15,
+    "winRate": "37.50",
+    "ratingScore": "929.84",
+    "avgPointsScored": "38.38",
+    "avgPointsConceded": "41.50",
+    "lastPlayedDaysAgo": 40
+   }
+  },
+  {
+   "key": "bwf-toma-junior-popov",
+   "fullName": "Toma Junior POPOV",
+   "email": "toma.junior.popov@bwf.example",
+   "phone": "0970000163",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 90,
+    "totalWins": 26,
+    "totalLosses": 64,
+    "winRate": "28.89",
+    "ratingScore": "847.33",
+    "avgPointsScored": "42.61",
+    "avgPointsConceded": "46.96",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-tomoka-miyazaki",
+   "fullName": "Tomoka MIYAZAKI",
+   "email": "tomoka.miyazaki@bwf.example",
+   "phone": "0970000164",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 40,
+    "totalWins": 20,
+    "totalLosses": 20,
+    "winRate": "50.00",
+    "ratingScore": "1013.47",
+    "avgPointsScored": "42.00",
+    "avgPointsConceded": "41.95",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-wang-chang",
+   "fullName": "WANG Chang",
+   "email": "wang.chang@bwf.example",
+   "phone": "0970000165",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 52,
+    "totalWins": 35,
+    "totalLosses": 17,
+    "winRate": "67.31",
+    "ratingScore": "1110.66",
+    "avgPointsScored": "45.19",
+    "avgPointsConceded": "42.19",
+    "lastPlayedDaysAgo": 23
+   }
+  },
+  {
+   "key": "bwf-wang-chi-lin",
+   "fullName": "WANG Chi-Lin",
+   "email": "wang.chi.lin@bwf.example",
+   "phone": "0970000166",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 48,
+    "totalWins": 20,
+    "totalLosses": 28,
+    "winRate": "41.67",
+    "ratingScore": "950.97",
+    "avgPointsScored": "44.44",
+    "avgPointsConceded": "47.02",
+    "lastPlayedDaysAgo": 27
+   }
+  },
+  {
+   "key": "bwf-wang-tzu-wei",
+   "fullName": "WANG Tzu Wei",
+   "email": "wang.tzu.wei@bwf.example",
+   "phone": "0970000167",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 55,
+    "totalWins": 15,
+    "totalLosses": 40,
+    "winRate": "27.27",
+    "ratingScore": "858.38",
+    "avgPointsScored": "41.44",
+    "avgPointsConceded": "46.49",
+    "lastPlayedDaysAgo": 26
+   }
+  },
+  {
+   "key": "bwf-wang-zhi-yi",
+   "fullName": "WANG Zhi Yi",
+   "email": "wang.zhi.yi@bwf.example",
+   "phone": "0970000168",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 59,
+    "totalWins": 43,
+    "totalLosses": 16,
+    "winRate": "72.88",
+    "ratingScore": "1209.68",
+    "avgPointsScored": "42.69",
+    "avgPointsConceded": "36.76",
+    "lastPlayedDaysAgo": 37
+   }
+  },
+  {
+   "key": "bwf-wei-ya-xin",
+   "fullName": "WEI Ya Xin",
+   "email": "wei.ya.xin@bwf.example",
+   "phone": "0970000169",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 77,
+    "totalWins": 55,
+    "totalLosses": 22,
+    "winRate": "71.43",
+    "ratingScore": "1164.35",
+    "avgPointsScored": "45.10",
+    "avgPointsConceded": "38.45",
+    "lastPlayedDaysAgo": 123
+   }
+  },
+  {
+   "key": "bwf-weng-hong-yang",
+   "fullName": "WENG Hong Yang",
+   "email": "weng.hong.yang@bwf.example",
+   "phone": "0970000170",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 45,
+    "totalWins": 25,
+    "totalLosses": 20,
+    "winRate": "55.56",
+    "ratingScore": "1034.60",
+    "avgPointsScored": "43.38",
+    "avgPointsConceded": "41.71",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-wong-tien-ci",
+   "fullName": "WONG Tien Ci",
+   "email": "wong.tien.ci@bwf.example",
+   "phone": "0970000171",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 28,
+    "totalWins": 5,
+    "totalLosses": 23,
+    "winRate": "17.86",
+    "ratingScore": "831.85",
+    "avgPointsScored": "37.25",
+    "avgPointsConceded": "46.18",
+    "lastPlayedDaysAgo": 117
+   }
+  },
+  {
+   "key": "bwf-wu-guan-xun",
+   "fullName": "WU Guan Xun",
+   "email": "wu.guan.xun@bwf.example",
+   "phone": "0970000172",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 12,
+    "totalWins": 2,
+    "totalLosses": 10,
+    "winRate": "16.67",
+    "ratingScore": "869.24",
+    "avgPointsScored": "43.25",
+    "avgPointsConceded": "52.25",
+    "lastPlayedDaysAgo": 34
+   }
+  },
+  {
+   "key": "bwf-wu-hsuan-yi",
+   "fullName": "WU Hsuan-Yi",
+   "email": "wu.hsuan.yi@bwf.example",
+   "phone": "0970000173",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 20,
+    "totalWins": 2,
+    "totalLosses": 18,
+    "winRate": "10.00",
+    "ratingScore": "834.24",
+    "avgPointsScored": "42.60",
+    "avgPointsConceded": "50.45",
+    "lastPlayedDaysAgo": 8
+   }
+  },
+  {
+   "key": "bwf-yang-ching-tun",
+   "fullName": "YANG Ching Tun",
+   "email": "yang.ching.tun@bwf.example",
+   "phone": "0970000174",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 31,
+    "totalWins": 7,
+    "totalLosses": 24,
+    "winRate": "22.58",
+    "ratingScore": "850.08",
+    "avgPointsScored": "34.42",
+    "avgPointsConceded": "43.81",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-yang-chu-yun",
+   "fullName": "YANG Chu Yun",
+   "email": "yang.chu.yun@bwf.example",
+   "phone": "0970000175",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 21,
+    "totalWins": 2,
+    "totalLosses": 19,
+    "winRate": "9.52",
+    "ratingScore": "815.93",
+    "avgPointsScored": "43.14",
+    "avgPointsConceded": "50.81",
+    "lastPlayedDaysAgo": 8
+   }
+  },
+  {
+   "key": "bwf-yang-po-han",
+   "fullName": "YANG Po Han",
+   "email": "yang.po.han@bwf.example",
+   "phone": "0970000176",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 27,
+    "totalWins": 8,
+    "totalLosses": 19,
+    "winRate": "29.63",
+    "ratingScore": "895.94",
+    "avgPointsScored": "42.44",
+    "avgPointsConceded": "45.70",
+    "lastPlayedDaysAgo": 165
+   }
+  },
+  {
+   "key": "bwf-yang-po-hsuan",
+   "fullName": "YANG Po-Hsuan",
+   "email": "yang.po.hsuan@bwf.example",
+   "phone": "0970000177",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 87,
+    "totalWins": 37,
+    "totalLosses": 50,
+    "winRate": "42.53",
+    "ratingScore": "938.15",
+    "avgPointsScored": "43.11",
+    "avgPointsConceded": "44.09",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-ye-hong-wei",
+   "fullName": "YE Hong Wei",
+   "email": "ye.hong.wei@bwf.example",
+   "phone": "0970000178",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 46,
+    "totalWins": 22,
+    "totalLosses": 24,
+    "winRate": "47.83",
+    "ratingScore": "1017.60",
+    "avgPointsScored": "42.07",
+    "avgPointsConceded": "43.15",
+    "lastPlayedDaysAgo": 32
+   }
+  },
+  {
+   "key": "bwf-yu-chien-hui",
+   "fullName": "YU Chien Hui",
+   "email": "yu.chien.hui@bwf.example",
+   "phone": "0970000179",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 21,
+    "totalWins": 2,
+    "totalLosses": 19,
+    "winRate": "9.52",
+    "ratingScore": "826.18",
+    "avgPointsScored": "34.67",
+    "avgPointsConceded": "45.52",
+    "lastPlayedDaysAgo": 228
+   }
+  },
+  {
+   "key": "bwf-yevheniia-kantemyr",
+   "fullName": "Yevheniia KANTEMYR",
+   "email": "yevheniia.kantemyr@bwf.example",
+   "phone": "0970000180",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 24,
+    "totalWins": 0,
+    "totalLosses": 24,
+    "winRate": "0.00",
+    "ratingScore": "736.91",
+    "avgPointsScored": "29.75",
+    "avgPointsConceded": "45.08",
+    "lastPlayedDaysAgo": 26
+   }
+  },
+  {
+   "key": "bwf-yugo-kobayashi",
+   "fullName": "Yugo KOBAYASHI",
+   "email": "yugo.kobayashi@bwf.example",
+   "phone": "0970000181",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 40,
+    "totalWins": 24,
+    "totalLosses": 16,
+    "winRate": "60.00",
+    "ratingScore": "1063.86",
+    "avgPointsScored": "45.05",
+    "avgPointsConceded": "42.52",
+    "lastPlayedDaysAgo": 39
+   }
+  },
+  {
+   "key": "bwf-yuichi-shimogami",
+   "fullName": "Yuichi SHIMOGAMI",
+   "email": "yuichi.shimogami@bwf.example",
+   "phone": "0970000182",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 28,
+    "totalWins": 12,
+    "totalLosses": 16,
+    "winRate": "42.86",
+    "ratingScore": "991.51",
+    "avgPointsScored": "42.43",
+    "avgPointsConceded": "42.89",
+    "lastPlayedDaysAgo": 33
+   }
+  },
+  {
+   "key": "bwf-yuki-fukushima",
+   "fullName": "Yuki FUKUSHIMA",
+   "email": "yuki.fukushima@bwf.example",
+   "phone": "0970000183",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 37,
+    "totalWins": 27,
+    "totalLosses": 10,
+    "winRate": "72.97",
+    "ratingScore": "1146.78",
+    "avgPointsScored": "44.19",
+    "avgPointsConceded": "38.84",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-yushi-tanaka",
+   "fullName": "Yushi TANAKA",
+   "email": "yushi.tanaka@bwf.example",
+   "phone": "0970000184",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "single",
+   "statistics": {
+    "totalMatches": 38,
+    "totalWins": 11,
+    "totalLosses": 27,
+    "winRate": "28.95",
+    "ratingScore": "894.95",
+    "avgPointsScored": "39.08",
+    "avgPointsConceded": "44.21",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-zhang-chi",
+   "fullName": "ZHANG Chi",
+   "email": "zhang.chi@bwf.example",
+   "phone": "0970000185",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 59,
+    "totalWins": 34,
+    "totalLosses": 25,
+    "winRate": "57.63",
+    "ratingScore": "1057.47",
+    "avgPointsScored": "44.61",
+    "avgPointsConceded": "43.03",
+    "lastPlayedDaysAgo": 29
+   }
+  },
+  {
+   "key": "bwf-zhang-shu-xian",
+   "fullName": "ZHANG Shu Xian",
+   "email": "zhang.shu.xian@bwf.example",
+   "phone": "0970000186",
+   "gender": "female",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 41,
+    "totalWins": 27,
+    "totalLosses": 14,
+    "winRate": "65.85",
+    "ratingScore": "1133.19",
+    "avgPointsScored": "45.54",
+    "avgPointsConceded": "40.83",
+    "lastPlayedDaysAgo": 25
+   }
+  },
+  {
+   "key": "bwf-zhi-yi-chen",
+   "fullName": "ZHI YI CHEN",
+   "email": "zhi.yi.chen@bwf.example",
+   "phone": "0970000187",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "double",
+   "statistics": {
+    "totalMatches": 27,
+    "totalWins": 1,
+    "totalLosses": 26,
+    "winRate": "3.70",
+    "ratingScore": "764.56",
+    "avgPointsScored": "33.70",
+    "avgPointsConceded": "45.74",
+    "lastPlayedDaysAgo": 4
+   }
+  },
+  {
+   "key": "bwf-zhu-yi-jun",
+   "fullName": "ZHU Yi Jun",
+   "email": "zhu.yi.jun@bwf.example",
+   "phone": "0970000188",
+   "gender": "male",
+   "skillLevel": "professional",
+   "preferredPlayType": "mixed",
+   "statistics": {
+    "totalMatches": 10,
+    "totalWins": 5,
+    "totalLosses": 5,
+    "winRate": "50.00",
+    "ratingScore": "987.94",
+    "avgPointsScored": "42.60",
+    "avgPointsConceded": "41.90",
+    "lastPlayedDaysAgo": 356
+   }
+  }
+ ]
+}
