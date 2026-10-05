@@ -1,0 +1,161 @@
+===============================================================================
+2.2.6 - TÍNH TOÁN ĐIỂM XẾP HẠNG KỸ NĂNG CỦA NGƯỜI CHƠI
+Giao diện: không có (chạy nền)
+API: không có endpoint công khai - chạy khi trận được xác nhận ở 2.2.2
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Một con số duy nhất thể hiện trình độ, tự điều chỉnh theo kết quả thi đấu.
+
+KHÔNG mở endpoint POST /api/v1/ratings/calculate công khai. Để người dùng tự
+gọi là mở đường cho họ làm hỏng dữ liệu của chính mình và của người khác.
+
+
+2. VÌ SAO CHỌN ELO
+-------------------------------------------------------------------------------
+  Phương án   Ưu                              Nhược                  Kết luận
+  ---------------------------------------------------------------------------
+  Elo         Đơn giản, giải thích được,      Không mô hình hoá      CHỌN
+              kiểm chứng suốt 60 năm           độ bất định
+  Glicko-2    Có thêm RD và biến động          Phức tạp, khó giải     Hướng mở
+                                               thích trong báo cáo    rộng
+  TrueSkill   Thiết kế sẵn cho nhiều người     Cần thư viện ngoài,    Quá mức
+                                               toán Bayes nặng
+
+Với một đồ án, GIẢI THÍCH ĐƯỢC quan trọng hơn TINH VI. Elo viết được trong 20
+dòng, vẽ được ra giấy khi bảo vệ, và người dùng hiểu được vì sao điểm mình tăng.
+
+
+3. CÔNG THỨC
+-------------------------------------------------------------------------------
+Điểm kỳ vọng của đội 1:
+
+    E1 = 1 / (1 + 10 ^ ((R2 - R1) / 400))
+
+Điểm mới:
+
+    R' = R + K * (S - E)
+    S  = 1 nếu thắng, 0 nếu thua
+
+Ý nghĩa hằng số 400: chênh 400 điểm thì bên mạnh có xác suất thắng khoảng 91%.
+Giữ nguyên hằng số chuẩn của Elo, không tự chế.
+
+
+4. ÁP DỤNG CHO ĐÁNH ĐÔI
+-------------------------------------------------------------------------------
+Cầu lông phần lớn là đánh đôi, mà Elo gốc dành cho một-đấu-một.
+
+    R_đội = (R_a + R_b) / 2        điểm đội là trung bình hai thành viên
+    delta = K * (S - E_đội)        tính một lần cho cả đội
+    R_a'  = R_a + delta
+    R_b'  = R_b + delta            cả hai nhận CÙNG một mức thay đổi
+
+Tổng điểm toàn hệ thống được bảo toàn: đội thắng cộng 2*delta, đội thua trừ
+2*delta.
+
+HẠN CHẾ PHẢI NÓI RÕ TRONG BÁO CÁO: cách này không tách được đóng góp của từng
+người. Người yếu ghép với người giỏi sẽ tăng điểm nhanh hơn thực lực. Muốn xử
+lý đúng thì cần TrueSkill. Ghi nhận là giới hạn đã biết, không giấu.
+
+
+5. HỆ SỐ K THAY ĐỔI THEO KINH NGHIỆM
+-------------------------------------------------------------------------------
+  Số trận đã chơi   K    Lý do
+  ---------------------------------------------------------------------------
+  0 - 9             40   Người mới cần hội tụ nhanh về đúng trình độ
+  10 - 29           24   Giai đoạn ổn định dần
+  >= 30             16   Điểm đã đáng tin, một trận không làm xáo trộn
+
+Nếu hai đội có K khác nhau (một đội toàn người mới), lấy K CỦA TỪNG NGƯỜI chứ
+không lấy K chung. Người mới biến động mạnh, người cũ biến động nhẹ, trong
+cùng một trận.
+
+Khi đó tổng điểm KHÔNG còn bảo toàn tuyệt đối - chấp nhận được, nên ghi chú.
+
+
+6. CÁC THAM SỐ KHÁC
+-------------------------------------------------------------------------------
+  Điểm khởi tạo      1000    Khớp player_statistics.rating_score DEFAULT 1000
+  Sàn điểm           100     Không cho về 0 hay âm, tránh số vô nghĩa
+  Trần điểm          không   Để tự nhiên
+  Số trận tạm tính   5       Hiện nhãn "Điểm tạm tính", loại khỏi phân cụm
+
+
+7. THỨ TỰ TÍNH TOÁN - CHỖ DỄ SAI NHẤT
+-------------------------------------------------------------------------------
+Điểm PHỤ THUỘC THỨ TỰ TRẬN. Tính trận ngày 10 trước trận ngày 5 sẽ ra kết quả
+khác hoàn toàn.
+
+  Tính tăng dần     LUÔN theo thứ tự confirmed_at tăng dần
+  Tính lại toàn bộ  XOÁ HẾT và chạy lại từ trận đầu tiên theo thứ tự thời
+                    gian, KHÔNG vá từng phần
+
+
+8. CHỐNG TÍNH HAI LẦN
+-------------------------------------------------------------------------------
+Cột matches.rating_applied_at (migration V15).
+
+  Job chỉ xử lý trận có rating_applied_at IS NULL
+  Đặt giá trị NGAY TRONG CÙNG TRANSACTION với việc cộng điểm
+
+Không có cột này thì job chạy lại lần hai sẽ cộng điểm HAI LẦN cho cùng một
+trận - lỗi rất khó phát hiện vì không có gì báo sai, số vẫn "trông hợp lý".
+
+Index hỗ trợ:
+  CREATE INDEX matches_pending_rating_idx ON matches (scheduled_at)
+      WHERE rating_applied_at IS NULL;
+
+
+9. CÓ TÍNH ĐẾN CÁCH BIỆT ĐIỂM SỐ KHÔNG
+-------------------------------------------------------------------------------
+Thắng 21-5 và thắng 21-19 rất khác nhau về trình độ, nhưng Elo gốc coi như
+nhau.
+
+KHUYẾN NGHỊ: bản đầu KHÔNG dùng. Thêm hệ số cách biệt làm công thức khó giải
+thích và khó kiểm chứng, trong khi lợi ích chưa rõ.
+
+Nếu muốn mở rộng:
+    mov    = |điểm_thắng - điểm_thua| / (điểm_thắng + điểm_thua)
+    hệ_số  = 1 + 0.5 * mov                      nằm trong [1.0, 1.5]
+    delta  = K * hệ_số * (S - E)
+
+Nếu làm, phải chạy CẢ HAI phiên bản trên dữ liệu mô phỏng và so xem bản nào
+khôi phục nhãn thật tốt hơn. Đó chính là một kết quả nghiên cứu đáng viết vào
+báo cáo.
+
+
+10. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  player_statistics       SỬA   rating_score
+  player_rating_history   THÊM 1 dòng / người / trận
+    user_id, match_id
+    old_rating, new_rating, change_amount
+    reason = 'match_result'
+  matches                 SỬA   rating_applied_at = now()
+
+player_rating_history cho phép dựng biểu đồ tiến bộ (2.2.10) và TÍNH LẠI TỪ
+ĐẦU khi cần kiểm chứng. Bảng này chính là bằng chứng để bảo vệ đồ án.
+
+
+11. KIỂM CHỨNG CÔNG THỨC
+-------------------------------------------------------------------------------
+Bộ dữ liệu BWF đã nạp sẵn có điểm Elo tính trước bằng script Python
+(data/bwf-to-seed.py). Khi cài đặt công thức bằng Java, kết quả PHẢI TRÙNG với
+dữ liệu đó.
+
+Một dấu hiệu kiểm chứng: người có điểm cao nhất trong bộ BWF là AN Se Young,
+đúng là tay vợt nữ số 1 thế giới ngoài đời. Công thức áp lên dữ liệu thật mà
+xếp đúng thứ hạng thực tế - đó là bằng chứng công thức chạy đúng.
+
+
+12. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/match/EloRatingService.java
+  backend/src/main/java/com/courtly/job/RatingCalculationJob.java
+  backend/src/test/java/com/courtly/service/match/EloRatingServiceTest.java
+
+Test bắt buộc: so kết quả Java với vài dòng mẫu trong bwf-players.json.

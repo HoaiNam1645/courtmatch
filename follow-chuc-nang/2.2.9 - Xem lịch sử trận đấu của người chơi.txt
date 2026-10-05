@@ -1,0 +1,144 @@
+===============================================================================
+2.2.9 - XEM LỊCH SỬ TRẬN ĐẤU CỦA NGƯỜI CHƠI
+Giao diện: /matches  và  /matches/:matchId
+API: GET /api/v1/users/me/matches                             Cần đăng nhập
+     GET /api/v1/matches/{id}
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Danh sách trận đã chơi, mới nhất trước.
+
+Ghi chú: chức năng 2.2.42 trong chuc-nang.text có TIÊU ĐỀ TRÙNG HỆT chức năng
+này. Hai mã số, một cài đặt. Nhóm 2.2.1-2.2.10 nhìn từ góc độ đường ống dữ
+liệu, nhóm 2.2.37-2.2.42 nhìn từ góc độ người dùng. Không viết code hai lần.
+
+
+2. THAM SỐ TRUY VẤN
+-------------------------------------------------------------------------------
+  GET /api/v1/users/me/matches?page=0&size=20&status=completed&type=double
+
+  Tham số   Mặc định   Giá trị hợp lệ
+  ---------------------------------------------------------------------------
+  page      0
+  size      20         tối đa 100 theo quy tắc chung của dự án
+  status    tất cả     scheduled / completed / disputed / cancelled
+  type      tất cả     single / double / mixed_double
+
+Sắp xếp: scheduled_at giảm dần. Trận chưa có scheduled_at xếp theo created_at.
+
+
+3. QUYỀN XEM - 404 CHỨ KHÔNG PHẢI 403
+-------------------------------------------------------------------------------
+Chi tiết một trận chỉ người THAM GIA trận đó mới xem được. Người ngoài nhận
+404, KHÔNG phải 403.
+
+Cùng nguyên tắc đã áp dụng ở chi tiết đơn đặt sân (2.1.29) và chi tiết thanh
+toán (2.1.34): không tiết lộ trận có tồn tại hay không.
+
+Trả 403 là gián tiếp xác nhận "trận này có thật, chỉ là bạn không được xem" -
+đủ để dò ra ai chơi với ai.
+
+
+4. MỖI DÒNG TRONG DANH SÁCH
+-------------------------------------------------------------------------------
+{
+  "id": "...",
+  "matchType": "double",
+  "scheduledAt": "2026-10-02T12:00:00Z",
+  "venueName": "Sân Cầu Lông Hòa Cường",
+  "myTeamNo": 1,
+  "won": true,
+  "scoreSummary": "2-1",
+  "games": [[21,18],[19,21],[21,17]],
+  "teammates": [{ "id": "...", "fullName": "...", "avatarUrl": "..." }],
+  "opponents": [{ "id": "...", "fullName": "...", "avatarUrl": "..." }],
+  "ratingChange": 12.4,
+  "status": "completed",
+  "needsMyConfirmation": false
+}
+
+
+5. HAI TRƯỜNG ĐÁNG CHÚ Ý
+-------------------------------------------------------------------------------
+ratingChange
+  Lấy từ player_rating_history.change_amount của CHÍNH người đang đăng nhập
+  trong trận đó. Cho người dùng thấy TRẬN NÀY ẢNH HƯỞNG GÌ TỚI ĐIỂM CỦA MÌNH.
+
+  Đây là thứ khiến hệ thống điểm trở nên minh bạch thay vì một hộp đen. Không
+  có nó thì người dùng chỉ thấy điểm nhảy mà không hiểu vì sao.
+
+  NULL khi trận chưa được tính điểm (status khác completed).
+
+needsMyConfirmation
+  true khi:  match_players.result_confirmed_at IS NULL
+         VÀ  match_players.result_disputed_at IS NULL
+         VÀ  matches.status = 'scheduled'
+         VÀ  dòng đó là của người đang đăng nhập
+
+  Để giao diện làm nổi bật những trận đang chờ mình bấm. Không có trường này
+  thì người dùng không biết mình đang CHẶN DỮ LIỆU của người khác.
+
+
+6. TRÁNH N+1 - PHẦN KỸ THUẬT QUAN TRỌNG NHẤT
+-------------------------------------------------------------------------------
+Một trận cần: thông tin sân, danh sách người chơi kèm tên và ảnh, các set,
+kết quả, thay đổi điểm.
+
+Danh sách 20 trận mà nạp lười sẽ thành HƠN 100 TRUY VẤN.
+
+Cách làm đúng - giống chi tiết sân (2.1.18): vài truy vấn CÓ CHỦ ĐÍCH, gom
+theo lô, rồi nhóm ở Java.
+
+  Truy vấn 1   lấy 20 matches (kèm venue qua JOIN)
+  Truy vấn 2   lấy TOÀN BỘ match_players của 20 match_id đó, trong MỘT câu
+               (JOIN users để lấy fullName, avatarUrl)
+  Truy vấn 3   lấy toàn bộ match_games của 20 match_id
+  Truy vấn 4   lấy toàn bộ match_results của 20 match_id
+  Truy vấn 5   lấy player_rating_history của tôi cho 20 match_id
+
+  -> 5 truy vấn cố định, không phụ thuộc số dòng.
+
+
+7. scoreSummary TÍNH THẾ NÀO
+-------------------------------------------------------------------------------
+Đếm số set mỗi đội thắng, viết theo GÓC NHÌN CỦA NGƯỜI ĐANG XEM:
+
+  myTeamNo = 1, thắng 2 set, thua 1  ->  "2-1"
+  myTeamNo = 2, thắng 1 set, thua 2  ->  "1-2"
+
+Số đầu luôn là của mình. Người dùng không phải tự suy luận mình là đội mấy.
+
+
+8. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  matches, match_players, match_games, match_results
+  venues               lấy tên sân
+  users                lấy tên và ảnh người chơi
+  player_rating_history lấy ratingChange
+
+Chức năng này CHỈ ĐỌC, không ghi gì.
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+  NOT_FOUND      404   Trận không tồn tại HOẶC mình không tham gia
+
+Danh sách rỗng trả mảng rỗng, không phải 404.
+
+
+10. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/match/MatchController.java
+  backend/src/main/java/com/courtly/api/match/dto/MatchSummaryResponse.java
+  backend/src/main/java/com/courtly/api/match/dto/MatchDetailResponse.java
+  backend/src/main/java/com/courtly/service/match/MatchQueryService.java
+  user-web/src/api/matches.js
+  user-web/src/hooks/useMatches.js
+
+Giao diện /matches và /matches/:matchId CHƯA có trong bản dựng hiện tại
+(11 router đang có đều thuộc Sprint 1), cần thiết kế mới.

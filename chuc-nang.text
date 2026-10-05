@@ -134,15 +134,56 @@ Ma trận độ ưu tiên theo Tác nhân: Sprint 1
 Dữ liệu & Hiệu suất Người chơi
 
 2.2.1. Thu thập bộ dữ liệu trận đấu của người chơi
+  - Dữ liệu gì: một trận gồm ai đánh với ai, tỷ số từng set, ngày giờ, sân nào.
+  - Ba nguồn: đơn đặt sân đã hoàn thành, người chơi tự nhập, dữ liệu BWF nhập sẵn.
+  - Đơn hoàn thành thì hệ thống chỉ GỢI Ý ghi kết quả, không tự tạo trận — nhiều
+    đơn chỉ là đi tập, tự tạo sẽ đẻ ra hàng loạt bản ghi rỗng.
 2.2.2. Nhập dữ liệu trận đấu của người chơi
+  - Ai nhập: một người chơi trong trận. Người tạo bắt buộc phải có mặt trong trận.
+  - Ai xác nhận: mỗi đội phải có ít nhất một người bấm Xác nhận thì mới tính điểm.
+    Chưa đủ thì không vào thống kê. Quá 72 giờ không ai bấm thì tự xác nhận.
+  - Thấy sai thì bấm Báo sai, trận bị treo; quá 7 ngày không giải quyết thì huỷ.
+  - Đội thắng do hệ thống suy ra từ tỷ số, KHÔNG nhận từ người nhập.
 2.2.3. Tiền xử lý bộ dữ liệu người chơi
+  - Đổi trục: từ "một dòng = một trận" sang "một dòng = một người chơi".
+  - Hệ thống chạy nền, không ai bấm. Chỉ gom những trận đã được xác nhận.
+  - Mỗi đêm có job tính lại từ đầu, lệch so với số đang lưu thì ghi log và sửa.
 2.2.4. Làm sạch dữ liệu bị thiếu & không hợp lệ
+  - Loại tỷ số sai luật cầu lông: 21-20 (chưa hơn 2 điểm), 25-20, 31-29 đều từ chối.
+  - Chống cày điểm: hai người đánh nhau quá 20 trận trong 7 ngày thì loại khỏi rating.
+  - Người dưới 3 trận vẫn xem được hồ sơ nhưng không đưa vào phân cụm.
+  - Thiếu dữ liệu thì để trống, KHÔNG điền giá trị trung bình vào thay.
 2.2.5. Trích xuất các đặc trưng kỹ năng của người chơi
+  - Biến mỗi người thành một dãy số để thuật toán so sánh: điểm xếp hạng, tỷ lệ
+    thắng, số trận, chênh lệch điểm, độ ổn định, độ mới của dữ liệu.
+  - Hệ thống tự tính từ kết quả trận, người dùng không nhập gì ở bước này.
+  - Không đưa toạ độ và khung giờ vào — hai thứ đó dùng để LỌC lúc ghép cặp,
+    không dùng để phân cụm, vì trộn vào sẽ ra cụm theo địa lý chứ không theo trình độ.
 2.2.6. Tính toán điểm xếp hạng kỹ năng của người chơi
+  - Công thức Elo. Khởi điểm 1000, sàn 100. Hệ thống tự tính, không ai sửa được.
+  - Đánh đôi: điểm đội là trung bình hai người, cả hai nhận cùng mức tăng/giảm.
+  - Người mới biến động mạnh (K=40), người trên 30 trận biến động nhẹ (K=16).
+  - Dưới 5 trận thì điểm hiện nhãn "Tạm tính" và không đưa vào phân cụm.
 2.2.7. Tính tỷ lệ thắng của người chơi
+  - Lưu HAI con số: tỷ lệ thô để hiển thị, tỷ lệ đã làm trơn để thuật toán dùng.
+  - Vì sao: thắng 2/2 trận là 100% nhưng chưa nói lên gì. Làm trơn kéo về 64%,
+    còn người 50 trận thắng 80% thì gần như không bị kéo.
+  - Hiển thị luôn kèm mẫu số: "100% (2 trận)", không bao giờ chỉ ghi "100%".
 2.2.8. Tính toán thống kê trận đấu của người chơi
+  - Hệ thống cộng dồn ngay khi trận được xác nhận: số trận, thắng/thua, chuỗi
+    thắng, số set, điểm trung bình ghi được và bị thủng mỗi trận.
+  - Lưu sẵn vào một bảng đọc nhanh, không tính lại mỗi lần mở màn hình.
+  - Job đêm tính lại toàn bộ để phát hiện số liệu đã trôi khỏi dữ liệu gốc.
 2.2.9. Xem lịch sử trận đấu của người chơi
+  - Danh sách trận đã chơi, mới nhất trước, kèm tỷ số và điểm tăng/giảm của trận đó.
+  - Chỉ người tham gia trận mới xem được chi tiết; người ngoài nhận 404.
+  - Đánh dấu rõ trận nào đang chờ mình bấm xác nhận.
 2.2.10. Xem thống kê hiệu suất của người chơi
+  - Trang tổng quan: điểm, tỷ lệ thắng, chuỗi thắng, thống kê theo loại trận,
+    biểu đồ tiến bộ 90 ngày gần nhất.
+  - Nhãn trình độ lấy từ điểm hệ thống ĐO được, không lấy từ trình độ người dùng
+    TỰ KHAI ở 2.1.8 — hai thứ có thể lệch nhau.
+  - Người chưa có trận nào thì hiện lời mời ghi trận đầu tiên, không hiện biểu đồ trống.
 
 Phân cụm Người chơi
 

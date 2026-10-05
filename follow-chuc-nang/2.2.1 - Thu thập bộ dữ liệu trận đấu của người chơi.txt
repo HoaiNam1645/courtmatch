@@ -1,0 +1,136 @@
+===============================================================================
+2.2.1 - THU THẬP BỘ DỮ LIỆU TRẬN ĐẤU CỦA NGƯỜI CHƠI
+Giao diện: /matches (khối "Đơn đã chơi, chưa ghi kết quả")
+API: GET /api/v1/users/me/match-suggestions                    Cần đăng nhập
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Đưa trận đấu vào hệ thống từ mọi nguồn, chuẩn hoá về cùng một hình dạng trong
+bốn bảng matches / match_players / match_games / match_results.
+
+Bản thân chức năng này KHÔNG ghi tỷ số. Nó chỉ lo phần "có một trận tồn tại".
+Người chơi và tỷ số thuộc 2.2.2.
+
+
+2. BA NGUỒN DỮ LIỆU
+-------------------------------------------------------------------------------
+  Nguồn                        data_source   Vào hệ thống bằng cách nào
+  ---------------------------------------------------------------------------
+  Đơn đặt sân đã hoàn thành    'booking'     Hệ thống gợi ý, người dùng bấm
+  Người dùng tự nhập           'manual'      Chức năng 2.2.2
+  Dữ liệu nhập khẩu/mô phỏng   'simulated'   Seeder, chỉ chạy ở môi trường dev
+
+Cột data_source do migration V15 thêm. Không có cột này thì 2.555 trận BWF
+nằm lẫn với trận người dùng thật, và lúc viết báo cáo không tách ra được.
+
+
+3. TỪ ĐƠN ĐẶT SÂN THÀNH TRẬN ĐẤU
+-------------------------------------------------------------------------------
+Đây là nguồn chất lượng cao nhất: thời gian, địa điểm và ít nhất một người
+chơi đã được hệ thống xác thực sẵn từ Sprint 1.
+
+  bookings.status = 'completed'
+          |
+          v
+  Hiện gợi ý: "Bạn vừa chơi ở Sân Cầu Lông Hòa Cường. Ghi lại kết quả?"
+          |
+          v  người dùng bấm
+  Tạo matches (booking_id, venue_id, scheduled_at, data_source='booking',
+               status='scheduled', created_by)
+          |
+          v
+  Chuyển sang 2.2.2 để thêm người chơi và tỷ số
+
+
+4. KHÔNG TỰ ĐỘNG TẠO TRẬN - QUYẾT ĐỊNH THIẾT KẾ
+-------------------------------------------------------------------------------
+Khi đơn chuyển sang completed, hệ thống CHỈ GỢI Ý, không tự tạo matches.
+
+Lý do: rất nhiều đơn đặt sân chỉ để tập luyện, đánh vui, không có trận nào.
+Tự tạo sẽ đẻ ra hàng loạt bản ghi rỗng status='scheduled' không bao giờ có
+kết quả, làm bẩn thống kê và làm job tính điểm phải quét qua vô ích.
+
+Người dùng chủ động bấm thì mới có trận.
+
+
+5. TRUY VẤN LẤY DANH SÁCH GỢI Ý
+-------------------------------------------------------------------------------
+  Lấy các đơn của tôi thoả:
+    bookings.user_id = :userId
+    bookings.status  = 'completed'
+    KHÔNG tồn tại matches nào có booking_id = bookings.id
+    booking_items.start_time trong vòng 30 ngày gần nhất
+
+Giới hạn 30 ngày: quá hạn đó thì người ta không còn nhớ tỷ số, ghi vào chỉ
+thêm dữ liệu sai. Thà thiếu còn hơn sai.
+
+Sắp xếp theo start_time giảm dần, phân trang mặc định 20.
+
+
+6. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+Chức năng này chỉ ĐỌC. Việc ghi nằm ở 2.2.2.
+
+Khi 2.2.2 tạo trận từ gợi ý thì:
+  matches                    THÊM 1 dòng
+    booking_id               đơn được chọn
+    venue_id                 lấy từ booking_items -> courts -> venues
+    scheduled_at             lấy từ booking_items.start_time sớm nhất
+    match_type               người dùng chọn
+    status                   'scheduled'
+    created_by               người đang đăng nhập
+    data_source              'booking'
+
+
+7. HAI CỘT NULLABLE VÀ Ý NGHĨA
+-------------------------------------------------------------------------------
+  booking_id   NULL khi trận nhập tay, không gắn đơn nào
+  venue_id     NULL khi chơi ở sân không có trong hệ thống
+
+  scheduled_at nullable theo schema, NHƯNG bắt buộc với trận đã hoàn thành.
+               Không có thời điểm thì:
+                 - không tính được độ mới của dữ liệu (đặc trưng f6 ở 2.2.5)
+                 - không sắp xếp được lịch sử trận đấu (2.2.9)
+                 - không tính Elo đúng thứ tự được (2.2.6)
+               Kiểm tra này nằm ở 2.2.4.
+
+
+8. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "content": [
+    {
+      "bookingId": "...",
+      "bookingCode": "CT-20261002-0001",
+      "venueId": "...",
+      "venueName": "Sân Cầu Lông Hòa Cường",
+      "playedAt": "2026-10-02T12:00:00Z",
+      "durationMinutes": 90
+    }
+  ],
+  "page": 0, "size": 20, "totalElements": 3
+}
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+
+Không có lỗi nghiệp vụ nào khác: danh sách rỗng là trạng thái hợp lệ, trả về
+mảng rỗng chứ không phải 404.
+
+
+10. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/resources/db/migration/V15__match_confirmation.sql
+  backend/src/main/java/com/courtly/api/match/MatchController.java
+  backend/src/main/java/com/courtly/api/match/dto/MatchSuggestionResponse.java
+  backend/src/main/java/com/courtly/service/match/MatchService.java
+
+Đã có sẵn (từ V7, commit "feat(domain)"):
+  backend/src/main/java/com/courtly/domain/match/Match.java
+  backend/src/main/java/com/courtly/domain/match/MatchRepository.java

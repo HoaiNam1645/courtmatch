@@ -1,0 +1,132 @@
+===============================================================================
+2.2.4 - LÀM SẠCH DỮ LIỆU BỊ THIẾU & KHÔNG HỢP LỆ
+Giao diện: không có (lớp kiểm tra nội bộ)
+API: không có endpoint riêng - gọi từ 2.2.2 và 2.2.3
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Chặn dữ liệu rác trước khi nó ngấm vào thống kê.
+
+Rác ở đây KHÔNG phải lỗi kỹ thuật, mà là dữ liệu đúng cú pháp nhưng SAI LUẬT
+CẦU LÔNG. Ví dụ "21-20" là hai số nguyên hợp lệ, nhưng không tồn tại trong
+môn cầu lông.
+
+
+2. LUẬT TÍNH ĐIỂM CẦU LÔNG - CƠ SỞ CỦA MỌI KIỂM TRA
+-------------------------------------------------------------------------------
+  Điểm thắng set   21
+  Cách biệt        phải hơn ít nhất 2 điểm
+  Điểm trần        30 - đạt 30 là thắng dù chỉ hơn 1 điểm (30-29)
+  Số set           thắng 2 trong 3
+
+
+3. TẬP TỶ SỐ HỢP LỆ CỦA MỘT SET
+-------------------------------------------------------------------------------
+  (21, x)    với 0 <= x <= 19
+  (x, 21)    với 0 <= x <= 19
+  (y, y-2)   với 22 <= y <= 30      giai đoạn giành cách biệt 2 điểm
+  (y-2, y)   với 22 <= y <= 30
+  (30, 29) và (29, 30)               chạm trần
+
+Ví dụ KHÔNG hợp lệ:
+  21-20   chưa đủ cách biệt 2 điểm
+  25-20   hơn 5 điểm nhưng vượt 21 - không thể xảy ra
+  31-29   vượt trần 30
+  21-21   hoà - không tồn tại
+
+
+4. DANH SÁCH KIỂM TRA ĐẦY ĐỦ
+-------------------------------------------------------------------------------
+  #   Kiểm tra                                  Xử lý khi vi phạm
+  ---------------------------------------------------------------------------
+  1   Tỷ số từng set thuộc tập hợp lệ ở mục 3   Từ chối ngay (400)
+  2   Số set từ 2 đến 3                          Từ chối
+  3   Đội thắng phải thắng đúng 2 set            Từ chối
+  4   Đã có đội thắng 2 set thì không có set 3   Từ chối
+  5   Một người không ở cả hai đội               Từ chối (DB cũng chặn)
+  6   Số người mỗi đội khớp match_type           Từ chối
+  7   Đôi nam nữ: mỗi đội một nam một nữ         CẢNH BÁO, không chặn
+  8   scheduled_at không ở tương lai             Từ chối
+  9   Hai người chơi > 20 trận trong 7 ngày      Đánh dấu nghi vấn, loại rating
+  10  Trận không có kết quả sau 7 ngày           Chuyển 'cancelled'
+  11  Người chơi có < 3 trận                     Giữ thống kê, LOẠI khỏi phân cụm
+
+Kiểm tra 1-8 chạy LÚC NHẬP, gọi từ 2.2.2, trả 400 ngay cho người dùng.
+Kiểm tra 9-11 chạy TRONG JOB tiền xử lý 2.2.3, không chặn người dùng.
+
+
+5. HAI KIỂM TRA ĐÁNG CHÚ Ý
+-------------------------------------------------------------------------------
+Kiểm tra 7 chỉ CẢNH BÁO vì player_profiles.gender cho phép NULL. Chặn cứng sẽ
+làm người chưa khai giới tính không ghi được trận đôi nam nữ.
+
+Kiểm tra 9 là chống gian lận: hai người tạo trận giả liên tục để đẩy điểm cho
+nhau. 20 trận/tuần với cùng một đối thủ là bất thường với người chơi phong
+trào. Vi phạm thì đặt:
+  matches.excluded_from_rating = true
+  matches.exclusion_reason = 'nghi van cay diem: qua 20 tran/7 ngay'
+Giữ nguyên bản ghi để còn đối chiếu, chỉ loại khỏi tính điểm.
+
+HẠN CHẾ ĐÃ BIẾT: quy tắc này không chặn được hai người thông đồng ở mức độ
+vừa phải (ví dụ 5 trận/tuần). Ghi nhận trong báo cáo, không giấu.
+
+
+6. KIỂM TRA 11 - VÌ SAO QUAN TRỌNG
+-------------------------------------------------------------------------------
+Người mới có 1 trận thì vector đặc trưng gần như toàn nhiễu: tỷ lệ thắng 0%
+hoặc 100%, độ lệch chuẩn không tính được, điểm Elo mới lệch một lần.
+
+Đưa vào K-Means sẽ kéo lệch tâm cụm. Giữ trong player_statistics để họ vẫn
+xem được hồ sơ, nhưng không đưa vào player_match_profiles.
+
+
+7. DỮ LIỆU THIẾU - XỬ LÝ TỪNG CỘT
+-------------------------------------------------------------------------------
+  Cột thiếu                   Cách xử lý           Vì sao
+  ---------------------------------------------------------------------------
+  playing_style               gán 'balanced'       Giá trị giữa, ít lệch nhất
+  skill_level                 suy từ rating_score  Có đo được thì không cần khai
+  preferred_location          để trống             Không lọc được theo khoảng
+                                                   cách, vẫn phân cụm được
+  date_of_birth               bỏ qua               Không dùng làm đặc trưng
+  avg_points_scored/conceded  0 khi chưa có trận   Không dùng NULL, giao diện
+                                                   phải hiện được số
+
+NGUYÊN TẮC CHUNG: KHÔNG BỊA DỮ LIỆU.
+
+Điền giá trị trung bình vào chỗ thiếu làm người đó TRÔNG GIỐNG người trung
+bình, và thuật toán sẽ gom họ vào cụm giữa một cách sai lệch. Thà đánh dấu
+thiếu và loại khỏi bước phân cụm.
+
+
+8. NƠI ĐẶT CODE
+-------------------------------------------------------------------------------
+Tách hẳn một lớp MatchDataValidator trong service/match/.
+
+KHÔNG rải logic luật cầu lông vào nhiều chỗ. Một ngày nào đó luật đổi (ví dụ
+BWF đổi sang 15 điểm/set), phải sửa đúng một file.
+
+
+9. LỖI TRẢ VỀ
+-------------------------------------------------------------------------------
+  INVALID_GAME_SCORE     400   Kèm gameNo và tỷ số sai để giao diện tô đỏ
+  INVALID_GAME_COUNT     400   Số set không phải 2 hoặc 3
+  INVALID_WINNER         400   Không đội nào thắng đủ 2 set
+  INVALID_TEAM_SIZE      400   Số người không khớp loại trận
+  FUTURE_MATCH_DATE      400   scheduled_at ở tương lai
+
+Thông điệp lỗi phải nói RÕ sai ở đâu: "Set 2: tỷ số 21-20 không hợp lệ, phải
+hơn ít nhất 2 điểm" - không phải "Dữ liệu không hợp lệ".
+
+
+10. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/match/MatchDataValidator.java
+  backend/src/test/java/com/courtly/service/match/MatchDataValidatorTest.java
+
+File test là bắt buộc với chức năng này: tập tỷ số hợp lệ ở mục 3 phải có test
+cho từng trường hợp biên (21-19, 21-20, 22-20, 30-29, 31-29).

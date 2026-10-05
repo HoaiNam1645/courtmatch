@@ -1,0 +1,132 @@
+===============================================================================
+2.2.5 - TRÍCH XUẤT CÁC ĐẶC TRƯNG KỸ NĂNG CỦA NGƯỜI CHƠI
+Giao diện: không có (chạy nền)
+API: không có endpoint riêng - chạy trong job 2.2.3
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Biến mỗi người chơi thành một VECTOR SỐ để thuật toán so sánh được.
+
+K-Means không hiểu "người này đánh hay". Nó chỉ hiểu khoảng cách giữa hai
+điểm trong không gian nhiều chiều. Chức năng này tạo ra các điểm đó.
+
+
+2. PHÂN BIỆT HAI LOẠI THUỘC TÍNH - QUYẾT ĐỊNH QUAN TRỌNG NHẤT
+-------------------------------------------------------------------------------
+  Loại                   Gồm                        Dùng ở đâu
+  ---------------------------------------------------------------------------
+  ĐẶC TRƯNG PHÂN CỤM     Kỹ năng, kinh nghiệm,      K-Means / DBSCAN
+                         phong cách                  (2.2.13, 2.2.15)
+  ĐIỀU KIỆN LỌC          Vị trí, khung giờ rảnh     Lọc cứng lúc ghép cặp
+                                                     (2.2.21, 2.2.22)
+
+KHÔNG ĐƯA TOẠ ĐỘ VÀ KHUNG GIỜ VÀO VECTOR PHÂN CỤM.
+
+Lý do: khoảng cách Euclid giữa "kỹ năng 1500" và "vĩ độ 16.07" không có ý
+nghĩa gì. Trộn hai loại đại lượng không cùng bản chất vào một phép đo khoảng
+cách là sai lầm kinh điển khi dùng K-Means. Kết quả sẽ là các cụm phản ánh
+ĐỊA LÝ chứ không phản ánh TRÌNH ĐỘ - tức là gom hết người quận Hải Châu vào
+một cụm bất kể giỏi dở.
+
+Đúng cách: phân cụm CHỈ theo kỹ năng, rồi khi ghép cặp thì lọc trong cụm bằng
+vị trí và thời gian.
+
+Bảng player_match_profiles chứa CẢ HAI loại - preferred_location và
+availability_score nằm đó cho bước GHÉP CẶP, KHÔNG PHẢI cho bước phân cụm.
+
+
+3. VECTOR ĐẶC TRƯNG
+-------------------------------------------------------------------------------
+  #    Đặc trưng           Công thức                      Nguồn
+  ---------------------------------------------------------------------------
+  f1   rating_score        lấy trực tiếp                  2.2.6
+  f2   win_rate_smoothed   đã làm trơn Bayes              2.2.7
+  f3   experience          ln(1 + total_matches)          2.2.8
+  f4   avg_point_diff      avg_scored - avg_conceded      2.2.8
+  f5   consistency         point_diff_stddev              2.2.8
+  f6   recency             exp(-days_since_last / 90)     2.2.8
+  f7-9 playing_style       one-hot: attacking/balanced/   player_profiles
+                           defensive
+
+Giải thích vài lựa chọn:
+
+  f2 phải dùng bản ĐÃ LÀM TRƠN, không dùng tỷ lệ thô. Người thắng 2/2 trận có
+     tỷ lệ thô 100% sẽ bị đẩy vào cụm "giỏi" dù chưa biết gì về họ.
+
+  f3 lấy logarit vì khác biệt 2 -> 10 trận có ý nghĩa hơn nhiều so với
+     100 -> 108 trận. Không lấy log thì người 500 trận áp đảo mọi người khác.
+
+  f4 phân biệt thắng sát nút với thắng áp đảo. Hai người cùng tỷ lệ thắng 60%
+     nhưng một người toàn thắng 21-19, một người toàn thắng 21-5.
+
+  f6 người nghỉ lâu thì dữ liệu kém tin cậy. Chia 90 nghĩa là sau 3 tháng
+     không chơi thì hệ số còn khoảng 0.37.
+
+
+4. KHÔNG ĐƯA VÀO VECTOR
+-------------------------------------------------------------------------------
+  total_wins, total_losses   Đã gói trong f2 và f3. Đưa thêm là tính TRÙNG
+                             một thông tin ba lần, làm nó nặng hơn thực tế
+  tuổi                       Không phải thước đo kỹ năng
+  giới tính                  Không phải thước đo kỹ năng, và dùng để phân
+                             nhóm là có vấn đề về công bằng
+
+
+5. VẤN ĐỀ THỰC TẾ VỚI f7-f9
+-------------------------------------------------------------------------------
+Đếm thật trong database ngày 05/10/2026:
+
+  player_profiles có playing_style khác NULL:   9 / 197 người
+
+Nghĩa là 188 người sẽ nhận giá trị mặc định 'balanced' theo quy tắc ở 2.2.4.
+Một chiều mà 95% điểm giống hệt nhau KHÔNG PHÂN BIỆT ĐƯỢC GÌ - nó chỉ làm
+loãng khoảng cách Euclid và thêm 3 chiều vô ích.
+
+ĐỀ XUẤT: với bộ dữ liệu hiện tại, dùng VECTOR 6 CHIỀU (f1-f6), bỏ f7-f9.
+Khi nào có đủ dữ liệu phong cách thì bật lại và so sánh kết quả hai phiên bản
+- bản thân phép so sánh đó là một kết quả đáng viết vào báo cáo.
+
+
+6. CHUẨN HOÁ - KHÔNG LÀM Ở ĐÂY
+-------------------------------------------------------------------------------
+Chuẩn hoá thuộc chức năng 2.2.12.
+
+Nhưng phải nhớ: f1 nằm khoảng 715-1704 (số thật trong database), f2 nằm
+khoảng 0-1. Không chuẩn hoá thì rating_score ÁP ĐẢO hoàn toàn mọi đặc trưng
+khác, và K-Means thực chất chỉ đang chia theo rating - năm đặc trưng kia vô
+tác dụng.
+
+
+7. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  player_match_profiles    GHI ĐÈ toàn bộ dòng của người chơi mỗi lần chạy lô
+    user_id
+    skill_score            = f1
+    win_rate               = f2  (ĐÃ LÀM TRƠN - khác với player_statistics)
+    total_matches          dùng cho f3 và cho kiểm tra 11 ở 2.2.4
+    playing_style          dùng cho f7-f9
+    preferred_location     COPY từ player_preferred_locations (cho ghép cặp)
+    preferred_radius_km    COPY từ player_preferred_locations (cho ghép cặp)
+    availability_score     COPY từ player_availability_slots  (cho ghép cặp)
+    cluster_label          để NULL, 2.2.18 mới điền
+
+Chỉ ghi người thoả kiểm tra 11 (>= 3 trận).
+
+
+8. LƯU Ý VỀ HAI CỘT CÙNG TÊN win_rate
+-------------------------------------------------------------------------------
+  player_statistics.win_rate       TỶ LỆ THÔ, để hiển thị cho người dùng
+  player_match_profiles.win_rate   ĐÃ LÀM TRƠN, cho thuật toán
+
+Cùng tên, khác ý nghĩa. Phải ghi COMMENT trong migration V16, nếu không người
+sau chắc chắn dùng nhầm.
+
+
+9. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/match/FeatureExtractionService.java
+  backend/src/test/java/com/courtly/service/match/FeatureExtractionServiceTest.java

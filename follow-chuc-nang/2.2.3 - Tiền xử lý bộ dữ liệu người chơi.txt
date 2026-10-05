@@ -1,0 +1,123 @@
+===============================================================================
+2.2.3 - TIỀN XỬ LÝ BỘ DỮ LIỆU NGƯỜI CHƠI
+Giao diện: không có (chạy nền)
+API: POST /api/v1/admin/preprocessing/run                     Chỉ quản trị viên
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Chuyển từ DỮ LIỆU THEO TRẬN sang DỮ LIỆU THEO NGƯỜI CHƠI - hình dạng mà thuật
+toán phân cụm cần.
+
+Đây là bước ĐỔI TRỤC:
+  trước bước này:  một dòng = một trận
+  sau bước này:    một dòng = một người chơi kèm vector đặc trưng
+
+
+2. ĐẦU VÀO - ĐẦU RA
+-------------------------------------------------------------------------------
+  matches  JOIN  match_players  JOIN  match_games  JOIN  match_results
+          (n dòng, mỗi dòng một lượt tham gia)
+                        |
+                        v   gom nhóm theo user_id
+          player_statistics       (1 dòng / người, số liệu thô)
+                        |
+                        v   + player_profiles
+                            + player_preferred_locations
+                            + player_availability_slots
+          player_match_profiles   (1 dòng / người, vector đặc trưng)
+
+
+3. HAI CÁCH CẬP NHẬT, HAI MỤC ĐÍCH
+-------------------------------------------------------------------------------
+  Bảng                    Cách cập nhật                  Vì sao
+  ---------------------------------------------------------------------------
+  player_statistics       TĂNG DẦN, ngay khi trận        Người dùng mở hồ sơ
+                          được xác nhận                  là thấy số mới ngay
+  player_match_profiles   CHẠY LÔ, theo lịch hoặc        Chỉ thuật toán dùng,
+                          trước mỗi lần phân cụm         không cần tức thời
+
+Cập nhật tăng dần có một rủi ro: chỉ cần MỘT lần lỗi giữa chừng là số liệu
+lệch vĩnh viễn và không ai biết. Vì vậy phải có job đối soát ở mục 5.
+
+
+4. CHỈ DÙNG TRẬN HỢP LỆ
+-------------------------------------------------------------------------------
+Mọi truy vấn tổng hợp đều phải lọc:
+
+  WHERE m.status = 'completed'
+    AND mr.confirmed_at IS NOT NULL
+    AND m.excluded_from_rating IS NOT TRUE
+
+Thiếu một trong ba điều kiện là kéo trận giả, trận tranh chấp hoặc trận nghi
+gian lận vào thống kê.
+
+
+5. JOB ĐỐI SOÁT HẰNG ĐÊM - BẮT BUỘC
+-------------------------------------------------------------------------------
+Chạy 3 giờ sáng:
+
+  Với mỗi người chơi:
+      tính lại TOÀN BỘ player_statistics từ matches/match_games/match_results
+      so với giá trị đang lưu
+      lệch -> ghi log WARN kèm cả hai giá trị, rồi ghi đè bằng giá trị đúng
+
+Không có job này thì không có cách nào phát hiện dữ liệu đã trôi. Log của job
+này là thứ ĐẦU TIÊN phải xem khi nghi ngờ số liệu sai.
+
+
+6. TÌNH TRẠNG DỮ LIỆU HIỆN TẠI - CẦN BIẾT TRƯỚC KHI LÀM
+-------------------------------------------------------------------------------
+Đếm thật trong database ngày 05/10/2026:
+
+  player_statistics        197 người   <- bộ BWF đã nạp đủ
+  player_match_profiles      8 người   <- CHỈ CÓ 8
+
+Nghĩa là bộ dữ liệu BWF nằm ở player_statistics nhưng CHƯA CHẢY SANG bảng đặc
+trưng. Chính chức năng 2.2.3 này là cây cầu đó. Chưa làm nó thì phân cụm
+(2.2.13) chạy trên 8 điểm dữ liệu - vô nghĩa về mặt thống kê.
+
+Ngoài ra:
+  player_preferred_locations    8/197 người có toạ độ
+  player_availability_slots     8/197 người có khung giờ
+  player_profiles.playing_style 9/197 người có giá trị
+
+Ba con số này ảnh hưởng trực tiếp tới 2.2.5 và tới bước lọc lúc ghép cặp.
+
+
+7. CHẠY KHI NÀO
+-------------------------------------------------------------------------------
+  Tự động   mỗi Chủ nhật 2 giờ sáng, trước khi chạy phân cụm
+  Tay       POST /api/v1/admin/preprocessing/run  (chỉ quản trị viên)
+
+Không mở endpoint công khai. Để người dùng tự gọi là mở đường cho việc làm
+hỏng dữ liệu và làm nghẽn server bằng cách gọi liên tục.
+
+
+8. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  player_statistics       GHI ĐÈ khi job đối soát phát hiện lệch
+  player_match_profiles   GHI ĐÈ toàn bộ dòng của từng người mỗi lần chạy lô
+
+Ghi đè chứ không thêm dòng mới: hai bảng này đều là read model, mỗi người đúng
+một dòng. Lịch sử thay đổi điểm đã có player_rating_history lo.
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+  FORBIDDEN      403   Không phải quản trị viên
+  ALREADY_RUNNING 409  Đang có một lần chạy chưa xong
+
+Chặn chạy chồng: hai lần chạy song song sẽ ghi đè lên nhau và ra kết quả không
+đoán được.
+
+
+10. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/match/PlayerPreprocessingService.java
+  backend/src/main/java/com/courtly/job/StatisticsReconcileJob.java
+  backend/src/main/java/com/courtly/api/admin/PreprocessingController.java

@@ -1,0 +1,128 @@
+===============================================================================
+2.2.8 - TÍNH TOÁN THỐNG KÊ TRẬN ĐẤU CỦA NGƯỜI CHƠI
+Giao diện: không có (chạy nền), kết quả hiện ở 2.1.6 và 2.2.10
+API: không có endpoint riêng
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Tổng hợp mọi số liệu của một người vào player_statistics để đọc nhanh.
+
+Bảng này là READ MODEL: KHÔNG tính lại mỗi lần mở màn hình. Hồ sơ người chơi
+(2.1.6) đã đọc từ đây từ Sprint 1.
+
+
+2. CÁC CHỈ SỐ ĐÃ CÓ TRONG BẢNG (từ V7)
+-------------------------------------------------------------------------------
+  Cột                   Cách tính
+  ---------------------------------------------------------------------------
+  total_matches         Đếm trận đã xác nhận
+  total_wins            Đếm theo winning_team so với team_no
+  total_losses          total_matches - total_wins
+  win_rate              total_wins / total_matches * 100, làm tròn 2 số
+  rating_score          Từ 2.2.6
+  avg_points_scored     Trung bình tổng điểm đội mình ghi MỖI TRẬN
+  avg_points_conceded   Trung bình tổng điểm đội đối phương ghi mỗi trận
+  last_played_at        MAX(scheduled_at)
+
+CHÚ Ý avg_points_scored: tính trên CẢ TRẬN (cộng mọi set), không phải trung
+bình mỗi set. Trận 2 set và trận 3 set có tổng điểm rất khác nhau, nên con số
+này phụ thuộc số set - cần ghi rõ để không hiểu nhầm.
+
+Muốn so sánh công bằng hơn thì dùng trung bình mỗi set, nhưng khi đó phải đổi
+tên cột.
+
+
+3. CÁC CỘT CẦN BỔ SUNG (migration V16)
+-------------------------------------------------------------------------------
+  Cột mới               Ý nghĩa                          Phục vụ
+  ---------------------------------------------------------------------------
+  current_streak        Chuỗi hiện tại, dương=thắng,     2.2.10
+                        âm=thua
+  longest_win_streak    Chuỗi thắng dài nhất             2.2.10
+  total_games_won       Số SET thắng, không phải số trận Thống kê chi tiết
+  total_games_lost      Số set thua                      Thống kê chi tiết
+  point_diff_stddev     Độ lệch chuẩn chênh lệch điểm    Đặc trưng f5 (2.2.5)
+  matches_single        Số trận đánh đơn                 2.2.10
+  matches_double        Số trận đánh đôi                 2.2.10
+  matches_mixed         Số trận đôi nam nữ               2.2.10
+
+
+4. CẬP NHẬT TĂNG DẦN
+-------------------------------------------------------------------------------
+Khi một trận được xác nhận, với MỖI người chơi trong trận:
+
+    total_matches += 1
+    total_wins    += (thắng ? 1 : 0)
+    total_losses  += (thắng ? 0 : 1)
+    win_rate       = total_wins / total_matches * 100
+
+    avg_points_scored = (avg_cũ * (n-1) + điểm_trận_này) / n      trung bình động
+    current_streak    = thắng ? max(streak+1, 1) : min(streak-1, -1)
+    longest_win_streak = max(longest_win_streak, current_streak)
+    last_played_at    = max(last_played_at, scheduled_at)
+
+    matches_single/double/mixed += 1 tuỳ match_type
+    total_games_won  += số set thắng trong trận này
+    total_games_lost += số set thua trong trận này
+
+Công thức trung bình động tránh phải quét lại toàn bộ lịch sử mỗi lần.
+
+Công thức current_streak đáng chú ý: thắng thì max(streak+1, 1) - nếu đang
+chuỗi thua -3, thắng một trận thì về 1 chứ không phải -2.
+
+
+5. point_diff_stddev KHÔNG CỘNG DỒN ĐƯỢC
+-------------------------------------------------------------------------------
+Độ lệch chuẩn không có công thức cập nhật đơn giản như trung bình động.
+
+Hai lựa chọn:
+  a) Thuật toán Welford - cập nhật một lượt, cần lưu thêm biến trung gian
+  b) Chấp nhận tính lại trong job đêm (mục 6)
+
+ĐỀ XUẤT: chọn (b). Cột này chỉ dùng cho đặc trưng f5 của phân cụm, mà phân
+cụm vốn chạy theo lô hằng tuần - không cần chính xác theo thời gian thực.
+Chọn (a) là thêm phức tạp cho một thứ không ai cần ngay.
+
+
+6. JOB ĐỐI SOÁT HẰNG ĐÊM
+-------------------------------------------------------------------------------
+Chạy 3 giờ sáng:
+
+    Với mỗi người chơi:
+        tính lại TOÀN BỘ từ matches / match_games / match_results
+        so với giá trị đang lưu
+        lệch -> ghi log WARN kèm CẢ HAI giá trị, rồi ghi đè bằng giá trị đúng
+
+Log của job này là thứ ĐẦU TIÊN phải xem khi nghi ngờ số liệu sai.
+
+Đây cũng là nơi tính lại point_diff_stddev theo quyết định ở mục 5.
+
+
+7. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  player_statistics   SỬA 1 dòng / người chơi trong trận
+                      (hoặc THÊM nếu người đó chưa có dòng nào)
+
+Người chơi mới đăng ký chưa có dòng trong player_statistics. Dùng
+INSERT ... ON CONFLICT (user_id) DO UPDATE để khỏi phải kiểm tra trước.
+
+
+8. KHÔNG NHÂN BẢN LOGIC
+-------------------------------------------------------------------------------
+Hồ sơ người chơi (2.1.6) đã hiện totalMatches, winRate, ratingScore từ
+Sprint 1. Trang thống kê hiệu suất (2.2.10) là bản chi tiết của cùng dữ liệu.
+
+CẢ HAI cùng đọc từ player_statistics, chỉ khác mức độ chi tiết. Không viết
+hai chỗ tính toán khác nhau.
+
+
+9. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/resources/db/migration/V16__player_statistics_extra.sql
+  backend/src/main/java/com/courtly/service/match/PlayerStatisticsService.java
+  backend/src/main/java/com/courtly/job/StatisticsReconcileJob.java
+  backend/src/test/java/com/courtly/service/match/PlayerStatisticsServiceTest.java

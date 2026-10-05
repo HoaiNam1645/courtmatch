@@ -1,0 +1,164 @@
+===============================================================================
+2.2.10 - XEM THỐNG KÊ HIỆU SUẤT CỦA NGƯỜI CHƠI
+Giao diện: /performance
+API: GET /api/v1/users/me/performance                         Cần đăng nhập
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Trang tổng quan năng lực của người chơi: điểm, tỷ lệ thắng, xu hướng, điểm
+mạnh điểm yếu.
+
+Đây là ĐẦU RA CUỐI CÙNG của cả nhóm 2.2.1 - 2.2.10. Mọi tính toán phía trước
+đổ về màn hình này.
+
+
+2. DỮ LIỆU TRẢ VỀ
+-------------------------------------------------------------------------------
+{
+  "summary": {
+    "ratingScore": 1372,
+    "ratingLabel": "Khá",
+    "isProvisional": false,
+    "totalMatches": 24,
+    "totalWins": 15,
+    "totalLosses": 9,
+    "winRate": 62.5,
+    "currentStreak": 3,
+    "longestWinStreak": 6,
+    "lastPlayedAt": "2026-10-02T12:00:00Z"
+  },
+  "scoring": {
+    "avgPointsScored": 42.25,
+    "avgPointsConceded": 38.10,
+    "avgPointDiff": 4.15,
+    "totalGamesWon": 33,
+    "totalGamesLost": 24
+  },
+  "byMatchType": [
+    { "type": "single",       "matches": 6,  "wins": 2,  "winRate": 33.3 },
+    { "type": "double",       "matches": 15, "wins": 11, "winRate": 73.3 },
+    { "type": "mixed_double", "matches": 3,  "wins": 2,  "winRate": 66.7 }
+  ],
+  "ratingTrend": [
+    { "date": "2026-07-01", "rating": 1000 },
+    { "date": "2026-08-15", "rating": 1180 },
+    { "date": "2026-10-02", "rating": 1372 }
+  ]
+}
+
+Toàn bộ đọc từ player_statistics, trừ ratingTrend.
+
+
+3. ratingTrend LẤY TỪ ĐÂU
+-------------------------------------------------------------------------------
+Từ player_rating_history, GOM THEO NGÀY, lấy giá trị new_rating CUỐI NGÀY.
+
+Giới hạn 90 ngày gần nhất để phản hồi không phình to. Người chơi 2 năm có
+hàng trăm dòng lịch sử, trả hết về là gửi mấy trăm KB cho một biểu đồ.
+
+  SELECT DATE(created_at) AS d, MAX(created_at) ...
+  WHERE user_id = :userId AND created_at >= now() - interval '90 days'
+  GROUP BY DATE(created_at)
+  ORDER BY d
+
+
+4. NHÃN TRÌNH ĐỘ SUY TỪ ĐIỂM
+-------------------------------------------------------------------------------
+  Điểm            Nhãn
+  ---------------------------------------------------------------------------
+  < 900           Mới chơi
+  900 - 1199      Trung bình
+  1200 - 1499     Khá
+  >= 1500         Giỏi
+
+BỐN MỐC NÀY LÀ TẠM THỜI. Sau khi có dữ liệu thật nên đặt lại theo PHÂN VỊ
+(25%, 50%, 75%) để mỗi nhóm có số người hợp lý, thay vì cố định cứng.
+
+Đối chiếu với dữ liệu hiện có: điểm trong database chạy từ 715 đến 1704,
+trung bình 1004. Với mốc cố định ở trên thì phần lớn 197 người rơi vào
+"Trung bình" - phân bố lệch, xác nhận là nên chuyển sang phân vị.
+
+
+5. BỐN ĐIỀU GIAO DIỆN PHẢI LÀM ĐÚNG
+-------------------------------------------------------------------------------
+1) NGƯỜI CHƯA CÓ TRẬN NÀO
+   KHÔNG hiện biểu đồ trống và một loạt số 0 - người dùng sẽ tưởng hệ thống
+   hỏng. Hiện một khối mời gọi:
+   "Bạn chưa có trận nào. Ghi lại trận đầu tiên để bắt đầu theo dõi tiến bộ."
+
+2) ĐIỂM TẠM TÍNH
+   Dưới 5 trận thì hiện rõ nhãn "Tạm tính" cạnh điểm số, kèm giải thích ngắn.
+   Không có nhãn này, người mới sẽ TIN VÀO MỘT CON SỐ MÀ CHÍNH HỆ THỐNG CHƯA
+   TIN. Trường isProvisional trong API phục vụ việc này.
+
+3) TỶ LỆ THẮNG LUÔN KÈM MẪU SỐ
+   "62.5% (15/24 trận)", không phải "62.5%". Quy tắc đã nêu ở 2.2.7.
+
+4) NHÃN TRÌNH ĐỘ SUY TỪ ĐIỂM, KHÔNG PHẢI TỪ KHAI BÁO
+   player_profiles.skill_level là người dùng TỰ KHAI (2.1.8)
+   rating_score là hệ thống ĐO ĐƯỢC
+
+   Hai thứ có thể lệch nhau, và trang này phải hiện CÁI ĐO ĐƯỢC.
+
+   Dữ liệu hiện tại cho thấy điều này không phải lo xa: 189/197 người tự khai
+   là 'professional'. Nếu tin lời tự khai thì cả hệ thống chỉ có một trình độ.
+
+   ĐỀ XUẤT: hiện CẢ HAI, gắn nhãn rõ - "Tự đánh giá: Khá" và "Hệ thống đo:
+   Trung bình (24 trận)". Minh bạch tốt hơn là chọn một cái rồi người dùng
+   không hiểu vì sao.
+
+
+6. byMatchType TÍNH THẾ NÀO
+-------------------------------------------------------------------------------
+Đọc thẳng matches_single / matches_double / matches_mixed từ
+player_statistics (cột mới ở V16).
+
+Số thắng theo từng loại thì KHÔNG có cột sẵn. Hai lựa chọn:
+  a) thêm 3 cột wins_single/double/mixed nữa
+  b) truy vấn đếm trực tiếp, chỉ 1 câu GROUP BY match_type
+
+ĐỀ XUẤT: chọn (b). Trang này không mở thường xuyên, một câu GROUP BY trên
+match_players của một người là rẻ. Thêm 3 cột nữa là thêm 3 chỗ có thể trôi
+khỏi dữ liệu gốc.
+
+
+7. QUAN HỆ VỚI 2.1.6 - KHÔNG NHÂN BẢN LOGIC
+-------------------------------------------------------------------------------
+Hồ sơ người chơi (2.1.6, đã làm ở Sprint 1) đã hiện totalMatches, winRate,
+ratingScore.
+
+Trang này là BẢN CHI TIẾT. Cùng đọc từ player_statistics, chỉ khác mức độ chi
+tiết. Không viết hai chỗ tính toán khác nhau, không tạo thêm bảng tổng hợp.
+
+
+8. BẢNG ĐƯỢC ĐỌC
+-------------------------------------------------------------------------------
+  player_statistics        gần như toàn bộ phản hồi
+  player_rating_history    ratingTrend
+  match_players + matches  byMatchType (theo lựa chọn (b) ở mục 6)
+
+Chức năng này CHỈ ĐỌC.
+
+
+9. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED   401   Chưa đăng nhập
+
+Không có 404: người dùng nào cũng có thống kê, kể cả khi toàn số 0. Nếu chưa
+có dòng trong player_statistics thì trả về bản ghi mặc định (rating 1000,
+mọi số đếm bằng 0, isProvisional = true), KHÔNG trả 404.
+
+
+10. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/api/match/PerformanceController.java
+  backend/src/main/java/com/courtly/api/match/dto/PerformanceResponse.java
+  backend/src/main/java/com/courtly/service/match/PerformanceQueryService.java
+  user-web/src/api/performance.js
+  user-web/src/hooks/usePerformance.js
+
+Giao diện /performance CHƯA có trong bản dựng hiện tại, cần thiết kế mới.

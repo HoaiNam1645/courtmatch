@@ -1,0 +1,119 @@
+===============================================================================
+2.2.7 - TÍNH TỶ LỆ THẮNG CỦA NGƯỜI CHƠI
+Giao diện: hiện trong /profile và /performance
+API: không có endpoint riêng - tính cùng lúc với 2.2.6 và 2.2.8
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Tỷ lệ phần trăm số trận thắng.
+
+Nghe đơn giản nhất nhóm, nhưng chứa CÁI BẪY NGUY HIỂM NHẤT của cả Sprint 2.
+
+
+2. CÁI BẪY - CÓ THẬT TRONG DỮ LIỆU HIỆN TẠI
+-------------------------------------------------------------------------------
+  Hoang Quoc Dat    2 trận, 2 thắng  ->  100%
+  Vu Ngoc Ha        3 trận, 3 thắng  ->  100%
+  Le Minh Chau      3 trận, 2 thắng  ->   66.67%
+
+Theo tỷ lệ thô, Dat và Ha là hai người giỏi nhất hệ thống. Thực tế chúng ta
+gần như KHÔNG BIẾT GÌ về họ - 2 trận thắng có thể chỉ là gặp đối thủ yếu,
+hoặc may mắn.
+
+Đưa thẳng con số này vào K-Means là đẩy mọi người mới thắng vài trận vào cụm
+"trình độ cao". Cụm đó sẽ lẫn lộn giữa người giỏi thật và người mới may mắn,
+và toàn bộ kết quả ghép cặp sai theo.
+
+
+3. GIẢI PHÁP - LÀM TRƠN BAYES
+-------------------------------------------------------------------------------
+Kéo tỷ lệ của người ít trận về phía giá trị trung bình, kéo càng mạnh khi
+càng ít dữ liệu:
+
+                       thắng + C * p0
+    win_rate_smooth = -------------------
+                        trận + C
+
+    p0 = 0.5    niềm tin ban đầu: chưa biết gì thì coi như 50-50
+    C  = 5      sức nặng của niềm tin đó, tính bằng "số trận ảo"
+
+
+4. ÁP VÀO DỮ LIỆU THẬT
+-------------------------------------------------------------------------------
+  Người chơi       Trận  Thắng  Tỷ lệ thô   Sau làm trơn
+  ---------------------------------------------------------------------------
+  Hoang Quoc Dat      2      2     100.00%      64.3%
+  Vu Ngoc Ha          3      3     100.00%      68.8%
+  Le Minh Chau        3      2      66.67%      56.3%
+  (giả định)         50     40      80.00%      77.3%
+
+Người 50 trận gần như không bị kéo - dữ liệu của họ đủ nhiều để tự nói.
+Người 2 trận bị kéo mạnh về giữa. Đúng như mong muốn.
+
+Chọn C = 5 vì nó KHỚP với ngưỡng 5 trận tạm tính của rating (2.2.6): dưới 5
+trận thì hệ thống chủ động không tin dữ liệu.
+
+
+5. HAI CON SỐ CHO HAI MỤC ĐÍCH - TÁCH BẠCH RÕ
+-------------------------------------------------------------------------------
+  Nơi lưu                          Giá trị        Dùng cho
+  ---------------------------------------------------------------------------
+  player_statistics.win_rate       TỶ LỆ THÔ      Hiển thị cho người dùng
+  player_match_profiles.win_rate   ĐÃ LÀM TRƠN    Thuật toán phân cụm
+
+Vì sao phải tách:
+
+Người dùng thắng 2/2 trận mà màn hình hiện 64.3% sẽ thấy SAI và mất niềm tin
+vào hệ thống. Họ phải thấy 100% - đó là sự thật về những gì đã xảy ra.
+
+Còn thuật toán cần con số phản ánh MỨC ĐỘ TIN CẬY, không phải sự thật trần
+trụi.
+
+Hai cột CÙNG TÊN win_rate ở hai bảng nhưng mang ý nghĩa khác nhau. PHẢI ghi
+COMMENT trong migration V16, nếu không người sau sẽ dùng nhầm:
+
+  COMMENT ON COLUMN player_statistics.win_rate IS
+      'Ty le thang THO, dung de hien thi. Ban da lam tron nam o
+       player_match_profiles.win_rate';
+
+
+6. CÔNG THỨC TỶ LỆ THÔ
+-------------------------------------------------------------------------------
+    win_rate = total_wins / total_matches * 100
+
+Làm tròn 2 chữ số thập phân, khớp kiểu numeric(5,2).
+
+Khi total_matches = 0 thì win_rate = 0, KHÔNG phải NULL. Giao diện phải hiện
+được một con số, và ràng buộc ps_win_rate_check đòi giá trị từ 0 đến 100.
+
+
+7. HIỂN THỊ PHẢI KÈM NGỮ CẢNH
+-------------------------------------------------------------------------------
+Giao diện ghi:   100% (2 trận)
+Không ghi:       100%
+
+Con số phần trăm KHÔNG KÈM MẪU SỐ là con số dễ gây hiểu nhầm nhất. "Thắng
+100%" nghe như vô địch, "100% (2 trận)" thì ai cũng hiểu ngay là chưa nói lên
+điều gì.
+
+Quy tắc này áp dụng ở cả 2.1.6 (hồ sơ) và 2.2.10 (thống kê hiệu suất).
+
+
+8. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  player_statistics       SỬA  win_rate        (thô)
+  player_match_profiles   SỬA  win_rate        (đã làm trơn)
+
+Cả hai cập nhật trong cùng luồng với 2.2.6 và 2.2.8.
+
+
+9. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/java/com/courtly/service/match/PlayerStatisticsService.java
+  backend/src/test/java/com/courtly/service/match/WinRateSmoothingTest.java
+
+Test bắt buộc: bốn dòng trong bảng ở mục 4 là bốn test case sẵn có.

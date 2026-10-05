@@ -1,0 +1,189 @@
+===============================================================================
+2.2.2 - NHẬP DỮ LIỆU TRẬN ĐẤU CỦA NGƯỜI CHƠI
+Giao diện: /matches/new, /matches/:matchId
+API: POST   /api/v1/matches                                   Cần đăng nhập
+     PUT    /api/v1/matches/{id}/games
+     POST   /api/v1/matches/{id}/confirm
+     POST   /api/v1/matches/{id}/dispute
+     DELETE /api/v1/matches/{id}
+
+*** CHƯA CÀI ĐẶT - tài liệu này mô tả LOGIC, không mô tả code đang chạy ***
+===============================================================================
+
+
+1. CHỨC NĂNG NÀY LÀM GÌ
+-------------------------------------------------------------------------------
+Cho người chơi ghi lại một trận: ai đánh với ai, tỷ số từng set, đội nào thắng.
+
+Đây là chức năng QUAN TRỌNG NHẤT VỀ CHẤT LƯỢNG DỮ LIỆU của cả Sprint 2. Điểm
+Elo, tỷ lệ thắng, phân cụm, ghép cặp - mọi con số phía sau đều bắt nguồn từ
+đây. Sai ở đây thì không có cách nào phát hiện ở phía sau.
+
+
+2. VÌ SAO PHẢI XÁC NHẬN HAI PHÍA
+-------------------------------------------------------------------------------
+Nếu một người tự nhập kết quả và hệ thống tin ngay thì:
+  - hai người bắt tay nhau tạo trận giả để đẩy điểm cho nhau
+  - hoặc đơn giản là nhập nhầm mà không ai sửa được
+
+Nên: nhập xong CHƯA tính điểm. Phải có người phía đối diện xác nhận.
+
+
+3. LUỒNG ĐẦY ĐỦ
+-------------------------------------------------------------------------------
+  Bước 1  A tạo trận, thêm người chơi, nhập tỷ số
+          matches.status = 'scheduled'
+          match_results.confirmed_at = NULL
+          -> CHƯA tính điểm, CHƯA vào thống kê
+
+  Bước 2  Hệ thống thông báo cho những người còn lại
+          "Nguyễn Văn A ghi nhận bạn thua 1-2 ở trận ngày 02/10. Xác nhận?"
+
+  Bước 3  Mỗi người bấm Xác nhận hoặc Báo sai
+          -> match_players.result_confirmed_at
+          -> hoặc match_players.result_disputed_at
+
+  Bước 4  Đủ điều kiện -> matches.status = 'completed'
+                          match_results.confirmed_at = now
+          -> LÚC NÀY mới chạy 2.2.6, 2.2.7, 2.2.8
+
+
+4. ĐIỀU KIỆN ĐỦ ĐỂ XÁC NHẬN
+-------------------------------------------------------------------------------
+Quy tắc: MỖI ĐỘI phải có ít nhất MỘT người xác nhận. Người tạo trận được
+tính là đã xác nhận sẵn.
+
+  Loại trận        Cần thêm bao nhiêu người bấm
+  -------------------------------------------------------------------------
+  Đơn (2 người)    1  - chính là đối thủ
+  Đôi (4 người)    1  - bất kỳ ai ở đội đối phương
+
+Vì sao không đòi tất cả: đôi nam nữ 4 người, chỉ cần một người lười bấm là
+trận treo mãi mãi. Đòi một người mỗi đội đã đủ chặn việc tự bịa trận.
+
+TỰ ĐỘNG XÁC NHẬN SAU 72 GIỜ. Không có mốc này thì dữ liệu kẹt vô hạn.
+  - ghi rõ trong match_results.note là xác nhận tự động
+  - KHÔNG áp dụng nếu đã có người bấm Báo sai
+  - KHÔNG áp dụng nếu người tạo không nằm trong danh sách người chơi (mục 6)
+
+
+5. BÁO SAI THÌ SAO
+-------------------------------------------------------------------------------
+  matches.status = 'disputed'   (trạng thái mới, do V15 thêm vào CHECK)
+
+Trận bị tranh chấp:
+  - không tính vào rating, không vào thống kê
+  - người tạo sửa lại tỷ số -> quay về bước 2, xoá sạch mọi result_confirmed_at
+  - quá 7 ngày không giải quyết -> 'cancelled', loại khỏi mọi tính toán
+
+
+6. AI ĐƯỢC TẠO TRẬN - QUY TẮC BẮT BUỘC
+-------------------------------------------------------------------------------
+Người tạo BẮT BUỘC phải nằm trong team1UserIds hoặc team2UserIds.
+
+Không có quy tắc này thì tôi tạo được một trận giữa hai người lạ, gán kết quả
+cho họ, và nếu cả hai lười bấm thì sau 72 giờ trận TỰ XÁC NHẬN - điểm của họ
+thay đổi vì một trận không hề xảy ra.
+
+Vi phạm -> 400 MATCH_CREATOR_NOT_PLAYER.
+
+
+7. KHÔNG NHẬN winningTeam TỪ CLIENT
+-------------------------------------------------------------------------------
+Đội thắng SUY RA từ tỷ số các set, đếm xem đội nào thắng 2 set trước.
+
+Nhận winningTeam từ client là mở đường cho dữ liệu mâu thuẫn: tỷ số nói đội 1
+thắng, trường winningTeam nói đội 2. Lúc đó không biết tin cái nào.
+
+
+8. THÂN REQUEST TẠO TRẬN
+-------------------------------------------------------------------------------
+POST /api/v1/matches
+{
+  "bookingId": null,
+  "venueId": "...",
+  "matchType": "double",
+  "scheduledAt": "2026-10-02T12:00:00Z",
+  "team1UserIds": ["...", "..."],
+  "team2UserIds": ["...", "..."],
+  "games": [
+    { "gameNo": 1, "team1Score": 21, "team2Score": 18 },
+    { "gameNo": 2, "team1Score": 19, "team2Score": 21 },
+    { "gameNo": 3, "team1Score": 21, "team2Score": 17 }
+  ]
+}
+
+games có thể để trống lúc tạo, nhập sau bằng PUT /matches/{id}/games.
+
+
+9. BẢNG BỊ THAY ĐỔI
+-------------------------------------------------------------------------------
+  matches          THÊM 1 dòng
+    booking_id, venue_id, match_type, scheduled_at
+    status         'scheduled'
+    created_by     người đang đăng nhập
+    data_source    'booking' nếu có bookingId, ngược lại 'manual'
+
+  match_players    THÊM n dòng  (2 với đơn, 4 với đôi)
+    match_id, user_id, team_no, position_no
+    joined_status  'joined'
+    result_confirmed_at   now() cho người tạo, NULL cho những người khác
+
+  match_games      THÊM n dòng  (2 hoặc 3)
+    match_id, game_no, team1_score, team2_score
+
+  match_results    THÊM 1 dòng
+    match_id, winning_team (SUY RA), recorded_by
+    confirmed_at   NULL
+
+
+10. BA LỚP VALIDATE
+-------------------------------------------------------------------------------
+Lớp 1 - DTO:
+  matchType thuộc single/double/mixed_double
+  số người mỗi đội khớp loại trận (đơn 1-1, đôi 2-2)
+  gameNo từ 1 đến 3, điểm là số nguyên không âm
+  scheduledAt không ở tương lai
+
+Lớp 2 - Service: toàn bộ MatchDataValidator ở 2.2.4
+
+Lớp 3 - Database:
+  match_players_unique (match_id, user_id)  chặn một người ở cả hai đội
+  match_games_unique (match_id, game_no)    chặn trùng set
+
+
+11. CHUYỂN TRẠNG THÁI
+-------------------------------------------------------------------------------
+  scheduled --(đủ xác nhận)--------> completed   tính điểm
+  scheduled --(có người báo sai)---> disputed    không tính
+  disputed  --(sửa tỷ số)----------> scheduled   đặt lại mọi xác nhận
+  disputed  --(quá 7 ngày)---------> cancelled   loại vĩnh viễn
+  scheduled --(người tạo xoá)------> (xoá hẳn)   chỉ khi chưa ai xác nhận
+
+Đã completed thì KHÔNG sửa, KHÔNG huỷ. Sai thì ghi nhận là sai - giống kế toán
+không xoá bút toán. Cho huỷ sau khi đã tính điểm là mở lỗ hổng cày điểm.
+
+
+12. LỖI CÓ THỂ GẶP
+-------------------------------------------------------------------------------
+  UNAUTHORIZED                401   Chưa đăng nhập
+  MATCH_CREATOR_NOT_PLAYER    400   Người tạo không có trong danh sách chơi
+  INVALID_GAME_SCORE          400   Tỷ số sai luật cầu lông (2.2.4)
+  INVALID_TEAM_SIZE           400   Số người không khớp loại trận
+  DUPLICATE_PLAYER            400   Một người xuất hiện ở cả hai đội
+  NOT_FOUND                   404   Trận không tồn tại HOẶC mình không tham gia
+  MATCH_ALREADY_CONFIRMED     409   Đã xác nhận rồi, không sửa được
+  NOT_MATCH_PARTICIPANT       403   Xác nhận trận mình không tham gia
+
+
+13. FILE SẼ TẠO
+-------------------------------------------------------------------------------
+  backend/src/main/resources/db/migration/V15__match_confirmation.sql
+  backend/src/main/java/com/courtly/api/match/MatchController.java
+  backend/src/main/java/com/courtly/api/match/dto/CreateMatchRequest.java
+  backend/src/main/java/com/courtly/api/match/dto/UpdateGamesRequest.java
+  backend/src/main/java/com/courtly/api/match/dto/MatchDetailResponse.java
+  backend/src/main/java/com/courtly/service/match/MatchService.java
+  backend/src/main/java/com/courtly/service/match/MatchDataValidator.java
+  backend/src/main/java/com/courtly/job/MatchAutoConfirmJob.java
+  user-web/src/api/matches.js
