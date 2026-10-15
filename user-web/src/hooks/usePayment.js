@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchPayment } from '../api/payments'
 
-/** Khoảng hỏi lại trạng thái khi đang chờ tiền về (2.1.39). */
+/** Hỏi lại khi đang chờ chủ sân xác nhận đã nhận tiền. */
 const POLL_INTERVAL_MS = 5000
 
 /**
  * Một giao dịch thanh toán, tự hỏi lại trạng thái khi còn đang chờ (2.1.34, 2.1.39).
  *
- * Người dùng chuyển khoản ở ứng dụng ngân hàng rồi quay lại tab này; không có gì
- * báo cho trình duyệt biết tiền đã về, nên phải chủ động hỏi lại. Dừng hỏi ngay khi
- * trạng thái khác `pending` để không gọi API vô ích.
+ * Sau khi người chơi báo đã thanh toán, chủ sân có thể xác nhận ở thiết bị khác.
+ * Dừng hỏi ngay khi trạng thái khác `payer_reported` để không gọi API vô ích.
  */
 export function usePayment(paymentId) {
   const [status, setStatus] = useState(paymentId ? 'loading' : 'error')
@@ -27,7 +26,7 @@ export function usePayment(paymentId) {
     }
     try {
       const next = await fetchPayment(paymentId)
-      isPendingRef.current = next.status === 'pending'
+      isPendingRef.current = next.status === 'payer_reported'
       setPayment(next)
       setStatus('success')
       return next

@@ -4,11 +4,14 @@ import { request } from './client'
 
 /** Nhãn tiếng Việt cho một bước trong timeline (2.1.30). */
 const STATUS_LABEL = {
-  pending_payment: 'Đã tạo yêu cầu, chờ thanh toán',
+  pending_owner_confirmation: 'Đã gửi yêu cầu, chờ chủ sân duyệt',
+  awaiting_payment: 'Chủ sân đã duyệt, chờ thanh toán',
   confirmed: 'Đã xác nhận đặt sân',
+  rejected: 'Chủ sân đã từ chối',
   cancelled: 'Đã huỷ đặt sân',
   completed: 'Đã chơi xong',
-  expired: 'Hết hạn thanh toán',
+  expired: 'Đã hết hạn',
+  disputed: 'Đang tranh chấp',
   refunded: 'Đã hoàn tiền',
 }
 
@@ -36,8 +39,7 @@ function toUiBooking(booking) {
     startTime: first?.startTime ?? null,
     endTime: first?.endTime ?? null,
     durationMinutes: minutesBetween(first?.startTime, first?.endTime),
-    // Người chơi trả đúng tiền sân. Phí nền tảng trừ vào doanh thu chủ sân
-    // (owner_balance_transactions), không cộng vào hoá đơn người chơi.
+    // Người chơi trả trực tiếp cho chủ sân; Courtly không thu hoặc giữ khoản này.
     price: Number(booking.totalAmount ?? 0),
     court: first ? { id: first.courtId, name: first.courtName } : null,
     venue: {

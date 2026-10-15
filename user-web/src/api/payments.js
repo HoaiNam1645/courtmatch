@@ -1,13 +1,15 @@
-/** Thanh toán SePay: 2.1.34 tạo giao dịch, 2.1.35/36 QR, 2.1.39 trạng thái, 2.1.41 thử lại. */
+/** Direct payment to the venue owner; Courtly only tracks confirmation state. */
 
 import { request } from './client'
 
-/** Nhãn tiếng Việt cho từng trạng thái giao dịch (2.1.39). */
 const STATUS_LABEL = {
-  pending: 'Chờ thanh toán',
-  paid: 'Đã thanh toán',
-  failed: 'Thanh toán thất bại',
-  expired: 'Giao dịch hết hạn',
+  awaiting_payment: 'Chờ thanh toán',
+  payer_reported: 'Chờ chủ sân xác nhận',
+  confirmed: 'Chủ sân đã xác nhận',
+  rejected: 'Chủ sân chưa nhận được tiền',
+  expired: 'Đã hết hạn',
+  disputed: 'Đang tranh chấp',
+  partially_refunded: 'Đã hoàn một phần',
   refunded: 'Đã hoàn tiền',
 }
 
@@ -16,39 +18,36 @@ function toUiPayment(payment) {
     id: payment.id,
     bookingId: payment.bookingId,
     bookingCode: payment.bookingCode,
-    provider: payment.provider,
+    method: payment.method,
     amount: Number(payment.amount ?? 0),
     status: payment.status,
     statusLabel: STATUS_LABEL[payment.status] ?? payment.status,
-    qrUrl: payment.qrUrl ?? null,
     bankName: payment.bankName ?? '',
     bankAccountNo: payment.bankAccountNo ?? '',
     bankAccountName: payment.bankAccountName ?? '',
-    transferContent: payment.transferContent ?? '',
-    providerTransactionId: payment.providerTransactionId ?? null,
-    paidAt: payment.paidAt ?? null,
+    referenceContent: payment.referenceContent ?? '',
+    proofUrl: payment.proofUrl ?? '',
+    payerReportedAt: payment.payerReportedAt ?? null,
+    confirmedAt: payment.confirmedAt ?? null,
+    rejectionReason: payment.rejectionReason ?? '',
     expiredAt: payment.expiredAt ?? null,
-    // Server tính giúp số giây còn lại; không tự trừ bằng đồng hồ máy người dùng
-    // vì đồng hồ lệch sẽ làm đếm ngược sai so với lúc server thật sự cho hết hạn.
     secondsRemaining: Number(payment.secondsRemaining ?? 0),
     createdAt: payment.createdAt,
     updatedAt: payment.updatedAt ?? null,
   }
 }
 
-/** 2.1.34 – 2.1.36, 2.1.39 — chi tiết giao dịch, cũng dùng để hỏi lại trạng thái. */
 export async function fetchPayment(paymentId) {
   return toUiPayment(await request(`/api/v1/payments/${encodeURIComponent(paymentId)}`))
 }
 
-/** 2.1.40 — màn hình đặt sân thành công tra giao dịch theo mã đơn. */
 export async function fetchPaymentByBooking(bookingId) {
   return toUiPayment(await request(`/api/v1/payments/by-booking/${encodeURIComponent(bookingId)}`))
 }
 
-/** 2.1.41, 2.1.42 — mở lại cửa sổ thanh toán sau khi thất bại hoặc hết hạn. */
-export async function retryPayment(paymentId) {
-  return toUiPayment(await request(`/api/v1/payments/${encodeURIComponent(paymentId)}/retry`, {
+export async function reportPayment(paymentId, { method, proofUrl = '' }) {
+  return toUiPayment(await request(`/api/v1/payments/${encodeURIComponent(paymentId)}/report-paid`, {
     method: 'POST',
+    body: { method, proofUrl: proofUrl.trim() || null },
   }))
 }
