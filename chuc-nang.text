@@ -83,46 +83,58 @@ Tìm kiếm Sân cầu lông
 
 2.1.28. Tạo yêu cầu đặt sân (router: /booking/checkout) [UI hoàn thiện]
   - Đọc lựa chọn từ sessionStorage key courtly_pending_booking.
-  - Hiển thị sân, sân con, ngày giờ, người đặt, ghi chú, phương thức thanh toán và chi tiết tiền.
-  - Tạo booking giả vào localStorage key courtly_fake_bookings.
+  - Hiển thị sân, sân con, ngày giờ, người đặt, ghi chú và giá được backend chốt tại thời điểm tạo yêu cầu.
+  - Booking mới ở trạng thái pending_owner_confirmation; khung giờ được giữ ở booking_items.status = pending.
+  - Không tạo giao dịch SePay và không thu tiền ngay khi người chơi gửi yêu cầu.
   - Dữ liệu API sau này: bookings + booking_items.
 2.1.29. Xem chi tiết đặt sân (router: /bookings/:bookingId) [UI hoàn thiện]
-  - Hiển thị mã booking, sân, sân con, lịch chơi, ghi chú, chi phí và trạng thái thanh toán.
+  - Hiển thị mã booking, sân, sân con, lịch chơi, ghi chú, giá đã chốt, trạng thái duyệt và trạng thái thanh toán.
   - Có action chỉ đường và gọi sân.
 2.1.30. Xem trạng thái đặt sân (router: /bookings/:bookingId) [UI hoàn thiện]
-  - Badge hỗ trợ pending_payment, confirmed, cancelled, completed, expired và refunded.
+  - Badge hỗ trợ pending_owner_confirmation, awaiting_payment, confirmed, rejected, cancelled, completed, expired, disputed và refunded.
   - Timeline giao diện khớp với booking_status_history.
 2.1.31. Hủy đặt sân (action tại: /bookings/:bookingId) [UI hoàn thiện]
-  - Chỉ hiển thị khi booking pending_payment/confirmed và chưa tới giờ chơi.
+  - Cho phép hủy khi booking đang chờ chủ sân, chờ thanh toán hoặc đã xác nhận nhưng vẫn nằm trong thời hạn chính sách.
   - Modal chọn lý do hủy; cập nhật status, cancelledAt, cancellationReason và timeline.
+  - Nếu đã thanh toán trực tiếp thì tạo yêu cầu hoàn tiền/điều chỉnh hoa hồng, không tự động chuyển tiền từ Courtly.
 2.1.32. Xem lịch sử đặt sân (router: /bookings) [UI hoàn thiện]
-  - Các tab: Sắp tới, Chờ thanh toán, Đã hoàn thành và Đã hủy.
+  - Các tab: Chờ chủ sân, Chờ thanh toán, Sắp tới, Đã hoàn thành, Đã hủy/Từ chối và Tranh chấp.
   - Tìm theo mã booking hoặc tên sân.
-  - Có dữ liệu booking mẫu và tự cập nhật booking vừa tạo/hủy từ localStorage.
+  - Dữ liệu thật lấy từ bookings; không dùng localStorage làm nguồn nghiệp vụ.
 
-Thanh toán trực tuyến qua SePay
+Xác nhận Booking & Thanh toán trực tiếp cho Chủ sân
 
-2.1.33. Chọn SePay làm phương thức thanh toán (action tại: /booking/checkout) [UI hoàn thiện]
-  - SePay/VietQR đang là phương thức được chọn; tạo booking và payment cùng lúc khi xác nhận.
-2.1.34. Tạo giao dịch thanh toán SePay (router: /payments/:paymentId) [UI hoàn thiện]
-  - Dữ liệu giao diện giả lưu tại localStorage key courtly_fake_payments.
-  - Cấu trúc bám bảng payments: bookingId, provider, amount, status, qrUrl, thông tin ngân hàng, transferContent, providerTransactionId, paidAt, expiredAt.
-2.1.35. Hiển thị mã QR thanh toán qua SePay (router: /payments/:paymentId) [UI hoàn thiện]
-  - QR hiện là hình mẫu không phát sinh giao dịch thật; khi tích hợp API thay bằng payments.qr_url do backend trả về.
-2.1.36. Thanh toán tiền sân qua mã QR / chuyển khoản ngân hàng (router: /payments/:paymentId) [UI hoàn thiện]
-  - Hiển thị số tiền, ngân hàng, số tài khoản, chủ tài khoản, nội dung chuyển khoản và nút sao chép.
-2.1.37. Nhận thông báo giao dịch thanh toán từ SePay (backend webhook, không có router giao diện) [Chờ backend]
-  - Payload webhook dự kiến lưu tại sepay_webhook_logs; unique transaction_code để chống xử lý trùng.
-2.1.38. Xác minh giao dịch thanh toán SePay (backend service, không có router giao diện) [Chờ backend]
-  - Backend cần đối chiếu payment, số tiền, nội dung chuyển khoản và provider_transaction_id trước khi xác nhận booking.
-2.1.39. Cập nhật trạng thái thanh toán (router: /payments/:paymentId) [UI hoàn thiện]
-  - Hỗ trợ pending, paid, failed, expired; prototype có điều khiển giả lập callback để kiểm tra giao diện.
+2.1.33. Chờ chủ sân duyệt yêu cầu đặt sân (router: /bookings/:bookingId)
+  - Sau khi tạo, booking chờ chủ sân phản hồi trong thời hạn owner_response_expires_at.
+  - Hệ thống thông báo cho chủ sân/nhân viên và giữ khung giờ để tránh người khác đặt trùng.
+2.1.34. Nhận kết quả chủ sân xác nhận hoặc từ chối (router: /bookings/:bookingId)
+  - Xác nhận: booking chuyển sang awaiting_payment và bắt đầu thời hạn thanh toán.
+  - Từ chối: booking chuyển sang rejected, ghi lý do và giải phóng booking_items.
+2.1.35. Hiển thị hướng dẫn thanh toán trực tiếp cho chủ sân (router dự kiến: /bookings/:bookingId/payment)
+  - Hỗ trợ tiền mặt tại sân hoặc chuyển khoản trực tiếp vào tài khoản chủ sân.
+  - Thông tin ngân hàng được snapshot vào payment để booking cũ không đổi khi chủ sân sửa tài khoản.
+2.1.36. Người chơi thanh toán trực tiếp cho chủ sân
+  - Courtly không nhận, giữ hoặc chi trả tiền sân.
+  - Giá người chơi phải trả là bookings.total_amount đã được chốt khi tạo yêu cầu.
+2.1.37. Người chơi báo đã thanh toán (action tại: /bookings/:bookingId/payment)
+  - Người chơi chọn phương thức, thời điểm thanh toán và có thể đính kèm bằng chứng chuyển khoản.
+  - Payment chuyển từ awaiting_payment sang payer_reported; thao tác này chưa xác nhận booking thành công.
+2.1.38. Chủ sân xác nhận đã thu tiền (action tại ứng dụng chủ sân)
+  - Chỉ owner/staff được phân quyền của sân mới xác nhận.
+  - Payment chuyển sang confirmed; booking chuyển sang confirmed; booking_items chuyển sang confirmed.
+  - Mọi lần xác nhận/từ chối phải ghi payment_status_history và booking_status_history.
+2.1.39. Cập nhật trạng thái thanh toán (router: /bookings/:bookingId/payment)
+  - Hỗ trợ awaiting_payment, payer_reported, confirmed, rejected, expired, disputed, partially_refunded và refunded.
 2.1.40. Xác nhận đặt sân thành công (router: /booking/success/:bookingId) [UI hoàn thiện]
-  - Hiển thị mã booking, sân, ngày giờ, tổng tiền và liên kết đến chi tiết booking.
-2.1.41. Xử lý thanh toán thất bại (trạng thái tại: /payments/:paymentId) [UI hoàn thiện]
-  - Hiển thị lỗi và cho phép thử lại, đồng thời đặt paymentStatus của booking thành failed.
-2.1.42. Xử lý thanh toán hết hạn (trạng thái tại: /payments/:paymentId) [UI hoàn thiện]
-  - Đếm ngược 10 phút; hết hạn tự chuyển payment và booking sang expired, đề nghị chọn lịch mới.
+  - Chỉ hiển thị sau khi chủ sân xác nhận đã nhận tiền.
+  - Hiển thị mã booking, sân, ngày giờ, tổng tiền, phương thức thanh toán và liên kết đến chi tiết booking.
+2.1.41. Xử lý hủy hoặc tranh chấp thanh toán (router dự kiến: /bookings/:bookingId/bao-cao)
+  - Người chơi có thể báo đã trả tiền nhưng chủ sân chưa xác nhận hoặc số tiền thực thu không đúng.
+  - Booking/payment chuyển sang disputed; phần hoa hồng liên quan tạm thời chưa đến hạn đối soát.
+2.1.42. Xử lý quá hạn tự động
+  - Quá hạn chủ sân phản hồi: booking chuyển expired và giải phóng khung giờ.
+  - Quá hạn thanh toán: payment và booking chuyển expired nếu chưa có báo đã thanh toán.
+  - Booking confirmed chỉ chuyển completed sau khi giờ chơi kết thúc; không dùng xác nhận thu tiền làm trạng thái completed.
 
 Ma trận độ ưu tiên theo Tác nhân: Sprint 1
 
@@ -242,8 +254,14 @@ Ma trận độ ưu tiên theo Tác nhân: Sprint 2
 
 Chủ sân / Nhân viên sân
 
-2.3.1. Đăng ký tài khoản chủ sân
-2.3.2. Gửi yêu cầu xác minh sân
+Quy ước nghiệp vụ:
+- Hệ thống chỉ có một chủ sân đối tác trong phạm vi hiện tại.
+- Không có đăng ký chủ sân công khai; quản trị viên tạo và cấp tài khoản OWNER.
+- Courtly là nền tảng, admin là người vận hành nền tảng, owner là đối tác cung cấp sân.
+- Người chơi trả tiền trực tiếp cho owner; Courtly chỉ tính và thu hoa hồng định kỳ.
+
+2.3.1. Đăng nhập bằng tài khoản chủ sân do quản trị viên cấp
+2.3.2. Xem và cập nhật hồ sơ chủ sân duy nhất
 2.3.3. Thêm sân cầu lông mới
 2.3.4. Cập nhật thông tin sân
 2.3.5. Cập nhật giá sân
@@ -255,20 +273,31 @@ Chủ sân / Nhân viên sân
 2.3.11. Mở khóa khung giờ sân
 2.3.12. Xem các yêu cầu đặt sân
 2.3.13. Xác nhận yêu cầu đặt sân
+  - Chuyển booking từ pending_owner_confirmation sang awaiting_payment.
+  - Ghi người xác nhận, thời điểm xác nhận và thời hạn người chơi phải thanh toán.
 2.3.14. Từ chối yêu cầu đặt sân
+  - Bắt buộc chọn lý do; chuyển booking sang rejected và giải phóng khung giờ.
 2.3.15. Xem lịch sử đặt sân
-2.3.16. Xem lịch sử thanh toán của sân
+2.3.16. Xem danh sách thanh toán trực tiếp của sân
+  - Theo dõi awaiting_payment, payer_reported, confirmed, rejected, expired và disputed.
+  - Không hiển thị số dư tiền đang giữ tại Courtly vì Courtly không giữ tiền sân.
 2.3.17. Xem thống kê doanh thu của sân
+  - Doanh thu gộp là số tiền owner đã trực tiếp thu từ các booking được xác nhận.
 2.3.18. Xem phí nền tảng của booking
+  - Phí được snapshot theo chính sách có hiệu lực tại thời điểm booking được xác nhận.
 2.3.19. Xem số tiền thực nhận của booking
-2.3.20. Xem số dư tài khoản
-2.3.21. Xem lịch sử giao dịch
+  - Số thực nhận = doanh thu gộp - hoa hồng Courtly - khoản owner đã hoàn cho người chơi.
+2.3.20. Xem tổng công nợ hoa hồng với Courtly
+2.3.21. Xem chi tiết các booking cấu thành công nợ hoa hồng
+  - Dữ liệu được tổng hợp trực tiếp từ hoa hồng của từng booking, không duy trì sổ cái công nợ riêng.
 2.3.22. Xem lịch sử đối soát booking
-2.3.23. Gửi yêu cầu rút tiền
-2.3.24. Xem trạng thái yêu cầu rút tiền
-2.3.25. Hủy yêu cầu rút tiền
-2.3.26. Xem lịch sử rút tiền
-2.3.27. Xem chi tiết giao dịch chi trả
+2.3.23. Xem các kỳ đối soát hoa hồng
+2.3.24. Gửi thông tin thanh toán công nợ cho Courtly
+  - Nhập số tiền, ngày thanh toán, mã tham chiếu và bằng chứng nếu có.
+2.3.25. Xem trạng thái thanh toán công nợ
+2.3.26. Xem lịch sử thanh toán hoa hồng
+2.3.27. Xem chi tiết xác nhận thanh toán trực tiếp của booking
+  - Owner/staff có thể xác nhận đã thu tiền hoặc từ chối báo đã thanh toán kèm lý do.
 
 Quản trị viên
 
@@ -276,8 +305,8 @@ Quản trị viên
 2.3.29. Phân quyền vai trò người dùng
 2.3.30. Quản lý quyền của người dùng
 2.3.31. Quản lý tài khoản người chơi
-2.3.32. Quản lý tài khoản chủ sân
-2.3.33. Xác minh tài khoản chủ sân
+2.3.32. Quản lý tài khoản chủ sân duy nhất
+2.3.33. Tạo, kích hoạt, khóa hoặc đặt lại thông tin đăng nhập chủ sân
 2.3.34. Phê duyệt sân cầu lông
 2.3.35. Từ chối sân cầu lông
 2.3.36. Quản lý người dùng bị báo cáo
@@ -289,20 +318,24 @@ Quản trị viên
 2.3.42. Xem tổng doanh thu phí nền tảng
 2.3.43. Xem danh sách giao dịch đối soát
 2.3.44. Xem chi tiết đối soát booking
-2.3.45. Xem danh sách yêu cầu rút tiền
-2.3.46. Xem chi tiết yêu cầu rút tiền
-2.3.47. Duyệt yêu cầu rút tiền
-2.3.48. Từ chối yêu cầu rút tiền
-2.3.49. Xác nhận giao dịch chi trả cho chủ sân
-2.3.50. Xem lịch sử chi trả
-2.3.51. Điều chỉnh giao dịch đối soát
-2.3.52. Xử lý hoàn tiền ảnh hưởng đến doanh thu chủ sân
+2.3.45. Xem danh sách kỳ công nợ hoa hồng
+2.3.46. Xem chi tiết công nợ và các booking cấu thành
+  - Các booking liên kết trực tiếp với kỳ đối soát, không qua bảng chi tiết trung gian.
+2.3.47. Xác nhận chủ sân đã thanh toán công nợ
+2.3.48. Từ chối hoặc yêu cầu bổ sung bằng chứng thanh toán công nợ
+2.3.49. Ghi nhận giao dịch đối soát hoa hồng
+  - Cập nhật số tiền đã thanh toán, mã tham chiếu, bằng chứng và trạng thái ngay trên kỳ đối soát.
+2.3.50. Xem lịch sử thanh toán hoa hồng của chủ sân
+2.3.51. Điều chỉnh công nợ có lý do và lưu audit log
+2.3.52. Xử lý hoàn tiền trực tiếp làm giảm/hoàn lại hoa hồng của booking
 
 Quản lý Thông báo
 
 2.3.53. Thông báo xác nhận đặt sân
+  - Thông báo cho player khi owner chấp nhận/từ chối và khi owner xác nhận đã thu tiền.
 2.3.54. Thông báo hủy đặt sân
 2.3.55. Thông báo trạng thái thanh toán
+  - Thông báo cho owner khi player báo đã thanh toán; thông báo cho player khi owner xác nhận/từ chối.
 2.3.56. Thông báo yêu cầu ghép cặp
 2.3.57. Thông báo phản hồi yêu cầu ghép cặp
 2.3.58. Thông báo lịch thi đấu
@@ -355,7 +388,7 @@ Báo cáo & Tranh chấp Hoàn tiền — Người chơi
 2.3.86. Chọn loại báo cáo theo danh mục có sẵn
   - Năm loại: sân đóng cửa, sân khác mô tả, chủ sân tự huỷ, bị thu thêm tiền, lý do khác.
 2.3.87. Đánh dấu yêu cầu hoàn tiền khi tạo báo cáo
-  - Không tick thì chỉ là phản ánh, không ảnh hưởng dòng tiền của chủ sân.
+  - Không tick thì chỉ là phản ánh, không điều chỉnh công nợ hoa hồng của booking.
   - Chỉ tick được trong vòng 7 ngày kể từ giờ chơi.
 2.3.88. Đính kèm ảnh bằng chứng vào báo cáo
 2.3.89. Xem danh sách báo cáo đã gửi (router dự kiến: /bao-cao)
@@ -370,7 +403,8 @@ Báo cáo & Tranh chấp Hoàn tiền — Chủ sân
 2.3.95. Gửi giải trình cho báo cáo
   - Hạn 48 giờ kể từ khi báo cáo được tạo.
 2.3.96. Đính kèm ảnh bằng chứng vào giải trình
-2.3.97. Xem số tiền đang bị tạm giữ do tranh chấp
+  - Nội dung giải trình và danh sách bằng chứng được lưu trực tiếp trong hồ sơ tranh chấp.
+2.3.97. Xem khoản hoa hồng đang tạm hoãn đối soát do tranh chấp
 
 Báo cáo & Tranh chấp Hoàn tiền — Quản trị viên
 
@@ -384,16 +418,18 @@ Báo cáo & Tranh chấp Hoàn tiền — Quản trị viên
 
 Xử lý Tự động cho Tranh chấp
 
-2.3.105. Tạm giữ tiền của đơn khi có yêu cầu hoàn tiền
-  - Chỉ giữ tiền của đúng đơn đang tranh chấp, không khoá toàn bộ tài khoản chủ sân.
-2.3.106. Trừ số tiền đang tạm giữ khỏi hạn mức rút tiền của chủ sân
+2.3.105. Tạm hoãn ghi nhận hoa hồng đến hạn của booking đang tranh chấp
+  - Courtly không giữ tiền sân; hệ thống chỉ tạm loại hoa hồng của đúng booking khỏi kỳ đối soát.
+2.3.106. Trừ khoản hoa hồng đang tranh chấp khỏi tổng công nợ đến hạn
 2.3.107. Tự động xử thua chủ sân khi quá hạn giải trình
-  - Quá 48 giờ không phản hồi thì hoàn 100% cho người chơi.
+  - Quá 48 giờ không phản hồi thì chuyển sang quyết định yêu cầu owner hoàn tiền theo chính sách.
   - Gửi email nhắc ở giờ thứ 24.
-2.3.108. Thực hiện hoàn tiền cho người chơi theo quyết định của quản trị viên
+2.3.108. Theo dõi và xác nhận chủ sân đã hoàn tiền trực tiếp cho người chơi
+  - Chủ sân gửi bằng chứng hoàn tiền; người chơi hoặc admin xác nhận đã nhận.
+  - Courtly không tự chuyển tiền vì không nắm giữ tiền thanh toán của booking.
 2.3.109. Hoàn lại phí nền tảng của đơn bị hoàn tiền
-  - Người chơi nhận đủ số tiền đã trả, nền tảng không giữ phí trên giao dịch hỏng.
-2.3.110. Mở khoá số tiền tạm giữ khi báo cáo bị bác bỏ
+  - Toàn phần: hủy toàn bộ hoa hồng; một phần: điều chỉnh theo số tiền owner thực giữ.
+2.3.110. Khôi phục khoản hoa hồng vào công nợ khi báo cáo bị bác bỏ
 2.3.111. Thông báo cho các bên liên quan ở mỗi bước xử lý
 
 Ma trận độ ưu tiên theo Tác nhân: Sprint 3

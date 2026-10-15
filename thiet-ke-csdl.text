@@ -7,7 +7,15 @@ Huong thiet ke:
 - Thoi gian: timestamptz.
 - Tien te: numeric(12,2).
 - Vi tri ban do: geography(Point, 4326).
-- Du lieu linh hoat nhu cau hinh thuat toan, payload webhook, metadata thong bao: JSONB.
+- Du lieu linh hoat nhu cau hinh thuat toan, bang chung/metadata va metadata thong bao: JSONB.
+
+Mo hinh nghiep vu da chot:
+- Courtly la nen tang ket noi va tinh hoa hong; Courtly khong nhan/giu tien san cua nguoi choi.
+- Nguoi choi thanh toan truc tiep cho chu san bang tien mat hoac chuyen khoan.
+- Chu san xac nhan da thu tien; booking chi confirmed sau buoc xac nhan nay.
+- Sau booking hoan thanh, he thong tinh hoa hong va ghi cong no chu san voi Courtly.
+- Cong no duoc doi soat/thanh toan theo ky; khong con luong rut tien va chi tra tu Courtly cho chu san.
+- Pham vi hien tai chi co mot chu san. Tai khoan OWNER do admin tao, khong co dang ky chu san cong khai.
 
 
 1. NHOM TAI KHOAN, DANG NHAP, PHAN QUYEN
@@ -150,7 +158,7 @@ Cot chinh:
 - updated_at timestamptz
 
 1.9. court_owner_profiles
-Muc dich: ho so chu san.
+Muc dich: ho so cua chu san duy nhat trong he thong.
 
 Cot chinh:
 - user_id uuid PK FK -> users.id
@@ -164,6 +172,12 @@ Cot chinh:
 - verified_at timestamptz
 - created_at timestamptz
 - updated_at timestamptz
+
+Ghi chu:
+- Khong co luong dang ky chu san cong khai. Admin tao user, gan role OWNER va tao profile nay.
+- Trong pham vi hien tai chi co mot profile owner dang active; van giu owner_id/FK de phan quyen,
+  audit va de mo rong sau nay ma khong phai doi schema.
+- verification_status chi do admin quan ly; owner duoc tao noi bo co the dat verified ngay.
 
 1.10. player_availability_slots
 Muc dich: luu khung gio ranh cua nguoi choi de ghep cap.
@@ -262,6 +276,9 @@ Index:
 - index(owner_id)
 - index(status, approval_status)
 - index(province, district)
+
+Ghi chu:
+- Tat ca venues hien tai thuoc cung mot owner, nhung van giu owner_id de kiem tra quyen owner/staff.
 
 2.2. courts
 Muc dich: luu tung san con trong mot dia diem.
@@ -379,30 +396,48 @@ Constraint:
 - PK(user_id, venue_id)
 
 
-3. NHOM DAT SAN
+3. NHOM DAT SAN VA DUYET BOOKING
 
 3.1. bookings
-Muc dich: don dat san.
+Muc dich: don dat san va toan bo vong doi duyet cua owner.
 
 Cot chinh:
 - id uuid PK
 - booking_code varchar(50) unique
 - user_id uuid FK -> users.id
 - venue_id uuid FK -> venues.id
-- status varchar(30) -- pending_payment, confirmed, cancelled, completed, expired, refunded
-- total_amount numeric(12,2)
+- status varchar(40) -- pending_owner_confirmation, awaiting_payment, confirmed,
+  rejected, cancelled, completed, expired, disputed, refunded
+- total_amount numeric(12,2) -- gia da chot, khong tinh lai sau khi tao booking
+- price_locked_at timestamptz
 - note text
-- expires_at timestamptz
-- confirmed_at timestamptz
+- owner_response_expires_at timestamptz
+- owner_responded_at timestamptz
+- owner_responded_by uuid FK -> users.id, nullable
+- payment_expires_at timestamptz
+- confirmed_at timestamptz -- owner/staff xac nhan da thu tien
+- completed_at timestamptz -- chi dat sau khi gio choi ket thuc
+- rejected_at timestamptz
+- rejection_reason text
 - cancelled_at timestamptz
 - cancellation_reason text
 - created_at timestamptz
 - updated_at timestamptz
 
 Index:
-- index(user_id, created_at)
-- index(venue_id, created_at)
+- index(user_id, created_at desc)
+- index(venue_id, status, created_at desc)
 - index(status)
+- index(owner_response_expires_at) where status = 'pending_owner_confirmation'
+- index(payment_expires_at) where status = 'awaiting_payment'
+
+Quy tac trang thai:
+- Tao don -> pending_owner_confirmation.
+- Owner chap nhan -> awaiting_payment.
+- Owner xac nhan da thu tien -> confirmed.
+- Qua gio choi va khong bi huy/tranh chap -> completed.
+- Owner tu choi -> rejected; booking_items duoc giai phong.
+- Khong dung completed de bieu dien da thu tien.
 
 3.2. booking_items
 Muc dich: chi tiet tung san/tung khung gio trong don.
@@ -413,7 +448,7 @@ Cot chinh:
 - court_id uuid FK -> courts.id
 - start_time timestamptz
 - end_time timestamptz
-- price numeric(12,2)
+- price numeric(12,2) -- snapshot gia cua khung gio
 - status varchar(30) -- pending, confirmed, cancelled, completed, expired
 - created_at timestamptz
 
@@ -423,88 +458,155 @@ Constraint:
   court_id WITH = va tstzrange(start_time, end_time, '[)') WITH &&
   ap dung khi status in ('pending', 'confirmed')
 
+Ghi chu:
+- item giu status pending trong ca hai buoc cho owner va cho thanh toan.
+- item chi confirmed khi owner/staff xac nhan da thu tien.
+
 Index:
 - index(court_id, start_time, end_time)
 - index(booking_id)
 
 3.3. booking_status_history
-Muc dich: lich su thay doi trang thai don.
+Muc dich: lich su bat bien cua moi thay doi trang thai booking.
 
 Cot chinh:
 - id uuid PK
 - booking_id uuid FK -> bookings.id
-- old_status varchar(30)
-- new_status varchar(30)
+- old_status varchar(40)
+- new_status varchar(40)
 - reason text
 - changed_by uuid FK -> users.id, nullable neu he thong tu dong
+- actor_role varchar(30), nullable -- player, owner, staff, admin, system
 - created_at timestamptz
 
 
-4. NHOM THANH TOAN SEPAY, HOAN TIEN
+4. NHOM THANH TOAN TRUC TIEP, HOAN TIEN, TRANH CHAP
 
 4.1. payments
-Muc dich: giao dich thanh toan cho booking.
+Muc dich: ghi nhan viec nguoi choi thanh toan truc tiep cho owner; Courtly khong giu tien.
 
 Cot chinh:
 - id uuid PK
 - booking_id uuid FK -> bookings.id
-- provider varchar(50) -- sepay
+- recipient_owner_id uuid FK -> users.id
+- method varchar(30) -- cash, owner_bank_transfer
 - amount numeric(12,2)
-- status varchar(30) -- pending, paid, failed, expired, refunded
-- qr_url text
-- bank_account_no varchar(50)
-- transfer_content varchar(255)
-- provider_transaction_id varchar(255)
-- paid_at timestamptz
-- expired_at timestamptz
+- status varchar(40) -- awaiting_payment, payer_reported, confirmed, rejected,
+  expired, disputed, partially_refunded, refunded
+- bank_name varchar(100), nullable -- snapshot tai khoan owner luc thanh toan
+- bank_account_no varchar(50), nullable
+- bank_account_name varchar(150), nullable
+- reference_content varchar(255), nullable
+- proof_url text, nullable
+- payer_reported_at timestamptz, nullable
+- confirmed_by uuid FK -> users.id, nullable -- owner/staff
+- confirmed_at timestamptz, nullable
+- rejected_by uuid FK -> users.id, nullable
+- rejected_at timestamptz, nullable
+- rejection_reason text, nullable
+- expired_at timestamptz, nullable
 - created_at timestamptz
 - updated_at timestamptz
 
 Index/constraint:
-- unique(provider, provider_transaction_id) where provider_transaction_id is not null
-- index(booking_id)
+- index(booking_id, created_at desc)
+- index(recipient_owner_id, status, created_at desc)
 - index(status)
+- check amount >= 0
 
-4.2. sepay_webhook_logs
-Muc dich: luu webhook tu SePay de doi soat va debug.
+Ghi chu:
+- Khong con provider = sepay, provider_transaction_id hay webhook xac nhan tu dong.
+- Viec nguoi choi bam "da thanh toan" chi chuyen sang payer_reported.
+- Booking chi confirmed khi owner/staff thuc hien xac nhan thu tien.
+
+4.2. payment_status_history
+Muc dich: luu lich su xac nhan/tu choi thanh toan de doi soat va tranh chap.
 
 Cot chinh:
 - id uuid PK
-- payment_id uuid FK -> payments.id, nullable luc chua match duoc
-- transaction_code varchar(255)
-- payload_json jsonb
-- processed_status varchar(30) -- received, processed, ignored, failed
-- error_message text
-- received_at timestamptz
-- processed_at timestamptz
+- payment_id uuid FK -> payments.id
+- old_status varchar(40)
+- new_status varchar(40)
+- reason text
+- changed_by uuid FK -> users.id, nullable neu he thong
+- created_at timestamptz
 
-Index/constraint:
-- unique(transaction_code)
-- index(payment_id)
+Index:
+- index(payment_id, created_at)
 
 4.3. refunds
-Muc dich: hoan tien booking.
+Muc dich: theo doi viec owner hoan tien truc tiep cho nguoi choi.
 
 Cot chinh:
 - id uuid PK
 - payment_id uuid FK -> payments.id
 - booking_id uuid FK -> bookings.id
+- dispute_id uuid FK -> booking_disputes.id, nullable
 - amount numeric(12,2)
 - reason text
-- status varchar(30) -- requested, approved, rejected, processed, failed
+- status varchar(40) -- requested, approved, awaiting_owner_refund,
+  owner_reported_refunded, confirmed, rejected, failed
 - requested_by uuid FK -> users.id
-- processed_by uuid FK -> users.id, nullable
-- processed_at timestamptz
+- approved_by uuid FK -> users.id, nullable -- admin
+- owner_reported_at timestamptz, nullable
+- proof_url text, nullable
+- confirmed_by uuid FK -> users.id, nullable -- player/admin
+- confirmed_at timestamptz, nullable
 - created_at timestamptz
+- updated_at timestamptz
 
+Ghi chu:
+- Courtly khong tu chuyen tien hoan. Owner hoan truc tiep va gui bang chung.
+- Refund confirmed se dieu chinh truc tiep commission_amount/status cua booking_commissions.
 
-5. NHOM DOANH THU, PHI NEN TANG, RUT TIEN
-
-5.1. platform_fee_configs
-Muc dich: cau hinh phi nen tang.
+4.4. booking_disputes
+Muc dich: tranh chap lien quan booking, thanh toan, dich vu va yeu cau hoan tien.
 
 Cot chinh:
 - id uuid PK
+- booking_id uuid FK -> bookings.id
+- payment_id uuid FK -> payments.id, nullable
+- reporter_id uuid FK -> users.id
+- category varchar(50) -- venue_closed, not_as_described, owner_cancelled,
+  extra_charge, paid_not_confirmed, other
+- description text
+- reporter_evidences_json jsonb, nullable -- danh sach file/anh bang chung cua nguoi bao cao
+- refund_requested boolean
+- requested_refund_amount numeric(12,2), nullable
+- status varchar(30) -- open, awaiting_owner_response, reviewing, resolved, rejected, cancelled
+- owner_response_deadline timestamptz
+- owner_response text, nullable
+- owner_responded_by uuid FK -> users.id, nullable
+- owner_responded_at timestamptz, nullable
+- owner_evidences_json jsonb, nullable -- danh sach file/anh bang chung cua owner
+- resolution varchar(30), nullable -- full_refund, partial_refund, no_refund, other
+- resolution_note text, nullable
+- resolution_evidences_json jsonb, nullable -- bang chung bo sung khi admin xu ly
+- handled_by uuid FK -> users.id, nullable -- admin
+- handled_at timestamptz, nullable
+- created_at timestamptz
+- updated_at timestamptz
+
+Index:
+- index(booking_id)
+- index(status, created_at desc)
+- index(owner_response_deadline) where status = 'awaiting_owner_response'
+
+Ghi chu:
+- Pham vi hien tai khong can luong chat tranh chap nhieu tin nhan.
+- Noi dung bao cao, giai trinh owner va ket luan admin duoc luu truc tiep tren booking_disputes.
+- Bang chung duoc luu dang mang JSONB gom file_url, file_type, description va uploaded_at;
+  khong tao bang dispute_messages hoac dispute_evidences rieng.
+
+
+5. NHOM HOA HONG, CONG NO, DOI SOAT DINH KY
+
+5.1. platform_fee_configs
+Muc dich: cau hinh chinh sach hoa hong cua Courtly.
+
+Cot chinh:
+- id uuid PK
+- name varchar(150)
 - fee_type varchar(30) -- percentage, fixed
 - fee_value numeric(12,2)
 - effective_from timestamptz
@@ -513,52 +615,79 @@ Cot chinh:
 - created_by uuid FK -> users.id
 - created_at timestamptz
 
-5.2. owner_balance_transactions
-Muc dich: so cai so du cua chu san.
+Ghi chu:
+- Thay doi cau hinh khong duoc lam thay doi hoa hong cua booking cu.
+- Moi booking_commissions phai snapshot fee_type va fee_value tai thoi diem ghi nhan.
+
+5.2. booking_commissions
+Muc dich: hoa hong Courtly cua tung booking da hoan thanh.
+
+Cot chinh:
+- id uuid PK
+- booking_id uuid FK -> bookings.id unique
+- owner_id uuid FK -> users.id
+- fee_config_id uuid FK -> platform_fee_configs.id, nullable
+- gross_amount numeric(12,2)
+- fee_type varchar(30) -- snapshot percentage, fixed
+- fee_value numeric(12,2) -- snapshot ty le/gia tri
+- commission_amount numeric(12,2)
+- settlement_id uuid FK -> commission_settlements.id, nullable
+- status varchar(30) -- pending, due, suspended, adjusted, waived, settled
+- calculated_at timestamptz
+- due_at timestamptz
+- settled_at timestamptz, nullable
+- created_at timestamptz
+- updated_at timestamptz
+
+Index/constraint:
+- unique(booking_id)
+- index(owner_id, status, due_at)
+- index(settlement_id)
+- check gross_amount >= 0
+- check commission_amount >= 0
+
+Ghi chu:
+- Chi tao mot lan khi booking completed; job/retry phai idempotent bang unique(booking_id).
+- Khi booking disputed, commission chuyen suspended va tam loai khoi cong no den han.
+- Refund confirmed tao adjusted/waived tuy ty le owner thuc su hoan.
+- Cong no duoc tinh truc tiep tu cac booking_commissions den han, sau khi tru so tien da thanh
+  toan cua commission_settlements; khong tao owner_commission_ledger.
+- settlement_id gan hoa hong vao mot ky doi soat; mot booking commission chi thuoc toi da mot ky.
+
+5.3. commission_settlements
+Muc dich: ky doi soat/thanh toan hoa hong giua owner va Courtly.
 
 Cot chinh:
 - id uuid PK
 - owner_id uuid FK -> users.id
-- booking_id uuid FK -> bookings.id, nullable
-- payment_id uuid FK -> payments.id, nullable
-- type varchar(30) -- earning, platform_fee, withdrawal, refund_adjustment, manual_adjustment
-- amount numeric(12,2)
-- balance_after numeric(12,2)
+- period_from date
+- period_to date
+- opening_outstanding numeric(12,2)
+- commission_total numeric(12,2)
+- adjustment_total numeric(12,2)
+- amount_due numeric(12,2)
+- amount_paid numeric(12,2)
+- status varchar(30) -- open, pending_review, partial, paid, overdue, disputed
+- owner_submitted_at timestamptz, nullable
+- payment_reference varchar(255), nullable
+- proof_url text, nullable
+- reviewed_by uuid FK -> users.id, nullable -- admin
+- reviewed_at timestamptz, nullable
+- paid_at timestamptz, nullable
 - note text
 - created_at timestamptz
+- updated_at timestamptz
 
-Index:
-- index(owner_id, created_at)
+Index/constraint:
+- unique(owner_id, period_from, period_to)
+- index(owner_id, status, period_to desc)
+- check period_to >= period_from
 
-5.3. withdrawal_requests
-Muc dich: chu san gui yeu cau rut tien.
-
-Cot chinh:
-- id uuid PK
-- owner_id uuid FK -> users.id
-- amount numeric(12,2)
-- bank_name varchar(100)
-- bank_account_no varchar(50)
-- bank_account_name varchar(150)
-- status varchar(30) -- pending, approved, rejected, paid, cancelled
-- requested_at timestamptz
-- reviewed_by uuid FK -> users.id, nullable
-- reviewed_at timestamptz
-- rejection_reason text
-
-5.4. payout_transactions
-Muc dich: giao dich chi tra cho chu san.
-
-Cot chinh:
-- id uuid PK
-- withdrawal_request_id uuid FK -> withdrawal_requests.id
-- owner_id uuid FK -> users.id
-- amount numeric(12,2)
-- provider varchar(50)
-- provider_transaction_id varchar(255)
-- status varchar(30) -- pending, success, failed
-- paid_at timestamptz
-- created_at timestamptz
+Ghi chu tong quat nhom 5:
+- Khong con withdrawal_requests va payout_transactions.
+- Owner da nhan tien san truc tiep, nen Courtly khong co nghia vu chi tra/rut tien cho owner.
+- Khong co owner_commission_ledger; chi tiet cong no doc truc tiep tu booking_commissions.
+- Khong co commission_settlement_items; booking_commissions.settlement_id lien ket truc tiep den ky doi soat.
 
 
 6. NHOM TRAN DAU, THONG KE NGUOI CHOI
@@ -810,6 +939,9 @@ Cot chinh:
 - handled_at timestamptz
 - created_at timestamptz
 
+Ghi chu:
+- Bang nay chi dung cho moderation chung. Tranh chap booking/thanh toan/hoan tien dung booking_disputes.
+
 9. NHOM THONG BAO
 
 9.1. notifications
@@ -818,7 +950,9 @@ Muc dich: thong bao trong he thong.
 Cot chinh:
 - id uuid PK
 - user_id uuid FK -> users.id
-- type varchar(80) -- booking_confirmed, payment_status, partner_request, match_reminder
+- type varchar(80) -- booking_owner_review, booking_accepted, booking_rejected,
+  payment_reported, payment_confirmed, commission_due, settlement_status,
+  dispute_status, partner_request, match_reminder
 - title varchar(255)
 - content text
 - data_json jsonb
@@ -879,7 +1013,12 @@ Index:
 - courts 1-n booking_items
 - bookings 1-n booking_items
 - bookings 1-n payments
-- payments 1-n sepay_webhook_logs
+- payments 1-n payment_status_history
+- bookings 1-n booking_disputes
+- payments 1-n refunds
+- bookings 1-1 booking_commissions
+- platform_fee_configs 1-n booking_commissions
+- commission_settlements 1-n booking_commissions qua booking_commissions.settlement_id
 - users 1-n partner_requests vai tro requester/receiver
 - matches 1-n match_players
 - matches 1-n match_games
@@ -895,7 +1034,15 @@ Index:
 - player_match_profiles.preferred_location: GiST index neu dung vi tri uu tien trong matching.
 - booking_items(court_id, start_time, end_time): tim lich trong.
 - booking_items exclusion constraint: chan dat trung san cung khung gio.
-- payments(provider, provider_transaction_id): chan xu ly webhook trung.
+- bookings(owner_response_expires_at) partial index: het han yeu cau owner chua duyet.
+- bookings(payment_expires_at) partial index: het han booking dang cho thanh toan.
+- payments(recipient_owner_id, status, created_at desc): hang doi owner xac nhan tien.
+- payment_status_history(payment_id, created_at): audit xac nhan/tu choi thanh toan.
+- booking_commissions unique(booking_id): chan tinh hoa hong trung khi job retry.
+- booking_commissions(owner_id, status, due_at): tong hop cong no den han.
+- booking_commissions(settlement_id): doc cac booking cau thanh mot ky doi soat.
+- commission_settlements(owner_id, status, period_to desc): quan ly ky doi soat.
+- booking_disputes(status, created_at desc): hang doi admin xu ly tranh chap.
 - auth_providers(provider_name, provider_user_id): dang nhap Google nhanh va an toan.
 - notifications(user_id, read_at, created_at): doc thong bao nhanh.
 - partner_suggestions(user_id, total_score desc): lay danh sach de xuat nhanh.
@@ -924,7 +1071,7 @@ MVP bat buoc:
 - booking_items
 - booking_status_history
 - payments
-- sepay_webhook_logs
+- payment_status_history
 - notifications
 - notification_preferences
 - venue_reviews
@@ -947,10 +1094,10 @@ MVP nang cao/Sprint 2:
 
 Giai doan quan tri/doanh thu:
 - platform_fee_configs
-- owner_balance_transactions
-- withdrawal_requests
-- payout_transactions
+- booking_commissions
+- commission_settlements
 - refunds
+- booking_disputes
 - reports
 - audit_logs
 
@@ -962,5 +1109,16 @@ Giai doan quan tri/doanh thu:
 - Khong tinh lai thong ke nguoi choi moi lan mo man hinh; doc tu player_statistics.
 - Du lieu BWF duoc lam sach va chuyen doi bang script truoc khi ghi vao cac bang Courtly hien co; khong tao nhom bang BWF rieng trong database.
 - Booking phai co rang buoc chong trung lich o database, khong chi check bang code.
+- Public registration chi tao PLAYER. OWNER duy nhat do admin tao va cap role; khong co owner self-registration.
+- Courtly khong giu tien san. Khong tao so du co the rut, withdrawal request hay payout cho owner.
+- Nguoi choi bao da thanh toan khong du de confirmed booking; owner/staff phai xac nhan da thu tien.
+- Booking completed chi sau khi gio choi ket thuc, tach biet voi payment confirmed.
+- Gia booking va chinh sach hoa hong phai snapshot; thay doi bang gia/phi sau nay khong sua du lieu cu.
+- Tinh hoa hong phai idempotent bang unique booking_id; khong ghi hai lan khi job retry.
+- Cong no duoc tinh tu booking_commissions va so tien da ghi nhan tren commission_settlements;
+  khong duy tri bang so cai cong no rieng.
+- Moi booking_commissions lien ket truc tiep toi toi da mot commission_settlements bang settlement_id.
+- Booking dang tranh chap chi tam hoan hoa hong cua booking do, khong khoa toan bo cong no owner.
+- Refund do owner thuc hien truc tiep; Courtly theo doi bang chung, xac nhan va dieu chinh hoa hong.
 - Map search nen dung PostGIS thay vi chi loc latitude/longitude thu cong.
 - JSONB chi dung cho payload/cau hinh/metadata linh hoat; cac quan he chinh van nen chuan hoa bang FK.
