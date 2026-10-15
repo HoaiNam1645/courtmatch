@@ -23,3 +23,5 @@ node_modules/
 # Thu muc nay la mot repo rieng tai ve tu ben ngoai (co .git cua no),
 # nen bo qua toan bo. Xuat xu duoc chep ra data/NGUON-DU-LIEU-BWF.md
 data/bwf-match-data/
+docs
+*.pdf
