@@ -6,11 +6,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /** Trang thai don dat san. */
 public enum BookingStatus implements PersistableEnum {
 
-    PENDING_PAYMENT("pending_payment"),
+    PENDING_OWNER_CONFIRMATION("pending_owner_confirmation"),
+    AWAITING_PAYMENT("awaiting_payment"),
     CONFIRMED("confirmed"),
+    REJECTED("rejected"),
     CANCELLED("cancelled"),
     COMPLETED("completed"),
     EXPIRED("expired"),
+    DISPUTED("disputed"),
     REFUNDED("refunded");
 
     private final String value;

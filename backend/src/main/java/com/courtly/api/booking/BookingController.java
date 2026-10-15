@@ -4,6 +4,7 @@ import com.courtly.api.booking.dto.BookingDetailResponse;
 import com.courtly.api.booking.dto.BookingSummaryResponse;
 import com.courtly.api.booking.dto.CancelBookingRequest;
 import com.courtly.api.booking.dto.CreateBookingRequest;
+import com.courtly.api.booking.dto.RejectBookingRequest;
 import com.courtly.common.PageResponse;
 import com.courtly.service.booking.BookingService;
 import jakarta.validation.Valid;
@@ -60,6 +61,16 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.list(currentUserId(jwt), tab, q, page, size));
     }
 
+    /** Hang doi booking cua chu san duy nhat. */
+    @GetMapping("/owner")
+    public ResponseEntity<PageResponse<BookingSummaryResponse>> ownerBookings(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "pending_owner_confirmation") String status,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        return ResponseEntity.ok(bookingService.listForOwner(currentUserId(jwt), status, page, size));
+    }
+
     /** 2.1.29, 2.1.30 - chi tiet don kem timeline trang thai. */
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingDetailResponse> detail(@AuthenticationPrincipal Jwt jwt,
@@ -73,6 +84,21 @@ public class BookingController {
                                                         @PathVariable UUID bookingId,
                                                         @Valid @RequestBody CancelBookingRequest request) {
         return ResponseEntity.ok(bookingService.cancel(currentUserId(jwt), bookingId, request));
+    }
+
+    /** Chu san chap nhan yeu cau va mo buoc thanh toan truc tiep. */
+    @PostMapping("/{bookingId}/accept")
+    public ResponseEntity<BookingDetailResponse> accept(@AuthenticationPrincipal Jwt jwt,
+                                                        @PathVariable UUID bookingId) {
+        return ResponseEntity.ok(bookingService.accept(currentUserId(jwt), bookingId));
+    }
+
+    /** Chu san tu choi yeu cau dat san. */
+    @PostMapping("/{bookingId}/reject")
+    public ResponseEntity<BookingDetailResponse> reject(@AuthenticationPrincipal Jwt jwt,
+                                                        @PathVariable UUID bookingId,
+                                                        @Valid @RequestBody RejectBookingRequest request) {
+        return ResponseEntity.ok(bookingService.reject(currentUserId(jwt), bookingId, request));
     }
 
     private static UUID currentUserId(Jwt jwt) {

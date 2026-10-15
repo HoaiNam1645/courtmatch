@@ -60,10 +60,10 @@ public class AuditLogSeeder implements Seeder {
                         SeedIds.of("platform-fee:default"),
                         null,
                         Map.of("fee_type", "percentage", "fee_value", 10, "status", "active"), 90),
-                new AuditSeed("audit-04", "admin", "withdrawal.approve", "withdrawal_requests",
-                        SeedIds.of("withdrawal:owner-01-paid"),
-                        Map.of("status", "pending"),
-                        Map.of("status", "paid", "amount", 189000), 0),
+                new AuditSeed("audit-04", "admin", "settlement.confirm", "commission_settlements",
+                        SeedIds.of("commission-settlement:owner-01-paid"),
+                        Map.of("status", "pending_review"),
+                        Map.of("status", "paid", "amount_paid", 189000), 0),
                 new AuditSeed("audit-05", "admin", "report.resolve", "reports",
                         SeedIds.of("report:report-02"),
                         Map.of("status", "pending"),
@@ -74,7 +74,7 @@ public class AuditLogSeeder implements Seeder {
                         Map.of("reason", "Bao tri mat san dinh ky", "status", "active"), 1),
                 new AuditSeed("audit-07", null, "booking.expire", "bookings",
                         SeedIds.of("booking:booking-05"),
-                        Map.of("status", "pending_payment"),
+                        Map.of("status", "pending_owner_confirmation"),
                         Map.of("status", "expired"), 4));
 
         for (AuditSeed seed : entries) {

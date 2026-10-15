@@ -25,10 +25,10 @@ public class BookingStatusHistory extends BaseEntity {
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
-    @Column(name = "old_status", length = 30)
+    @Column(name = "old_status", length = 40)
     private BookingStatus oldStatus;
 
-    @Column(name = "new_status", nullable = false, length = 30)
+    @Column(name = "new_status", nullable = false, length = 40)
     private BookingStatus newStatus;
 
     @Column(name = "reason")
@@ -38,4 +38,7 @@ public class BookingStatusHistory extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by")
     private User changedBy;
+
+    @Column(name = "actor_role", length = 30)
+    private String actorRole;
 }

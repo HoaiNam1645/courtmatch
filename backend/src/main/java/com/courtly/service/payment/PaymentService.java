@@ -1,158 +1,186 @@
 package com.courtly.service.payment;
 
 import com.courtly.api.payment.dto.PaymentDetailResponse;
-import com.courtly.common.config.SepayProperties;
+import com.courtly.api.payment.dto.RejectPaymentRequest;
+import com.courtly.api.payment.dto.ReportPaymentRequest;
+import com.courtly.common.enums.BookingItemStatus;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.common.enums.PaymentStatus;
 import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
+import com.courtly.domain.account.CourtOwnerProfile;
+import com.courtly.domain.account.CourtOwnerProfileRepository;
+import com.courtly.domain.account.User;
+import com.courtly.domain.account.UserRepository;
 import com.courtly.domain.booking.Booking;
+import com.courtly.domain.booking.BookingStatusHistory;
 import com.courtly.domain.payment.Payment;
 import com.courtly.domain.payment.PaymentRepository;
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import com.courtly.domain.payment.PaymentStatusHistory;
+import com.courtly.domain.payment.PaymentStatusHistoryRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Giao dich thanh toan SePay: tao (2.1.34), hien thi QR (2.1.35, 2.1.36),
- * doc trang thai (2.1.39), thu lai (2.1.41), het han (2.1.42).
- *
- * <p>Viec xac nhan da nhan tien khong nam o day ma o {@link SepayWebhookService}: chi ngan hang
- * moi biet tien da ve, nguoi dung bam nut khong lam don thanh da thanh toan duoc.
- */
+/** Records payments made directly to the venue owner; Courtly never receives the funds. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
+    public static final int PAYMENT_WINDOW_MINUTES = 30;
+
     private final PaymentRepository paymentRepository;
-    private final SepayProperties sepay;
+    private final PaymentStatusHistoryRepository historyRepository;
+    private final CourtOwnerProfileRepository ownerProfileRepository;
+    private final UserRepository userRepository;
 
-    /**
-     * Canh bao som khi cau hinh con la gia tri demo.
-     *
-     * <p>Khong co khoa webhook thi moi webhook deu bi tu choi, nghia la khong don nao duoc xac
-     * nhan - loi nay chi lo ra khi co nguoi that chuyen tien, qua muon.
-     */
-    @PostConstruct
-    void warnIfNotConfigured() {
-        if (sepay.apiKey() == null || sepay.apiKey().isBlank()) {
-            log.warn("Chua co SEPAY_API_KEY: webhook SePay se bi tu choi, don se khong tu xac nhan duoc");
-        }
-    }
-
-    /**
-     * Tao giao dich cho mot booking vua duoc tao (2.1.33, 2.1.34).
-     *
-     * <p>Goi trong cung transaction voi luc tao booking: don va giao dich phai sinh ra cung nhau,
-     * neu khong se co don treo khong bao gio tra duoc tien.
-     *
-     * @param booking don vua tao, da co ma don va han thanh toan
-     * @return payment da gan vao booking, chua duoc flush
-     */
-    public Payment createFor(Booking booking) {
-        requireConfigured();
-
-        String transferContent = transferContentOf(booking.getBookingCode());
+    /** Creates payment instructions only after the owner accepts the booking. */
+    public Payment createFor(Booking booking, Instant now) {
+        User owner = booking.getVenue().getOwner();
+        CourtOwnerProfile profile = ownerProfileRepository.findById(owner.getId()).orElse(null);
 
         Payment payment = new Payment();
         payment.setId(UUID.randomUUID());
         payment.setBooking(booking);
-        payment.setProvider(Payment.PROVIDER_SEPAY);
+        payment.setRecipientOwner(owner);
+        payment.setMethod("owner_bank_transfer");
         payment.setAmount(booking.getTotalAmount());
-        payment.setStatus(PaymentStatus.PENDING);
-        payment.setBankAccountNo(sepay.accountNo());
-        payment.setTransferContent(transferContent);
-        payment.setQrUrl(buildQrUrl(booking.getTotalAmount(), transferContent));
-        payment.setExpiredAt(booking.getExpiresAt());
-        payment.setCreatedAt(booking.getCreatedAt());
-
-        return paymentRepository.save(payment);
+        payment.setStatus(PaymentStatus.AWAITING_PAYMENT);
+        payment.setBankName(profile == null ? null : profile.getBankName());
+        payment.setBankAccountNo(profile == null ? null : profile.getBankAccountNo());
+        payment.setBankAccountName(profile == null ? null : profile.getBankAccountName());
+        payment.setReferenceContent(referenceContentOf(booking.getBookingCode()));
+        payment.setExpiredAt(booking.getPaymentExpiresAt());
+        payment.setCreatedAt(now);
+        payment = paymentRepository.save(payment);
+        addHistory(payment, null, PaymentStatus.AWAITING_PAYMENT, "Chu san da chap nhan booking", owner, now);
+        return payment;
     }
 
-    /** 2.1.34 - 2.1.36, 2.1.39: man hinh thanh toan va cac lan hoi lai trang thai. */
     @Transactional(readOnly = true)
     public PaymentDetailResponse getDetail(UUID userId, UUID paymentId) {
-        Payment payment = paymentRepository.findDetailById(paymentId)
-                .orElseThrow(() -> ApiException.notFound("Khong tim thay giao dich thanh toan."));
-        requireOwner(userId, payment);
-        return toResponse(payment, Instant.now());
+        return toResponse(requireVisiblePayment(userId, paymentId), Instant.now());
     }
 
-    /** 2.1.40: man hinh dat san thanh cong doc giao dich theo don, khong can nho paymentId. */
     @Transactional(readOnly = true)
     public PaymentDetailResponse getByBooking(UUID userId, UUID bookingId) {
         Payment payment = paymentRepository.findFirstByBookingIdOrderByCreatedAtDesc(bookingId)
-                .orElseThrow(() -> ApiException.notFound("Don nay chua co giao dich thanh toan."));
-        requireOwner(userId, payment);
+                .orElseThrow(() -> ApiException.notFound("Don nay chua co huong dan thanh toan."));
+        requireParticipant(userId, payment);
         return toResponse(payment, Instant.now());
     }
 
-    /**
-     * 2.1.41 - thu thanh toan lai sau khi that bai hoac het han.
-     *
-     * <p>Mo lai cua so thanh toan tren chinh giao dich cu thay vi tao giao dich moi: noi dung
-     * chuyen khoan giu nguyen nen neu nguoi dung da chuyen tien bang ma QR cu thi webhook van
-     * doi chieu dung.
-     *
-     * <p>Chi mo lai duoc khi don van con giu cho. Don da bi job huy thi phai dat lai tu dau.
-     */
-    @Transactional
-    public PaymentDetailResponse retry(UUID userId, UUID paymentId) {
-        Payment payment = paymentRepository.findDetailById(paymentId)
-                .orElseThrow(() -> ApiException.notFound("Khong tim thay giao dich thanh toan."));
-        requireOwner(userId, payment);
-
-        if (payment.getStatus() != PaymentStatus.FAILED && payment.getStatus() != PaymentStatus.EXPIRED) {
-            throw ApiException.conflict(ErrorCode.PAYMENT_NOT_RETRYABLE,
-                    "Giao dich nay khong o trang thai can thu lai.",
-                    Map.of("status", "Chi thu lai duoc giao dich that bai hoac het han"));
+    @Transactional(readOnly = true)
+    public List<PaymentDetailResponse> listForOwner(UUID ownerId, String statusValue) {
+        PaymentStatus status;
+        try {
+            status = PaymentStatus.from(statusValue);
+        } catch (IllegalArgumentException exception) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED,
+                    "Trang thai thanh toan khong hop le.", Map.of("status", exception.getMessage()));
         }
+        Instant now = Instant.now();
+        return paymentRepository.findForOwnerByStatus(ownerId, status).stream()
+                .map(payment -> toResponse(payment, now))
+                .toList();
+    }
 
-        Booking booking = payment.getBooking();
-        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
-            throw ApiException.conflict(ErrorCode.PAYMENT_NOT_RETRYABLE,
-                    "Don nay khong con giu cho nua, vui long chon lich moi.",
-                    Map.of("bookingId", "Don da het hieu luc"));
+    /** Player reports a direct payment; this alone does not confirm the booking. */
+    @Transactional
+    public PaymentDetailResponse reportPaid(UUID userId, UUID paymentId, ReportPaymentRequest request) {
+        Payment payment = requireVisiblePayment(userId, paymentId);
+        if (!payment.getBooking().getUser().getId().equals(userId)) {
+            throw ApiException.notFound("Khong tim thay giao dich thanh toan.");
+        }
+        if (payment.getStatus() != PaymentStatus.AWAITING_PAYMENT
+                && payment.getStatus() != PaymentStatus.REJECTED) {
+            throw ApiException.conflict(ErrorCode.PAYMENT_STATUS_INVALID,
+                    "Giao dich khong o trang thai co the bao da thanh toan.", Map.of());
         }
 
         Instant now = Instant.now();
-        Instant newDeadline = now.plus(PAYMENT_WINDOW_MINUTES, ChronoUnit.MINUTES);
-
-        payment.setStatus(PaymentStatus.PENDING);
-        payment.setExpiredAt(newDeadline);
-        // QR cu co the da sinh voi so tien khac neu bang gia doi, sinh lai cho chac.
-        payment.setQrUrl(buildQrUrl(payment.getAmount(), payment.getTransferContent()));
-        booking.setExpiresAt(newDeadline);
-
-        log.info("Mo lai cua so thanh toan cho don {}", booking.getBookingCode());
+        if (payment.getExpiredAt() != null && !payment.getExpiredAt().isAfter(now)) {
+            throw ApiException.conflict(ErrorCode.PAYMENT_STATUS_INVALID,
+                    "Giao dich da qua han thanh toan.", Map.of());
+        }
+        PaymentStatus previous = payment.getStatus();
+        payment.setMethod(request.method());
+        payment.setProofUrl(blankToNull(request.proofUrl()));
+        payment.setPayerReportedAt(now);
+        payment.setRejectedBy(null);
+        payment.setRejectedAt(null);
+        payment.setRejectionReason(null);
+        payment.setStatus(PaymentStatus.PAYER_REPORTED);
+        addHistory(payment, previous, PaymentStatus.PAYER_REPORTED,
+                "Nguoi choi bao da thanh toan", payment.getBooking().getUser(), now);
         return toResponse(payment, now);
     }
 
-    /**
-     * 2.1.42 - dong cac giao dich qua han.
-     *
-     * <p>Chay rieng voi viec huy don: mot giao dich co the het han trong khi don van con duoc
-     * giu them vai giay cho toi luot job huy don chay.
-     *
-     * @return so giao dich vua chuyen sang het han
-     */
+    /** Owner confirms receipt; this is the only payment action that confirms the booking. */
+    @Transactional
+    public PaymentDetailResponse confirmReceived(UUID ownerId, UUID paymentId) {
+        Payment payment = requireOwnerPayment(ownerId, paymentId);
+        if (payment.getStatus() != PaymentStatus.PAYER_REPORTED) {
+            throw ApiException.conflict(ErrorCode.PAYMENT_STATUS_INVALID,
+                    "Chi xac nhan duoc khi nguoi choi da bao thanh toan.", Map.of());
+        }
+
+        User owner = requireUser(ownerId);
+        Instant now = Instant.now();
+        if (payment.getExpiredAt() != null && !payment.getExpiredAt().isAfter(now)) {
+            throw ApiException.conflict(ErrorCode.PAYMENT_STATUS_INVALID,
+                    "Giao dich da qua han; can xu ly thu cong neu tien den muon.", Map.of());
+        }
+        payment.setStatus(PaymentStatus.CONFIRMED);
+        payment.setConfirmedBy(owner);
+        payment.setConfirmedAt(now);
+        addHistory(payment, PaymentStatus.PAYER_REPORTED, PaymentStatus.CONFIRMED,
+                "Chu san xac nhan da thu tien", owner, now);
+
+        Booking booking = payment.getBooking();
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setConfirmedAt(now);
+        booking.setPaymentExpiresAt(null);
+        booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CONFIRMED));
+        addBookingHistory(booking, BookingStatus.AWAITING_PAYMENT, BookingStatus.CONFIRMED,
+                "Chu san xac nhan da thu tien", owner, now);
+        return toResponse(payment, now);
+    }
+
+    @Transactional
+    public PaymentDetailResponse rejectReport(UUID ownerId, UUID paymentId, RejectPaymentRequest request) {
+        Payment payment = requireOwnerPayment(ownerId, paymentId);
+        if (payment.getStatus() != PaymentStatus.PAYER_REPORTED) {
+            throw ApiException.conflict(ErrorCode.PAYMENT_STATUS_INVALID,
+                    "Chi tu choi duoc bao cao thanh toan dang cho xac nhan.", Map.of());
+        }
+
+        User owner = requireUser(ownerId);
+        Instant now = Instant.now();
+        payment.setStatus(PaymentStatus.REJECTED);
+        payment.setRejectedBy(owner);
+        payment.setRejectedAt(now);
+        payment.setRejectionReason(request.reason().trim());
+        addHistory(payment, PaymentStatus.PAYER_REPORTED, PaymentStatus.REJECTED,
+                request.reason().trim(), owner, now);
+        return toResponse(payment, now);
+    }
+
     @Transactional
     public int expireOverduePayments() {
         Instant now = Instant.now();
-        List<Payment> overdue = paymentRepository.findExpiredPending(now);
+        List<Payment> overdue = paymentRepository.findExpiredAwaiting(now);
         for (Payment payment : overdue) {
+            PaymentStatus previous = payment.getStatus();
             payment.setStatus(PaymentStatus.EXPIRED);
+            addHistory(payment, previous, PaymentStatus.EXPIRED, "Qua han thanh toan", null, now);
         }
         if (!overdue.isEmpty()) {
             log.info("Dong {} giao dich qua han", overdue.size());
@@ -160,75 +188,83 @@ public class PaymentService {
         return overdue.size();
     }
 
-    /** Thoi gian giu cho, trung voi cua so thanh toan cua booking. */
-    private static final int PAYMENT_WINDOW_MINUTES = 10;
-
-    /**
-     * Noi dung chuyen khoan sinh tu ma don, bo dau gach.
-     *
-     * <p>Nhieu ngan hang cat ky tu dac biet trong noi dung chuyen khoan, nen chi giu chu va so.
-     * Day la soi day duy nhat noi tien voi don (2.1.38).
-     */
-    static String transferContentOf(String bookingCode) {
+    static String referenceContentOf(String bookingCode) {
         return bookingCode.replaceAll("[^A-Za-z0-9]", "");
     }
 
-    private String buildQrUrl(BigDecimal amount, String transferContent) {
-        return "%s?acc=%s&bank=%s&amount=%s&des=%s".formatted(
-                sepay.qrBaseUrl(),
-                encode(sepay.accountNo()),
-                encode(sepay.bankCode()),
-                amount.toBigInteger(),
-                encode(transferContent));
+    private Payment requireVisiblePayment(UUID userId, UUID paymentId) {
+        Payment payment = paymentRepository.findDetailById(paymentId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay giao dich thanh toan."));
+        requireParticipant(userId, payment);
+        return payment;
     }
 
-    private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
-    }
-
-    /** Thieu cau hinh ma van tao don thi nguoi dung nhan duoc ma QR tro vao tai khoan rong. */
-    private void requireConfigured() {
-        if (isBlank(sepay.accountNo()) || isBlank(sepay.bankCode()) || isBlank(sepay.qrBaseUrl())) {
-            throw ApiException.conflict(ErrorCode.PAYMENT_GATEWAY_NOT_CONFIGURED,
-                    "Cong thanh toan chua duoc cau hinh, vui long thu lai sau.",
-                    Map.of());
+    private Payment requireOwnerPayment(UUID ownerId, UUID paymentId) {
+        Payment payment = paymentRepository.findDetailById(paymentId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay giao dich thanh toan."));
+        if (!payment.getRecipientOwner().getId().equals(ownerId)) {
+            throw ApiException.notFound("Khong tim thay giao dich thanh toan.");
         }
+        return payment;
     }
 
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
+    private User requireUser(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan."));
     }
 
-    private static void requireOwner(UUID userId, Payment payment) {
-        if (!payment.getBooking().getUser().getId().equals(userId)) {
-            // Tra 404 chu khong phai 403: khong xac nhan giup nguoi la rang paymentId nay co that.
+    private static void requireParticipant(UUID userId, Payment payment) {
+        if (!payment.getBooking().getUser().getId().equals(userId)
+                && !payment.getRecipientOwner().getId().equals(userId)) {
             throw ApiException.notFound("Khong tim thay giao dich thanh toan.");
         }
     }
 
-    private PaymentDetailResponse toResponse(Payment payment, Instant now) {
-        Booking booking = payment.getBooking();
+    private void addHistory(Payment payment, PaymentStatus from, PaymentStatus to,
+                            String reason, User changedBy, Instant at) {
+        PaymentStatusHistory history = new PaymentStatusHistory();
+        history.setId(UUID.randomUUID());
+        history.setPayment(payment);
+        history.setOldStatus(from);
+        history.setNewStatus(to);
+        history.setReason(reason);
+        history.setChangedBy(changedBy);
+        history.setCreatedAt(at);
+        historyRepository.save(history);
+    }
+
+    private static void addBookingHistory(Booking booking, BookingStatus from, BookingStatus to,
+                                          String reason, User changedBy, Instant at) {
+        BookingStatusHistory history = new BookingStatusHistory();
+        history.setId(UUID.randomUUID());
+        history.setBooking(booking);
+        history.setOldStatus(from);
+        history.setNewStatus(to);
+        history.setReason(reason);
+        history.setChangedBy(changedBy);
+        history.setActorRole("owner");
+        history.setCreatedAt(at);
+        booking.getStatusHistory().add(history);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static PaymentDetailResponse toResponse(Payment payment, Instant now) {
         long secondsRemaining = 0;
-        if (payment.getStatus() == PaymentStatus.PENDING && payment.getExpiredAt() != null) {
+        if ((payment.getStatus() == PaymentStatus.AWAITING_PAYMENT
+                || payment.getStatus() == PaymentStatus.REJECTED)
+                && payment.getExpiredAt() != null) {
             secondsRemaining = Math.max(0, ChronoUnit.SECONDS.between(now, payment.getExpiredAt()));
         }
+        Booking booking = payment.getBooking();
         return new PaymentDetailResponse(
-                payment.getId(),
-                booking.getId(),
-                booking.getBookingCode(),
-                payment.getProvider(),
-                payment.getAmount(),
-                payment.getStatus(),
-                payment.getQrUrl(),
-                sepay.bankName(),
-                payment.getBankAccountNo(),
-                sepay.accountName(),
-                payment.getTransferContent(),
-                payment.getProviderTransactionId(),
-                payment.getPaidAt(),
-                payment.getExpiredAt(),
-                secondsRemaining,
-                payment.getCreatedAt(),
-                payment.getUpdatedAt());
+                payment.getId(), booking.getId(), booking.getBookingCode(), payment.getMethod(),
+                payment.getAmount(), payment.getStatus(), payment.getBankName(),
+                payment.getBankAccountNo(), payment.getBankAccountName(), payment.getReferenceContent(),
+                payment.getProofUrl(), payment.getPayerReportedAt(), payment.getConfirmedAt(),
+                payment.getRejectionReason(), payment.getExpiredAt(), secondsRemaining,
+                payment.getCreatedAt(), payment.getUpdatedAt());
     }
 }

@@ -6,10 +6,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /** Trang thai giao dich thanh toan. */
 public enum PaymentStatus implements PersistableEnum {
 
-    PENDING("pending"),
-    PAID("paid"),
-    FAILED("failed"),
+    AWAITING_PAYMENT("awaiting_payment"),
+    PAYER_REPORTED("payer_reported"),
+    CONFIRMED("confirmed"),
+    REJECTED("rejected"),
     EXPIRED("expired"),
+    DISPUTED("disputed"),
+    PARTIALLY_REFUNDED("partially_refunded"),
     REFUNDED("refunded");
 
     private final String value;

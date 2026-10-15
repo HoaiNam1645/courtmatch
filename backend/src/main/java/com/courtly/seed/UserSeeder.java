@@ -105,11 +105,7 @@ public class UserSeeder implements Seeder {
 
     private static final List<OwnerSeed> OWNERS = List.of(
             new OwnerSeed("owner-01", "Nguyen Huu Thang", "thang.owner@example.com", "0902000001",
-                    "Ho kinh doanh San Cau Long Hai Chau", "0359111001"),
-            new OwnerSeed("owner-02", "Tran Quang Hieu", "hieu.owner@example.com", "0902000002",
-                    "Cong ty TNHH The Thao Son Tra", "0359111002"),
-            new OwnerSeed("owner-03", "Do Thi Mai", "mai.owner@example.com", "0902000003",
-                    "Ho kinh doanh Green Court", "0359111003"));
+                    "Ho kinh doanh San Cau Long Hai Chau", "0359111001"));
 
     @Override
     public String name() {

@@ -33,7 +33,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /** Cau hinh xac thuc: stateless, xac minh JWT o moi request. */
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, SepayProperties.class,
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class,
         MailProperties.class, PasswordResetProperties.class, EmailVerificationProperties.class})
 public class SecurityConfig {
 
@@ -48,9 +48,7 @@ public class SecurityConfig {
             "/api/v1/auth/password-reset/verify",
             "/api/v1/auth/password-reset/confirm",
             // Xem gia truoc khi dang nhap; chi buoc tao don that moi can dang nhap (2.1.27).
-            "/api/v1/bookings/quote",
-            // SePay goi tu Internet, khong co JWT. Tu bao ve bang khoa rieng trong controller.
-            "/api/v1/payments/sepay/webhook"
+            "/api/v1/bookings/quote"
     };
 
     /** Duyet san khong can dang nhap (2.1.13 - 2.1.18). */

@@ -9,12 +9,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Tu dong huy don qua han thanh toan (2.1.42).
+ * Tu dong het han yeu cau, dong payment qua han va hoan tat booking da qua gio choi.
  *
  * <p>Khong co job nay thi don bo do se giu khung gio vinh vien va nguoi khac khong dat duoc.
  *
  * <p>Chu ky mot phut nghia la khung gio co the bi giu them toi da mot phut sau khi het han.
- * Chap nhan duoc voi cua so thanh toan 10 phut.
+ * Chap nhan duoc voi cac cua so xu ly 30 phut.
  */
 @Slf4j
 @Component
@@ -33,6 +33,7 @@ public class BookingExpiryJob {
             // thay trang thai "het han" thay vi thay don bien mat ma khong hieu vi sao.
             paymentService.expireOverduePayments();
             bookingService.expireOverdueBookings();
+            bookingService.completeFinishedBookings();
         } catch (Exception e) {
             // Job that bai mot lan khong duoc lam dung ca lich chay.
             log.error("Khong huy duoc don qua han", e);

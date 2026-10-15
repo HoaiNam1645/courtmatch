@@ -44,9 +44,9 @@ public class RoleAndPermissionSeeder implements Seeder {
         PERMISSIONS.put("payment.view", "Xem lich su thanh toan");
         PERMISSIONS.put("refund.process", "Xu ly hoan tien");
         PERMISSIONS.put("finance.fee.config", "Thiet lap phi nen tang");
-        PERMISSIONS.put("finance.withdrawal.request", "Gui yeu cau rut tien");
-        PERMISSIONS.put("finance.withdrawal.review", "Duyet yeu cau rut tien");
-        PERMISSIONS.put("finance.payout.confirm", "Xac nhan giao dich chi tra");
+        PERMISSIONS.put("finance.commission.view", "Xem cong no hoa hong");
+        PERMISSIONS.put("finance.settlement.submit", "Gui bang chung thanh toan cong no");
+        PERMISSIONS.put("finance.settlement.review", "Duyet ky doi soat hoa hong");
         PERMISSIONS.put("match.record", "Ghi nhan ket qua tran dau");
         PERMISSIONS.put("partner.match", "Su dung tinh nang ghep cap doi tac");
         PERMISSIONS.put("report.handle", "Xu ly bao cao vi pham");
@@ -68,7 +68,8 @@ public class RoleAndPermissionSeeder implements Seeder {
                     "payment.view", "match.record", "partner.match"),
             Role.OWNER, List.of(
                     "venue.create", "venue.update", "court.manage", "court.block",
-                    "booking.review", "payment.view", "finance.withdrawal.request"),
+                    "booking.review", "payment.view", "finance.commission.view",
+                    "finance.settlement.submit"),
             Role.STAFF, List.of(
                     "court.block", "booking.review", "payment.view"),
             Role.ADMIN, List.copyOf(PERMISSIONS.keySet()));

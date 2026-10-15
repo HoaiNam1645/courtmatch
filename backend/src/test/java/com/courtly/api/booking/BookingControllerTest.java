@@ -153,7 +153,7 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createBody(LocalTime.of(9, 0), 90, "Nho chuan bi cau")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("pending_payment"))
+                .andExpect(jsonPath("$.status").value("pending_owner_confirmation"))
                 // 120.000 x 1,5 gio
                 .andExpect(jsonPath("$.totalAmount").value(180000))
                 .andExpect(jsonPath("$.bookingCode").isNotEmpty())
@@ -341,7 +341,7 @@ class BookingControllerTest {
         mockMvc.perform(get(BOOKINGS).header("Authorization", bearer()).param("tab", "pending"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].status").value("pending_payment"));
+                .andExpect(jsonPath("$.content[0].status").value("pending_owner_confirmation"));
     }
 
     @Test
@@ -392,7 +392,7 @@ class BookingControllerTest {
         String id = createAndGetId(LocalTime.of(9, 0), 60);
 
         Booking booking = bookingRepository.findById(UUID.fromString(id)).orElseThrow();
-        booking.setExpiresAt(Instant.now().minusSeconds(60));
+        booking.setOwnerResponseExpiresAt(Instant.now().minusSeconds(60));
         bookingRepository.saveAndFlush(booking);
 
         bookingService.expireOverdueBookings();

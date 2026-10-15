@@ -41,8 +41,8 @@ public class Booking extends AuditedEntity {
     @JoinColumn(name = "venue_id", nullable = false)
     private Venue venue;
 
-    @Column(name = "status", nullable = false, length = 30)
-    private BookingStatus status = BookingStatus.PENDING_PAYMENT;
+    @Column(name = "status", nullable = false, length = 40)
+    private BookingStatus status = BookingStatus.PENDING_OWNER_CONFIRMATION;
 
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
@@ -50,12 +50,33 @@ public class Booking extends AuditedEntity {
     @Column(name = "note")
     private String note;
 
-    /** Han thanh toan; qua han thi booking chuyen expired (2.1.42). */
-    @Column(name = "expires_at")
-    private Instant expiresAt;
+    @Column(name = "price_locked_at", nullable = false)
+    private Instant priceLockedAt;
+
+    @Column(name = "owner_response_expires_at")
+    private Instant ownerResponseExpiresAt;
+
+    @Column(name = "owner_responded_at")
+    private Instant ownerRespondedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_responded_by")
+    private User ownerRespondedBy;
+
+    @Column(name = "payment_expires_at")
+    private Instant paymentExpiresAt;
 
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @Column(name = "rejected_at")
+    private Instant rejectedAt;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
 
     @Column(name = "cancelled_at")
     private Instant cancelledAt;

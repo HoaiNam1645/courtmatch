@@ -25,6 +25,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PlatformFeeConfig extends BaseEntity {
 
+    @Column(name = "name", nullable = false, length = 150)
+    private String name;
+
     @Column(name = "fee_type", nullable = false, length = 30)
     private FeeType feeType = FeeType.PERCENTAGE;
 

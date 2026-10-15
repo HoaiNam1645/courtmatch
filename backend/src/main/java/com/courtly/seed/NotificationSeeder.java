@@ -83,7 +83,7 @@ public class NotificationSeeder implements Seeder {
                     "Co don dat san moi",
                     "Don CT-20260925-0006 tai San Cau Long Hai Chau da thanh toan thanh cong.",
                     40, null, Map.of("bookingCode", "CT-20260925-0006")),
-            new NotificationSeed("notif-12", "owner-02", NotificationType.PAYMENT_STATUS,
+            new NotificationSeed("notif-12", "owner-01", NotificationType.PAYMENT_STATUS,
                     "Yeu cau rut tien dang cho duyet",
                     "Yeu cau rut 126.000d cua ban dang cho quan tri vien duyet.",
                     24, null, Map.of("amount", 126000, "status", "pending")));

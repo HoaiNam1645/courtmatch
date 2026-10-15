@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -18,23 +19,20 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     Optional<Payment> findFirstByBookingIdOrderByCreatedAtDesc(UUID bookingId);
 
-    /**
-     * Doi chieu webhook voi payment (2.1.38).
-     *
-     * <p>Noi dung chuyen khoan la thu duy nhat noi tien voi don, nen tim theo no.
-     * Chi lay payment con cho tien de khong ghi de mot don da thanh toan xong.
-     */
-    @Query("""
-            select p from Payment p join fetch p.booking
-            where p.transferContent = :transferContent and p.status = :status
-            """)
-    Optional<Payment> findByTransferContentAndStatus(String transferContent, PaymentStatus status);
-
-    /** Cac payment qua han ma chua ai dong trang thai (2.1.42). */
+    /** Payments that have not been owner-confirmed before their deadline. */
     @Query("""
             select p from Payment p
-            where p.status = com.courtly.common.enums.PaymentStatus.PENDING
+            where p.status in (com.courtly.common.enums.PaymentStatus.AWAITING_PAYMENT,
+                               com.courtly.common.enums.PaymentStatus.REJECTED)
               and p.expiredAt is not null and p.expiredAt <= :now
             """)
-    List<Payment> findExpiredPending(Instant now);
+    List<Payment> findExpiredAwaiting(Instant now);
+
+    @Query("""
+            select p from Payment p join fetch p.booking b join fetch b.user
+            where p.recipientOwner.id = :ownerId and p.status = :status
+            order by p.createdAt desc
+            """)
+    List<Payment> findForOwnerByStatus(@Param("ownerId") UUID ownerId,
+                                       @Param("status") PaymentStatus status);
 }

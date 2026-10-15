@@ -40,9 +40,9 @@ public final class ErrorCode {
     public static final String BOOKING_SLOT_TAKEN = "BOOKING_SLOT_TAKEN";
     public static final String BOOKING_NOT_CANCELLABLE = "BOOKING_NOT_CANCELLABLE";
 
-    // Thanh toan SePay (2.1.33 - 2.1.42)
-    public static final String PAYMENT_NOT_RETRYABLE = "PAYMENT_NOT_RETRYABLE";
-    public static final String PAYMENT_GATEWAY_NOT_CONFIGURED = "PAYMENT_GATEWAY_NOT_CONFIGURED";
+    // Dat san va thanh toan truc tiep cho chu san
+    public static final String PAYMENT_STATUS_INVALID = "PAYMENT_STATUS_INVALID";
+    public static final String BOOKING_REVIEW_INVALID = "BOOKING_REVIEW_INVALID";
 
     private ErrorCode() {
     }

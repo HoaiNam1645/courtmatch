@@ -8,8 +8,10 @@ public enum RefundStatus implements PersistableEnum {
 
     REQUESTED("requested"),
     APPROVED("approved"),
+    AWAITING_OWNER_REFUND("awaiting_owner_refund"),
+    OWNER_REPORTED_REFUNDED("owner_reported_refunded"),
+    CONFIRMED("confirmed"),
     REJECTED("rejected"),
-    PROCESSED("processed"),
     FAILED("failed");
 
     private final String value;

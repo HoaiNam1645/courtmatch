@@ -83,7 +83,7 @@ courtly:
     enabled: ${SEED_ENABLED:false}
   jobs:
     booking-expiry:
-      # Tu dong huy don qua han thanh toan, giai phong khung gio (2.1.42)
+      # Het han yeu cau/checkout va hoan tat booking sau gio choi.
       enabled: ${BOOKING_EXPIRY_JOB_ENABLED:true}
       interval-ms: 60000
   mail:
@@ -91,20 +91,6 @@ courtly:
     enabled: ${MAIL_ENABLED:false}
     from-address: ${MAIL_FROM_ADDRESS:no-reply@courtly.vn}
     from-name: ${MAIL_FROM_NAME:Courtly}
-  payment:
-    sepay:
-      # Khoa SePay gui kem header `Authorization: Apikey <key>` khi goi webhook.
-      # De trong thi moi webhook deu bi tu choi - an toan hon la nhan bua.
-      api-key: ${SEPAY_API_KEY:}
-      # Tai khoan nhan tien cua nen tang (khong phai cua chu san).
-      # Mac dinh la tai khoan demo, trung voi gia tri BookingSeeder dang dung nen du lieu mau
-      # va don tao moi khi chay dev deu nhat quan. MOI TRUONG THAT BAT BUOC ghi de bang bien
-      # moi truong, neu khong tien se chay vao tai khoan demo.
-      bank-code: ${SEPAY_BANK_CODE:MBBank}
-      bank-name: ${SEPAY_BANK_NAME:MB Bank}
-      account-no: ${SEPAY_ACCOUNT_NO:0359000111}
-      account-name: ${SEPAY_ACCOUNT_NAME:COURTLY DEMO}
-      qr-base-url: ${SEPAY_QR_BASE_URL:https://qr.sepay.vn/img}
   auth:
     email-verification:
       # 2.1.1 - xac minh email khi dang ky

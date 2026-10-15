@@ -29,7 +29,7 @@ public class AuditLog extends BaseEntity {
     @JoinColumn(name = "actor_id")
     private User actor;
 
-    /** Vi du: venue.approve, withdrawal.reject, booking.cancel. */
+    /** Vi du: venue.approve, settlement.confirm, booking.cancel. */
     @Column(name = "action", nullable = false, length = 100)
     private String action;
 

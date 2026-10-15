@@ -355,6 +355,7 @@ class AvailabilityAndQuoteTest {
         booking.setVenue(venue);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setTotalAmount(BigDecimal.valueOf(100_000));
+        booking.setPriceLockedAt(Instant.now());
 
         BookingItem item = new BookingItem();
         item.setId(UUID.randomUUID());

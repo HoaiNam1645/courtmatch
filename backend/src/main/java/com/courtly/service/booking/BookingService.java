@@ -6,6 +6,7 @@ import com.courtly.api.booking.dto.CancelBookingRequest;
 import com.courtly.api.booking.dto.CreateBookingRequest;
 import com.courtly.api.booking.dto.QuoteRequest;
 import com.courtly.api.booking.dto.QuoteResponse;
+import com.courtly.api.booking.dto.RejectBookingRequest;
 import com.courtly.common.PageResponse;
 import com.courtly.common.enums.BookingItemStatus;
 import com.courtly.common.enums.BookingStatus;
@@ -21,6 +22,7 @@ import com.courtly.domain.venue.Court;
 import com.courtly.domain.venue.CourtRepository;
 import com.courtly.domain.venue.VenueImageRepository;
 import com.courtly.service.payment.PaymentService;
+import com.courtly.service.finance.CommissionService;
 import com.courtly.domain.venue.Venue;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -47,8 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BookingService {
 
-    /** Thoi gian giu cho de thanh toan. Qua han thi job tu dong huy (2.1.42). */
-    public static final int PAYMENT_WINDOW_MINUTES = 10;
+    public static final int OWNER_REVIEW_WINDOW_MINUTES = 30;
 
     private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final int MAX_CODE_ATTEMPTS = 5;
@@ -56,9 +57,11 @@ public class BookingService {
     /** Cac tab o man hinh lich su dat san (2.1.32). */
     private static final Map<String, List<BookingStatus>> TABS = Map.of(
             "upcoming", List.of(BookingStatus.CONFIRMED),
-            "pending", List.of(BookingStatus.PENDING_PAYMENT),
+            "pending", List.of(BookingStatus.PENDING_OWNER_CONFIRMATION,
+                    BookingStatus.AWAITING_PAYMENT),
             "completed", List.of(BookingStatus.COMPLETED),
-            "cancelled", List.of(BookingStatus.CANCELLED, BookingStatus.EXPIRED, BookingStatus.REFUNDED),
+            "cancelled", List.of(BookingStatus.REJECTED, BookingStatus.CANCELLED,
+                    BookingStatus.EXPIRED, BookingStatus.REFUNDED),
             "all", List.of(BookingStatus.values()));
 
     private final BookingRepository bookingRepository;
@@ -67,6 +70,7 @@ public class BookingService {
     private final VenueImageRepository venueImageRepository;
     private final QuoteService quoteService;
     private final PaymentService paymentService;
+    private final CommissionService commissionService;
 
     /**
      * Tao yeu cau dat san (2.1.28).
@@ -101,11 +105,12 @@ public class BookingService {
         booking.setBookingCode(nextBookingCode());
         booking.setUser(user);
         booking.setVenue(venue);
-        booking.setStatus(BookingStatus.PENDING_PAYMENT);
+        booking.setStatus(BookingStatus.PENDING_OWNER_CONFIRMATION);
         booking.setTotalAmount(quote.totalAmount());
         booking.setNote(request.note());
         booking.setCreatedAt(now);
-        booking.setExpiresAt(now.plus(PAYMENT_WINDOW_MINUTES, ChronoUnit.MINUTES));
+        booking.setPriceLockedAt(now);
+        booking.setOwnerResponseExpiresAt(now.plus(OWNER_REVIEW_WINDOW_MINUTES, ChronoUnit.MINUTES));
 
         BookingItem item = new BookingItem();
         item.setId(UUID.randomUUID());
@@ -118,7 +123,8 @@ public class BookingService {
         item.setCreatedAt(now);
         booking.getItems().add(item);
 
-        addHistory(booking, null, BookingStatus.PENDING_PAYMENT, "Tao yeu cau dat san", user, now);
+        addHistory(booking, null, BookingStatus.PENDING_OWNER_CONFIRMATION,
+                "Da gui yeu cau cho chu san", user, now);
 
         try {
             bookingRepository.saveAndFlush(booking);
@@ -130,10 +136,6 @@ public class BookingService {
                     "Khung gio nay vua co nguoi dat. Vui long chon gio khac.",
                     Map.of("startTime", "Khung gio vua bi giu"));
         }
-
-        // SePay la phuong thuc duy nhat hien tai (2.1.33). Giao dich phai sinh ra cung luc voi
-        // don, neu khong se co don treo khong co duong nao tra tien.
-        paymentService.createFor(booking);
 
         log.info("Tao don {} cho nguoi dung {}", booking.getBookingCode(), userId);
         return toDetail(booking, now);
@@ -162,6 +164,28 @@ public class BookingService {
                 .toList());
     }
 
+    /** Booking queue for the venue owner to review and operate. */
+    @Transactional(readOnly = true)
+    public PageResponse<BookingSummaryResponse> listForOwner(UUID ownerId, String status, int page, int size) {
+        List<BookingStatus> statuses;
+        if (status == null || status.isBlank() || "all".equals(status)) {
+            statuses = List.of(BookingStatus.values());
+        } else {
+            try {
+                statuses = List.of(BookingStatus.from(status));
+            } catch (IllegalArgumentException exception) {
+                throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED,
+                        "Trang thai booking khong hop le.", Map.of("status", exception.getMessage()));
+            }
+        }
+        Page<Booking> bookings = bookingRepository.findForOwner(
+                ownerId, statuses, PageRequest.of(page, size));
+        Map<UUID, String> covers = coversFor(bookings.getContent());
+        return PageResponse.from(bookings, bookings.getContent().stream()
+                .map(booking -> toSummary(booking, covers.get(booking.getVenue().getId())))
+                .toList());
+    }
+
     /** Chi tiet don (2.1.29, 2.1.30). Chi chu don moi xem duoc. */
     @Transactional(readOnly = true)
     public BookingDetailResponse getDetail(UUID userId, UUID bookingId) {
@@ -171,7 +195,7 @@ public class BookingService {
     /**
      * Huy dat san (2.1.31).
      *
-     * <p>Chi huy duoc khi don dang pending_payment hoac confirmed, va chua toi gio choi.
+     * <p>Chi huy duoc khi don dang cho owner, cho thanh toan hoac confirmed, va chua toi gio choi.
      */
     @Transactional
     public BookingDetailResponse cancel(UUID userId, UUID bookingId, CancelBookingRequest request) {
@@ -201,7 +225,8 @@ public class BookingService {
 
     /** Chi don chua toi gio choi va dang o trang thai con huy duoc. */
     private boolean isCancellable(Booking booking, Instant now) {
-        boolean statusAllows = booking.getStatus() == BookingStatus.PENDING_PAYMENT
+        boolean statusAllows = booking.getStatus() == BookingStatus.PENDING_OWNER_CONFIRMATION
+                || booking.getStatus() == BookingStatus.AWAITING_PAYMENT
                 || booking.getStatus() == BookingStatus.CONFIRMED;
         Instant firstStart = booking.getItems().stream()
                 .map(BookingItem::getStartTime)
@@ -272,7 +297,7 @@ public class BookingService {
                 first == null ? null : first.getCourt().getName(),
                 first == null ? null : first.getStartTime(),
                 first == null ? null : first.getEndTime(),
-                booking.getExpiresAt(),
+                activeDeadline(booking),
                 booking.getCreatedAt());
     }
 
@@ -299,7 +324,7 @@ public class BookingService {
                 booking.getStatus(),
                 booking.getTotalAmount(),
                 booking.getNote(),
-                booking.getExpiresAt(),
+                activeDeadline(booking),
                 booking.getConfirmedAt(),
                 booking.getCancelledAt(),
                 booking.getCancellationReason(),
@@ -323,40 +348,72 @@ public class BookingService {
                         .toList());
     }
 
-    /**
-     * Xac nhan don sau khi webhook SePay bao da nhan du tien (2.1.38, 2.1.40).
-     *
-     * <p>De o day chu khong o tang thanh toan: doi trang thai don va khung gio la nghiep vu cua
-     * booking. Goi trong transaction cua webhook nen khong tu luu, de JPA flush cung luc.
-     *
-     * <p>Khong lam gi neu don khong con cho thanh toan - tien ve muon hon luc job huy don thi
-     * phai hoan tay, khong duoc tu dong hoi sinh mot khung gio da nha cho nguoi khac.
-     *
-     * @return true neu don vua duoc chuyen sang confirmed
-     */
-    public boolean confirmPaid(Booking booking, Instant now) {
-        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
-            return false;
+    /** Owner accepts the request and opens the direct-payment step. */
+    @Transactional
+    public BookingDetailResponse accept(UUID ownerId, UUID bookingId) {
+        Booking booking = requireOwnerBooking(ownerId, bookingId);
+        if (booking.getStatus() != BookingStatus.PENDING_OWNER_CONFIRMATION) {
+            throw ApiException.conflict(ErrorCode.BOOKING_REVIEW_INVALID,
+                    "Booking khong con cho chu san duyet.", Map.of());
         }
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setExpiresAt(null);
-        booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CONFIRMED));
-        addHistory(booking, BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED,
-                "Da nhan thanh toan qua SePay", null, now);
-        return true;
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan chu san."));
+        Instant now = Instant.now();
+        if (booking.getOwnerResponseExpiresAt() != null
+                && !booking.getOwnerResponseExpiresAt().isAfter(now)) {
+            throw ApiException.conflict(ErrorCode.BOOKING_REVIEW_INVALID,
+                    "Yeu cau da qua han phan hoi.", Map.of());
+        }
+        booking.setStatus(BookingStatus.AWAITING_PAYMENT);
+        booking.setOwnerRespondedAt(now);
+        booking.setOwnerRespondedBy(owner);
+        booking.setOwnerResponseExpiresAt(null);
+        booking.setPaymentExpiresAt(now.plus(PaymentService.PAYMENT_WINDOW_MINUTES, ChronoUnit.MINUTES));
+        addHistory(booking, BookingStatus.PENDING_OWNER_CONFIRMATION, BookingStatus.AWAITING_PAYMENT,
+                "Chu san da chap nhan, cho nguoi choi thanh toan", owner, now);
+        paymentService.createFor(booking, now);
+        return toDetail(booking, now);
+    }
+
+    /** Owner rejects the request and immediately releases the court slot. */
+    @Transactional
+    public BookingDetailResponse reject(UUID ownerId, UUID bookingId, RejectBookingRequest request) {
+        Booking booking = requireOwnerBooking(ownerId, bookingId);
+        if (booking.getStatus() != BookingStatus.PENDING_OWNER_CONFIRMATION) {
+            throw ApiException.conflict(ErrorCode.BOOKING_REVIEW_INVALID,
+                    "Booking khong con cho chu san duyet.", Map.of());
+        }
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan chu san."));
+        Instant now = Instant.now();
+        booking.setStatus(BookingStatus.REJECTED);
+        booking.setOwnerRespondedAt(now);
+        booking.setOwnerRespondedBy(owner);
+        booking.setOwnerResponseExpiresAt(null);
+        booking.setRejectedAt(now);
+        booking.setRejectionReason(request.reason().trim());
+        booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CANCELLED));
+        addHistory(booking, BookingStatus.PENDING_OWNER_CONFIRMATION, BookingStatus.REJECTED,
+                request.reason().trim(), owner, now);
+        return toDetail(booking, now);
     }
 
     /** Dung cho job het han (2.1.42) va cac cho khac can doi trang thai he thong. */
     @Transactional
     public int expireOverdueBookings() {
         Instant now = Instant.now();
-        List<Booking> overdue = bookingRepository.findExpiredPendingPayment(now);
+        List<Booking> overdue = bookingRepository.findExpiredPending(now);
 
         for (Booking booking : overdue) {
+            BookingStatus previous = booking.getStatus();
             booking.setStatus(BookingStatus.EXPIRED);
             booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.EXPIRED));
-            addHistory(booking, BookingStatus.PENDING_PAYMENT, BookingStatus.EXPIRED,
-                    "Qua han thanh toan " + PAYMENT_WINDOW_MINUTES + " phut", null, now);
+            String reason = previous == BookingStatus.PENDING_OWNER_CONFIRMATION
+                    ? "Chu san khong phan hoi dung han"
+                    : "Qua han thanh toan";
+            addHistory(booking, previous, BookingStatus.EXPIRED, reason, null, now);
         }
 
         if (!overdue.isEmpty()) {
@@ -364,5 +421,36 @@ public class BookingService {
             log.info("Da huy {} don qua han thanh toan", overdue.size());
         }
         return overdue.size();
+    }
+
+    /** Marks played bookings completed and creates exactly one commission snapshot. */
+    @Transactional
+    public int completeFinishedBookings() {
+        Instant now = Instant.now();
+        List<Booking> finished = bookingRepository.findConfirmedFinished(now);
+        for (Booking booking : finished) {
+            booking.setStatus(BookingStatus.COMPLETED);
+            booking.setCompletedAt(now);
+            booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.COMPLETED));
+            addHistory(booking, BookingStatus.CONFIRMED, BookingStatus.COMPLETED,
+                    "Khung gio choi da ket thuc", null, now);
+            commissionService.createForCompletedBooking(booking, now);
+        }
+        return finished.size();
+    }
+
+    private Booking requireOwnerBooking(UUID ownerId, UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay don dat san."));
+        if (!booking.getVenue().getOwner().getId().equals(ownerId)) {
+            throw ApiException.notFound("Khong tim thay don dat san.");
+        }
+        return booking;
+    }
+
+    private static Instant activeDeadline(Booking booking) {
+        return booking.getStatus() == BookingStatus.PENDING_OWNER_CONFIRMATION
+                ? booking.getOwnerResponseExpiresAt()
+                : booking.getPaymentExpiresAt();
     }
 }

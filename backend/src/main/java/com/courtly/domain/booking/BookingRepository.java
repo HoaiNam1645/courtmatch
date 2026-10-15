@@ -50,14 +50,40 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                               @Param("keyword") String keyword,
                               Pageable pageable);
 
-    /** Don cho thanh toan da qua han, dung cho job tu dong huy (2.1.42). */
+    @Query(value = """
+            SELECT b FROM Booking b
+            JOIN FETCH b.venue v
+            WHERE v.owner.id = :ownerId
+              AND b.status IN :statuses
+            ORDER BY b.createdAt DESC
+            """,
+            countQuery = """
+                    SELECT count(b) FROM Booking b
+                    WHERE b.venue.owner.id = :ownerId AND b.status IN :statuses
+                    """)
+    Page<Booking> findForOwner(@Param("ownerId") UUID ownerId,
+                               @Param("statuses") Collection<BookingStatus> statuses,
+                               Pageable pageable);
+
+    /** Owner-review or direct-payment requests that passed their deadline. */
     @Query("""
             SELECT b FROM Booking b
-            WHERE b.status = com.courtly.common.enums.BookingStatus.PENDING_PAYMENT
-              AND b.expiresAt IS NOT NULL
-              AND b.expiresAt < :now
+            WHERE (b.status = com.courtly.common.enums.BookingStatus.PENDING_OWNER_CONFIRMATION
+                   AND b.ownerResponseExpiresAt IS NOT NULL AND b.ownerResponseExpiresAt < :now)
+               OR (b.status = com.courtly.common.enums.BookingStatus.AWAITING_PAYMENT
+                   AND b.paymentExpiresAt IS NOT NULL AND b.paymentExpiresAt < :now)
             """)
-    List<Booking> findExpiredPendingPayment(@Param("now") Instant now);
+    List<Booking> findExpiredPending(@Param("now") Instant now);
+
+    @Query("""
+            SELECT b FROM Booking b
+            WHERE b.status = com.courtly.common.enums.BookingStatus.CONFIRMED
+              AND NOT EXISTS (
+                  SELECT i.id FROM BookingItem i
+                  WHERE i.booking = b AND i.endTime > :now
+              )
+            """)
+    List<Booking> findConfirmedFinished(@Param("now") Instant now);
 
     /** Dem don tao trong ngay, dung de sinh so thu tu trong ma don. */
     @Query("""
