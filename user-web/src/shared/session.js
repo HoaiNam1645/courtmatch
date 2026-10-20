@@ -54,6 +54,23 @@ export function readPendingBooking() {
   }
 }
 
+export function savePendingBooking(booking) {
+  try {
+    window.sessionStorage.setItem(PENDING_BOOKING_STORAGE_KEY, JSON.stringify(booking))
+  } catch {
+    // The checkout page will simply ask the user to select the slot again.
+  }
+}
+
+export function clearPendingBooking() {
+  try {
+    window.sessionStorage.removeItem(PENDING_BOOKING_STORAGE_KEY)
+    window.sessionStorage.removeItem(LEGACY_STORAGE_KEYS.pendingBooking)
+  } catch {
+    // A completed request must not fail only because storage is unavailable.
+  }
+}
+
 export function saveRecoveryRequest(request) {
   window.sessionStorage.setItem(RECOVERY_STORAGE_KEY, JSON.stringify(request))
 }

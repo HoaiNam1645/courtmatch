@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CalendarDays, CheckCircle2, ChevronRight, Clock3, Eye, Layers, List, LocateFixed, MapPin, Search, Star, X } from 'lucide-react'
-import { fetchDistricts } from '../../api/venues'
-import { BottomNav, BrandMark } from '../../app/AppLayout'
-import { useVenueSearch } from '../../hooks/useVenueSearch'
-import { DEFAULT_USER_LOCATION, DEFAULT_VENUE_FILTERS, MAX_PRICE_FILTER } from '../../app/config'
-import { classNames, searchMatches } from '../../shared/utils'
-import { VenueFilterPanel } from './HomeVenueComponents'
+import { fetchDistricts } from '../../../api/venues'
+import { BottomNav, BrandMark } from '../../../app/AppLayout'
+import { useVenueSearch } from '../../../hooks/useVenueSearch'
+import { DEFAULT_USER_LOCATION, DEFAULT_VENUE_FILTERS, MAX_PRICE_FILTER } from '../../../app/config'
+import { classNames, searchMatches } from '../../../shared/utils'
+import { VenueFilterPanel } from '../HomeVenueComponents'
 
 function MapVenueDetail({ venue, onBack, onClose }) {
   const detailHref = `/san/${venue.id}`
@@ -540,4 +540,5 @@ function MapPage() {
   )
 }
 
-export { MapPage }
+
+export default MapPage

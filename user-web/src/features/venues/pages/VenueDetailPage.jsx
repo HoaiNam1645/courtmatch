@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, Heart, Map, MapPin, MapPinned, Navigation, Phone, Share2, Star, Tag, Users, X } from 'lucide-react'
-import { fetchQuote } from '../../api/venues'
-import { AppHeader, BottomNav, BrandMark } from '../../app/AppLayout'
-import { VenueMap } from '../../components/VenueMap'
-import { useAvailability } from '../../hooks/useAvailability'
-import { useVenueDetail } from '../../hooks/useVenueDetail'
-import { useVenueReviews } from '../../hooks/useVenueReviews'
-import { BookingEmptyState } from '../bookings/BookingPages'
-import { PageBackLink, ProfileSectionTitle } from '../profile/ProfilePages'
-import { weekDays } from '../profile/profileOptions'
-import { classNames } from '../../shared/utils'
-import { SectionTitle } from './HomeVenueComponents'
+import { fetchQuote } from '../../../api/venues'
+import { AppHeader, BottomNav, BrandMark } from '../../../app/AppLayout'
+import { VenueMap } from '../../../components/VenueMap'
+import { useAvailability } from '../../../hooks/useAvailability'
+import { useVenueDetail } from '../../../hooks/useVenueDetail'
+import { useVenueReviews } from '../../../hooks/useVenueReviews'
+import { BookingEmptyState } from '../../bookings/components/BookingEmptyState'
+import { PageBackLink, ProfileSectionTitle } from '../../profile/components/ProfileUi'
+import { weekDays } from '../../profile/profileOptions'
+import { classNames } from '../../../shared/utils'
+import { savePendingBooking } from '../../../shared/session'
+import { SectionTitle } from '../HomeVenueComponents'
 
 function formatCurrency(value) {
   if (value === null || value === undefined) return 'Miễn phí'
@@ -521,7 +522,7 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
             <button className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-lime-300 text-sm font-semibold text-emerald-950 shadow-[0_10px_22px_rgba(163,230,53,0.24)] disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400 disabled:shadow-none" disabled={!selectedCourt || !selectedSlot || !quote?.available} onClick={() => {
               // Luu lựa chọn tạm để /booking/checkout đọc lại. Số tiền ở đây do server tính;
               // bước tạo đơn thật vẫn phải tính lại, không tin giá trị lưu ở client.
-              window.sessionStorage.setItem(PENDING_BOOKING_STORAGE_KEY, JSON.stringify({
+              savePendingBooking({
                 venueId: venue.id,
                 venueName: venue.name,
                 courtId: selectedCourt.id,
@@ -533,7 +534,7 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
                 endAt: quote.endTime,
                 durationMinutes,
                 price: quote.totalAmount,
-              }))
+              })
               setSelectionSaved(true)
               window.location.href = '/booking/checkout'
             }}>
@@ -565,4 +566,5 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
   )
 }
 
-export { VenueDetailRoute }
+
+export default VenueDetailRoute
