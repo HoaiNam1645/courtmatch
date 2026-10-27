@@ -26,8 +26,8 @@ import org.hibernate.type.SqlTypes;
 public class DoubleTeamSuggestion extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "run_id", nullable = false)
-    private AlgorithmRun run;
+    @JoinColumn(name = "model_id", nullable = false)
+    private AiModel model;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_id")

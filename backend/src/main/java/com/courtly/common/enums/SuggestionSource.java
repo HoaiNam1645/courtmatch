@@ -3,16 +3,15 @@ package com.courtly.common.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/** Trang thai mot lan chay thuat toan. */
-public enum RunStatus implements PersistableEnum {
+/** Nguon cham diem cua de xuat doi tac. */
+public enum SuggestionSource implements PersistableEnum {
 
-    RUNNING("running"),
-    SUCCESS("success"),
-    FAILED("failed");
+    AI("ai"),
+    BASELINE("baseline");
 
     private final String value;
 
-    RunStatus(String value) {
+    SuggestionSource(String value) {
         this.value = value;
     }
 
@@ -23,12 +22,12 @@ public enum RunStatus implements PersistableEnum {
     }
 
     @JsonCreator
-    public static RunStatus from(String value) {
-        for (RunStatus item : values()) {
+    public static SuggestionSource from(String value) {
+        for (SuggestionSource item : values()) {
             if (item.value.equals(value)) {
                 return item;
             }
         }
-        throw new IllegalArgumentException("Gia tri '" + value + "' khong hop le cho RunStatus");
+        throw new IllegalArgumentException("Gia tri '" + value + "' khong hop le cho SuggestionSource");
     }
 }

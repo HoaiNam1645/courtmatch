@@ -1,24 +1,23 @@
 package com.courtly.seed;
 
 import com.courtly.common.GeoSupport;
-import com.courtly.common.enums.AlgorithmType;
 import com.courtly.common.enums.ConnectionStatus;
+import com.courtly.common.enums.ModelStatus;
+import com.courtly.common.enums.ModelType;
 import com.courtly.common.enums.PartnerRequestStatus;
 import com.courtly.common.enums.PlayingStyle;
-import com.courtly.common.enums.RunStatus;
 import com.courtly.common.enums.SuggestionStatus;
+import com.courtly.common.enums.SuggestionSource;
 import com.courtly.domain.account.User;
 import com.courtly.domain.account.UserRepository;
-import com.courtly.domain.matching.AlgorithmRun;
-import com.courtly.domain.matching.AlgorithmRunRepository;
+import com.courtly.domain.matching.AiModel;
+import com.courtly.domain.matching.AiModelRepository;
 import com.courtly.domain.matching.DoubleTeamSuggestion;
 import com.courtly.domain.matching.DoubleTeamSuggestionRepository;
 import com.courtly.domain.matching.PartnerRequest;
 import com.courtly.domain.matching.PartnerRequestRepository;
 import com.courtly.domain.matching.PartnerSuggestion;
 import com.courtly.domain.matching.PartnerSuggestionRepository;
-import com.courtly.domain.matching.PlayerCluster;
-import com.courtly.domain.matching.PlayerClusterRepository;
 import com.courtly.domain.matching.PlayerConnection;
 import com.courtly.domain.matching.PlayerConnectionRepository;
 import com.courtly.domain.matching.PlayerMatchProfile;
@@ -35,11 +34,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Buoc 7: player_match_profiles, algorithm_runs, player_clusters, partner_suggestions,
+ * Buoc 7: player_match_profiles, ai_models, partner_suggestions,
  * partner_requests, player_connections, double_team_suggestions.
  *
- * <p>Day la ket qua mau cua Sprint 2 duoc viet san de co du lieu doi chieu;
- * seeder khong chay K-Means, DBSCAN hay thuat toan ghep cap nao.
+ * <p>Day la ket qua mau cua Sprint 2 de doi chieu giao dien va schema. Seeder khong
+ * huan luyen model; artifact CatBoost that do AI service tao ra.
  */
 @Slf4j
 @Component
@@ -48,41 +47,39 @@ import org.springframework.transaction.annotation.Transactional;
 public class MatchingSeeder implements Seeder {
 
     private final PlayerMatchProfileRepository matchProfileRepository;
-    private final AlgorithmRunRepository algorithmRunRepository;
-    private final PlayerClusterRepository clusterRepository;
+    private final AiModelRepository aiModelRepository;
     private final PartnerSuggestionRepository suggestionRepository;
     private final PartnerRequestRepository requestRepository;
     private final PlayerConnectionRepository connectionRepository;
     private final DoubleTeamSuggestionRepository doubleTeamRepository;
     private final UserRepository userRepository;
 
-    private static final String KMEANS_RUN = "run-kmeans-01";
-    private static final String PARTNER_RUN = "run-partner-01";
-    private static final String DOUBLE_TEAM_RUN = "run-double-team-01";
+    private static final String PARTNER_MODEL = "model-partner-catboost-01";
+    private static final String DOUBLE_TEAM_MODEL = "model-double-team-01";
 
     /** Vector dac trung cua tung nguoi choi, tong hop san tu ho so va thong ke. */
     private record ProfileSeed(String playerKey, String skillScore, String winRate, int totalMatches,
                                double latitude, double longitude, int radiusKm,
-                               PlayingStyle playingStyle, String clusterLabel, String distanceToCentroid) {
+                               PlayingStyle playingStyle) {
     }
 
     private static final List<ProfileSeed> PROFILES = List.of(
             new ProfileSeed("player-01", "1372.00", "25.00", 4, 16.0609, 108.2237, 7,
-                    PlayingStyle.ATTACKING, "cluster_1", "0.4120"),
+                    PlayingStyle.ATTACKING),
             new ProfileSeed("player-02", "1180.00", "50.00", 2, 16.0655, 108.1858, 7,
-                    PlayingStyle.BALANCED, "cluster_0", "0.2870"),
+                    PlayingStyle.BALANCED),
             new ProfileSeed("player-03", "1704.00", "66.67", 3, 16.0837, 108.2372, 7,
-                    PlayingStyle.ATTACKING, "cluster_2", "0.1950"),
+                    PlayingStyle.ATTACKING),
             new ProfileSeed("player-04", "832.00", "0.00", 2, 16.0042, 108.2522, 7,
-                    PlayingStyle.DEFENSIVE, "cluster_3", "0.3310"),
+                    PlayingStyle.DEFENSIVE),
             new ProfileSeed("player-05", "1258.00", "100.00", 2, 16.0747, 108.1497, 7,
-                    PlayingStyle.BALANCED, "cluster_0", "0.5040"),
+                    PlayingStyle.BALANCED),
             new ProfileSeed("player-06", "1467.00", "100.00", 3, 16.0615, 108.224500, 7,
-                    PlayingStyle.ATTACKING, "cluster_1", "0.2260"),
+                    PlayingStyle.ATTACKING),
             new ProfileSeed("player-07", "1150.00", "50.00", 2, 16.0192, 108.1995, 7,
-                    PlayingStyle.DEFENSIVE, "cluster_0", "0.6180"),
+                    PlayingStyle.DEFENSIVE),
             new ProfileSeed("player-08", "872.00", "0.00", 2, 16.065, 108.18650, 7,
-                    PlayingStyle.BALANCED, "cluster_3", "0.2740"));
+                    PlayingStyle.BALANCED));
 
     /** Khung gio thuong ranh: thu trong tuan -> cac gio bat dau. */
     private static final Map<String, List<Integer>> AVAILABILITY = Map.of(
@@ -97,13 +94,13 @@ public class MatchingSeeder implements Seeder {
 
     private static final List<SuggestionSeed> SUGGESTIONS = List.of(
             new SuggestionSeed("player-01", "player-06", "92.00", "96.00", "88.00", "95.00", "92.80",
-                    "Cung cum ky nang, cung quan Hai Chau, cung phong cach tan cong"),
+                    "Trinh do can bang, cung quan Hai Chau, cung phong cach tan cong"),
             new SuggestionSeed("player-01", "player-03", "78.00", "62.00", "88.00", "95.00", "79.60",
                     "Trinh do cao hon mot bac, cung phong cach tan cong"),
             new SuggestionSeed("player-02", "player-05", "94.00", "84.00", "88.00", "98.00", "91.20",
-                    "Cung cum ky nang va cung phong cach balanced"),
+                    "Trinh do can bang va cung phong cach balanced"),
             new SuggestionSeed("player-04", "player-08", "95.00", "88.00", "88.00", "70.00", "86.40",
-                    "Cung cum nguoi moi choi, khu vuc gan nhau"),
+                    "Cung nhom trinh do nguoi moi, khu vuc gan nhau"),
             new SuggestionSeed("player-07", "player-02", "88.00", "58.00", "88.00", "72.00", "77.60",
                     "Ty le thang tuong duong, lech khu vuc 8 km"),
             new SuggestionSeed("player-06", "player-01", "92.00", "96.00", "88.00", "95.00", "92.80",
@@ -123,39 +120,36 @@ public class MatchingSeeder implements Seeder {
 
     @Override
     public String name() {
-        return "match profiles + clustering + partner matching";
+        return "match profiles + AI partner ranking";
     }
 
     @Override
     @Transactional
     public void seed() {
-        if (algorithmRunRepository.count() > 0) {
+        if (aiModelRepository.count() > 0) {
             log.info("  [matching] da co du lieu, bo qua");
             return;
         }
 
         seedMatchProfiles();
 
-        AlgorithmRun kmeansRun = seedRun(KMEANS_RUN, AlgorithmType.KMEANS, "v1.0", 7,
-                Map.of("k", 4, "max_iter", 300, "random_state", 42, "features",
-                        List.of("skill_score", "win_rate", "total_matches", "availability_score")),
-                Map.of("silhouette", 0.62, "davies_bouldin", 0.81, "inertia", 18.47, "n_clusters", 4));
-        seedClusters(kmeansRun);
-
-        AlgorithmRun partnerRun = seedRun(PARTNER_RUN, AlgorithmType.PARTNER_MATCHING, "v1.0", 1,
-                Map.of("weights", Map.of("skill", 0.35, "location", 0.25, "time", 0.25, "style", 0.15),
-                        "top_n", 20),
-                Map.of("candidates_evaluated", 72, "suggestions_created", SUGGESTIONS.size()));
-        seedSuggestions(partnerRun);
+        AiModel partnerModel = seedModel(PARTNER_MODEL, ModelType.CATBOOST_RANKER,
+                "courtly-partner-v1", 1, "models/courtly-partner-v1.cbm",
+                Map.of("loss_function", "YetiRank", "iterations", 500, "depth", 8,
+                        "random_seed", 42, "top_n", 20),
+                Map.of("ndcg_at_10", 0.84, "precision_at_10", 0.76,
+                        "recall_at_10", 0.71, "suggestions_created", SUGGESTIONS.size()));
+        seedSuggestions(partnerModel);
 
         seedRequestsAndConnections();
 
-        AlgorithmRun doubleTeamRun = seedRun(DOUBLE_TEAM_RUN, AlgorithmType.DOUBLE_TEAM_MATCHING, "v1.0", 3,
+        AiModel doubleTeamModel = seedModel(DOUBLE_TEAM_MODEL, ModelType.DOUBLE_TEAM_RANKER,
+                "courtly-double-team-v1", 3, "models/courtly-double-team-v1.cbm",
                 Map.of("pool_size", 4, "objective", "minimize_strength_gap"),
                 Map.of("combinations_evaluated", 3, "best_balance_score", 12.5));
-        seedDoubleTeams(doubleTeamRun);
+        seedDoubleTeams(doubleTeamModel);
 
-        log.info("  [matching] {} ho so, 3 lan chay, {} goi y, {} yeu cau ghep cap",
+        log.info("  [matching] {} ho so, 2 model, {} goi y, {} yeu cau ghep cap",
                 PROFILES.size(), SUGGESTIONS.size(), REQUESTS.size());
     }
 
@@ -171,46 +165,40 @@ public class MatchingSeeder implements Seeder {
             profile.setPreferredRadiusKm(BigDecimal.valueOf(seed.radiusKm()));
             profile.setAvailabilityScore(AVAILABILITY);
             profile.setPlayingStyle(seed.playingStyle());
-            profile.setClusterLabel(seed.clusterLabel());
             matchProfileRepository.save(profile);
         }
     }
 
-    private AlgorithmRun seedRun(String key, AlgorithmType type, String version, int daysAgo,
-                                 Map<String, Object> parameters, Map<String, Object> metrics) {
+    private AiModel seedModel(String key, ModelType type, String version, int daysAgo,
+                              String artifactPath, Map<String, Object> parameters,
+                              Map<String, Object> metrics) {
         Instant startedAt = Instant.now().minus(daysAgo, ChronoUnit.DAYS);
 
-        AlgorithmRun run = new AlgorithmRun();
-        run.setId(SeedIds.of("algorithm-run:" + key));
-        run.setAlgorithmType(type);
-        run.setAlgorithmVersion(version);
-        run.setParametersJson(parameters);
-        run.setMetricsJson(metrics);
-        run.setStartedAt(startedAt);
-        run.setFinishedAt(startedAt.plusSeconds(42));
-        run.setStatus(RunStatus.SUCCESS);
-        return algorithmRunRepository.save(run);
+        AiModel model = new AiModel();
+        model.setId(SeedIds.of("ai-model:" + key));
+        model.setModelType(type);
+        model.setModelVersion(version);
+        model.setArtifactPath(artifactPath);
+        model.setArtifactChecksum("sha256:seed-" + key);
+        model.setFeatureSchemaJson(Map.of(
+                "version", 1,
+                "features", List.of("skill_score", "win_rate", "recent_form",
+                        "location_score", "time_score", "style_score")));
+        model.setParametersJson(parameters);
+        model.setMetricsJson(metrics);
+        model.setTrainingStartedAt(startedAt);
+        model.setTrainedAt(startedAt.plusSeconds(42));
+        model.setActivatedAt(startedAt.plusSeconds(60));
+        model.setStatus(ModelStatus.ACTIVE);
+        return aiModelRepository.save(model);
     }
 
-    private void seedClusters(AlgorithmRun run) {
-        for (ProfileSeed seed : PROFILES) {
-            PlayerCluster cluster = new PlayerCluster();
-            cluster.setId(SeedIds.of("player-cluster:" + run.getId() + ":" + seed.playerKey()));
-            cluster.setRun(run);
-            cluster.setUser(player(seed.playerKey()));
-            cluster.setClusterLabel(seed.clusterLabel());
-            cluster.setDistanceToCentroid(new BigDecimal(seed.distanceToCentroid()));
-            cluster.setCreatedAt(run.getFinishedAt());
-            clusterRepository.save(cluster);
-        }
-    }
-
-    private void seedSuggestions(AlgorithmRun run) {
+    private void seedSuggestions(AiModel model) {
         int index = 0;
         for (SuggestionSeed seed : SUGGESTIONS) {
             PartnerSuggestion suggestion = new PartnerSuggestion();
             suggestion.setId(SeedIds.of("partner-suggestion:" + index++));
-            suggestion.setRun(run);
+            suggestion.setModel(model);
             suggestion.setUser(player(seed.userKey()));
             suggestion.setSuggestedUser(player(seed.suggestedKey()));
             suggestion.setSkillScore(new BigDecimal(seed.skill()));
@@ -218,12 +206,14 @@ public class MatchingSeeder implements Seeder {
             suggestion.setTimeScore(new BigDecimal(seed.time()));
             suggestion.setStyleScore(new BigDecimal(seed.style()));
             suggestion.setTotalScore(new BigDecimal(seed.total()));
+            suggestion.setConfidenceScore(new BigDecimal("0.8600"));
+            suggestion.setScoringSource(SuggestionSource.AI);
             suggestion.setReasonJson(Map.of(
                     "summary", seed.reason(),
                     "skill_gap", new BigDecimal(seed.skill()),
                     "shared_slots", List.of("Thu 3 18:00", "Thu 5 18:00")));
             suggestion.setStatus(SuggestionStatus.ACTIVE);
-            suggestion.setCreatedAt(run.getFinishedAt());
+            suggestion.setCreatedAt(model.getTrainedAt());
             suggestionRepository.save(suggestion);
         }
     }
@@ -264,10 +254,10 @@ public class MatchingSeeder implements Seeder {
         connectionRepository.save(connection);
     }
 
-    private void seedDoubleTeams(AlgorithmRun run) {
+    private void seedDoubleTeams(AiModel model) {
         DoubleTeamSuggestion suggestion = new DoubleTeamSuggestion();
         suggestion.setId(SeedIds.of("double-team-suggestion:01"));
-        suggestion.setRun(run);
+        suggestion.setModel(model);
         suggestion.setTeam1Players(List.of(
                 player("player-01").getId(), player("player-04").getId()));
         suggestion.setTeam2Players(List.of(
@@ -275,12 +265,12 @@ public class MatchingSeeder implements Seeder {
         suggestion.setTeam1Strength(new BigDecimal("2204.00"));
         suggestion.setTeam2Strength(new BigDecimal("2339.00"));
         suggestion.setBalanceScore(new BigDecimal("135.00"));
-        suggestion.setCreatedAt(run.getFinishedAt());
+        suggestion.setCreatedAt(model.getTrainedAt());
         doubleTeamRepository.save(suggestion);
 
         DoubleTeamSuggestion alternative = new DoubleTeamSuggestion();
         alternative.setId(SeedIds.of("double-team-suggestion:02"));
-        alternative.setRun(run);
+        alternative.setModel(model);
         alternative.setTeam1Players(List.of(
                 player("player-01").getId(), player("player-08").getId()));
         alternative.setTeam2Players(List.of(
@@ -288,7 +278,7 @@ public class MatchingSeeder implements Seeder {
         alternative.setTeam1Strength(new BigDecimal("2244.00"));
         alternative.setTeam2Strength(new BigDecimal("2299.00"));
         alternative.setBalanceScore(new BigDecimal("55.00"));
-        alternative.setCreatedAt(run.getFinishedAt());
+        alternative.setCreatedAt(model.getTrainedAt());
         doubleTeamRepository.save(alternative);
     }
 

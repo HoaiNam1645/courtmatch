@@ -1,7 +1,7 @@
 package com.courtly.domain.matching;
 
-import com.courtly.common.enums.AlgorithmType;
-import com.courtly.common.enums.RunStatus;
+import com.courtly.common.enums.ModelStatus;
+import com.courtly.common.enums.ModelType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -20,50 +20,61 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Persistable;
 
-/** Metadata cua moi lan chay K-Means / DBSCAN / ghep cap (2.2.16, 2.3.73). */
+/** Metadata cua model AI/baseline dung cho xep hang doi tac (2.2.16). */
 @Entity
-@Table(name = "algorithm_runs")
+@Table(name = "ai_models")
 @Getter
 @Setter
 @NoArgsConstructor
-public class AlgorithmRun implements Persistable<UUID> {
+public class AiModel implements Persistable<UUID> {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "algorithm_type", nullable = false, length = 50)
-    private AlgorithmType algorithmType;
+    @Column(name = "model_type", nullable = false, length = 50)
+    private ModelType modelType;
 
-    @Column(name = "algorithm_version", length = 50)
-    private String algorithmVersion;
+    @Column(name = "model_version", nullable = false, length = 50)
+    private String modelVersion;
 
-    /** Vi du: {"k": 4, "max_iter": 300, "random_state": 42}. */
+    @Column(name = "artifact_path", length = 500)
+    private String artifactPath;
+
+    @Column(name = "artifact_checksum", length = 128)
+    private String artifactChecksum;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "feature_schema_json")
+    private Map<String, Object> featureSchemaJson;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "parameters_json")
     private Map<String, Object> parametersJson;
 
-    /** Vi du: {"silhouette": 0.62, "davies_bouldin": 0.81, "n_clusters": 4}. */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metrics_json")
     private Map<String, Object> metricsJson;
 
-    @Column(name = "started_at", nullable = false)
-    private Instant startedAt;
+    @Column(name = "training_started_at", nullable = false)
+    private Instant trainingStartedAt;
 
-    @Column(name = "finished_at")
-    private Instant finishedAt;
+    @Column(name = "trained_at")
+    private Instant trainedAt;
+
+    @Column(name = "activated_at")
+    private Instant activatedAt;
 
     @Column(name = "status", nullable = false, length = 30)
-    private RunStatus status = RunStatus.RUNNING;
+    private ModelStatus status = ModelStatus.TRAINING;
 
     @PrePersist
     void applyDefaults() {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        if (startedAt == null) {
-            startedAt = Instant.now();
+        if (trainingStartedAt == null) {
+            trainingStartedAt = Instant.now();
         }
     }
 

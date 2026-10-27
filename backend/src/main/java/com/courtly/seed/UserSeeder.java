@@ -65,7 +65,7 @@ public class UserSeeder implements Seeder {
     private final NotificationPreferenceRepository notificationPreferenceRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /** Ho so nguoi choi mau, da dang trinh do va phong cach de phan cum co y nghia. */
+    /** Ho so nguoi choi mau, da dang trinh do va phong cach de kiem thu xep hang. */
     private record PlayerSeed(String key, String fullName, String email, String phone,
                               Gender gender, LocalDate dateOfBirth, SkillLevel skillLevel,
                               double skillScore, DominantHand hand, PlayingStyle style,

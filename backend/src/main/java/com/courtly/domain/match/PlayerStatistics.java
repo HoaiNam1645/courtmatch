@@ -23,7 +23,7 @@ import lombok.Setter;
 import org.springframework.data.domain.Persistable;
 
 /**
- * Bang tong hop doc nhanh cho ho so va thuat toan ghep cap (2.2.10).
+ * Bang tong hop doc nhanh cho ho so va model AI ghep cap (2.2.10).
  *
  * <p>Man hinh ho so doc thang tu bang nay, khong tinh lai tu matches moi lan mo.
  */

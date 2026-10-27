@@ -2,6 +2,7 @@ package com.courtly.domain.matching;
 
 import com.courtly.common.BaseEntity;
 import com.courtly.common.enums.SuggestionStatus;
+import com.courtly.common.enums.SuggestionSource;
 import com.courtly.domain.account.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,8 +27,8 @@ import org.hibernate.type.SqlTypes;
 public class PartnerSuggestion extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "run_id")
-    private AlgorithmRun run;
+    @JoinColumn(name = "model_id")
+    private AiModel model;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -56,6 +57,13 @@ public class PartnerSuggestion extends BaseEntity {
     /** Diem tong the dung de xep hang (2.2.28). */
     @Column(name = "total_score", nullable = false, precision = 6, scale = 2)
     private BigDecimal totalScore = BigDecimal.ZERO;
+
+    /** Do tin cay 0..1 do AI service tra ve. */
+    @Column(name = "confidence_score", precision = 5, scale = 4)
+    private BigDecimal confidenceScore;
+
+    @Column(name = "scoring_source", nullable = false, length = 20)
+    private SuggestionSource scoringSource = SuggestionSource.BASELINE;
 
     /** Giai thich vi sao duoc de xuat, hien thi o man hinh chi tiet (2.2.30). */
     @JdbcTypeCode(SqlTypes.JSON)

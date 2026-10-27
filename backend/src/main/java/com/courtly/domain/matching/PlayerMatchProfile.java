@@ -29,7 +29,7 @@ import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Persistable;
 
 /**
- * Vector dac trung phuc vu phan cum va ghep cap (2.2.5).
+ * Vector dac trung phuc vu model AI xep hang doi tac (2.2.5).
  *
  * <p>Tong hop tu player_profiles, player_statistics, player_availability_slots
  * va player_preferred_locations. Bang nay duoc tinh lai theo lo, khong cap nhat truc tiep tu UI.
@@ -74,10 +74,6 @@ public class PlayerMatchProfile implements Persistable<UUID> {
 
     @Column(name = "playing_style", length = 50)
     private PlayingStyle playingStyle;
-
-    /** Ket qua phan cum moi nhat, copy tu player_clusters de doc nhanh. */
-    @Column(name = "cluster_label", length = 50)
-    private String clusterLabel;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

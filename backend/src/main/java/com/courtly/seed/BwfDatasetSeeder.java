@@ -45,9 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
  * Buoc 11: nap bo du lieu tran dau that cua BWF.
  *
  * <p>Vi sao can: {@link MatchSeeder} chi co 6 tran va 8 nguoi choi - du de xem giao dien
- * nhung khong du de chay thuat toan. K-Means tren 8 diem du lieu khong co y nghia thong ke.
+ * nhung khong du de huan luyen model. AI service dung bo seed BWF day du cho training.
  * Bo du lieu nay cho 188 van dong vien va {@value #SO_TRAN_DU_KIEN} tran that, moi nguoi
- * trung vi 40 tran, dat nguong toi thieu de phan cum va ghep cap o Sprint 2.
+ * trung vi 40 tran, dat nguong toi thieu de huan luyen va ghep cap o Sprint 2.
  *
  * <p>Nguon: 105.147 tran BWF 2007-2026 trong {@code data/bwf-match-data}. Script
  * {@code data/bwf-to-seed.py} loc vong dau chinh tu 2024, chon 188 nguoi nhieu tran nhat,
@@ -59,8 +59,8 @@ import org.springframework.transaction.annotation.Transactional;
  * thi ket qua phai trung voi du lieu o day.
  *
  * <p>Han che da biet: day la van dong vien chuyen nghiep, khong co nguoi moi choi. Dung de
- * kiem chung duong ong xu ly va thuat toan xep hang; muon danh gia chat luong phan cum thi
- * van can bo du lieu mo phong co nhan biet truoc.
+ * kiem chung duong ong xu ly va model xep hang. Metric chinh do AI service tinh tren toan bo
+ * tap du lieu; van can bo du lieu mo phong co nhan biet truoc cho cac feature ngoai BWF.
  */
 @Slf4j
 @Component
@@ -138,7 +138,7 @@ public class BwfDatasetSeeder implements Seeder {
             profile.setSkillLevel(SkillLevel.from(p.skillLevel()));
             profile.setPreferredPlayType(PlayType.from(p.preferredPlayType()));
             // playing_style va date_of_birth de trong: bo du lieu BWF khong co hai thong
-            // tin nay, va dien bua vao se lam sai ket qua phan cum.
+            // tin nay, va dien bua vao se lam sai feature dau vao cua model.
             user.setPlayerProfile(profile);
 
             userRepository.save(user);
