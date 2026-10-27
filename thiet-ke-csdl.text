@@ -7,7 +7,7 @@ Huong thiet ke:
 - Thoi gian: timestamptz.
 - Tien te: numeric(12,2).
 - Vi tri ban do: geography(Point, 4326).
-- Du lieu linh hoat nhu cau hinh thuat toan, bang chung/metadata va metadata thong bao: JSONB.
+- Du lieu linh hoat nhu feature schema/model metrics, bang chung va metadata thong bao: JSONB.
 
 Mo hinh nghiep vu da chot:
 - Courtly la nen tang ket noi va tinh hoa hong; Courtly khong nhan/giu tien san cua nguoi choi.
@@ -745,7 +745,7 @@ Cot chinh:
 - note text
 
 6.5. player_statistics
-Muc dich: bang tong hop doc nhanh cho ho so va thuat toan.
+Muc dich: bang tong hop doc nhanh cho ho so va model xep hang.
 
 Cot chinh:
 - user_id uuid PK FK -> users.id
@@ -773,7 +773,7 @@ Cot chinh:
 - created_at timestamptz
 
 
-7. NHOM GHEP CAP, PHAN CUM, GOI Y DOI TAC
+7. NHOM AI GHEP CAP VA GOI Y DOI TAC
 
 7.1. player_match_profiles
 Muc dich: vector dac trung phuc vu ghep cap.
@@ -787,47 +787,39 @@ Cot chinh:
 - preferred_radius_km numeric(6,2)
 - availability_score jsonb
 - playing_style varchar(50)
-- cluster_label varchar(50)
 - updated_at timestamptz
 
 Index:
 - gist(preferred_location)
-- index(cluster_label)
 
-7.2. algorithm_runs
-Muc dich: luu moi lan chay thuat toan clustering/matching.
+7.2. ai_models
+Muc dich: luu metadata, artifact va metric cua tung phien ban model AI/baseline.
 
 Cot chinh:
 - id uuid PK
-- algorithm_type varchar(50) -- kmeans, dbscan, partner_matching, double_team_matching
-- algorithm_version varchar(50)
+- model_type varchar(50) -- catboost_ranker, baseline_ranker, double_team_ranker
+- model_version varchar(50)
+- artifact_path varchar(500), nullable voi baseline
+- artifact_checksum varchar(128), nullable
+- feature_schema_json jsonb
 - parameters_json jsonb
 - metrics_json jsonb
-- started_at timestamptz
-- finished_at timestamptz
-- status varchar(30) -- running, success, failed
-
-7.3. player_clusters
-Muc dich: ket qua phan cum nguoi choi.
-
-Cot chinh:
-- id uuid PK
-- run_id uuid FK -> algorithm_runs.id
-- user_id uuid FK -> users.id
-- cluster_label varchar(50)
-- distance_to_centroid numeric(10,4)
-- created_at timestamptz
+- training_started_at timestamptz
+- trained_at timestamptz, nullable
+- activated_at timestamptz, nullable
+- status varchar(30) -- training, ready, active, failed, archived
 
 Index/constraint:
-- unique(run_id, user_id)
-- index(cluster_label)
+- unique(model_type, model_version)
+- unique(model_type) where status = active
+- index(model_type, training_started_at desc)
 
-7.4. partner_suggestions
+7.3. partner_suggestions
 Muc dich: danh sach doi tac de xuat.
 
 Cot chinh:
 - id uuid PK
-- run_id uuid FK -> algorithm_runs.id, nullable
+- model_id uuid FK -> ai_models.id, nullable voi baseline
 - user_id uuid FK -> users.id
 - suggested_user_id uuid FK -> users.id
 - skill_score numeric(6,2)
@@ -835,6 +827,8 @@ Cot chinh:
 - time_score numeric(6,2)
 - style_score numeric(6,2)
 - total_score numeric(6,2)
+- confidence_score numeric(5,4), nullable, trong khoang 0..1
+- scoring_source varchar(20) -- ai, baseline
 - reason_json jsonb
 - status varchar(30) -- active, hidden, expired
 - created_at timestamptz
@@ -842,8 +836,9 @@ Cot chinh:
 Index/constraint:
 - unique(user_id, suggested_user_id, created_at)
 - index(user_id, total_score desc)
+- index(model_id)
 
-7.5. partner_requests
+7.4. partner_requests
 Muc dich: yeu cau ghep cap giua nguoi choi.
 
 Cot chinh:
@@ -859,7 +854,7 @@ Index:
 - index(receiver_id, status)
 - index(requester_id, status)
 
-7.6. player_connections
+7.5. player_connections
 Muc dich: danh sach doi tac da ghep cap.
 
 Cot chinh:
@@ -873,12 +868,12 @@ Cot chinh:
 Constraint:
 - unique(user_id, partner_id)
 
-7.7. double_team_suggestions
+7.6. double_team_suggestions
 Muc dich: goi y chia doi doi nam/nu can bang.
 
 Cot chinh:
 - id uuid PK
-- run_id uuid FK -> algorithm_runs.id
+- model_id uuid FK -> ai_models.id
 - match_id uuid FK -> matches.id, nullable
 - team1_players jsonb
 - team2_players jsonb
@@ -1023,8 +1018,8 @@ Index:
 - matches 1-n match_players
 - matches 1-n match_games
 - users 1-1 player_statistics
-- algorithm_runs 1-n player_clusters
-- algorithm_runs 1-n partner_suggestions
+- ai_models 1-n partner_suggestions
+- ai_models 1-n double_team_suggestions
 
 
 12. CAC INDEX BAT BUOC DE TOI UU
@@ -1086,8 +1081,7 @@ MVP nang cao/Sprint 2:
 - player_statistics
 - player_rating_history
 - player_match_profiles
-- algorithm_runs
-- player_clusters
+- ai_models
 - partner_suggestions
 - partner_requests
 - player_connections

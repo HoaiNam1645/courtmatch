@@ -163,21 +163,21 @@ Dữ liệu & Hiệu suất Người chơi
 2.2.4. Làm sạch dữ liệu bị thiếu & không hợp lệ
   - Loại tỷ số sai luật cầu lông: 21-20 (chưa hơn 2 điểm), 25-20, 31-29 đều từ chối.
   - Chống cày điểm: hai người đánh nhau quá 20 trận trong 7 ngày thì loại khỏi rating.
-  - Người dưới 3 trận vẫn xem được hồ sơ nhưng không đưa vào phân cụm.
+  - Người dưới 3 trận vẫn xem được hồ sơ nhưng chưa dùng làm mẫu huấn luyện chính.
   - Thiếu dữ liệu thì để trống, KHÔNG điền giá trị trung bình vào thay.
 2.2.5. Trích xuất các đặc trưng kỹ năng của người chơi
-  - Biến mỗi người thành một dãy số để thuật toán so sánh: điểm xếp hạng, tỷ lệ
+  - Biến mỗi người thành một dãy đặc trưng cho model: điểm xếp hạng, tỷ lệ
     thắng, số trận, chênh lệch điểm, độ ổn định, độ mới của dữ liệu.
   - Hệ thống tự tính từ kết quả trận, người dùng không nhập gì ở bước này.
   - Không đưa toạ độ và khung giờ vào — hai thứ đó dùng để LỌC lúc ghép cặp,
-    không dùng để phân cụm, vì trộn vào sẽ ra cụm theo địa lý chứ không theo trình độ.
+    sau đó mới đưa điểm vị trí/thời gian vào model để xếp hạng các ứng viên hợp lệ.
 2.2.6. Tính toán điểm xếp hạng kỹ năng của người chơi
   - Công thức Elo. Khởi điểm 1000, sàn 100. Hệ thống tự tính, không ai sửa được.
   - Đánh đôi: điểm đội là trung bình hai người, cả hai nhận cùng mức tăng/giảm.
   - Người mới biến động mạnh (K=40), người trên 30 trận biến động nhẹ (K=16).
-  - Dưới 5 trận thì điểm hiện nhãn "Tạm tính" và không đưa vào phân cụm.
+  - Dưới 5 trận thì điểm hiện nhãn "Tạm tính" và dùng cơ chế cold-start khi ghép cặp.
 2.2.7. Tính tỷ lệ thắng của người chơi
-  - Lưu HAI con số: tỷ lệ thô để hiển thị, tỷ lệ đã làm trơn để thuật toán dùng.
+  - Lưu HAI con số: tỷ lệ thô để hiển thị, tỷ lệ đã làm trơn để model dùng.
   - Vì sao: thắng 2/2 trận là 100% nhưng chưa nói lên gì. Làm trơn kéo về 64%,
     còn người 50 trận thắng 80% thì gần như không bị kéo.
   - Hiển thị luôn kèm mẫu số: "100% (2 trận)", không bao giờ chỉ ghi "100%".
@@ -197,17 +197,42 @@ Dữ liệu & Hiệu suất Người chơi
     TỰ KHAI ở 2.1.8 — hai thứ có thể lệch nhau.
   - Người chưa có trận nào thì hiện lời mời ghi trận đầu tiên, không hiện biểu đồ trống.
 
-Phân cụm Người chơi
+Model AI Xếp hạng Đối tác
 
-2.2.11. Xác định các đặc trưng dùng để phân cụm người chơi
-2.2.12. Chuẩn hóa dữ liệu đặc trưng của người chơi
-2.2.13. Thực hiện phân cụm người chơi bằng K-Means
-2.2.14. Xác định số lượng cụm tối ưu
-2.2.15. Thực hiện phân cụm người chơi bằng DBSCAN
-2.2.16. So sánh kết quả K-Means & DBSCAN
-2.2.17. Đánh giá chất lượng phân cụm
-2.2.18. Gán người chơi vào cụm kỹ năng
-2.2.19. Xem thông tin cụm của người chơi
+Quy ước công nghệ:
+- Model chính: CatBoostRanker, huấn luyện bằng Python từ dữ liệu trận đã chuẩn hóa.
+- AI service: FastAPI chạy độc lập; Spring Boot gọi qua REST nội bộ.
+- Spring Boot vẫn lọc điều kiện bắt buộc, lưu kết quả và xử lý toàn bộ nghiệp vụ.
+- Khi AI service lỗi hoặc model chưa đủ dữ liệu, hệ thống dùng công thức baseline làm fallback.
+
+2.2.11. Xác định đặc trưng đầu vào và nhãn huấn luyện cho model
+  - Đặc trưng gồm kỹ năng, phong độ, tỷ lệ thắng làm trơn, độ ổn định, vị trí,
+    thời gian rảnh, phong cách chơi và loại trận mong muốn.
+  - Nhãn xếp hạng phản ánh mức phù hợp hoặc độ cân bằng của cặp người chơi.
+2.2.12. Tạo tập huấn luyện, kiểm định và kiểm thử theo thời gian
+  - Không chia ngẫu nhiên làm rò rỉ tương lai; dùng các trận cũ để dự đoán giai đoạn mới hơn.
+  - Lưu schema đặc trưng để pipeline huấn luyện và pipeline dự đoán luôn giống nhau.
+2.2.13. Huấn luyện model CatBoostRanker
+  - Script Python đọc dữ liệu đã seed/chuẩn hóa, huấn luyện model và xuất file .cbm.
+  - Cấu hình huấn luyện và random seed phải được lưu để có thể tái lập kết quả.
+2.2.14. Đánh giá chất lượng model xếp hạng
+  - Dùng NDCG@K, Precision@K và Recall@K; không chỉ dùng accuracy.
+  - Đánh giá riêng theo đánh đơn, đánh đôi và nhóm người chơi mới.
+2.2.15. So sánh model AI với công thức baseline
+  - Baseline là tổng có trọng số của kỹ năng, vị trí, thời gian và phong cách chơi.
+  - Chỉ chọn model mới khi kết quả kiểm thử tốt hơn baseline và không vi phạm luật lọc.
+2.2.16. Quản lý phiên bản và metadata của model
+  - Lưu modelVersion, danh sách đặc trưng, metric, thời điểm huấn luyện và checksum file model.
+  - Mỗi danh sách đề xuất phải truy được model hoặc baseline đã tạo ra nó.
+2.2.17. Cung cấp API suy luận bằng FastAPI
+  - Các API chính: xếp hạng đối tác, dự đoán độ cân bằng và kiểm tra trạng thái service.
+  - Có timeout, health check và xác thực kết nối nội bộ từ Spring Boot.
+2.2.18. Dự đoán điểm phù hợp và độ tin cậy
+  - AI trả về totalScore, confidence, modelVersion và các yếu tố giải thích chính.
+  - Spring Boot kiểm tra lại ứng viên trước khi lưu, không tin tuyệt đối kết quả từ AI.
+2.2.19. Theo dõi chất lượng và tái huấn luyện model
+  - Ghi nhận kết quả đề xuất, phản hồi ghép cặp và trận đã hoàn thành để đánh giá model.
+  - Chỉ kích hoạt model mới sau khi vượt kiểm thử; có thể quay lại phiên bản trước.
 
 Ghép cặp Đối tác chơi thông minh
 
@@ -215,13 +240,18 @@ Ghép cặp Đối tác chơi thông minh
 2.2.21. Lọc ứng viên ghép cặp theo vị trí
 2.2.22. Lọc ứng viên ghép cặp theo thời gian rảnh
 2.2.23. Lọc ứng viên ghép cặp theo trình độ kỹ năng
-2.2.24. Tính điểm tương đồng về kỹ năng
-2.2.25. Tính điểm tương thích về vị trí
-2.2.26. Tính điểm tương thích về thời gian
-2.2.27. Tính điểm tương thích về phong cách chơi
-2.2.28. Tính điểm tương thích tổng thể
-2.2.29. Tạo danh sách đề xuất đối tác theo thứ hạng
+2.2.24. Tính đặc trưng tương đồng về kỹ năng
+2.2.25. Tính đặc trưng tương thích về vị trí
+2.2.26. Tính đặc trưng tương thích về thời gian
+2.2.27. Tính đặc trưng tương thích về phong cách chơi
+2.2.28. Dùng CatBoostRanker tính điểm phù hợp tổng thể
+  - Chỉ chấm điểm các ứng viên đã vượt qua bộ lọc bắt buộc ở 2.2.21–2.2.23.
+  - Nếu AI service không khả dụng thì dùng baseline, đồng thời ghi rõ nguồn tính điểm.
+2.2.29. Tạo danh sách đề xuất đối tác theo thứ hạng AI
+  - Lưu điểm, độ tin cậy, modelVersion và lý do đề xuất để phục vụ kiểm tra sau này.
 2.2.30. Xem chi tiết đề xuất đối tác
+  - Hiển thị các lý do dễ hiểu như trình độ cân bằng, gần vị trí và trùng lịch rảnh;
+    không hiển thị trực tiếp cấu trúc nội bộ hoặc trọng số kỹ thuật của model.
 
 Yêu cầu Ghép cặp Đối tác
 
@@ -360,8 +390,8 @@ Phân tích & Đánh giá Hệ thống Ghép cặp
 
 2.3.70. Đánh giá độ chính xác của ghép cặp người chơi
 2.3.71. Đánh giá độ chính xác của ghép đội
-2.3.72. Phân tích kết quả phân cụm người chơi
-2.3.73. Phân tích hiệu suất thuật toán ghép cặp
+2.3.72. Phân tích kết quả model AI xếp hạng đối tác
+2.3.73. Phân tích hiệu suất AI service và chất lượng model
 2.3.74. Xem thống kê hiệu suất ghép cặp
 2.3.75. Xem lịch sử ghép cặp người chơi
 2.3.76. Xem lịch sử ghép đội
