@@ -3,6 +3,7 @@ package com.courtly.domain.match;
 import com.courtly.common.enums.MatchStatus;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,4 +33,58 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
 
     @Query("SELECT p.user.id FROM MatchPlayer p WHERE p.match.id = :matchId")
     List<UUID> findParticipantUserIds(@Param("matchId") UUID matchId);
+
+    @Query("""
+            SELECT DISTINCT m FROM Match m
+            JOIN FETCH m.players p
+            JOIN FETCH p.user
+            JOIN FETCH m.result r
+            WHERE m.id = :matchId
+              AND m.status = com.courtly.common.enums.MatchStatus.COMPLETED
+              AND r.confirmedAt IS NOT NULL
+            """)
+    Optional<Match> findConfirmedWithPlayers(@Param("matchId") UUID matchId);
+
+    @Query("""
+            SELECT DISTINCT m FROM Match m
+            JOIN FETCH m.players p
+            JOIN FETCH p.user
+            JOIN FETCH m.result r
+            WHERE m.status = com.courtly.common.enums.MatchStatus.COMPLETED
+              AND r.confirmedAt IS NOT NULL
+            ORDER BY m.scheduledAt ASC, m.createdAt ASC
+            """)
+    List<Match> findAllConfirmedWithPlayers();
+
+    @Query(value = """
+            SELECT count(DISTINCT m.id)
+            FROM matches m
+            JOIN match_results mr ON mr.match_id = m.id AND mr.confirmed_at IS NOT NULL
+            JOIN match_players first_player ON first_player.match_id = m.id
+            JOIN match_players second_player ON second_player.match_id = m.id
+            WHERE m.status = 'completed'
+              AND m.excluded_from_rating = false
+              AND first_player.user_id = :firstUserId
+              AND second_player.user_id = :secondUserId
+              AND first_player.team_no <> second_player.team_no
+              AND m.scheduled_at >= :windowStart
+              AND (m.scheduled_at < :scheduledAt
+                   OR (m.scheduled_at = :scheduledAt AND m.created_at < :createdAt))
+            """, nativeQuery = true)
+    long countPriorRatedMeetings(@Param("firstUserId") UUID firstUserId,
+                                 @Param("secondUserId") UUID secondUserId,
+                                 @Param("windowStart") Instant windowStart,
+                                 @Param("scheduledAt") Instant scheduledAt,
+                                 @Param("createdAt") Instant createdAt);
+
+    @Query(value = """
+            SELECT count(DISTINCT m.id)
+            FROM matches m
+            JOIN match_players mp ON mp.match_id = m.id
+            JOIN match_results mr ON mr.match_id = m.id AND mr.confirmed_at IS NOT NULL
+            WHERE mp.user_id = :userId
+              AND m.status = 'completed'
+              AND m.excluded_from_rating = true
+            """, nativeQuery = true)
+    long countExcludedMatchesForUser(@Param("userId") UUID userId);
 }
