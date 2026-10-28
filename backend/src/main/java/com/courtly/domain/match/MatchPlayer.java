@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,4 +41,10 @@ public class MatchPlayer extends BaseEntity {
 
     @Column(name = "joined_status", nullable = false, length = 30)
     private JoinedStatus joinedStatus = JoinedStatus.INVITED;
+
+    @Column(name = "result_confirmed_at")
+    private Instant resultConfirmedAt;
+
+    @Column(name = "result_disputed_at")
+    private Instant resultDisputedAt;
 }

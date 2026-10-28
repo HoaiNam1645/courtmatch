@@ -8,6 +8,7 @@ public enum MatchStatus implements PersistableEnum {
 
     SCHEDULED("scheduled"),
     COMPLETED("completed"),
+    DISPUTED("disputed"),
     CANCELLED("cancelled");
 
     private final String value;

@@ -2,6 +2,8 @@ package com.courtly.domain.account;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +22,31 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmailIgnoreCase(@Param("email") String email);
 
     boolean existsByPhone(String phone);
+
+    @Query(value = """
+            SELECT DISTINCT u FROM User u
+            JOIN u.userRoles ur
+            WHERE u.id <> :currentUserId
+              AND u.status = com.courtly.common.enums.UserStatus.ACTIVE
+              AND ur.role.code = 'player'
+              AND (u.email IS NULL OR lower(u.email) NOT LIKE '%@bwf.example')
+              AND (lower(function('courtly_unaccent', u.fullName))
+                       LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(coalesce(u.email, '')) LIKE lower(:keyword))
+            ORDER BY u.fullName ASC
+            """,
+            countQuery = """
+                    SELECT count(DISTINCT u) FROM User u
+                    JOIN u.userRoles ur
+                    WHERE u.id <> :currentUserId
+                      AND u.status = com.courtly.common.enums.UserStatus.ACTIVE
+                      AND ur.role.code = 'player'
+                      AND (u.email IS NULL OR lower(u.email) NOT LIKE '%@bwf.example')
+                      AND (lower(function('courtly_unaccent', u.fullName))
+                               LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(coalesce(u.email, '')) LIKE lower(:keyword))
+                    """)
+    Page<User> searchActivePlayers(@Param("currentUserId") UUID currentUserId,
+                                   @Param("keyword") String keyword,
+                                   Pageable pageable);
 }

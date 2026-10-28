@@ -44,6 +44,12 @@ public final class ErrorCode {
     public static final String PAYMENT_STATUS_INVALID = "PAYMENT_STATUS_INVALID";
     public static final String BOOKING_REVIEW_INVALID = "BOOKING_REVIEW_INVALID";
 
+    // Du lieu tran dau Sprint 2
+    public static final String MATCH_PLAYERS_INVALID = "MATCH_PLAYERS_INVALID";
+    public static final String MATCH_SCORE_INVALID = "MATCH_SCORE_INVALID";
+    public static final String MATCH_STATE_INVALID = "MATCH_STATE_INVALID";
+    public static final String MATCH_ALREADY_RECORDED = "MATCH_ALREADY_RECORDED";
+
     private ErrorCode() {
     }
 }

@@ -120,6 +120,7 @@
                  Dat o day thay vi tao src/test/resources/application.yml - file do se
                  che mat application.yml chinh va lam mat cau hinh datasource. -->
             <courtly.jobs.booking-expiry.enabled>false</courtly.jobs.booking-expiry.enabled>
+            <courtly.jobs.match-data.enabled>false</courtly.jobs.match-data.enabled>
             <courtly.mail.enabled>false</courtly.mail.enabled>
           </systemPropertyVariables>
         </configuration>

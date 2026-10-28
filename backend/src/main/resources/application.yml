@@ -86,6 +86,9 @@ courtly:
       # Het han yeu cau/checkout va hoan tat booking sau gio choi.
       enabled: ${BOOKING_EXPIRY_JOB_ENABLED:true}
       interval-ms: 60000
+    match-data:
+      enabled: ${MATCH_DATA_JOB_ENABLED:true}
+      confirmation-interval-ms: ${MATCH_CONFIRMATION_JOB_INTERVAL_MS:3600000}
   mail:
     # false = khong goi SMTP, chi ghi ma ra log. Dung khi chay test hoac chua co .env
     enabled: ${MAIL_ENABLED:false}
