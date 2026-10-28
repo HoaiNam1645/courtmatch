@@ -7,6 +7,8 @@ import com.courtly.domain.match.PlayerStatisticsRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +38,9 @@ public class PlayerStatisticsService {
             return;
         }
         Set<UUID> uniqueIds = new HashSet<>(userIds);
-        Map<UUID, PlayerStatisticsRepository.StatisticsAggregate> aggregates = new HashMap<>();
-        statisticsRepository.aggregateForUsers(uniqueIds)
-                .forEach(item -> aggregates.put(item.getUserId(), item));
+        Map<UUID, List<PlayerStatisticsRepository.PerformanceMatchRow>> matches = new HashMap<>();
+        statisticsRepository.findPerformanceRows(uniqueIds).forEach(row ->
+                matches.computeIfAbsent(row.getUserId(), ignored -> new ArrayList<>()).add(row));
         Map<UUID, User> users = new HashMap<>();
         userRepository.findAllById(uniqueIds).forEach(user -> users.put(user.getId(), user));
 
@@ -49,7 +51,7 @@ public class PlayerStatisticsService {
             }
             PlayerStatistics statistics = statisticsRepository.findById(userId)
                     .orElseGet(() -> new PlayerStatistics(user));
-            apply(statistics, aggregates.get(userId));
+            apply(statistics, matches.getOrDefault(userId, List.of()));
             statisticsRepository.save(statistics);
         }
     }
@@ -75,8 +77,8 @@ public class PlayerStatisticsService {
     }
 
     private static void apply(PlayerStatistics statistics,
-                              PlayerStatisticsRepository.StatisticsAggregate aggregate) {
-        if (aggregate == null) {
+                              List<PlayerStatisticsRepository.PerformanceMatchRow> matches) {
+        if (matches.isEmpty()) {
             statistics.setTotalMatches(0);
             statistics.setTotalWins(0);
             statistics.setTotalLosses(0);
@@ -84,24 +86,66 @@ public class PlayerStatisticsService {
             statistics.setSmoothedWinRate(BigDecimal.valueOf(50).setScale(2));
             statistics.setAvgPointsScored(null);
             statistics.setAvgPointsConceded(null);
+            statistics.setCurrentWinStreak(0);
+            statistics.setLongestWinStreak(0);
+            statistics.setTotalGamesWon(0);
+            statistics.setTotalGamesLost(0);
+            statistics.setMatchTypeStatistics(new LinkedHashMap<>());
             statistics.setLastPlayedAt(null);
             return;
         }
-        statistics.setTotalMatches(Math.toIntExact(aggregate.getTotalMatches()));
-        statistics.setTotalWins(Math.toIntExact(aggregate.getTotalWins()));
-        statistics.setTotalLosses(Math.toIntExact(aggregate.getTotalLosses()));
-        statistics.setWinRate(BigDecimal.valueOf(aggregate.getTotalWins())
+
+        int totalWins = 0;
+        int currentStreak = 0;
+        int longestStreak = 0;
+        long totalScored = 0;
+        long totalConceded = 0;
+        long totalGamesWon = 0;
+        long totalGamesLost = 0;
+        java.time.Instant lastPlayedAt = null;
+        Map<String, MatchTypeAccumulator> byType = new LinkedHashMap<>();
+        for (PlayerStatisticsRepository.PerformanceMatchRow match : matches) {
+            if (match.getWon()) {
+                totalWins++;
+                currentStreak++;
+                longestStreak = Math.max(longestStreak, currentStreak);
+            } else {
+                currentStreak = 0;
+            }
+            totalScored += match.getScored();
+            totalConceded += match.getConceded();
+            totalGamesWon += match.getGamesWon();
+            totalGamesLost += match.getGamesLost();
+            if (match.getScheduledAt() != null
+                    && (lastPlayedAt == null || match.getScheduledAt().isAfter(lastPlayedAt))) {
+                lastPlayedAt = match.getScheduledAt();
+            }
+            byType.computeIfAbsent(match.getMatchType(), ignored -> new MatchTypeAccumulator())
+                    .add(match.getWon());
+        }
+
+        int totalMatches = matches.size();
+        statistics.setTotalMatches(totalMatches);
+        statistics.setTotalWins(totalWins);
+        statistics.setTotalLosses(totalMatches - totalWins);
+        statistics.setWinRate(BigDecimal.valueOf(totalWins)
                 .multiply(BigDecimal.valueOf(100))
-                .divide(BigDecimal.valueOf(aggregate.getTotalMatches()), 2, RoundingMode.HALF_UP));
-        statistics.setSmoothedWinRate(smoothedWinRate(
-                aggregate.getTotalWins(), aggregate.getTotalMatches()));
-        statistics.setAvgPointsScored(scale(aggregate.getAvgPointsScored()));
-        statistics.setAvgPointsConceded(scale(aggregate.getAvgPointsConceded()));
-        statistics.setLastPlayedAt(aggregate.getLastPlayedAt());
+                .divide(BigDecimal.valueOf(totalMatches), 2, RoundingMode.HALF_UP));
+        statistics.setSmoothedWinRate(smoothedWinRate(totalWins, totalMatches));
+        statistics.setAvgPointsScored(average(totalScored, totalMatches));
+        statistics.setAvgPointsConceded(average(totalConceded, totalMatches));
+        statistics.setCurrentWinStreak(currentStreak);
+        statistics.setLongestWinStreak(longestStreak);
+        statistics.setTotalGamesWon(Math.toIntExact(totalGamesWon));
+        statistics.setTotalGamesLost(Math.toIntExact(totalGamesLost));
+        Map<String, PlayerStatistics.MatchTypeStatistics> matchTypes = new LinkedHashMap<>();
+        byType.forEach((type, value) -> matchTypes.put(type, value.toStatistics()));
+        statistics.setMatchTypeStatistics(matchTypes);
+        statistics.setLastPlayedAt(lastPlayedAt);
     }
 
-    private static BigDecimal scale(BigDecimal value) {
-        return value == null ? null : value.setScale(2, RoundingMode.HALF_UP);
+    private static BigDecimal average(long total, int count) {
+        return BigDecimal.valueOf(total).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
     }
 
     static BigDecimal smoothedWinRate(long wins, long matches) {
@@ -112,12 +156,36 @@ public class PlayerStatisticsService {
 
     private record Snapshot(int matches, int wins, int losses, BigDecimal winRate,
                             BigDecimal smoothedWinRate,
-                            BigDecimal scored, BigDecimal conceded, java.time.Instant lastPlayedAt) {
+                            BigDecimal scored, BigDecimal conceded, int currentStreak,
+                            int longestStreak, int gamesWon, int gamesLost,
+                            Map<String, PlayerStatistics.MatchTypeStatistics> matchTypes,
+                            java.time.Instant lastPlayedAt) {
         static Snapshot of(PlayerStatistics item) {
             return new Snapshot(item.getTotalMatches(), item.getTotalWins(), item.getTotalLosses(),
                     item.getWinRate(), item.getSmoothedWinRate(),
                     item.getAvgPointsScored(), item.getAvgPointsConceded(),
+                    item.getCurrentWinStreak(), item.getLongestWinStreak(),
+                    item.getTotalGamesWon(), item.getTotalGamesLost(),
+                    item.getMatchTypeStatistics(),
                     item.getLastPlayedAt());
+        }
+    }
+
+    private static final class MatchTypeAccumulator {
+        private int matches;
+        private int wins;
+
+        void add(boolean won) {
+            matches++;
+            if (won) {
+                wins++;
+            }
+        }
+
+        PlayerStatistics.MatchTypeStatistics toStatistics() {
+            BigDecimal winRate = BigDecimal.valueOf(wins).multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(matches), 2, RoundingMode.HALF_UP);
+            return new PlayerStatistics.MatchTypeStatistics(matches, wins, matches - wins, winRate);
         }
     }
 }

@@ -16,11 +16,15 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.domain.Persistable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Bang tong hop doc nhanh cho ho so va model AI ghep cap (2.2.10).
@@ -70,6 +74,22 @@ public class PlayerStatistics implements Persistable<UUID> {
     @Column(name = "avg_points_conceded", precision = 8, scale = 2)
     private BigDecimal avgPointsConceded;
 
+    @Column(name = "current_win_streak", nullable = false)
+    private int currentWinStreak;
+
+    @Column(name = "longest_win_streak", nullable = false)
+    private int longestWinStreak;
+
+    @Column(name = "total_games_won", nullable = false)
+    private int totalGamesWon;
+
+    @Column(name = "total_games_lost", nullable = false)
+    private int totalGamesLost;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "match_type_statistics", nullable = false)
+    private Map<String, MatchTypeStatistics> matchTypeStatistics = new LinkedHashMap<>();
+
     @Column(name = "last_played_at")
     private Instant lastPlayedAt;
 
@@ -79,6 +99,10 @@ public class PlayerStatistics implements Persistable<UUID> {
     public PlayerStatistics(User user) {
         this.user = user;
         this.userId = user.getId();
+    }
+
+    public record MatchTypeStatistics(int totalMatches, int totalWins, int totalLosses,
+                                      BigDecimal winRate) {
     }
 
     @PrePersist
