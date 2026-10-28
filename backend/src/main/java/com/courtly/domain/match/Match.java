@@ -1,6 +1,7 @@
 package com.courtly.domain.match;
 
 import com.courtly.common.AuditedEntity;
+import com.courtly.common.enums.MatchDataSource;
 import com.courtly.common.enums.MatchStatus;
 import com.courtly.common.enums.MatchType;
 import com.courtly.domain.account.User;
@@ -47,6 +48,15 @@ public class Match extends AuditedEntity {
 
     @Column(name = "status", nullable = false, length = 30)
     private MatchStatus status = MatchStatus.SCHEDULED;
+
+    @Column(name = "data_source", nullable = false, length = 30)
+    private MatchDataSource dataSource = MatchDataSource.MANUAL;
+
+    @Column(name = "excluded_from_rating", nullable = false)
+    private boolean excludedFromRating;
+
+    @Column(name = "exclusion_reason")
+    private String exclusionReason;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")

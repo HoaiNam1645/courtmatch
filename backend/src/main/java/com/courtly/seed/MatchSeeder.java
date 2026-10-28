@@ -2,6 +2,7 @@ package com.courtly.seed;
 
 import com.courtly.common.enums.JoinedStatus;
 import com.courtly.common.enums.MatchStatus;
+import com.courtly.common.enums.MatchDataSource;
 import com.courtly.common.enums.MatchType;
 import com.courtly.domain.account.User;
 import com.courtly.domain.account.UserRepository;
@@ -148,6 +149,7 @@ public class MatchSeeder implements Seeder {
         match.setVenue(venueRepository.findById(SeedIds.of("venue:" + seed.venueKey())).orElseThrow());
         match.setMatchType(seed.type());
         match.setStatus(MatchStatus.COMPLETED);
+        match.setDataSource(MatchDataSource.SEEDED);
         match.setScheduledAt(scheduledAt);
         match.setCreatedAt(scheduledAt.minus(2, ChronoUnit.DAYS));
         match.setCreatedBy(player(seed.team1().getFirst()));

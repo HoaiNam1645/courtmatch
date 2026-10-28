@@ -3,6 +3,7 @@ package com.courtly.seed;
 import com.courtly.common.enums.Gender;
 import com.courtly.common.enums.JoinedStatus;
 import com.courtly.common.enums.MatchStatus;
+import com.courtly.common.enums.MatchDataSource;
 import com.courtly.common.enums.MatchType;
 import com.courtly.common.enums.PlayType;
 import com.courtly.common.enums.SkillLevel;
@@ -171,6 +172,7 @@ public class BwfDatasetSeeder implements Seeder {
             match.setId(SeedIds.of(m.key()));
             match.setMatchType(MatchType.from(m.type()));
             match.setStatus(MatchStatus.COMPLETED);
+            match.setDataSource(MatchDataSource.SEEDED);
             match.setScheduledAt(bayGio.minus(m.daysAgo(), ChronoUnit.DAYS));
             match.setCreatedAt(bayGio.minus(m.daysAgo(), ChronoUnit.DAYS));
             // venue de trong: tran dien ra o giai dau that, khong phai o san nao trong

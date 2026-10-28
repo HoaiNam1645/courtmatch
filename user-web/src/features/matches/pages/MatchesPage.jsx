@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ArrowUpRight, BarChart3, Bell, ChevronRight, CircleAlert, Plus, Swords, TrendingUp, Trophy } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Bell, ChevronRight, CircleAlert, LoaderCircle, Plus, RotateCcw, Swords, TrendingUp, Trophy } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
-import { sprint2Matches, sprint2Performance, sprint2Suggestions } from '../../../data/sprint2Preview'
+import { sprint2Matches, sprint2Performance } from '../../../data/sprint2Preview'
+import { useMatchSuggestions } from '../../../hooks/useMatchSuggestions'
 import { PageBackLink, ProfileEmptyState } from '../../profile/components/ProfileUi'
 import { classNames } from '../../../shared/utils'
 
@@ -22,7 +23,7 @@ function SprintTwoPreviewBanner() {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
       <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-100"><CircleAlert className="size-4" /></span>
-      <div><p className="text-xs font-bold uppercase tracking-[0.14em]">Bản xem trước Sprint 2</p><p className="mt-1 text-xs font-medium leading-5 text-amber-800">Giao diện đang dùng dữ liệu minh hoạ để duyệt UX. Cấu trúc đã bám theo API 2.2 và sẽ thay bằng dữ liệu thật khi backend hoàn tất.</p></div>
+      <div><p className="text-xs font-bold uppercase tracking-[0.14em]">Phạm vi đang triển khai</p><p className="mt-1 text-xs font-medium leading-5 text-amber-800">Gợi ý booking và luồng ghi/xác nhận kết quả đã dùng API thật. Lịch sử và dashboard bên dưới thuộc 2.2.9–2.2.10 nên vẫn là bản xem trước.</p></div>
     </div>
   )
 }
@@ -56,6 +57,7 @@ function MatchCard({ match }) {
 
 function MatchesPage({ user, onLogout }) {
   const [tab, setTab] = useState('all')
+  const suggestions = useMatchSuggestions()
   if (!user) return <ProfileEmptyState />
 
   const visibleMatches = sprint2Matches.filter((match) => {
@@ -81,7 +83,10 @@ function MatchesPage({ user, onLogout }) {
 
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.1 · Gợi ý từ lịch đặt sân</p><h2 className="mt-2 text-2xl font-semibold">Bạn vừa chơi trận nào?</h2></div><span className="text-xs font-semibold text-stone-400">Chỉ hiện booking trong 30 ngày gần nhất</span></div>
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">{sprint2Suggestions.map((suggestion) => <article key={suggestion.bookingId} className="relative overflow-hidden rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_10px_28px_rgba(34,52,40,0.06)]"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-lime-100/70" /><div className="relative"><div className="flex items-start gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-xl bg-emerald-900 text-lime-300"><Swords className="size-6" /></span><div><p className="text-xs font-bold text-emerald-600">{suggestion.bookingCode}</p><h3 className="mt-1 text-lg font-semibold">{suggestion.venueName}</h3><p className="mt-2 text-xs font-medium text-stone-500">{suggestion.courtName} · {new Date(suggestion.playedAt).toLocaleString('vi-VN')} · {suggestion.durationMinutes} phút</p></div></div><a href={`/matches/new?booking=${suggestion.bookingId}`} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800">Ghi lại kết quả <ChevronRight className="size-4" /></a></div></article>)}</div>
+          {suggestions.status === 'loading' && <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-100 bg-white p-5 text-sm text-stone-500"><LoaderCircle className="size-5 animate-spin text-emerald-600" />Đang tải booking đã hoàn tất...</div>}
+          {suggestions.status === 'empty' && <div className="mt-5 rounded-xl border border-emerald-100 bg-white p-5 text-sm text-stone-500">Bạn không có booking hoàn tất nào cần ghi kết quả trong 30 ngày gần đây.</div>}
+          {suggestions.status === 'error' && <button onClick={suggestions.reload} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 p-5 text-sm font-semibold text-red-700"><RotateCcw className="size-4" />{suggestions.error}</button>}
+          {suggestions.status === 'success' && <div className="mt-5 grid gap-4 lg:grid-cols-2">{suggestions.suggestions.map((suggestion) => <article key={suggestion.bookingId} className="relative overflow-hidden rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_10px_28px_rgba(34,52,40,0.06)]"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-lime-100/70" /><div className="relative"><div className="flex items-start gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-xl bg-emerald-900 text-lime-300"><Swords className="size-6" /></span><div><p className="text-xs font-bold text-emerald-600">{suggestion.bookingCode}</p><h3 className="mt-1 text-lg font-semibold">{suggestion.venueName}</h3><p className="mt-2 text-xs font-medium text-stone-500">{suggestion.courtName} · {new Date(suggestion.playedAt).toLocaleString('vi-VN')} · {suggestion.durationMinutes} phút</p></div></div><a href={`/matches/new?booking=${suggestion.bookingId}`} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800">Ghi lại kết quả <ChevronRight className="size-4" /></a></div></article>)}</div>}
         </section>
 
         <section className="mt-10">

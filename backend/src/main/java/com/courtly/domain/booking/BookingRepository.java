@@ -93,4 +93,33 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     long countCreatedBetween(@Param("dayStart") Instant dayStart, @Param("dayEnd") Instant dayEnd);
 
     boolean existsByBookingCode(String bookingCode);
+
+    /** Booking da choi xong nhung nguoi dat chua ghi nhan tran dau (2.2.1). */
+    @Query(value = """
+            SELECT b FROM Booking b
+            JOIN FETCH b.venue
+            WHERE b.user.id = :userId
+              AND b.status = com.courtly.common.enums.BookingStatus.COMPLETED
+              AND b.completedAt >= :since
+              AND NOT EXISTS (
+                  SELECT m.id FROM Match m
+                  WHERE m.booking = b
+                    AND m.status <> com.courtly.common.enums.MatchStatus.CANCELLED
+              )
+            ORDER BY b.completedAt DESC
+            """,
+            countQuery = """
+                    SELECT count(b) FROM Booking b
+                    WHERE b.user.id = :userId
+                      AND b.status = com.courtly.common.enums.BookingStatus.COMPLETED
+                      AND b.completedAt >= :since
+                      AND NOT EXISTS (
+                          SELECT m.id FROM Match m
+                          WHERE m.booking = b
+                            AND m.status <> com.courtly.common.enums.MatchStatus.CANCELLED
+                      )
+                    """)
+    Page<Booking> findMatchSuggestions(@Param("userId") UUID userId,
+                                       @Param("since") Instant since,
+                                       Pageable pageable);
 }

@@ -147,7 +147,7 @@ Dữ liệu & Hiệu suất Người chơi
 
 2.2.1. Thu thập bộ dữ liệu trận đấu của người chơi
   - Dữ liệu gì: một trận gồm ai đánh với ai, tỷ số từng set, ngày giờ, sân nào.
-  - Ba nguồn: đơn đặt sân đã hoàn thành, người chơi tự nhập, dữ liệu BWF nhập sẵn.
+  - Hai nguồn nghiệp vụ: đơn đặt sân đã hoàn thành và người chơi tự nhập.
   - Đơn hoàn thành thì hệ thống chỉ GỢI Ý ghi kết quả, không tự tạo trận — nhiều
     đơn chỉ là đi tập, tự tạo sẽ đẻ ra hàng loạt bản ghi rỗng.
 2.2.2. Nhập dữ liệu trận đấu của người chơi

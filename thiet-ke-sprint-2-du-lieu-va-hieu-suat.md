@@ -223,13 +223,17 @@ làm hỏng dữ liệu.
 Đưa dữ liệu trận đấu vào hệ thống từ mọi nguồn, chuẩn hoá về cùng một hình dạng
 trong bốn bảng `matches` / `match_players` / `match_games` / `match_results`.
 
-### Ba nguồn
+### Hai nguồn nghiệp vụ
 
 | Nguồn | `data_source` | Cách vào hệ thống |
 |---|---|---|
 | Đơn đặt sân đã hoàn thành | `booking` | Hệ thống gợi ý tạo trận sau khi đơn `completed` |
 | Người dùng tự nhập | `manual` | Chức năng 2.2.2 |
-| Dữ liệu mô phỏng / nhập khẩu | `simulated` | Lệnh CLI hoặc seeder riêng, chỉ chạy ở môi trường phát triển |
+
+Dữ liệu BWF/nhập khẩu chỉ là **seed nội bộ cho môi trường phát triển và nghiên cứu**.
+Nó không phải chức năng, không phải nguồn nghiệp vụ và không xuất hiện thành lựa chọn
+trên API hoặc giao diện người chơi. Database có thể đánh dấu `data_source = 'seeded'`
+để tách dữ liệu seed khỏi dữ liệu phát sinh thật.
 
 ### Từ đơn đặt sân → trận đấu
 
@@ -978,7 +982,7 @@ ALTER TABLE matches
     ADD COLUMN excluded_from_rating boolean NOT NULL DEFAULT false,
     ADD COLUMN exclusion_reason text,
     ADD CONSTRAINT matches_source_check
-        CHECK (data_source IN ('booking', 'manual', 'simulated'));
+        CHECK (data_source IN ('booking', 'manual', 'seeded'));
 
 -- Cho phép thêm trạng thái tranh chấp
 ALTER TABLE matches DROP CONSTRAINT matches_status_check;
@@ -996,7 +1000,7 @@ CREATE INDEX matches_pending_rating_idx ON matches (scheduled_at)
 
 | Cột mới | Vì sao cần |
 |---|---|
-| `data_source` | Tách dữ liệu mô phỏng khỏi dữ liệu thật khi báo cáo kết quả |
+| `data_source` | Tách seed nội bộ khỏi hai nguồn nghiệp vụ thật khi báo cáo kết quả |
 | `rating_applied_at` | Chống cộng điểm hai lần khi job chạy lại |
 | `excluded_from_rating` + lý do | Loại trận nghi gian lận mà vẫn giữ bản ghi để đối chiếu |
 | `result_confirmed_at` | Luồng xác nhận hai phía của 2.2.2 |
