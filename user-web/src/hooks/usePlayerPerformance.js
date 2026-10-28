@@ -8,7 +8,7 @@ export function usePlayerPerformance({ includeHistory = true } = {}) {
   useEffect(() => {
     let ignore = false
     const historyRequest = includeHistory
-      ? fetchPlayerRatingHistory({ size: 50 })
+      ? fetchPlayerRatingHistory({ days: 90, size: 100 })
       : Promise.resolve({ history: [] })
 
     Promise.all([fetchPlayerPerformance(), historyRequest]).then(([performance, history]) => {

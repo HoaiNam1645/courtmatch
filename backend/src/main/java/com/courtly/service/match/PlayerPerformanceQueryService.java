@@ -14,6 +14,9 @@ import com.courtly.domain.match.PlayerStatisticsRepository;
 import com.courtly.domain.matching.PlayerMatchProfile;
 import com.courtly.domain.matching.PlayerMatchProfileRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -59,7 +62,16 @@ public class PlayerPerformanceQueryService {
                         statistics == null ? 0 : statistics.getTotalLosses(),
                         rawWinRate,
                         smoothedWinRate,
+                        statistics == null ? 0 : statistics.getCurrentWinStreak(),
+                        statistics == null ? 0 : statistics.getLongestWinStreak(),
                         statistics == null ? null : statistics.getLastPlayedAt()),
+                new PlayerPerformanceResponse.Scoring(
+                        statistics == null ? null : statistics.getAvgPointsScored(),
+                        statistics == null ? null : statistics.getAvgPointsConceded(),
+                        difference(statistics),
+                        statistics == null ? 0 : statistics.getTotalGamesWon(),
+                        statistics == null ? 0 : statistics.getTotalGamesLost()),
+                matchTypes(statistics),
                 new PlayerPerformanceResponse.Features(
                         profile == null ? rating : profile.getSkillScore(),
                         profile == null ? smoothedWinRate : profile.getWinRate(),
@@ -74,10 +86,14 @@ public class PlayerPerformanceQueryService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PlayerRatingHistoryResponse> getRatingHistory(UUID userId, int page, int size) {
+    public PageResponse<PlayerRatingHistoryResponse> getRatingHistory(
+            UUID userId, Integer days, int page, int size) {
         requirePlayer(userId);
-        Page<PlayerRatingHistory> history = ratingHistoryRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size));
+        Page<PlayerRatingHistory> history = days == null
+                ? ratingHistoryRepository.findByUserIdOrderByCreatedAtDesc(
+                        userId, PageRequest.of(page, size))
+                : ratingHistoryRepository.findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+                        userId, Instant.now().minus(days, ChronoUnit.DAYS), PageRequest.of(page, size));
         return PageResponse.from(history, history.getContent().stream()
                 .map(PlayerPerformanceQueryService::toHistoryResponse)
                 .toList());
@@ -89,6 +105,35 @@ public class PlayerPerformanceQueryService {
                 history.getMatch() == null ? null : history.getMatch().getId(),
                 history.getOldRating(), history.getNewRating(), history.getChangeAmount(),
                 history.getCreatedAt());
+    }
+
+    private static BigDecimal difference(PlayerStatistics statistics) {
+        if (statistics == null || statistics.getAvgPointsScored() == null
+                || statistics.getAvgPointsConceded() == null) {
+            return null;
+        }
+        return statistics.getAvgPointsScored().subtract(statistics.getAvgPointsConceded());
+    }
+
+    private static PlayerPerformanceResponse.MatchTypes matchTypes(PlayerStatistics statistics) {
+        Map<String, PlayerStatistics.MatchTypeStatistics> values = statistics == null
+                || statistics.getMatchTypeStatistics() == null
+                ? Map.of() : statistics.getMatchTypeStatistics();
+        return new PlayerPerformanceResponse.MatchTypes(
+                matchType(values.get("single")),
+                matchType(values.get("double")),
+                matchType(values.get("mixed_double")));
+    }
+
+    private static PlayerPerformanceResponse.MatchTypeStatistics matchType(
+            PlayerStatistics.MatchTypeStatistics statistics) {
+        if (statistics == null) {
+            return new PlayerPerformanceResponse.MatchTypeStatistics(
+                    0, 0, 0, BigDecimal.ZERO.setScale(2));
+        }
+        return new PlayerPerformanceResponse.MatchTypeStatistics(
+                statistics.totalMatches(), statistics.totalWins(), statistics.totalLosses(),
+                statistics.winRate());
     }
 
     private void requirePlayer(UUID userId) {

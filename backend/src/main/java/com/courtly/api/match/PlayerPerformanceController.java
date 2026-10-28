@@ -33,13 +33,16 @@ public class PlayerPerformanceController {
     @GetMapping("/rating-history")
     public ResponseEntity<PageResponse<PlayerRatingHistoryResponse>> ratingHistory(
             @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false)
+            @Min(value = 1, message = "Khoang ngay phai tu 1 tro len")
+            @Max(value = 365, message = "Khoang ngay toi da la 365") Integer days,
             @RequestParam(defaultValue = "0")
             @Min(value = 0, message = "Trang phai bat dau tu 0") int page,
             @RequestParam(defaultValue = "20")
             @Min(value = 1, message = "So dong phai tu 1 tro len")
             @Max(value = 100, message = "Moi trang toi da 100 dong") int size) {
         return ResponseEntity.ok(performanceService.getRatingHistory(
-                currentUserId(jwt), page, size));
+                currentUserId(jwt), days, page, size));
     }
 
     private static UUID currentUserId(Jwt jwt) {
