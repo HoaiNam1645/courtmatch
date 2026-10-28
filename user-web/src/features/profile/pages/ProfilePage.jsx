@@ -1,4 +1,4 @@
-import { Award, BarChart3, CalendarDays, Check, Edit3, Heart, History, MapPinned, SlidersHorizontal, Star, Swords, Target, Users, UserRound } from 'lucide-react'
+import { Activity, Award, BarChart3, CalendarDays, Check, Edit3, Heart, History, MapPinned, SlidersHorizontal, Star, Swords, Target, Users, UserRound } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useProfile } from '../../../hooks/useProfile'
 import { classNames } from '../../../shared/utils'

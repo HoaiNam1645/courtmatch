@@ -38,10 +38,13 @@ function buildBookingDates() {
     const date = new Date()
     date.setHours(0, 0, 0, 0)
     date.setDate(date.getDate() + index)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const dayOfMonth = String(date.getDate()).padStart(2, '0')
     return {
-      value: date.toISOString().slice(0, 10),
+      value: `${year}-${month}-${dayOfMonth}`,
       day: index === 0 ? 'Hôm nay' : formatter.format(date).replace('Th ', 'T'),
-      label: `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: `${dayOfMonth}/${month}`,
     }
   })
 }
