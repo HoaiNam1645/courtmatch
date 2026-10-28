@@ -58,14 +58,17 @@ public class PlayerStatistics implements Persistable<UUID> {
     @Column(name = "win_rate", nullable = false, precision = 5, scale = 2)
     private BigDecimal winRate = BigDecimal.ZERO;
 
+    @Column(name = "smoothed_win_rate", nullable = false, precision = 5, scale = 2)
+    private BigDecimal smoothedWinRate = BigDecimal.valueOf(50);
+
     @Column(name = "rating_score", nullable = false, precision = 8, scale = 2)
     private BigDecimal ratingScore = DEFAULT_RATING;
 
-    @Column(name = "avg_points_scored", nullable = false, precision = 8, scale = 2)
-    private BigDecimal avgPointsScored = BigDecimal.ZERO;
+    @Column(name = "avg_points_scored", precision = 8, scale = 2)
+    private BigDecimal avgPointsScored;
 
-    @Column(name = "avg_points_conceded", nullable = false, precision = 8, scale = 2)
-    private BigDecimal avgPointsConceded = BigDecimal.ZERO;
+    @Column(name = "avg_points_conceded", precision = 8, scale = 2)
+    private BigDecimal avgPointsConceded;
 
     @Column(name = "last_played_at")
     private Instant lastPlayedAt;

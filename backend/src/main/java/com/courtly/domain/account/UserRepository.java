@@ -23,6 +23,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByPhone(String phone);
 
+    @Query("""
+            SELECT count(u) > 0 FROM User u
+            JOIN u.userRoles ur
+            WHERE u.id = :userId AND ur.role.code = 'player'
+            """)
+    boolean hasPlayerRole(@Param("userId") UUID userId);
+
     @Query(value = """
             SELECT DISTINCT u FROM User u
             JOIN u.userRoles ur

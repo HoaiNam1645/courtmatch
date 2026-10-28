@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ArrowUpRight, BarChart3, Bell, ChevronRight, CircleAlert, LoaderCircle, Plus, RotateCcw, Swords, TrendingUp, Trophy } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
-import { sprint2Matches, sprint2Performance } from '../../../data/sprint2Preview'
+import { sprint2Matches } from '../../../data/sprint2Preview'
 import { useMatchSuggestions } from '../../../hooks/useMatchSuggestions'
+import { usePlayerPerformance } from '../../../hooks/usePlayerPerformance'
 import { PageBackLink, ProfileEmptyState } from '../../profile/components/ProfileUi'
 import { classNames } from '../../../shared/utils'
 
@@ -23,7 +24,7 @@ function SprintTwoPreviewBanner() {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
       <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-100"><CircleAlert className="size-4" /></span>
-      <div><p className="text-xs font-bold uppercase tracking-[0.14em]">Phạm vi đang triển khai</p><p className="mt-1 text-xs font-medium leading-5 text-amber-800">Gợi ý booking và luồng ghi/xác nhận kết quả đã dùng API thật. Lịch sử và dashboard bên dưới thuộc 2.2.9–2.2.10 nên vẫn là bản xem trước.</p></div>
+      <div><p className="text-xs font-bold uppercase tracking-[0.14em]">Phạm vi đang triển khai</p><p className="mt-1 text-xs font-medium leading-5 text-amber-800">Gợi ý booking, luồng xác nhận và thẻ hiệu suất đã dùng API thật. Danh sách lịch sử 2.2.9 bên dưới vẫn là bản xem trước.</p></div>
     </div>
   )
 }
@@ -58,6 +59,7 @@ function MatchCard({ match }) {
 function MatchesPage({ user, onLogout }) {
   const [tab, setTab] = useState('all')
   const suggestions = useMatchSuggestions()
+  const performance = usePlayerPerformance({ includeHistory: false })
   if (!user) return <ProfileEmptyState />
 
   const visibleMatches = sprint2Matches.filter((match) => {
@@ -66,6 +68,10 @@ function MatchesPage({ user, onLogout }) {
     return match.status === tab
   })
   const pendingCount = sprint2Matches.filter((match) => match.status === 'scheduled' || match.status === 'disputed').length
+  const performanceSummary = performance.performance?.summary
+  const performanceLabel = performance.status === 'error'
+    ? 'Chưa tải được hiệu suất'
+    : 'Đang tải hiệu suất'
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_88%_4%,rgba(190,242,100,0.22),transparent_24%),linear-gradient(145deg,#edf8f2,#fafbf7)] pb-24 text-emerald-950">
@@ -76,7 +82,7 @@ function MatchesPage({ user, onLogout }) {
 
       <section className="mx-auto -mt-8 max-w-[1200px] px-4 md:px-6">
         <div className="grid overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_18px_44px_rgba(24,65,44,0.1)] sm:grid-cols-3">
-          {[[sprint2Performance.summary.totalMatches, 'Trận đã xác nhận', Trophy], [`${sprint2Performance.summary.winRate}%`, `${sprint2Performance.summary.totalWins}/${sprint2Performance.summary.totalMatches} trận thắng`, TrendingUp], [pendingCount, 'Cần bạn xử lý', Bell]].map(([value, label, Icon], index) => <div key={label} className={classNames('flex items-center gap-4 p-5', index > 0 && 'border-t border-emerald-100 sm:border-l sm:border-t-0')}><span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Icon className="size-5" /></span><div><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-xs font-medium text-stone-500">{label}</p></div></div>)}
+          {[[performanceSummary?.totalMatches ?? '—', 'Trận đã xác nhận', Trophy], [performanceSummary ? `${performanceSummary.rawWinRate}%` : '—', performanceSummary ? `${performanceSummary.totalWins}/${performanceSummary.totalMatches} trận thắng` : performanceLabel, TrendingUp], [pendingCount, 'Cần bạn xử lý', Bell]].map(([value, label, Icon], index) => <div key={label} className={classNames('flex items-center gap-4 p-5', index > 0 && 'border-t border-emerald-100 sm:border-l sm:border-t-0')}><span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Icon className="size-5" /></span><div><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-xs font-medium text-stone-500">{label}</p></div></div>)}
         </div>
 
         <div className="mt-6"><SprintTwoPreviewBanner /></div>

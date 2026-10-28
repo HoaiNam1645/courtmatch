@@ -2,6 +2,7 @@ package com.courtly.common.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,6 +69,21 @@ public class GlobalExceptionHandler {
                 ErrorCode.VALIDATION_FAILED,
                 "Du lieu gui len chua hop le, vui long kiem tra lai cac o duoc danh dau.",
                 Map.of(exception.getName(), "Gia tri khong hop le")));
+    }
+
+    /** Bean Validation tren query/path parameter cua controller @Validated. */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException exception) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        exception.getConstraintViolations().forEach(violation -> {
+            String path = violation.getPropertyPath().toString();
+            String field = path.substring(path.lastIndexOf('.') + 1);
+            fieldErrors.putIfAbsent(field, violation.getMessage());
+        });
+        return ResponseEntity.badRequest().body(ApiError.of(
+                ErrorCode.VALIDATION_FAILED,
+                "Du lieu gui len chua hop le, vui long kiem tra lai cac o duoc danh dau.",
+                fieldErrors));
     }
 
     /**

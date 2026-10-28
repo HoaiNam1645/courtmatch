@@ -24,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlayerStatisticsService {
 
+    private static final BigDecimal PRIOR_WINS = BigDecimal.valueOf(2.5);
+    private static final BigDecimal PRIOR_MATCHES = BigDecimal.valueOf(5);
+
     private final PlayerStatisticsRepository statisticsRepository;
     private final UserRepository userRepository;
 
@@ -78,8 +81,9 @@ public class PlayerStatisticsService {
             statistics.setTotalWins(0);
             statistics.setTotalLosses(0);
             statistics.setWinRate(BigDecimal.ZERO.setScale(2));
-            statistics.setAvgPointsScored(BigDecimal.ZERO.setScale(2));
-            statistics.setAvgPointsConceded(BigDecimal.ZERO.setScale(2));
+            statistics.setSmoothedWinRate(BigDecimal.valueOf(50).setScale(2));
+            statistics.setAvgPointsScored(null);
+            statistics.setAvgPointsConceded(null);
             statistics.setLastPlayedAt(null);
             return;
         }
@@ -89,20 +93,30 @@ public class PlayerStatisticsService {
         statistics.setWinRate(BigDecimal.valueOf(aggregate.getTotalWins())
                 .multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(aggregate.getTotalMatches()), 2, RoundingMode.HALF_UP));
+        statistics.setSmoothedWinRate(smoothedWinRate(
+                aggregate.getTotalWins(), aggregate.getTotalMatches()));
         statistics.setAvgPointsScored(scale(aggregate.getAvgPointsScored()));
         statistics.setAvgPointsConceded(scale(aggregate.getAvgPointsConceded()));
         statistics.setLastPlayedAt(aggregate.getLastPlayedAt());
     }
 
     private static BigDecimal scale(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO.setScale(2) : value.setScale(2, RoundingMode.HALF_UP);
+        return value == null ? null : value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    static BigDecimal smoothedWinRate(long wins, long matches) {
+        return BigDecimal.valueOf(wins).add(PRIOR_WINS)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(matches).add(PRIOR_MATCHES), 2, RoundingMode.HALF_UP);
     }
 
     private record Snapshot(int matches, int wins, int losses, BigDecimal winRate,
+                            BigDecimal smoothedWinRate,
                             BigDecimal scored, BigDecimal conceded, java.time.Instant lastPlayedAt) {
         static Snapshot of(PlayerStatistics item) {
             return new Snapshot(item.getTotalMatches(), item.getTotalWins(), item.getTotalLosses(),
-                    item.getWinRate(), item.getAvgPointsScored(), item.getAvgPointsConceded(),
+                    item.getWinRate(), item.getSmoothedWinRate(),
+                    item.getAvgPointsScored(), item.getAvgPointsConceded(),
                     item.getLastPlayedAt());
         }
     }

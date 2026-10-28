@@ -76,7 +76,7 @@ public class PlayerFeatureService {
             return;
         }
         profile.setSkillScore(statistics.getRatingScore());
-        profile.setWinRate(statistics.getWinRate());
+        profile.setWinRate(statistics.getSmoothedWinRate());
         profile.setTotalMatches(statistics.getTotalMatches());
         profile.setAveragePointDifference(aggregate == null ? null : scale(aggregate.getAvgPointDifference()));
         profile.setPerformanceConsistency(aggregate == null ? null : scale(aggregate.getPerformanceConsistency()));
