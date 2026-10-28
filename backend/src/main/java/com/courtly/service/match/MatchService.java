@@ -5,6 +5,7 @@ import com.courtly.api.match.dto.DisputeMatchRequest;
 import com.courtly.api.match.dto.MatchGameRequest;
 import com.courtly.api.match.dto.MatchPlayerOptionResponse;
 import com.courtly.api.match.dto.MatchResponse;
+import com.courtly.api.match.dto.MatchHistoryResponse;
 import com.courtly.api.match.dto.UpdateMatchGamesRequest;
 import com.courtly.common.PageResponse;
 import com.courtly.common.enums.BookingStatus;
@@ -23,9 +24,11 @@ import com.courtly.domain.booking.BookingItem;
 import com.courtly.domain.booking.BookingRepository;
 import com.courtly.domain.match.Match;
 import com.courtly.domain.match.MatchGame;
+import com.courtly.domain.match.MatchGameRepository;
 import com.courtly.domain.match.MatchPlayer;
 import com.courtly.domain.match.MatchRepository;
 import com.courtly.domain.match.MatchResult;
+import com.courtly.domain.match.PlayerRatingHistoryRepository;
 import com.courtly.domain.venue.Venue;
 import com.courtly.domain.venue.VenueRepository;
 import java.time.Instant;
@@ -56,11 +59,50 @@ public class MatchService {
     private static final int DISPUTE_EXPIRY_DAYS = 7;
 
     private final MatchRepository matchRepository;
+    private final MatchGameRepository matchGameRepository;
+    private final PlayerRatingHistoryRepository ratingHistoryRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final VenueRepository venueRepository;
     private final MatchScoreValidator scoreValidator;
     private final PlayerPerformanceService performanceService;
+
+    @Transactional(readOnly = true)
+    public PageResponse<MatchHistoryResponse> getHistory(UUID userId, String state,
+                                                         int page, int size) {
+        requireActiveUser(userId);
+        String normalizedState = normalizeHistoryState(state);
+        Page<UUID> ids = "pending".equals(normalizedState)
+                ? matchRepository.findPendingHistoryIds(userId, PageRequest.of(page, size))
+                : matchRepository.findHistoryIds(userId, historyStatuses(normalizedState),
+                        PageRequest.of(page, size));
+        if (ids.isEmpty()) {
+            return PageResponse.from(ids, List.of());
+        }
+
+        List<UUID> orderedIds = ids.getContent();
+        Map<UUID, Match> matches = matchRepository.findHistoryDetails(orderedIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Match::getId, item -> item));
+        Map<UUID, List<MatchGame>> games = matchGameRepository
+                .findByMatchIdInOrderByMatchIdAscGameNoAsc(orderedIds).stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        item -> item.getMatch().getId(), java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()));
+        Map<UUID, java.math.BigDecimal> ratingChanges = ratingHistoryRepository
+                .findByUserIdAndMatchIdIn(userId, orderedIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        item -> item.getMatch().getId(),
+                        com.courtly.domain.match.PlayerRatingHistory::getChangeAmount,
+                        (first, latest) -> latest));
+
+        List<MatchHistoryResponse> content = orderedIds.stream()
+                .map(matches::get)
+                .filter(java.util.Objects::nonNull)
+                .map(match -> toHistoryResponse(match, games.getOrDefault(match.getId(), List.of()),
+                        ratingChanges.get(match.getId()), userId))
+                .toList();
+        return PageResponse.from(ids, content);
+    }
 
     @Transactional(readOnly = true)
     public PageResponse<MatchPlayerOptionResponse> searchParticipants(UUID userId, String query,
@@ -409,6 +451,60 @@ public class MatchService {
                         player.getUser().getFullName(), player.getUser().getAvatarUrl(),
                         player.getResultConfirmedAt() != null, player.getResultDisputedAt() != null))
                 .toList();
+    }
+
+    private static MatchHistoryResponse toHistoryResponse(
+            Match match, List<MatchGame> games, java.math.BigDecimal ratingChange,
+            UUID currentUserId) {
+        MatchPlayer current = participant(match, currentUserId);
+        MatchResult result = match.getResult();
+        return new MatchHistoryResponse(
+                match.getId(), match.getMatchType(), match.getStatus(), match.getDataSource(),
+                match.getScheduledAt(),
+                match.getVenue() == null ? null : new MatchHistoryResponse.Venue(
+                        match.getVenue().getId(), match.getVenue().getName(),
+                        match.getVenue().getAddress()),
+                historyPlayers(match, (short) 1), historyPlayers(match, (short) 2),
+                games.stream().map(game -> new MatchHistoryResponse.Game(
+                        game.getGameNo(), game.getTeam1Score(), game.getTeam2Score())).toList(),
+                result == null ? null : result.getWinningTeam(), ratingChange,
+                match.getStatus() == MatchStatus.SCHEDULED
+                        && current.getResultConfirmedAt() == null);
+    }
+
+    private static List<MatchHistoryResponse.Player> historyPlayers(Match match, short teamNo) {
+        return match.getPlayers().stream()
+                .filter(player -> player.getTeamNo() == teamNo)
+                .sorted(Comparator.comparing(MatchPlayer::getPositionNo,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(player -> new MatchHistoryResponse.Player(
+                        player.getUser().getId(), player.getUser().getFullName(),
+                        player.getUser().getAvatarUrl(), player.getResultConfirmedAt() != null,
+                        player.getResultDisputedAt() != null))
+                .toList();
+    }
+
+    private static String normalizeHistoryState(String rawState) {
+        String state = rawState == null ? "all" : rawState.trim().toLowerCase();
+        if (!Set.of("all", "pending", "scheduled", "completed", "disputed", "cancelled")
+                .contains(state)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED,
+                    "Trang thai loc lich su khong hop le.",
+                    Map.of("state", "Chi chap nhan all, pending, scheduled, completed, disputed, cancelled"));
+        }
+        return state;
+    }
+
+    private static List<MatchStatus> historyStatuses(String state) {
+        return switch (state) {
+            case "all" -> List.of(MatchStatus.SCHEDULED, MatchStatus.COMPLETED,
+                    MatchStatus.DISPUTED, MatchStatus.CANCELLED);
+            case "scheduled" -> List.of(MatchStatus.SCHEDULED);
+            case "completed" -> List.of(MatchStatus.COMPLETED);
+            case "disputed" -> List.of(MatchStatus.DISPUTED);
+            case "cancelled" -> List.of(MatchStatus.CANCELLED);
+            default -> throw new IllegalArgumentException("Pending history uses a dedicated query");
+        };
     }
 
     private static void invalidState(String message) {

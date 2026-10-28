@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ArrowUpRight, BarChart3, Bell, ChevronRight, CircleAlert, LoaderCircle, Plus, RotateCcw, Swords, TrendingUp, Trophy } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Bell, ChevronLeft, ChevronRight, LoaderCircle, Plus, RotateCcw, Swords, TrendingUp, Trophy } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
-import { sprint2Matches } from '../../../data/sprint2Preview'
+import { useMatchHistory } from '../../../hooks/useMatchHistory'
 import { useMatchSuggestions } from '../../../hooks/useMatchSuggestions'
 import { usePlayerPerformance } from '../../../hooks/usePlayerPerformance'
 import { PageBackLink, ProfileEmptyState } from '../../profile/components/ProfileUi'
@@ -18,15 +18,6 @@ const matchTypeLabels = {
   single: 'Đánh đơn',
   double: 'Đánh đôi',
   mixed_double: 'Đôi nam nữ',
-}
-
-function SprintTwoPreviewBanner() {
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-      <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-100"><CircleAlert className="size-4" /></span>
-      <div><p className="text-xs font-bold uppercase tracking-[0.14em]">Phạm vi đang triển khai</p><p className="mt-1 text-xs font-medium leading-5 text-amber-800">Gợi ý booking, luồng xác nhận và thẻ hiệu suất đã dùng API thật. Danh sách lịch sử 2.2.9 bên dưới vẫn là bản xem trước.</p></div>
-    </div>
-  )
 }
 
 function MatchStatusBadge({ status }) {
@@ -47,27 +38,26 @@ function MatchScore({ match, compact = false }) {
 }
 
 function MatchCard({ match }) {
+  const ratingLabel = match.ratingChange == null
+    ? null
+    : `${match.ratingChange >= 0 ? '+' : ''}${match.ratingChange.toFixed(2)} Elo`
   return (
     <a href={`/matches/${match.id}`} className="group block rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_10px_28px_rgba(34,52,40,0.06)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_16px_36px_rgba(24,65,44,0.10)]">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><MatchStatusBadge status={match.status} /><span className="text-[11px] font-bold uppercase tracking-[0.12em] text-stone-400">{matchTypeLabels[match.matchType]}</span></div><ArrowUpRight className="size-4 text-emerald-600 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-2"><MatchStatusBadge status={match.status} />{match.currentUserNeedsConfirmation && <span className="rounded-full bg-lime-200 px-3 py-1 text-[11px] font-bold text-emerald-900">Cần bạn xác nhận</span>}<span className="text-[11px] font-bold uppercase tracking-[0.12em] text-stone-400">{matchTypeLabels[match.matchType] ?? 'Loại trận khác'}</span></div><ArrowUpRight className="size-4 text-emerald-600 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></div>
       <div className="mt-5"><MatchScore match={match} compact /></div>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-emerald-50 pt-4 text-xs font-medium text-stone-500"><span>{match.venueName}</span><span>{new Date(match.scheduledAt).toLocaleDateString('vi-VN')}</span></div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-emerald-50 pt-4 text-xs font-medium text-stone-500"><span>{match.venueName}</span><span className="flex items-center gap-3">{ratingLabel && <strong className={match.ratingChange >= 0 ? 'text-emerald-700' : 'text-red-600'}>{ratingLabel}</strong>}<span>{new Date(match.scheduledAt).toLocaleDateString('vi-VN')}</span></span></div>
     </a>
   )
 }
 
 function MatchesPage({ user, onLogout }) {
   const [tab, setTab] = useState('all')
+  const [page, setPage] = useState(0)
   const suggestions = useMatchSuggestions()
   const performance = usePlayerPerformance({ includeHistory: false })
+  const history = useMatchHistory({ state: tab, page, size: 10 })
   if (!user) return <ProfileEmptyState />
 
-  const visibleMatches = sprint2Matches.filter((match) => {
-    if (tab === 'all') return true
-    if (tab === 'pending') return match.status === 'scheduled' || match.status === 'disputed'
-    return match.status === tab
-  })
-  const pendingCount = sprint2Matches.filter((match) => match.status === 'scheduled' || match.status === 'disputed').length
   const performanceSummary = performance.performance?.summary
   const performanceLabel = performance.status === 'error'
     ? 'Chưa tải được hiệu suất'
@@ -82,10 +72,8 @@ function MatchesPage({ user, onLogout }) {
 
       <section className="mx-auto -mt-8 max-w-[1200px] px-4 md:px-6">
         <div className="grid overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_18px_44px_rgba(24,65,44,0.1)] sm:grid-cols-3">
-          {[[performanceSummary?.totalMatches ?? '—', 'Trận đã xác nhận', Trophy], [performanceSummary ? `${performanceSummary.rawWinRate}%` : '—', performanceSummary ? `${performanceSummary.totalWins}/${performanceSummary.totalMatches} trận thắng` : performanceLabel, TrendingUp], [pendingCount, 'Cần bạn xử lý', Bell]].map(([value, label, Icon], index) => <div key={label} className={classNames('flex items-center gap-4 p-5', index > 0 && 'border-t border-emerald-100 sm:border-l sm:border-t-0')}><span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Icon className="size-5" /></span><div><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-xs font-medium text-stone-500">{label}</p></div></div>)}
+          {[[performanceSummary?.totalMatches ?? '—', 'Trận đã xác nhận', Trophy], [performanceSummary ? `${performanceSummary.rawWinRate}%` : '—', performanceSummary ? `${performanceSummary.totalWins}/${performanceSummary.totalMatches} trận thắng` : performanceLabel, TrendingUp], [history.status === 'error' ? '—' : history.pendingCount, 'Cần bạn xác nhận', Bell]].map(([value, label, Icon], index) => <div key={label} className={classNames('flex items-center gap-4 p-5', index > 0 && 'border-t border-emerald-100 sm:border-l sm:border-t-0')}><span className="grid size-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Icon className="size-5" /></span><div><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-xs font-medium text-stone-500">{label}</p></div></div>)}
         </div>
-
-        <div className="mt-6"><SprintTwoPreviewBanner /></div>
 
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.1 · Gợi ý từ lịch đặt sân</p><h2 className="mt-2 text-2xl font-semibold">Bạn vừa chơi trận nào?</h2></div><span className="text-xs font-semibold text-stone-400">Chỉ hiện booking trong 30 ngày gần nhất</span></div>
@@ -97,8 +85,11 @@ function MatchesPage({ user, onLogout }) {
 
         <section className="mt-10">
           <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.9 · Lịch sử trận đấu</p><h2 className="mt-2 text-2xl font-semibold">Hành trình trên sân</h2></div><a className="flex h-10 items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 text-xs font-semibold text-emerald-700" href="/performance"><BarChart3 className="size-4" />Xem hiệu suất</a></div>
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-2">{[['all', 'Tất cả'], ['pending', 'Cần xử lý'], ['completed', 'Đã xác nhận'], ['disputed', 'Tranh chấp']].map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={classNames('h-10 shrink-0 rounded-full px-4 text-xs font-semibold', tab === id ? 'bg-emerald-700 text-white' : 'border border-emerald-100 bg-white text-stone-500')}>{label}</button>)}</div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">{visibleMatches.map((match) => <MatchCard key={match.id} match={match} />)}</div>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2">{[['all', 'Tất cả'], ['pending', 'Cần xác nhận'], ['completed', 'Đã xác nhận'], ['disputed', 'Tranh chấp']].map(([id, label]) => <button key={id} onClick={() => { setTab(id); setPage(0) }} className={classNames('h-10 shrink-0 rounded-full px-4 text-xs font-semibold', tab === id ? 'bg-emerald-700 text-white' : 'border border-emerald-100 bg-white text-stone-500')}>{label}</button>)}</div>
+          {history.status === 'loading' && <div className="mt-4 flex min-h-40 items-center justify-center gap-3 rounded-xl border border-emerald-100 bg-white text-sm font-medium text-stone-500"><LoaderCircle className="size-5 animate-spin text-emerald-600" />Đang tải lịch sử trận đấu...</div>}
+          {history.status === 'error' && <button onClick={history.reload} className="mt-4 flex min-h-40 w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 text-sm font-semibold text-red-700"><RotateCcw className="size-4" />{history.error}</button>}
+          {history.status === 'empty' && <div className="mt-4 grid min-h-40 place-items-center rounded-xl border border-dashed border-emerald-200 bg-white/70 px-5 text-center text-sm font-medium text-stone-500">Không có trận đấu nào trong nhóm này.</div>}
+          {history.status === 'success' && <><div className="mt-4 grid gap-4 md:grid-cols-2">{history.matches.map((match) => <MatchCard key={match.id} match={match} />)}</div>{history.totalPages > 1 && <div className="mt-6 flex items-center justify-center gap-3"><button disabled={page === 0} onClick={() => setPage((value) => value - 1)} className="grid size-10 place-items-center rounded-lg border border-emerald-200 bg-white text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Trang trước"><ChevronLeft className="size-4" /></button><span className="min-w-24 text-center text-xs font-semibold text-stone-500">Trang {page + 1}/{history.totalPages}</span><button disabled={page + 1 >= history.totalPages} onClick={() => setPage((value) => value + 1)} className="grid size-10 place-items-center rounded-lg border border-emerald-200 bg-white text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Trang sau"><ChevronRight className="size-4" /></button></div>}</>}
         </section>
       </section>
       <BottomNav activeLabel="Tài khoản" />

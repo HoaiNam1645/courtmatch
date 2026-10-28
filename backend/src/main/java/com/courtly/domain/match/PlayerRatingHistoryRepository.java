@@ -2,6 +2,8 @@ package com.courtly.domain.match;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
+import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +22,9 @@ public interface PlayerRatingHistoryRepository extends JpaRepository<PlayerRatin
     Optional<PlayerRatingHistory> findTopByUserIdOrderByCreatedAtDesc(UUID userId);
 
     Page<PlayerRatingHistory> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+
+    Page<PlayerRatingHistory> findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+            UUID userId, Instant cutoff, Pageable pageable);
+
+    List<PlayerRatingHistory> findByUserIdAndMatchIdIn(UUID userId, Collection<UUID> matchIds);
 }

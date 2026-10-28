@@ -3,6 +3,7 @@ package com.courtly.api.match;
 import com.courtly.api.match.dto.CreateMatchRequest;
 import com.courtly.api.match.dto.DisputeMatchRequest;
 import com.courtly.api.match.dto.MatchResponse;
+import com.courtly.api.match.dto.MatchHistoryResponse;
 import com.courtly.api.match.dto.MatchPlayerOptionResponse;
 import com.courtly.api.match.dto.UpdateMatchGamesRequest;
 import com.courtly.common.PageResponse;
@@ -35,6 +36,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class MatchController {
 
     private final MatchService matchService;
+
+    @GetMapping
+    public ResponseEntity<PageResponse<MatchHistoryResponse>> history(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "all") @Size(max = 30) String state,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+        return ResponseEntity.ok(matchService.getHistory(
+                currentUserId(jwt), state, page, size));
+    }
 
     /** Danh sach tai khoan co the them vao hai doi khi ghi ket qua. */
     @GetMapping("/participants")
