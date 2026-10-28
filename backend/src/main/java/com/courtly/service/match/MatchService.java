@@ -60,6 +60,7 @@ public class MatchService {
     private final UserRepository userRepository;
     private final VenueRepository venueRepository;
     private final MatchScoreValidator scoreValidator;
+    private final PlayerStatisticsService statisticsService;
 
     @Transactional(readOnly = true)
     public PageResponse<MatchPlayerOptionResponse> searchParticipants(UUID userId, String query,
@@ -184,6 +185,9 @@ public class MatchService {
             complete(match, Instant.now(), null);
         }
         matchRepository.saveAndFlush(match);
+        if (match.getStatus() == MatchStatus.COMPLETED) {
+            statisticsService.recomputeUsers(matchRepository.findParticipantUserIds(matchId));
+        }
         return toResponse(match, userId);
     }
 
@@ -229,6 +233,7 @@ public class MatchService {
             match.getPlayers().forEach(player -> player.setResultConfirmedAt(now));
             complete(match, now, "Tu dong xac nhan sau 72 gio khong co bao sai.");
             matchRepository.saveAndFlush(match);
+            statisticsService.recomputeUsers(matchRepository.findParticipantUserIds(match.getId()));
         }
     }
 

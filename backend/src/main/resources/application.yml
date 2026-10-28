@@ -89,6 +89,7 @@ courtly:
     match-data:
       enabled: ${MATCH_DATA_JOB_ENABLED:true}
       confirmation-interval-ms: ${MATCH_CONFIRMATION_JOB_INTERVAL_MS:3600000}
+      reconciliation-cron: ${MATCH_STATISTICS_RECONCILIATION_CRON:0 20 2 * * *}
   mail:
     # false = khong goi SMTP, chi ghi ma ra log. Dung khi chay test hoac chua co .env
     enabled: ${MAIL_ENABLED:false}

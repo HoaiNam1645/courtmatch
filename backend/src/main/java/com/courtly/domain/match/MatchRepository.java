@@ -30,4 +30,6 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
             """)
     List<Match> findDisputedBefore(@Param("cutoff") Instant cutoff);
 
+    @Query("SELECT p.user.id FROM MatchPlayer p WHERE p.match.id = :matchId")
+    List<UUID> findParticipantUserIds(@Param("matchId") UUID matchId);
 }
