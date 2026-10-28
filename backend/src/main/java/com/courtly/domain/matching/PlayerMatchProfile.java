@@ -59,6 +59,18 @@ public class PlayerMatchProfile implements Persistable<UUID> {
     @Column(name = "total_matches", nullable = false)
     private int totalMatches;
 
+    @Column(name = "average_point_difference", precision = 8, scale = 2)
+    private BigDecimal averagePointDifference;
+
+    @Column(name = "performance_consistency", precision = 8, scale = 2)
+    private BigDecimal performanceConsistency;
+
+    @Column(name = "data_recency_days")
+    private Integer dataRecencyDays;
+
+    @Column(name = "training_eligible", nullable = false)
+    private boolean trainingEligible;
+
     /** Ghi truc tiep (khong co trigger nhu venues) vi bang khong luu latitude/longitude. */
     @JdbcTypeCode(SqlTypes.GEOGRAPHY)
     @Column(name = "preferred_location")

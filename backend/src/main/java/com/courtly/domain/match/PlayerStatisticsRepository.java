@@ -38,6 +38,8 @@ public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatisti
                    count(*) FILTER (WHERE team_no <> winning_team) AS totalLosses,
                    avg(scored)::numeric AS avgPointsScored,
                    avg(conceded)::numeric AS avgPointsConceded,
+                   avg(scored - conceded)::numeric AS avgPointDifference,
+                   stddev_samp(scored - conceded)::numeric AS performanceConsistency,
                    max(scheduled_at) AS lastPlayedAt
             FROM per_match
             GROUP BY user_id
@@ -62,6 +64,8 @@ public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatisti
         long getTotalLosses();
         BigDecimal getAvgPointsScored();
         BigDecimal getAvgPointsConceded();
+        BigDecimal getAvgPointDifference();
+        BigDecimal getPerformanceConsistency();
         Instant getLastPlayedAt();
     }
 }
