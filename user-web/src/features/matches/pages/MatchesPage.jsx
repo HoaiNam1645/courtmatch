@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpRight, BarChart3, Bell, ChevronLeft, ChevronRight, LoaderCircle, Plus, RotateCcw, Swords, TrendingUp, Trophy } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Bell, ChevronLeft, ChevronRight, LoaderCircle, Plus, RotateCcw, Search, Swords, TrendingUp, Trophy } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useMatchHistory } from '../../../hooks/useMatchHistory'
 import { useMatchSuggestions } from '../../../hooks/useMatchSuggestions'
@@ -67,7 +67,7 @@ function MatchesPage({ user, onLogout }) {
     <main className="min-h-screen bg-[radial-gradient(circle_at_88%_4%,rgba(190,242,100,0.22),transparent_24%),linear-gradient(145deg,#edf8f2,#fafbf7)] pb-24 text-emerald-950">
       <AppHeader user={user} onLogout={onLogout} />
       <section className="overflow-hidden bg-emerald-950 px-4 pb-16 pt-8 text-white md:px-6">
-        <div className="mx-auto max-w-[1200px]"><PageBackLink href="/profile" label="Về hồ sơ" tone="dark" /><div className="mt-8 grid items-end gap-7 lg:grid-cols-[1fr_auto]"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-300">Dữ liệu thi đấu · Sprint 2</p><h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">Mỗi trận đấu là một bước tiến bộ.</h1><p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-emerald-100/75">Ghi kết quả, xác nhận cùng đối thủ và theo dõi lịch sử thi đấu của bạn ở một nơi.</p></div><a href="/matches/new" className="flex h-12 items-center justify-center gap-2 rounded-xl bg-lime-300 px-6 text-sm font-semibold text-emerald-950 shadow-[0_14px_30px_rgba(163,230,53,0.2)]"><Plus className="size-4" />Ghi kết quả trận đấu</a></div></div>
+        <div className="mx-auto max-w-[1200px]"><PageBackLink href="/profile" label="Về hồ sơ" tone="dark" /><div className="mt-8 grid items-end gap-7 lg:grid-cols-[1fr_auto]"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-300">Dữ liệu thi đấu · Sprint 2</p><h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">Mỗi trận đấu là một bước tiến bộ.</h1><p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-emerald-100/75">Ghi kết quả, xác nhận cùng đối thủ và theo dõi lịch sử thi đấu của bạn ở một nơi.</p></div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1"><a href="/partners" className="flex h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 text-sm font-semibold text-white"><Search className="size-4" />Tìm đối tác</a><a href="/matches/new" className="flex h-12 items-center justify-center gap-2 rounded-xl bg-lime-300 px-6 text-sm font-semibold text-emerald-950 shadow-[0_14px_30px_rgba(163,230,53,0.2)]"><Plus className="size-4" />Ghi kết quả trận đấu</a></div></div></div>
       </section>
 
       <section className="mx-auto -mt-8 max-w-[1200px] px-4 md:px-6">

@@ -6,6 +6,7 @@ import { authRoutes } from '../../features/auth/routes'
 import { bookingRoutes } from '../../features/bookings/routes'
 import { homeRoutes } from '../../features/home/routes'
 import { matchRoutes } from '../../features/matches/routes'
+import { partnerRoutes } from '../../features/partners/routes'
 import { profileRoutes } from '../../features/profile/routes'
 import { venueRoutes } from '../../features/venues/routes'
 
@@ -15,6 +16,7 @@ const routes = [
   ...bookingRoutes,
   ...profileRoutes,
   ...matchRoutes,
+  ...partnerRoutes,
   ...venueRoutes,
   { path: '*', element: <Navigate to="/" replace /> },
 ]

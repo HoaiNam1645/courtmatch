@@ -1,4 +1,4 @@
-import { Compass, Home, List, Map, UserRound } from 'lucide-react'
+import { Home, List, Map, UserRound, Users } from 'lucide-react'
 
 export const DEFAULT_USER_LOCATION = { lat: 16.0544, lng: 108.2022 }
 export const MAX_PRICE_FILTER = 200000
@@ -30,6 +30,6 @@ export const navigationTabs = [
   { label: 'Trang chủ', icon: Home, href: '/' },
   { label: 'Bản đồ', icon: Map, href: '/map' },
   { label: 'Khám phá', icon: List, href: '/explore', raised: true },
-  { label: 'Nổi bật', icon: Compass, href: '/featured' },
+  { label: 'Đối tác', icon: Users, href: '/partners' },
   { label: 'Tài khoản', icon: UserRound, href: '/login' },
 ]
