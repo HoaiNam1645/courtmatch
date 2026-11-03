@@ -1,6 +1,7 @@
 package com.courtly.domain.account;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Repository;
 public interface PlayerPreferredLocationRepository extends JpaRepository<PlayerPreferredLocation, UUID> {
 
     List<PlayerPreferredLocation> findAllByUserIdOrderByCreatedAtAsc(UUID userId);
+
+    Optional<PlayerPreferredLocation> findByIdAndUserId(UUID id, UUID userId);
 
     void deleteAllByUserId(UUID userId);
 }

@@ -50,6 +50,9 @@ public final class ErrorCode {
     public static final String MATCH_STATE_INVALID = "MATCH_STATE_INVALID";
     public static final String MATCH_ALREADY_RECORDED = "MATCH_ALREADY_RECORDED";
 
+    // Tim kiem doi tac Sprint 2
+    public static final String PARTNER_LOCATION_REQUIRED = "PARTNER_LOCATION_REQUIRED";
+
     private ErrorCode() {
     }
 }
