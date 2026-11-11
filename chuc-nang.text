@@ -256,11 +256,23 @@ Ghép cặp Đối tác chơi thông minh
 Yêu cầu Ghép cặp Đối tác
 
 2.2.31. Gửi yêu cầu ghép cặp
+  - Người chơi gửi lời mời kèm lời nhắn cho một ứng viên khác từ kết quả tìm kiếm hoặc đề xuất.
+  - Không cho phép tự gửi, gửi trùng khi yêu cầu cũ còn chờ hoặc gửi cho đối tác đã kết nối.
 2.2.32. Xem các yêu cầu ghép cặp đã nhận
+  - Hiển thị phân trang các yêu cầu người chơi đã nhận, gồm người gửi, lời nhắn, thời điểm và trạng thái.
+  - Cho phép lọc yêu cầu đang chờ để người chơi xử lý trước.
 2.2.33. Chấp nhận yêu cầu ghép cặp
+  - Chỉ người nhận được chấp nhận yêu cầu đang ở trạng thái chờ.
+  - Khi chấp nhận, hệ thống cập nhật yêu cầu và tạo kết nối đối tác hai chiều trong cùng giao dịch.
 2.2.34. Từ chối yêu cầu ghép cặp
+  - Chỉ người nhận được từ chối yêu cầu đang chờ; hệ thống lưu trạng thái và thời điểm phản hồi.
+  - Yêu cầu đã được xử lý, hủy hoặc hết hạn không thể từ chối lại.
 2.2.35. Hủy yêu cầu ghép cặp
+  - Chỉ người gửi được hủy yêu cầu của mình khi yêu cầu vẫn đang chờ phản hồi.
+  - Yêu cầu đã được chấp nhận, từ chối hoặc hết hạn không thể hủy.
 2.2.36. Xem danh sách đối tác đã ghép cặp
+  - Hiển thị phân trang các kết nối đối tác đang hoạt động của người chơi cùng thông tin hồ sơ cơ bản.
+  - Danh sách chỉ lấy từ các kết nối đã được xác nhận, không bao gồm yêu cầu đang chờ hoặc đã từ chối.
 
 Quản lý Trận đấu
 
