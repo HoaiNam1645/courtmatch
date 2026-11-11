@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { execFileSync } from 'node:child_process'
 
 const API_BASE_URL = 'http://127.0.0.1:8080'
 const DEFAULT_PASSWORD = 'Courtly@123'
@@ -50,4 +51,18 @@ export async function loginThroughUi(page, identity, { method = 'email', passwor
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('link', { name: /Nguyen Van An|Tran Thi Binh/ })).toBeVisible()
+}
+
+export function resetPartnerE2eData() {
+  const sql = `
+    DELETE FROM player_connections
+    WHERE source_request_id IN (
+      SELECT id FROM partner_requests WHERE message LIKE 'E2E:%'
+    );
+    DELETE FROM partner_requests WHERE message LIKE 'E2E:%';
+  `
+  execFileSync('psql', ['-h', 'localhost', '-U', 'courtly', '-d', 'courtly', '-v', 'ON_ERROR_STOP=1', '-c', sql], {
+    env: { ...process.env, PGPASSWORD: 'courtly' },
+    stdio: 'ignore',
+  })
 }

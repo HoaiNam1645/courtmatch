@@ -53,6 +53,11 @@ public final class ErrorCode {
     // Tim kiem doi tac Sprint 2
     public static final String PARTNER_LOCATION_REQUIRED = "PARTNER_LOCATION_REQUIRED";
 
+    // Yeu cau ghep cap doi tac Sprint 2
+    public static final String PARTNER_REQUEST_DUPLICATE = "PARTNER_REQUEST_DUPLICATE";
+    public static final String PARTNER_ALREADY_CONNECTED = "PARTNER_ALREADY_CONNECTED";
+    public static final String PARTNER_REQUEST_STATE_INVALID = "PARTNER_REQUEST_STATE_INVALID";
+
     private ErrorCode() {
     }
 }

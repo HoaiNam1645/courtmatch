@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.courtly.common.enums.PlayType;
 import com.courtly.common.enums.PlayingStyle;
+import com.courtly.common.enums.ConnectionStatus;
+import com.courtly.common.enums.PartnerRequestStatus;
 import com.courtly.common.enums.UserStatus;
 import com.courtly.domain.account.PlayerAvailabilitySlot;
 import com.courtly.domain.account.PlayerAvailabilitySlotRepository;
@@ -20,6 +22,10 @@ import com.courtly.domain.account.UserRepository;
 import com.courtly.domain.account.UserRole;
 import com.courtly.domain.match.PlayerStatistics;
 import com.courtly.domain.match.PlayerStatisticsRepository;
+import com.courtly.domain.matching.PartnerRequest;
+import com.courtly.domain.matching.PartnerRequestRepository;
+import com.courtly.domain.matching.PlayerConnection;
+import com.courtly.domain.matching.PlayerConnectionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -54,6 +60,8 @@ class PartnerSearchControllerTest {
     @Autowired private PlayerPreferredLocationRepository locationRepository;
     @Autowired private PlayerAvailabilitySlotRepository availabilityRepository;
     @Autowired private PlayerStatisticsRepository statisticsRepository;
+    @Autowired private PartnerRequestRepository partnerRequestRepository;
+    @Autowired private PlayerConnectionRepository connectionRepository;
     @Autowired private EntityManager entityManager;
 
     private User requester;
@@ -91,6 +99,16 @@ class PartnerSearchControllerTest {
         User skillGap = persistPlayer("skill-gap", "1550.00", 8);
         persistLocation(skillGap, 16.0630, 108.2240, 10);
         persistAvailability(skillGap, requestedTime.getDayOfWeek().getValue(), 17, 21);
+
+        User connected = persistPlayer("connected", "1230.00", 8);
+        persistLocation(connected, 16.0630, 108.2240, 10);
+        persistAvailability(connected, requestedTime.getDayOfWeek().getValue(), 17, 21);
+        persistConnection(requester, connected);
+
+        User pending = persistPlayer("pending", "1240.00", 8);
+        persistLocation(pending, 16.0630, 108.2240, 10);
+        persistAvailability(pending, requestedTime.getDayOfWeek().getValue(), 17, 21);
+        persistRequest(pending, requester);
 
         entityManager.clear();
         mockMvc.perform(get("/api/v1/partners/search")
@@ -235,6 +253,23 @@ class PartnerSearchControllerTest {
         slot.setStartTime(LocalTime.of(startHour, 0));
         slot.setEndTime(LocalTime.of(endHour, 0));
         availabilityRepository.saveAndFlush(slot);
+    }
+
+    private void persistConnection(User user, User partner) {
+        PlayerConnection connection = new PlayerConnection();
+        connection.setUser(user);
+        connection.setPartner(partner);
+        connection.setStatus(ConnectionStatus.ACTIVE);
+        connectionRepository.saveAndFlush(connection);
+    }
+
+    private void persistRequest(User sender, User receiver) {
+        PartnerRequest request = new PartnerRequest();
+        request.setRequester(sender);
+        request.setReceiver(receiver);
+        request.setMessage("Yeu cau dang cho");
+        request.setStatus(PartnerRequestStatus.PENDING);
+        partnerRequestRepository.saveAndFlush(request);
     }
 
     private void ensurePlayerRole() {

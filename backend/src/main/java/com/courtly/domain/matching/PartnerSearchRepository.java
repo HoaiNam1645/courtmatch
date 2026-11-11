@@ -44,6 +44,20 @@ public interface PartnerSearchRepository extends Repository<PlayerMatchProfile, 
                   AND requester_location.location IS NOT NULL
                   AND u.status = 'active'
                   AND (u.email IS NULL OR lower(u.email) NOT LIKE '%@bwf.example')
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM player_connections connection
+                      WHERE connection.status = 'active'
+                        AND ((connection.user_id = :requesterId AND connection.partner_id = u.id)
+                          OR (connection.user_id = u.id AND connection.partner_id = :requesterId))
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM partner_requests request
+                      WHERE request.status = 'pending'
+                        AND ((request.requester_id = :requesterId AND request.receiver_id = u.id)
+                          OR (request.requester_id = u.id AND request.receiver_id = :requesterId))
+                  )
                   AND abs(coalesce(ps.rating_score, 1000) - :requesterRating)
                       <= :maxRatingDifference
                   AND ST_DWithin(
@@ -81,6 +95,20 @@ public interface PartnerSearchRepository extends Repository<PlayerMatchProfile, 
                           AND requester_location.location IS NOT NULL
                           AND u.status = 'active'
                           AND (u.email IS NULL OR lower(u.email) NOT LIKE '%@bwf.example')
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM player_connections connection
+                              WHERE connection.status = 'active'
+                                AND ((connection.user_id = :requesterId AND connection.partner_id = u.id)
+                                  OR (connection.user_id = u.id AND connection.partner_id = :requesterId))
+                          )
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM partner_requests request
+                              WHERE request.status = 'pending'
+                                AND ((request.requester_id = :requesterId AND request.receiver_id = u.id)
+                                  OR (request.requester_id = u.id AND request.receiver_id = :requesterId))
+                          )
                           AND abs(coalesce(ps.rating_score, 1000) - :requesterRating)
                               <= :maxRatingDifference
                           AND ST_DWithin(

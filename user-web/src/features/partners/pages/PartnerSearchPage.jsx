@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import {
   ArrowLeft, ArrowRight, CalendarDays, Clock3, Gauge,
-  MapPin, RotateCcw, Search, ShieldCheck, Sparkles, Target, Users,
+  MapPin, RotateCcw, Search, Send, ShieldCheck, Sparkles, Target, Users,
 } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
+import { createPartnerRequest } from '../../../api/partnerRequests'
 import { usePartnerSearch } from '../../../hooks/usePartnerSearch'
 import { useProfile } from '../../../hooks/useProfile'
 import { classNames } from '../../../shared/utils'
 import { ProfileEmptyState, ProfileSectionTitle } from '../../profile/components/ProfileUi'
 import { CompatibilityMeter } from '../components/CompatibilityMeter'
+import { PartnerRequestDialog } from '../components/PartnerRequestDialog'
 
 const styleLabels = { attacking: 'Thiên công', balanced: 'Cân bằng', defensive: 'Phòng thủ' }
 const playTypeLabels = { single: 'Đánh đơn', double: 'Đánh đôi', mixed: 'Đôi nam nữ' }
@@ -44,7 +46,7 @@ function InitialAvatar({ name }) {
   return <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-emerald-900 text-xl font-semibold text-lime-300">{name.slice(0, 1).toUpperCase()}</span>
 }
 
-function PartnerCard({ partner }) {
+function PartnerCard({ partner, requestSent, onInvite }) {
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white p-5 shadow-[0_12px_32px_rgba(26,72,49,0.07)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(26,72,49,0.11)]">
       <div className="absolute right-0 top-0 h-28 w-28 rounded-bl-full bg-[radial-gradient(circle_at_top_right,rgba(190,242,100,0.48),rgba(236,253,245,0.25))]" />
@@ -87,6 +89,9 @@ function PartnerCard({ partner }) {
           <span className="rounded-full border border-emerald-100 px-3 py-1.5 text-[11px] font-semibold text-emerald-700">{styleLabels[partner.playingStyle] ?? 'Chưa chọn phong cách'}</span>
           <span className="rounded-full border border-emerald-100 px-3 py-1.5 text-[11px] font-semibold text-emerald-700">{playTypeLabels[partner.preferredPlayType] ?? 'Linh hoạt hình thức'}</span>
         </div>
+        <button type="button" disabled={requestSent} onClick={() => onInvite(partner)} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 text-sm font-semibold text-white disabled:bg-emerald-100 disabled:text-emerald-700">
+          <Send className="size-4" />{requestSent ? 'Đã gửi lời mời' : 'Gửi yêu cầu ghép cặp'}
+        </button>
       </div>
     </article>
   )
@@ -98,6 +103,10 @@ function PartnerSearchPage({ user, onLogout }) {
   const suggestedSlot = useMemo(() => nextPreferredSlot(profile.data?.profile.availability ?? []), [profile.data])
   const [form, setForm] = useState(null)
   const [clientErrors, setClientErrors] = useState({})
+  const [selectedPartner, setSelectedPartner] = useState(null)
+  const [requestMessage, setRequestMessage] = useState('')
+  const [requestState, setRequestState] = useState({ status: 'idle', error: '' })
+  const [sentPartnerIds, setSentPartnerIds] = useState(() => new Set())
   const activeForm = form ?? {
     preferredLocationId: profile.data?.profile.locations.find((item) => item.isDefault && item.latitude != null)?.id
       ?? profile.data?.profile.locations.find((item) => item.latitude != null)?.id
@@ -133,6 +142,26 @@ function PartnerSearchPage({ user, onLogout }) {
 
   const changePage = (page) => results.search(activeForm, page)
   const fieldErrors = { ...results.fieldErrors, ...clientErrors }
+  const openRequest = (partner) => {
+    setSelectedPartner(partner)
+    setRequestMessage('')
+    setRequestState({ status: 'idle', error: '' })
+  }
+  const closeRequest = () => {
+    if (requestState.status !== 'loading') setSelectedPartner(null)
+  }
+  const sendRequest = async (event) => {
+    event.preventDefault()
+    if (!selectedPartner || !requestMessage.trim()) return
+    setRequestState({ status: 'loading', error: '' })
+    try {
+      await createPartnerRequest(selectedPartner.id, requestMessage.trim())
+      setSentPartnerIds((current) => new Set(current).add(selectedPartner.id))
+      setRequestState({ status: 'success', error: '' })
+    } catch (requestError) {
+      setRequestState({ status: 'error', error: requestError?.message ?? 'Không gửi được lời mời lúc này.' })
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_8%_3%,rgba(190,242,100,0.24),transparent_24%),linear-gradient(150deg,#eef8f2,#fbfcf8)] pb-24 text-emerald-950">
@@ -172,14 +201,16 @@ function PartnerSearchPage({ user, onLogout }) {
 
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">Kết quả đã kiểm tra điều kiện</p><h2 className="mt-2 text-2xl font-semibold">Đối tác phù hợp</h2></div>{['success', 'empty'].includes(results.status) && <span className="text-xs font-semibold text-stone-500">{results.totalElements} người vượt qua ba bộ lọc</span>}</div>
+          <div className="mt-4 flex justify-end"><a href="/partners/requests" className="inline-flex h-10 items-center rounded-xl border border-emerald-200 bg-white px-4 text-xs font-semibold text-emerald-700">Xem yêu cầu đã nhận</a></div>
           {results.status === 'idle' && <div className="mt-5 grid min-h-52 place-items-center rounded-2xl border border-dashed border-emerald-200 bg-white/65 px-6 text-center"><div><Sparkles className="mx-auto size-8 text-emerald-500" /><p className="mt-3 text-sm font-semibold">Chọn buổi chơi rồi bắt đầu tìm kiếm</p><p className="mt-1 text-xs font-medium text-stone-500">Điểm tương đồng được backend tính từ Elo, không dựa trên trình độ tự khai.</p></div></div>}
           {results.status === 'loading' && <div className="mt-5"><SearchSkeleton /></div>}
           {results.status === 'empty' && <div className="mt-5 grid min-h-52 place-items-center rounded-2xl border border-dashed border-emerald-200 bg-white/70 px-6 text-center"><div><Users className="mx-auto size-9 text-stone-300" /><p className="mt-3 text-sm font-semibold">Chưa có người phù hợp trong khung giờ này</p><p className="mt-1 max-w-lg text-xs font-medium leading-5 text-stone-500">Thử tăng độ lệch Elo, chọn thời gian khác hoặc dùng khu vực có bán kính rộng hơn.</p></div></div>}
-          {results.status === 'success' && <><div className="mt-5 grid gap-4 md:grid-cols-2">{results.partners.map((partner) => <PartnerCard key={partner.id} partner={partner} />)}</div>{results.totalPages > 1 && <div className="mt-7 flex items-center justify-center gap-3"><button disabled={results.page === 0 || results.status === 'loading'} onClick={() => changePage(results.page - 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white text-emerald-700 disabled:opacity-40" aria-label="Trang trước"><ArrowLeft className="size-4" /></button><span className="min-w-24 text-center text-xs font-semibold text-stone-500">Trang {results.page + 1}/{results.totalPages}</span><button disabled={results.page + 1 >= results.totalPages || results.status === 'loading'} onClick={() => changePage(results.page + 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white text-emerald-700 disabled:opacity-40" aria-label="Trang sau"><ArrowRight className="size-4" /></button></div>}</>}
+          {results.status === 'success' && <><div className="mt-5 grid gap-4 md:grid-cols-2">{results.partners.map((partner) => <PartnerCard key={partner.id} partner={partner} requestSent={sentPartnerIds.has(partner.id)} onInvite={openRequest} />)}</div>{results.totalPages > 1 && <div className="mt-7 flex items-center justify-center gap-3"><button disabled={results.page === 0 || results.status === 'loading'} onClick={() => changePage(results.page - 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white text-emerald-700 disabled:opacity-40" aria-label="Trang trước"><ArrowLeft className="size-4" /></button><span className="min-w-24 text-center text-xs font-semibold text-stone-500">Trang {results.page + 1}/{results.totalPages}</span><button disabled={results.page + 1 >= results.totalPages || results.status === 'loading'} onClick={() => changePage(results.page + 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white text-emerald-700 disabled:opacity-40" aria-label="Trang sau"><ArrowRight className="size-4" /></button></div>}</>}
         </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-3">{[[MapPin, 'Vị trí riêng tư', 'Chỉ dùng khoảng cách; không hiển thị tọa độ hay địa chỉ của người khác.'], [CalendarDays, 'Lịch rảnh thực tế', 'Ứng viên phải rảnh trọn vẹn trong toàn bộ thời lượng bạn chọn.'], [ShieldCheck, 'Kỹ năng đo được', 'Lọc và tính tương đồng bằng Elo từ các trận đã xác nhận.']].map(([Icon, title, description]) => <div key={title} className="rounded-2xl border border-emerald-100 bg-white/75 p-5"><Icon className="size-5 text-emerald-600" /><h3 className="mt-3 text-sm font-semibold">{title}</h3><p className="mt-1 text-xs font-medium leading-5 text-stone-500">{description}</p></div>)}</section>
       </section>
+      <PartnerRequestDialog partner={selectedPartner} message={requestMessage} status={requestState.status} error={requestState.error} onMessageChange={setRequestMessage} onClose={closeRequest} onSubmit={sendRequest} />
       <BottomNav activeLabel="Đối tác" />
     </main>
   )

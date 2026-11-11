@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { loginByApi, watchRuntimeErrors } from './helpers'
+import { loginByApi, resetPartnerE2eData, watchRuntimeErrors } from './helpers'
 
-async function openPartnerSearch(page) {
-  await loginByApi(page, 'an.nguyen@example.com')
+async function openPartnerSearch(page, email = 'binh.tran@example.com') {
+  await loginByApi(page, email)
   await page.goto('/partners')
   await expect(page.getByRole('heading', { name: 'Tìm người vừa tầm, đúng nơi, đúng lúc.' })).toBeVisible()
 }
@@ -129,7 +129,8 @@ test.describe('partner search', () => {
     const candidate = payload.content[0]
     const expected = Number(Math.max(0, 100 * (1 - (Number(candidate.distanceKm) / radiusKm))).toFixed(2))
 
-    expect(Number(candidate.locationCompatibility)).toBeCloseTo(expected, 1)
+    // distanceKm duoc API lam tron 2 chu so, con diem duoc tinh tu khoang cach goc.
+    expect(Math.abs(Number(candidate.locationCompatibility) - expected)).toBeLessThanOrEqual(0.1)
     const card = page.locator('article').first()
     await expect(card.getByText('Vị trí', { exact: true })).toBeVisible()
     await expect(card.getByText(`${Number(candidate.locationCompatibility).toFixed(0)}%`, { exact: true }).first()).toBeVisible()
@@ -164,6 +165,37 @@ test.describe('partner search', () => {
     const card = page.locator('article').first()
     await expect(card.getByText('Phong cách', { exact: true })).toBeVisible()
     await expect(card.getByText(`${score.toFixed(0)}%`, { exact: true }).first()).toBeVisible()
+    assertNoRuntimeErrors()
+  })
+
+  test('2.2.31 sends a partner request from the search result', async ({ page }) => {
+    const assertNoRuntimeErrors = watchRuntimeErrors(page)
+    resetPartnerE2eData()
+    await openPartnerSearch(page, 'binh.tran@example.com')
+
+    await page.getByRole('button', { name: '± 300' }).click()
+    await searchFromUi(page)
+    const firstCard = page.locator('article').first()
+    const candidateName = await firstCard.getByRole('heading').textContent()
+    await firstCard.getByRole('button', { name: 'Gửi yêu cầu ghép cặp' }).click()
+
+    const dialog = page.getByRole('dialog', { name: `Mời ${candidateName} cùng chơi` })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('textbox', { name: 'Lời nhắn' }).fill('E2E: Tối thứ Năm mình đánh đôi, bạn tham gia nhé?')
+    const responsePromise = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+        && response.url().endsWith('/api/v1/partner-requests')
+    ))
+    await dialog.getByRole('button', { name: 'Gửi lời mời' }).click()
+    const response = await responsePromise
+    expect(response.status(), await response.text()).toBe(201)
+    const payload = await response.json()
+    expect(payload.status).toBe('pending')
+    expect(payload.message).toBe('E2E: Tối thứ Năm mình đánh đôi, bạn tham gia nhé?')
+
+    await expect(dialog.getByText('Đã gửi lời mời')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Hoàn tất' }).click()
+    await expect(firstCard.getByRole('button', { name: 'Đã gửi lời mời' })).toBeDisabled()
     assertNoRuntimeErrors()
   })
 
