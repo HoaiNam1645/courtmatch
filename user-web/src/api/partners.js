@@ -49,3 +49,21 @@ export async function searchPartners({
     totalPages: data.totalPages,
   }
 }
+
+/** 2.2.36: danh sách phân trang các kết nối đối tác đang hoạt động. */
+export async function getPartnerConnections({ page = 0, size = 20 } = {}) {
+  const search = new URLSearchParams({ page: String(page), size: String(size) })
+  const data = await request(`/api/v1/partners/connections?${search.toString()}`)
+  return {
+    ...data,
+    content: data.content.map((item) => ({
+      id: item.connectionId,
+      partnerId: item.partnerId,
+      fullName: item.fullName,
+      avatarUrl: item.avatarUrl ?? null,
+      playingStyle: item.playingStyle ?? null,
+      preferredPlayType: item.preferredPlayType ?? null,
+      connectedAt: item.connectedAt,
+    })),
+  }
+}
