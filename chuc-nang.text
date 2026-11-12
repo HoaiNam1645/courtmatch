@@ -300,8 +300,14 @@ Quản lý Trận đấu
 Đánh giá Đối tác
 
 2.2.43. Đánh giá đối tác chơi
+  - Sau khi trận đấu được xác nhận hoàn tất, người chơi chấm đối tác cùng đội hoặc đối thủ từ 1 đến 5 sao.
+  - Chỉ người tham gia trận được đánh giá; không được tự đánh giá hoặc đánh giá trùng cùng một người trong cùng trận.
 2.2.44. Viết nhận xét về đối tác
+  - Người đánh giá có thể viết nhận xét ngắn kèm điểm sao để phản ánh tinh thần, thái độ và trải nghiệm chơi chung.
+  - Nội dung rỗng được phép, nhưng nhận xét vi phạm có thể bị báo cáo và ẩn khỏi hệ thống.
 2.2.45. Xem đánh giá & nhận xét về đối tác
+  - Hiển thị phân trang các đánh giá đang công khai của người chơi, gồm điểm sao, nhận xét, người đánh giá và thời gian tạo.
+  - Hệ thống hiển thị điểm trung bình và tổng số lượt đánh giá, không công khai email hoặc số điện thoại người đánh giá.
 
 Ma trận độ ưu tiên theo Tác nhân: Sprint 2
 
