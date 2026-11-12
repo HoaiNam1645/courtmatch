@@ -58,6 +58,10 @@ public final class ErrorCode {
     public static final String PARTNER_ALREADY_CONNECTED = "PARTNER_ALREADY_CONNECTED";
     public static final String PARTNER_REQUEST_STATE_INVALID = "PARTNER_REQUEST_STATE_INVALID";
 
+    // Danh gia doi tac sau tran dau Sprint 2
+    public static final String PARTNER_REVIEW_DUPLICATE = "PARTNER_REVIEW_DUPLICATE";
+    public static final String PARTNER_REVIEW_NOT_ALLOWED = "PARTNER_REVIEW_NOT_ALLOWED";
+
     private ErrorCode() {
     }
 }

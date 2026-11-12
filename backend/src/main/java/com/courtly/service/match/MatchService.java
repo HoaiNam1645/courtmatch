@@ -29,6 +29,7 @@ import com.courtly.domain.match.MatchPlayer;
 import com.courtly.domain.match.MatchRepository;
 import com.courtly.domain.match.MatchResult;
 import com.courtly.domain.match.PlayerRatingHistoryRepository;
+import com.courtly.domain.review.PartnerReviewRepository;
 import com.courtly.domain.venue.Venue;
 import com.courtly.domain.venue.VenueRepository;
 import java.time.Instant;
@@ -66,6 +67,7 @@ public class MatchService {
     private final VenueRepository venueRepository;
     private final MatchScoreValidator scoreValidator;
     private final PlayerPerformanceService performanceService;
+    private final PartnerReviewRepository partnerReviewRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<MatchHistoryResponse> getHistory(UUID userId, String state,
@@ -422,7 +424,7 @@ public class MatchService {
         }
     }
 
-    private static MatchResponse toResponse(Match match, UUID currentUserId) {
+    private MatchResponse toResponse(Match match, UUID currentUserId) {
         MatchResult result = match.getResult();
         MatchPlayer current = participant(match, currentUserId);
         boolean hasResult = result != null;
@@ -432,12 +434,17 @@ public class MatchService {
         boolean canRecordResult = creator
                 && (match.getStatus() == MatchStatus.SCHEDULED
                     || match.getStatus() == MatchStatus.DISPUTED);
+        Set<UUID> reviewedUserIds = match.getStatus() == MatchStatus.COMPLETED
+                ? new HashSet<>(partnerReviewRepository.findReviewedUserIds(
+                        currentUserId, match.getId()))
+                : Set.of();
         return new MatchResponse(match.getId(),
                 match.getBooking() == null ? null : match.getBooking().getId(),
                 match.getMatchType(), match.getStatus(), match.getDataSource(), match.getScheduledAt(),
                 match.getVenue() == null ? null : new MatchResponse.Venue(match.getVenue().getId(),
                         match.getVenue().getName(), match.getVenue().getAddress()),
-                playersOf(match, (short) 1), playersOf(match, (short) 2),
+                playersOf(match, (short) 1, reviewedUserIds),
+                playersOf(match, (short) 2, reviewedUserIds),
                 match.getGames().stream().sorted(Comparator.comparingInt(MatchGame::getGameNo))
                         .map(game -> new MatchResponse.Game(game.getGameNo(), game.getTeam1Score(),
                                 game.getTeam2Score())).toList(),
@@ -452,13 +459,15 @@ public class MatchService {
                 pending);
     }
 
-    private static List<MatchResponse.Player> playersOf(Match match, short teamNo) {
+    private static List<MatchResponse.Player> playersOf(
+            Match match, short teamNo, Set<UUID> reviewedUserIds) {
         return match.getPlayers().stream().filter(player -> player.getTeamNo() == teamNo)
                 .sorted(Comparator.comparing(MatchPlayer::getPositionNo,
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(player -> new MatchResponse.Player(player.getUser().getId(),
                         player.getUser().getFullName(), player.getUser().getAvatarUrl(),
-                        player.getResultConfirmedAt() != null, player.getResultDisputedAt() != null))
+                        player.getResultConfirmedAt() != null, player.getResultDisputedAt() != null,
+                        reviewedUserIds.contains(player.getUser().getId())))
                 .toList();
     }
 

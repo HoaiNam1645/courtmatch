@@ -5,6 +5,7 @@ import { cancelMatch, confirmMatch, disputeMatch, recordMatchResult } from '../.
 import { useMatchDetail } from '../../../hooks/useMatchDetail'
 import { BookingEmptyState } from '../../bookings/components/BookingEmptyState'
 import { PageBackLink, ProfileEmptyState, ProfileSectionTitle } from '../../profile/components/ProfileUi'
+import PartnerReviewForm from '../../partners/components/PartnerReviewForm'
 import { classNames } from '../../../shared/utils'
 
 const statusMeta = {
@@ -41,6 +42,8 @@ function MatchDetailPage({ matchId, user, onLogout }) {
   if (detail.status === 'error') return <StatePage user={user} onLogout={onLogout} icon={RotateCcw} title={detail.error} action="Thử lại" onAction={detail.reload} />
 
   const match = detail.match
+  const reviewablePlayers = [...match.team1, ...match.team2]
+    .filter((player) => player.id !== user.id && !player.reviewedByCurrentUser)
   const meta = statusMeta[match.status] ?? statusMeta.scheduled
   const team1Sets = match.games.filter((game) => game.team1Score > game.team2Score).length
   const team2Sets = match.games.filter((game) => game.team2Score > game.team1Score).length
@@ -62,6 +65,7 @@ function MatchDetailPage({ matchId, user, onLogout }) {
             </section>
 
             <section className="rounded-xl border border-emerald-100 bg-white p-5"><ProfileSectionTitle icon={Users} eyebrow="Người tham gia" title="Trạng thái xác nhận" /><div className="mt-5 grid gap-5 sm:grid-cols-2"><PlayerTeam title="Đội 1" players={match.team1} /><PlayerTeam title="Đội 2" players={match.team2} /></div></section>
+            {match.status === 'completed' && <section><ProfileSectionTitle icon={ShieldCheck} eyebrow="2.2.43–2.2.44 · Đánh giá đối tác" title="Chia sẻ trải nghiệm sau trận" />{reviewablePlayers.length > 0 ? <div className="mt-4 grid gap-4 sm:grid-cols-2">{reviewablePlayers.map((player) => <PartnerReviewForm key={player.id} matchId={match.id} player={player} onReviewed={(name) => { setNotice(`Đã gửi đánh giá cho ${name}.`); detail.reload() }} />)}</div> : <p className="mt-4 rounded-xl border border-emerald-100 bg-white p-5 text-sm text-stone-500">Bạn đã đánh giá tất cả người chơi khác trong trận này.</p>}</section>}
             {match.currentUserCanRecordResult && <ResultEditor key={`${match.id}:${match.games.map((game) => `${game.team1Score}-${game.team2Score}`).join(',')}`} match={match} disabled={action === 'submitting'} onSubmit={(payload) => run(() => recordMatchResult(match.id, payload), 'Đã ghi kết quả; đang chờ đối thủ xác nhận.')} />}
             {match.status === 'disputed' && <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-700"><strong>Kết quả đang bị báo sai.</strong><p className="mt-2">{match.note}</p></div>}
           </div>

@@ -30,7 +30,8 @@ public record MatchResponse(
     public record Venue(UUID id, String name, String address) {
     }
 
-    public record Player(UUID id, String fullName, String avatarUrl, boolean confirmed, boolean disputed) {
+    public record Player(UUID id, String fullName, String avatarUrl, boolean confirmed,
+                         boolean disputed, boolean reviewedByCurrentUser) {
     }
 
     public record Game(int gameNo, int team1Score, int team2Score) {
