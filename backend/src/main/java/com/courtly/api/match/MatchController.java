@@ -5,7 +5,7 @@ import com.courtly.api.match.dto.DisputeMatchRequest;
 import com.courtly.api.match.dto.MatchResponse;
 import com.courtly.api.match.dto.MatchHistoryResponse;
 import com.courtly.api.match.dto.MatchPlayerOptionResponse;
-import com.courtly.api.match.dto.UpdateMatchGamesRequest;
+import com.courtly.api.match.dto.RecordMatchResultRequest;
 import com.courtly.common.PageResponse;
 import com.courtly.service.match.MatchService;
 import jakarta.validation.Valid;
@@ -70,11 +70,13 @@ public class MatchController {
                 .body(matchService.create(currentUserId(jwt), request));
     }
 
-    @PutMapping("/{matchId}/games")
-    public ResponseEntity<MatchResponse> updateGames(@AuthenticationPrincipal Jwt jwt,
-                                                     @PathVariable UUID matchId,
-                                                     @Valid @RequestBody UpdateMatchGamesRequest request) {
-        return ResponseEntity.ok(matchService.updateGames(currentUserId(jwt), matchId, request));
+    /** 2.2.38 - nguoi tao ghi hoac sua ket qua tung set cua tran. */
+    @PutMapping("/{matchId}/result")
+    public ResponseEntity<MatchResponse> recordResult(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID matchId,
+            @Valid @RequestBody RecordMatchResultRequest request) {
+        return ResponseEntity.ok(matchService.recordResult(currentUserId(jwt), matchId, request));
     }
 
     @PostMapping("/{matchId}/confirm")

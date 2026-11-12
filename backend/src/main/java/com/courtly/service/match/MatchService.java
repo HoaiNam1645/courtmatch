@@ -6,7 +6,7 @@ import com.courtly.api.match.dto.MatchGameRequest;
 import com.courtly.api.match.dto.MatchPlayerOptionResponse;
 import com.courtly.api.match.dto.MatchResponse;
 import com.courtly.api.match.dto.MatchHistoryResponse;
-import com.courtly.api.match.dto.UpdateMatchGamesRequest;
+import com.courtly.api.match.dto.RecordMatchResultRequest;
 import com.courtly.common.PageResponse;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.common.enums.JoinedStatus;
@@ -125,8 +125,6 @@ public class MatchService {
         User creator = requireActiveUser(userId);
         validateTeams(request.matchType(), request.team1UserIds(), request.team2UserIds(), userId);
         Map<UUID, User> players = requirePlayers(request.team1UserIds(), request.team2UserIds());
-        short winningTeam = scoreValidator.validateAndFindWinner(request.games());
-
         Booking booking = null;
         Venue venue;
         Instant scheduledAt;
@@ -171,11 +169,6 @@ public class MatchService {
         match.setCreatedAt(now);
         addPlayers(match, request.team1UserIds(), (short) 1, players, userId, now);
         addPlayers(match, request.team2UserIds(), (short) 2, players, userId, now);
-        replaceGames(match, request.games());
-
-        MatchResult result = new MatchResult(match, winningTeam);
-        result.setRecordedBy(creator);
-        match.setResult(result);
         try {
             matchRepository.saveAndFlush(match);
         } catch (DataIntegrityViolationException exception) {
@@ -189,26 +182,38 @@ public class MatchService {
     }
 
     @Transactional
-    public MatchResponse updateGames(UUID userId, UUID matchId, UpdateMatchGamesRequest request) {
+    public MatchResponse recordResult(UUID userId, UUID matchId, RecordMatchResultRequest request) {
         Match match = requireParticipantMatch(userId, matchId);
         requireCreator(match, userId);
         if (match.getStatus() == MatchStatus.COMPLETED || match.getStatus() == MatchStatus.CANCELLED) {
             invalidState("Tran da ket thuc nen khong sua duoc ty so.");
         }
+        if (match.getScheduledAt() != null && match.getScheduledAt().isAfter(Instant.now())) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED,
+                    "Chi ghi ket qua sau khi tran da dien ra.",
+                    Map.of("games", "Tran dau chua den thoi gian thi dau"));
+        }
         short winningTeam = scoreValidator.validateAndFindWinner(request.games());
         match.getGames().clear();
         matchRepository.flush();
         replaceGames(match, request.games());
-        match.getResult().setWinningTeam(winningTeam);
-        match.getResult().setConfirmedAt(null);
-        match.getResult().setNote(null);
+        MatchResult result = match.getResult();
+        if (result == null) {
+            result = new MatchResult(match, winningTeam);
+            match.setResult(result);
+        } else {
+            result.setWinningTeam(winningTeam);
+        }
+        result.setRecordedBy(match.getCreatedBy());
+        result.setConfirmedAt(null);
+        result.setNote(null);
         Instant now = Instant.now();
         match.getPlayers().forEach(player -> {
             player.setResultConfirmedAt(player.getUser().getId().equals(userId) ? now : null);
             player.setResultDisputedAt(null);
         });
         match.setStatus(MatchStatus.SCHEDULED);
-        matchRepository.save(match);
+        matchRepository.flush();
         return toResponse(match, userId);
     }
 
@@ -302,7 +307,7 @@ public class MatchService {
     private User requireActiveUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan."));
-        if (user.getStatus() != UserStatus.ACTIVE) {
+        if (user.getStatus() != UserStatus.ACTIVE || !userRepository.hasPlayerRole(userId)) {
             throw ApiException.forbidden(ErrorCode.FORBIDDEN, "Tai khoan khong hoat dong.");
         }
         return user;
@@ -324,7 +329,8 @@ public class MatchService {
         Map<UUID, User> players = new HashMap<>();
         userRepository.findAllById(ids).forEach(user -> players.put(user.getId(), user));
         if (players.size() != ids.size() || players.values().stream()
-                .anyMatch(user -> user.getStatus() != UserStatus.ACTIVE)) {
+                .anyMatch(user -> user.getStatus() != UserStatus.ACTIVE
+                        || !userRepository.hasPlayerRole(user.getId()))) {
             throw ApiException.badRequest(ErrorCode.MATCH_PLAYERS_INVALID,
                     "Danh sach nguoi choi co tai khoan khong ton tai hoac khong hoat dong.",
                     Map.of("players", "Kiem tra lai nguoi tham gia"));
@@ -364,9 +370,6 @@ public class MatchService {
             player.setPositionNo(position++);
             player.setJoinedStatus(JoinedStatus.JOINED);
             player.setCreatedAt(now);
-            if (id.equals(creatorId)) {
-                player.setResultConfirmedAt(now);
-            }
             match.getPlayers().add(player);
         }
     }
@@ -422,7 +425,13 @@ public class MatchService {
     private static MatchResponse toResponse(Match match, UUID currentUserId) {
         MatchResult result = match.getResult();
         MatchPlayer current = participant(match, currentUserId);
-        boolean pending = match.getStatus() == MatchStatus.SCHEDULED;
+        boolean hasResult = result != null;
+        boolean pending = match.getStatus() == MatchStatus.SCHEDULED && hasResult;
+        boolean creator = match.getCreatedBy() != null
+                && match.getCreatedBy().getId().equals(currentUserId);
+        boolean canRecordResult = creator
+                && (match.getStatus() == MatchStatus.SCHEDULED
+                    || match.getStatus() == MatchStatus.DISPUTED);
         return new MatchResponse(match.getId(),
                 match.getBooking() == null ? null : match.getBooking().getId(),
                 match.getMatchType(), match.getStatus(), match.getDataSource(), match.getScheduledAt(),
@@ -435,9 +444,9 @@ public class MatchService {
                 result == null ? null : result.getWinningTeam(),
                 result == null ? null : result.getConfirmedAt(),
                 result == null ? null : result.getNote(),
-                match.getCreatedBy() != null && match.getCreatedBy().getId().equals(currentUserId)
-                        && (match.getStatus() == MatchStatus.SCHEDULED || match.getStatus() == MatchStatus.DISPUTED),
-                match.getCreatedBy() != null && match.getCreatedBy().getId().equals(currentUserId)
+                canRecordResult,
+                canRecordResult && hasResult,
+                creator
                         && match.getStatus() != MatchStatus.COMPLETED && match.getStatus() != MatchStatus.CANCELLED,
                 pending && current.getResultConfirmedAt() == null,
                 pending);
@@ -468,7 +477,7 @@ public class MatchService {
                 games.stream().map(game -> new MatchHistoryResponse.Game(
                         game.getGameNo(), game.getTeam1Score(), game.getTeam2Score())).toList(),
                 result == null ? null : result.getWinningTeam(), ratingChange,
-                match.getStatus() == MatchStatus.SCHEDULED
+                result != null && match.getStatus() == MatchStatus.SCHEDULED
                         && current.getResultConfirmedAt() == null);
     }
 

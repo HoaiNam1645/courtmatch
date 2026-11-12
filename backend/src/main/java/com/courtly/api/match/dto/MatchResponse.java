@@ -21,6 +21,7 @@ public record MatchResponse(
         Short winningTeam,
         Instant confirmedAt,
         String note,
+        boolean currentUserCanRecordResult,
         boolean currentUserCanEdit,
         boolean currentUserCanCancel,
         boolean currentUserCanConfirm,
