@@ -1,0 +1,30 @@
+import { ArrowLeft, ArrowRight, LoaderCircle, MessageSquareText, RefreshCw, Star, UserRoundX } from 'lucide-react'
+import { AppHeader, BottomNav } from '../../../app/AppLayout'
+import { usePartnerReviews } from '../../../hooks/usePartnerReviews'
+
+function PartnerReviewsPage({ playerId, user, onLogout }) {
+  const data = usePartnerReviews(playerId)
+  if (data.status === 'not-found') return <StatePage user={user} onLogout={onLogout} icon={UserRoundX} title="Không tìm thấy người chơi" />
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_85%_3%,rgba(190,242,100,0.22),transparent_26%),linear-gradient(145deg,#edf8f2,#fcfcf8)] pb-24 text-emerald-950">
+      <AppHeader user={user} onLogout={onLogout} />
+      <section className="bg-emerald-950 px-4 pb-20 pt-9 text-white md:px-6"><div className="mx-auto max-w-[900px]"><a href="/partners/connections" className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-100/70"><ArrowLeft className="size-4" />Về danh sách đối tác</a><div className="mt-7 flex items-center gap-4">{data.player?.avatarUrl ? <img src={data.player.avatarUrl} alt="" className="size-16 rounded-2xl object-cover" /> : <span className="grid size-16 place-items-center rounded-2xl bg-lime-300 text-2xl font-semibold text-emerald-950">{data.player?.fullName?.slice(0, 1).toUpperCase() ?? '?'}</span>}<div><p className="text-xs font-bold uppercase tracking-[0.16em] text-lime-300">2.2.45 · Đánh giá công khai</p><h1 className="mt-2 text-3xl font-semibold">{data.player?.fullName ?? 'Đánh giá đối tác'}</h1></div></div></div></section>
+      <section className="mx-auto -mt-10 max-w-[900px] px-4 md:px-6">
+        <div className="grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-[0_16px_42px_rgba(20,70,48,0.12)]"><p className="text-xs font-bold uppercase text-stone-400">Điểm trung bình</p><div className="mt-2 flex items-center gap-2"><Star className="size-7 fill-amber-400 text-amber-400" /><strong data-testid="average-rating" className="text-3xl">{data.averageRating.toFixed(1)}</strong><span className="text-sm text-stone-400">/ 5</span></div></div><div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-[0_16px_42px_rgba(20,70,48,0.12)]"><p className="text-xs font-bold uppercase text-stone-400">Lượt đánh giá</p><p data-testid="total-reviews" className="mt-2 text-3xl font-semibold">{data.totalReviews}</p></div></div>
+        {data.status === 'loading' && <div className="mt-5 grid min-h-56 place-items-center rounded-2xl bg-white"><LoaderCircle className="size-8 animate-spin text-emerald-600" /></div>}
+        {data.status === 'error' && <div className="mt-5 rounded-2xl border border-red-100 bg-white p-8 text-center"><p className="text-sm font-semibold text-red-700">{data.error}</p><button type="button" onClick={() => data.load(data.page)} className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-xs font-semibold text-white"><RefreshCw className="size-4" />Thử lại</button></div>}
+        {data.status === 'empty' && <div className="mt-5 rounded-2xl border border-dashed border-emerald-200 bg-white/80 p-10 text-center"><MessageSquareText className="mx-auto size-9 text-emerald-300" /><p className="mt-3 font-semibold">Chưa có đánh giá công khai</p><p className="mt-1 text-xs text-stone-500">Các nhận xét sau trận đấu sẽ xuất hiện tại đây.</p></div>}
+        {data.status === 'success' && <div className="mt-5 grid gap-4">{data.reviews.map((review) => <article key={review.id} data-testid={`partner-review-${review.id}`} className="rounded-2xl border border-emerald-100 bg-white p-5"><div className="flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3">{review.reviewer.avatarUrl ? <img src={review.reviewer.avatarUrl} alt="" className="size-10 rounded-xl object-cover" /> : <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-950 font-semibold text-lime-300">{review.reviewer.fullName.slice(0, 1).toUpperCase()}</span>}<div className="min-w-0"><h2 className="truncate text-sm font-semibold">{review.reviewer.fullName}</h2><p className="mt-0.5 text-[11px] text-stone-400">{new Date(review.createdAt).toLocaleString('vi-VN')}</p></div></div><div className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700"><Star className="size-4 fill-amber-400 text-amber-400" />{review.rating}</div></div>{review.comment && <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-stone-600">{review.comment}</p>}</article>)}</div>}
+        {data.totalPages > 1 && <div className="mt-6 flex items-center justify-center gap-3"><button type="button" aria-label="Trang trước" disabled={data.page === 0 || data.status === 'loading'} onClick={() => data.load(data.page - 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white disabled:opacity-40"><ArrowLeft className="size-4" /></button><span className="text-xs font-semibold text-stone-500">Trang {data.page + 1}/{data.totalPages}</span><button type="button" aria-label="Trang sau" disabled={data.page + 1 >= data.totalPages || data.status === 'loading'} onClick={() => data.load(data.page + 1)} className="grid size-11 place-items-center rounded-xl border border-emerald-200 bg-white disabled:opacity-40"><ArrowRight className="size-4" /></button></div>}
+      </section>
+      <BottomNav activeLabel="Đối tác" />
+    </main>
+  )
+}
+
+function StatePage({ user, onLogout, icon: Icon, title }) {
+  return <main className="min-h-screen bg-[#f4f7f1] pb-24"><AppHeader user={user} onLogout={onLogout} /><section className="mx-auto max-w-[700px] px-4 py-20 text-center"><Icon className="mx-auto size-9 text-stone-400" /><h1 className="mt-4 text-xl font-semibold">{title}</h1><a href="/partners/connections" className="mt-5 inline-flex rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Quay lại</a></section></main>
+}
+
+export default PartnerReviewsPage
