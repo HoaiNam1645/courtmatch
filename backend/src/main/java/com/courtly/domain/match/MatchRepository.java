@@ -105,6 +105,7 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
     @Query("""
             SELECT m.id FROM Match m
             JOIN m.players participant
+            JOIN m.result result
             WHERE participant.user.id = :userId
               AND m.status = com.courtly.common.enums.MatchStatus.SCHEDULED
               AND participant.resultConfirmedAt IS NULL

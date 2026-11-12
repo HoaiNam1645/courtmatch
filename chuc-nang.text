@@ -277,11 +277,25 @@ Yêu cầu Ghép cặp Đối tác
 Quản lý Trận đấu
 
 2.2.37. Tạo trận đấu
+  - Người chơi tạo trận từ booking đã hoàn thành hoặc nhập thủ công thông tin sân và thời gian thi đấu.
+  - Người tạo chọn đánh đơn/đôi, chia người chơi vào hai đội và phải là một thành viên của trận.
+  - Không cho phép tạo trùng trận cho cùng một booking hoặc sử dụng người chơi không hợp lệ.
 2.2.38. Ghi nhận kết quả trận đấu
+  - Người tạo nhập tỷ số từng hiệp; hệ thống kiểm tra luật tính điểm và xác định đội thắng.
+  - Các bên tham gia xác nhận hoặc báo sai kết quả; kết quả chỉ được hoàn tất khi đủ điều kiện xác nhận.
+  - Trận không có báo sai được tự động xác nhận sau thời hạn quy định.
 2.2.39. Cập nhật điểm xếp hạng người chơi sau trận đấu
+  - Khi kết quả được xác nhận, hệ thống tính biến động Elo dựa trên kết quả và tương quan trình độ hai đội.
+  - Điểm mới và lịch sử thay đổi được lưu một lần cho từng người chơi, tránh cộng điểm trùng.
 2.2.40. Cập nhật thống kê hiệu suất người chơi
+  - Sau khi trận hoàn tất, hệ thống cập nhật số trận, thắng/thua, tỷ lệ thắng và hiệu suất theo loại trận.
+  - Chỉ sử dụng các trận có kết quả đã xác nhận; trận bị hủy hoặc tranh chấp không được tính.
 2.2.41. Xem kết quả trận đấu
+  - Người tham gia xem thông tin trận, đội hình, tỷ số từng hiệp, đội thắng và trạng thái xác nhận.
+  - Chỉ thành viên của trận được xem chi tiết và thực hiện các thao tác liên quan đến kết quả.
 2.2.42. Xem lịch sử trận đấu
+  - Hiển thị phân trang các trận người chơi đã tham gia, sắp xếp từ mới đến cũ.
+  - Cho phép lọc theo trạng thái và hiển thị đối thủ, tỷ số, kết quả cùng biến động điểm xếp hạng.
 
 Đánh giá Đối tác
 

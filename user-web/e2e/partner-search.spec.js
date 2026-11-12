@@ -81,7 +81,9 @@ test.describe('partner search', () => {
     for (const candidate of payload.content) {
       expect(timeToMinutes(candidate.availableFrom)).toBeLessThanOrEqual(requestedStart)
       expect(timeToMinutes(candidate.availableUntil)).toBeGreaterThanOrEqual(requestedEnd)
-      await expect(page.getByText(`Rảnh ${candidate.availableFrom.slice(0, 5)}–${candidate.availableUntil.slice(0, 5)}`)).toBeVisible()
+      await expect(page.getByText(
+        `Rảnh ${candidate.availableFrom.slice(0, 5)}–${candidate.availableUntil.slice(0, 5)}`,
+      ).first()).toBeVisible()
     }
     assertNoRuntimeErrors()
   })
