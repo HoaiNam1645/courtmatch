@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, Clock3, CircleAlert, LoaderCircle, RotateCcw, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
-import { cancelMatch, confirmMatch, disputeMatch } from '../../../api/matches'
+import { cancelMatch, confirmMatch, disputeMatch, recordMatchResult } from '../../../api/matches'
 import { useMatchDetail } from '../../../hooks/useMatchDetail'
 import { BookingEmptyState } from '../../bookings/components/BookingEmptyState'
 import { PageBackLink, ProfileEmptyState, ProfileSectionTitle } from '../../profile/components/ProfileUi'
@@ -50,18 +50,19 @@ function MatchDetailPage({ matchId, user, onLogout }) {
       <AppHeader user={user} onLogout={onLogout} />
       <section className="mx-auto max-w-[1050px] px-4 py-7 md:px-6 md:py-10">
         <PageBackLink href="/matches" label="Về dữ liệu thi đấu" />
-        <div className="mt-6 flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.2 · Xác nhận kết quả</p><h1 className="mt-2 text-3xl font-semibold">Kết quả trận đấu</h1><p className="mt-2 text-sm text-stone-500">{match.venue?.name ?? 'Ngoài hệ thống'} · {new Date(match.scheduledAt).toLocaleString('vi-VN')}</p></div><span className={classNames('rounded-full px-3 py-1 text-xs font-bold', meta.className)}>{meta.label}</span></div>
+        <div className="mt-6 flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.41 · Kết quả trận đấu</p><h1 className="mt-2 text-3xl font-semibold">Kết quả trận đấu</h1><p className="mt-2 text-sm text-stone-500">{match.venue?.name ?? 'Ngoài hệ thống'} · {new Date(match.scheduledAt).toLocaleString('vi-VN')}</p></div><span className={classNames('rounded-full px-3 py-1 text-xs font-bold', meta.className)}>{match.games.length === 0 && match.status === 'scheduled' ? 'Chờ ghi kết quả' : meta.label}</span></div>
         {notice && <p className="mt-5 rounded-xl border border-emerald-100 bg-white p-4 text-sm font-semibold text-emerald-800">{notice}</p>}
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
           <div className="grid gap-6">
             <section className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-[0_16px_40px_rgba(24,65,44,0.09)]">
               <p className="text-xs font-bold uppercase text-stone-400">{typeLabel[match.matchType]}</p>
-              <div className="mt-8 grid grid-cols-[1fr_90px_1fr] items-center gap-3"><TeamNames players={match.team1} align="right" /><div className="grid grid-cols-3 rounded-lg bg-emerald-950 px-3 py-2 text-center text-white"><strong>{team1Sets}</strong><span className="text-lime-300">—</span><strong>{team2Sets}</strong></div><TeamNames players={match.team2} /></div>
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">{match.games.map((game) => <div key={game.gameNo} className="rounded-xl bg-stone-50 p-4 text-center"><p className="text-[11px] font-bold uppercase text-stone-400">Set {game.gameNo}</p><p className="mt-2 text-2xl font-semibold">{game.team1Score}<span className="mx-2 text-stone-300">—</span>{game.team2Score}</p></div>)}</div>
+              <div className="mt-8 grid grid-cols-[1fr_90px_1fr] items-center gap-3"><TeamNames players={match.team1} align="right" /><div className="grid grid-cols-3 rounded-lg bg-emerald-950 px-3 py-2 text-center text-white"><strong>{match.games.length ? team1Sets : '–'}</strong><span className="text-lime-300">—</span><strong>{match.games.length ? team2Sets : '–'}</strong></div><TeamNames players={match.team2} /></div>
+              {match.games.length > 0 ? <div className="mt-7 grid gap-3 sm:grid-cols-3">{match.games.map((game) => <div key={game.gameNo} className="rounded-xl bg-stone-50 p-4 text-center"><p className="text-[11px] font-bold uppercase text-stone-400">Set {game.gameNo}</p><p className="mt-2 text-2xl font-semibold">{game.team1Score}<span className="mx-2 text-stone-300">—</span>{game.team2Score}</p></div>)}</div> : <p className="mt-7 rounded-xl bg-amber-50 p-4 text-sm font-medium text-amber-800">Trận đấu đã được tạo và đang chờ người tạo ghi kết quả.</p>}
             </section>
 
             <section className="rounded-xl border border-emerald-100 bg-white p-5"><ProfileSectionTitle icon={Users} eyebrow="Người tham gia" title="Trạng thái xác nhận" /><div className="mt-5 grid gap-5 sm:grid-cols-2"><PlayerTeam title="Đội 1" players={match.team1} /><PlayerTeam title="Đội 2" players={match.team2} /></div></section>
+            {match.currentUserCanRecordResult && <ResultEditor key={`${match.id}:${match.games.map((game) => `${game.team1Score}-${game.team2Score}`).join(',')}`} match={match} disabled={action === 'submitting'} onSubmit={(payload) => run(() => recordMatchResult(match.id, payload), 'Đã ghi kết quả; đang chờ đối thủ xác nhận.')} />}
             {match.status === 'disputed' && <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-700"><strong>Kết quả đang bị báo sai.</strong><p className="mt-2">{match.note}</p></div>}
           </div>
 
@@ -86,6 +87,32 @@ function TeamNames({ players, align = 'left' }) {
 
 function PlayerTeam({ title, players }) {
   return <div><p className="text-xs font-bold text-stone-400">{title.toUpperCase()}</p><div className="mt-2 grid gap-2">{players.map((player) => <div key={player.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-3 py-3"><span className="text-sm font-semibold">{player.fullName}</span>{player.disputed ? <CircleAlert className="size-5 text-red-500" /> : player.confirmed ? <CheckCircle2 className="size-5 text-emerald-600" /> : <Clock3 className="size-5 text-amber-500" />}</div>)}</div></div>
+}
+
+function ResultEditor({ match, disabled, onSubmit }) {
+  const [games, setGames] = useState(match.games.length > 0
+    ? match.games.map((game) => [game.team1Score, game.team2Score])
+    : [[21, 18], [21, 16]])
+
+  function updateScore(index, side, value) {
+    setGames((current) => current.map((game, gameIndex) => (
+      gameIndex === index
+        ? game.map((score, scoreIndex) => scoreIndex === side ? Number(value) : score)
+        : game
+    )))
+  }
+
+  function selectGameCount(count) {
+    setGames((current) => count === 2
+      ? current.slice(0, 2)
+      : [...current, [21, 18]].slice(0, 3))
+  }
+
+  const submit = () => onSubmit(games.map(([team1Score, team2Score], index) => ({
+    gameNo: index + 1, team1Score, team2Score,
+  })))
+
+  return <section className="rounded-xl border border-emerald-100 bg-white p-5"><div className="flex flex-wrap items-end justify-between gap-3"><ProfileSectionTitle icon={ShieldCheck} eyebrow="2.2.38 · Ghi nhận kết quả" title={match.games.length > 0 ? 'Chỉnh sửa tỷ số từng set' : 'Nhập tỷ số từng set'} /><div className="flex gap-2">{[2, 3].map((count) => <button type="button" key={count} onClick={() => selectGameCount(count)} className={classNames('rounded-full px-3 py-1 text-xs font-bold', games.length === count ? 'bg-emerald-700 text-white' : 'bg-stone-100 text-stone-500')}>{count} set</button>)}</div></div><div className="mt-5 grid gap-3">{games.map((game, index) => <div key={index} className="grid grid-cols-[64px_1fr_auto_1fr] items-center gap-3 rounded-xl bg-stone-50 p-3"><span className="text-xs font-bold text-stone-400">SET {index + 1}</span><input aria-label={`Điểm đội 1 set ${index + 1}`} type="number" min="0" max="30" value={game[0]} onChange={(event) => updateScore(index, 0, event.target.value)} className="h-11 min-w-0 rounded-lg border border-emerald-200 bg-white text-center text-lg font-semibold" /><span className="text-stone-300">—</span><input aria-label={`Điểm đội 2 set ${index + 1}`} type="number" min="0" max="30" value={game[1]} onChange={(event) => updateScore(index, 1, event.target.value)} className="h-11 min-w-0 rounded-lg border border-amber-200 bg-white text-center text-lg font-semibold" /></div>)}</div><button type="button" disabled={disabled} onClick={submit} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 text-sm font-semibold text-white disabled:opacity-60"><CheckCircle2 className="size-4" />Lưu kết quả trận đấu</button></section>
 }
 
 function StatePage({ user, onLogout, icon: Icon, spin, title, action, onAction }) {

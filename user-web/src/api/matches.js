@@ -45,8 +45,8 @@ export function fetchMatchDetail(matchId) {
   return request(`/api/v1/matches/${encodeURIComponent(matchId)}`)
 }
 
-export function updateMatchGames(matchId, games) {
-  return request(`/api/v1/matches/${encodeURIComponent(matchId)}/games`, {
+export function recordMatchResult(matchId, games) {
+  return request(`/api/v1/matches/${encodeURIComponent(matchId)}/result`, {
     method: 'PUT',
     body: { games },
   })
