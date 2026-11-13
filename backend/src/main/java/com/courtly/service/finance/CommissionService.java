@@ -22,6 +22,13 @@ public class CommissionService {
     private final PlatformFeeConfigRepository configRepository;
     private final BookingCommissionRepository commissionRepository;
 
+    /** Cong thuc hoa hong duy nhat: dung cho ca ghi nhan that va uoc tinh hien o man hinh chu san (2.3.18). */
+    public static BigDecimal commissionFor(PlatformFeeConfig config, BigDecimal grossAmount) {
+        return config.getFeeType() == FeeType.PERCENTAGE
+                ? grossAmount.multiply(config.getFeeValue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                : config.getFeeValue().setScale(2, RoundingMode.HALF_UP);
+    }
+
     public void createForCompletedBooking(Booking booking, Instant now) {
         if (commissionRepository.findByBookingId(booking.getId()).isPresent()) {
             return;
@@ -30,10 +37,7 @@ public class CommissionService {
                 .findFirstByStatusOrderByEffectiveFromDesc(ActiveStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalStateException("Chua co chinh sach hoa hong dang active."));
 
-        BigDecimal commissionAmount = config.getFeeType() == FeeType.PERCENTAGE
-                ? booking.getTotalAmount().multiply(config.getFeeValue())
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
-                : config.getFeeValue().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal commissionAmount = commissionFor(config, booking.getTotalAmount());
 
         BookingCommission commission = new BookingCommission();
         commission.setBooking(booking);

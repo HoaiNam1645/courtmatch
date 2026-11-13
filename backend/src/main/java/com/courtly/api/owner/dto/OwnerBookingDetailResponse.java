@@ -12,7 +12,17 @@ public record OwnerBookingDetailResponse(UUID bookingId, String bookingCode, Str
                                          List<BookingRequestResponse.CourtSlot> slots,
                                          BigDecimal totalAmount, String note,
                                          String rejectionReason, String cancellationReason,
-                                         Payment payment, List<Step> timeline, Instant createdAt) {
+                                         Payment payment, Fee fee, List<Step> timeline, Instant createdAt) {
+
+    /**
+     * Phi nen tang cua booking (2.3.18).
+     *
+     * @param estimated true = chua ghi nhan, uoc tinh theo chinh sach hien hanh; false = da chup lai (snapshot)
+     * @param status    trang thai hoa hong khi da ghi nhan (pending, due, ...); null khi uoc tinh
+     */
+    public record Fee(boolean estimated, String policyName, String feeType, BigDecimal feeValue,
+                      BigDecimal grossAmount, BigDecimal commissionAmount, String status) {
+    }
 
     /** @param method cash hoac owner_bank_transfer */
     public record Payment(UUID paymentId, String status, String method, BigDecimal amount,

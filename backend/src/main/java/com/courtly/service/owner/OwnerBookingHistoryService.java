@@ -4,6 +4,7 @@ import com.courtly.api.owner.dto.BookingRequestResponse;
 import com.courtly.api.owner.dto.OwnerBookingDetailResponse;
 import com.courtly.api.owner.dto.OwnerBookingHistoryItem;
 import com.courtly.common.PageResponse;
+import com.courtly.common.enums.ActiveStatus;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
@@ -11,10 +12,13 @@ import com.courtly.domain.booking.Booking;
 import com.courtly.domain.booking.BookingItem;
 import com.courtly.domain.booking.BookingRepository;
 import com.courtly.domain.booking.BookingStatusHistory;
+import com.courtly.domain.finance.BookingCommissionRepository;
+import com.courtly.domain.finance.PlatformFeeConfigRepository;
 import com.courtly.domain.payment.Payment;
 import com.courtly.domain.payment.PaymentRepository;
 import com.courtly.domain.venue.VenueRepository;
 import com.courtly.service.booking.AvailabilityService;
+import com.courtly.service.finance.CommissionService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -45,6 +49,8 @@ public class OwnerBookingHistoryService {
     private final VenueRepository venueRepository;
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
+    private final BookingCommissionRepository commissionRepository;
+    private final PlatformFeeConfigRepository feeConfigRepository;
 
     private static Map<String, List<BookingStatus>> groups() {
         Map<String, List<BookingStatus>> map = new LinkedHashMap<>();
@@ -117,11 +123,27 @@ public class OwnerBookingHistoryService {
                 payment == null ? null : new OwnerBookingDetailResponse.Payment(
                         payment.getId(), payment.getStatus().getValue(), payment.getMethod(), payment.getAmount(),
                         payment.getPayerReportedAt(), payment.getConfirmedAt(), payment.getRejectionReason()),
+                feeOf(booking),
                 booking.getStatusHistory().stream()
                         .sorted(Comparator.comparing(BookingStatusHistory::getCreatedAt))
                         .map(OwnerBookingHistoryService::toStep)
                         .toList(),
                 booking.getCreatedAt());
+    }
+
+    /** Da ghi nhan thi hien snapshot; booking da xac nhan nhung chua choi xong thi hien uoc tinh. */
+    private OwnerBookingDetailResponse.Fee feeOf(Booking booking) {
+        return commissionRepository.findByBookingId(booking.getId())
+                .map(commission -> new OwnerBookingDetailResponse.Fee(false,
+                        commission.getFeeConfig() == null ? null : commission.getFeeConfig().getName(),
+                        commission.getFeeType().getValue(), commission.getFeeValue(), commission.getGrossAmount(),
+                        commission.getCommissionAmount(), commission.getStatus()))
+                .orElseGet(() -> booking.getStatus() != BookingStatus.CONFIRMED ? null
+                        : feeConfigRepository.findFirstByStatusOrderByEffectiveFromDesc(ActiveStatus.ACTIVE)
+                        .map(config -> new OwnerBookingDetailResponse.Fee(true, config.getName(),
+                                config.getFeeType().getValue(), config.getFeeValue(), booking.getTotalAmount(),
+                                CommissionService.commissionFor(config, booking.getTotalAmount()), null))
+                        .orElse(null));
     }
 
     private static OwnerBookingHistoryItem toItem(Booking booking, Payment payment) {

@@ -10,6 +10,41 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
 
     Optional<BookingCommission> findByBookingId(UUID bookingId);
 
+    /** Hoa hong cua cac san, kem don, san, nguoi dat va chinh sach da ap dung (2.3.18). */
+    @Query(value = """
+            select c from BookingCommission c
+            join fetch c.booking b
+            join fetch b.venue v
+            join fetch b.user
+            left join fetch c.feeConfig
+            where v.id in :venueIds and c.status in :statuses
+              and c.calculatedAt >= :fromTime and c.calculatedAt < :toTime
+            order by c.calculatedAt desc
+            """,
+            countQuery = """
+                    select count(c) from BookingCommission c
+                    where c.booking.venue.id in :venueIds and c.status in :statuses
+                      and c.calculatedAt >= :fromTime and c.calculatedAt < :toTime
+                    """)
+    org.springframework.data.domain.Page<BookingCommission> findForVenues(
+            @org.springframework.data.repository.query.Param("venueIds") java.util.Collection<UUID> venueIds,
+            @org.springframework.data.repository.query.Param("statuses") java.util.Collection<String> statuses,
+            @org.springframework.data.repository.query.Param("fromTime") java.time.Instant fromTime,
+            @org.springframework.data.repository.query.Param("toTime") java.time.Instant toTime,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** Tong hoa hong cua tap da loc, khong phan trang (2.3.18). */
+    @Query("""
+            select coalesce(sum(c.commissionAmount), 0) from BookingCommission c
+            where c.booking.venue.id in :venueIds and c.status in :statuses
+              and c.calculatedAt >= :fromTime and c.calculatedAt < :toTime
+            """)
+    BigDecimal sumForVenues(
+            @org.springframework.data.repository.query.Param("venueIds") java.util.Collection<UUID> venueIds,
+            @org.springframework.data.repository.query.Param("statuses") java.util.Collection<String> statuses,
+            @org.springframework.data.repository.query.Param("fromTime") java.time.Instant fromTime,
+            @org.springframework.data.repository.query.Param("toTime") java.time.Instant toTime);
+
     @Query(value = """
             select coalesce(sum(commission_amount), 0) from booking_commissions
             where owner_id = :ownerId and status in ('pending', 'due', 'adjusted')

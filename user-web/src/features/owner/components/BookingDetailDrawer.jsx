@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { bookingStatusMeta } from '../../../api/ownerBookingRequests'
+import { commissionStatusMeta, describeFee } from '../../../api/ownerCommissions'
 import { fetchBookingDetail, paymentStatusMeta, PAYMENT_METHOD_LABEL } from '../../../api/ownerBookings'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
@@ -59,6 +60,19 @@ function BookingDetailDrawer({ bookingId, onClose }) {
                 </div>
               ) : <p className="mt-2 text-sm font-medium text-stone-500">Chưa có thanh toán — booking chưa được chủ sân chấp nhận.</p>}
             </section>
+
+            {data.fee && (
+              <section data-testid="drawer-fee">
+                <h3 className="text-sm font-semibold text-emerald-950">Phí nền tảng</h3>
+                <div className="mt-2 grid gap-1 text-sm font-medium text-stone-600">
+                  <p className="text-lg font-semibold text-emerald-800" data-testid="drawer-fee-amount">{formatCurrency(data.fee.commissionAmount)}</p>
+                  <p>{describeFee(data.fee.feeType, data.fee.feeValue, formatCurrency)} trên {formatCurrency(data.fee.grossAmount)}{data.fee.policyName ? ` · ${data.fee.policyName}` : ''}</p>
+                  {data.fee.estimated
+                    ? <p className="text-xs text-amber-800" data-testid="drawer-fee-estimate">Ước tính theo chính sách hiện hành; phí được chốt khi booking hoàn thành.</p>
+                    : <div><Badge meta={commissionStatusMeta(data.fee.status)} /></div>}
+                </div>
+              </section>
+            )}
 
             <section>
               <h3 className="text-sm font-semibold text-emerald-950">Tiến trình</h3>

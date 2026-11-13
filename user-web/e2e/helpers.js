@@ -101,6 +101,8 @@ export function deleteE2eVenues() {
     rmSync(path.resolve(import.meta.dirname, '../../backend/uploads/venues', venueId), { recursive: true, force: true })
   }
   runSql(`
+    DELETE FROM booking_commissions WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
+    DELETE FROM refunds WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM bookings WHERE venue_id IN (${E2E_VENUES});
     DELETE FROM audit_logs WHERE entity_id IN (${E2E_VENUES})
@@ -145,6 +147,29 @@ export function makeVenueBookable(venueId) {
     WHERE c.venue_id = '${venueId}'
       AND NOT EXISTS (SELECT 1 FROM court_price_rules r WHERE r.court_id = c.id);
   `)
+}
+
+/**
+ * Chủ sân gửi nhiều booking tới sân E2E và chấp nhận chúng; trả về danh sách booking.
+ * Mỗi booking 60 phút (120.000đ) ở các giờ đã cho, vào thứ Hai sắp tới.
+ */
+export async function createAcceptedBookings(page, { ownerToken, playerToken, venue, times }) {
+  const monday = nextMondayIso()
+  const bookings = []
+  for (const time of times) {
+    const response = await page.request.post(`${API_BASE_URL}/api/v1/bookings`, {
+      headers: { Authorization: `Bearer ${playerToken}` },
+      data: { courtId: venue.courts[0].id, startTime: `${monday}T${time}:00+07:00`, durationMinutes: 60, note: 'E2E' },
+    })
+    expect(response.status(), await response.text()).toBe(201)
+    const booking = await response.json()
+    const accepted = await page.request.post(`${API_BASE_URL}/api/v1/owner/booking-requests/${booking.id}/accept`, {
+      headers: { Authorization: `Bearer ${ownerToken}` },
+    })
+    expect(accepted.status(), await accepted.text()).toBe(200)
+    bookings.push(booking)
+  }
+  return bookings
 }
 
 /** Ngày thứ Hai sắp tới (giờ Việt Nam), dạng YYYY-MM-DD. */

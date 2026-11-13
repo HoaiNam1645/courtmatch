@@ -1,11 +1,13 @@
 import { useSearchParams } from 'react-router-dom'
 import { classNames } from '../../../shared/utils'
+import { CommissionTab } from '../components/CommissionTab'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { RevenueTab } from '../components/RevenueTab'
 
 /** Các tab tài chính; thêm tab khi chức năng tương ứng hoàn thành. */
 const FINANCE_TABS = [
   { id: 'revenue', label: 'Doanh thu', component: RevenueTab },
+  { id: 'commissions', label: 'Hoa hồng', component: CommissionTab },
 ]
 
 /** Tài chính của chủ sân: doanh thu, hoa hồng và công nợ với Courtly. */

@@ -70,6 +70,8 @@ export async function fetchBookingDetail(bookingId) {
     rejectionReason: data.rejectionReason ?? '',
     cancellationReason: data.cancellationReason ?? '',
     payment: data.payment ?? null,
+    // 2.3.18 — estimated = chưa ghi nhận, ước tính theo chính sách hiện hành
+    fee: data.fee ? { ...data.fee, feeValue: Number(data.fee.feeValue), grossAmount: Number(data.fee.grossAmount), commissionAmount: Number(data.fee.commissionAmount) } : null,
     timeline: data.timeline,
     createdAt: data.createdAt,
   }
