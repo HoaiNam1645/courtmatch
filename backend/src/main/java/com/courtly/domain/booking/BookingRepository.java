@@ -65,6 +65,55 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                                @Param("statuses") Collection<BookingStatus> statuses,
                                Pageable pageable);
 
+    /**
+     * Yeu cau dat san cua chu san, loc theo san, trang thai va ngay choi (2.3.12).
+     *
+     * <p>Yeu cau sap het han hien truoc (han phan hoi tang dan); don da xu ly khong co han nen
+     * xep theo thoi diem tao, moi nhat truoc. Tham so loc luon co gia tri (danh sach san,
+     * khoang thoi gian rong) de tranh tham so NULL kho suy kieu trong PostgreSQL.
+     */
+    @Query(value = """
+            SELECT b FROM Booking b
+            JOIN FETCH b.venue v
+            JOIN FETCH b.user
+            WHERE v.id IN :venueIds
+              AND b.status IN :statuses
+              AND EXISTS (SELECT i.id FROM BookingItem i
+                          WHERE i.booking = b AND i.startTime >= :from AND i.startTime < :to)
+            ORDER BY b.ownerResponseExpiresAt ASC NULLS LAST, b.createdAt DESC
+            """,
+            countQuery = """
+                    SELECT count(b) FROM Booking b
+                    WHERE b.venue.id IN :venueIds
+                      AND b.status IN :statuses
+                      AND EXISTS (SELECT i.id FROM BookingItem i
+                                  WHERE i.booking = b AND i.startTime >= :from AND i.startTime < :to)
+                    """)
+    Page<Booking> findRequestsForOwner(@Param("venueIds") Collection<UUID> venueIds,
+                                       @Param("statuses") Collection<BookingStatus> statuses,
+                                       @Param("from") Instant from,
+                                       @Param("to") Instant to,
+                                       Pageable pageable);
+
+    /** So yeu cau dang cho chu san duyet va so yeu cau sap het han (2.3.12). */
+    @Query("""
+            SELECT count(b) FROM Booking b
+            WHERE b.venue.id IN :venueIds
+              AND b.status = com.courtly.common.enums.BookingStatus.PENDING_OWNER_CONFIRMATION
+              AND b.ownerResponseExpiresAt > :now
+              AND b.ownerResponseExpiresAt <= :soon
+            """)
+    long countExpiringSoon(@Param("venueIds") Collection<UUID> venueIds,
+                           @Param("now") Instant now,
+                           @Param("soon") Instant soon);
+
+    @Query("""
+            SELECT count(b) FROM Booking b
+            WHERE b.venue.id IN :venueIds
+              AND b.status = com.courtly.common.enums.BookingStatus.PENDING_OWNER_CONFIRMATION
+            """)
+    long countAwaitingOwner(@Param("venueIds") Collection<UUID> venueIds);
+
     /** Owner-review or direct-payment requests that passed their deadline. */
     @Query("""
             SELECT b FROM Booking b

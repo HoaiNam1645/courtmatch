@@ -93,6 +93,7 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange, showRa
       cancelled = true
       if (resizeTimer) clearTimeout(resizeTimer)
       if (mapRef.current) {
+        mapRef.current.stop()
         mapRef.current.remove()
         mapRef.current = null
         markerRef.current = null
@@ -114,7 +115,8 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange, showRa
     if (latitude == null || longitude == null || !mapRef.current) return
     markerRef.current?.setLatLng([latitude, longitude])
     circleRef.current?.setLatLng([latitude, longitude])
-    mapRef.current.setView([latitude, longitude], Math.max(mapRef.current.getZoom(), 15))
+    // Không animate: hoạt ảnh đang chạy mà bản đồ bị gỡ (rời trang) làm Leaflet văng lỗi _leaflet_pos.
+    mapRef.current.setView([latitude, longitude], Math.max(mapRef.current.getZoom(), 15), { animate: false })
   }, [latitude, longitude])
 
   function useCurrentPosition() {

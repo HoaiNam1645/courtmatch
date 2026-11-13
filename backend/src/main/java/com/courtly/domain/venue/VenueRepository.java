@@ -18,6 +18,10 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
 
     boolean existsBySlug(String slug);
 
+    /** Id cac san cua mot chu san (2.3.12). */
+    @Query("SELECT v.id FROM Venue v WHERE v.owner.id = :ownerId")
+    List<UUID> findIdsByOwnerId(@Param("ownerId") UUID ownerId);
+
     /** San cua mot chu san, moi trang thai, moi nhat truoc (2.3.3). */
     Page<Venue> findByOwnerIdOrderByCreatedAtDesc(UUID ownerId, Pageable pageable);
 
