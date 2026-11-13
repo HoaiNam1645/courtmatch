@@ -140,3 +140,32 @@ export async function createOwnerVenue(values) {
   })
   return toUiVenueDetail(data)
 }
+
+/** 2.3.4 — chi tiết sân của chủ sân, kể cả sân chưa duyệt. */
+export async function fetchOwnerVenue(venueId) {
+  return toUiVenueDetail(await request(`/api/v1/owner/venues/${encodeURIComponent(venueId)}`))
+}
+
+/** 2.3.4 — cập nhật thông tin chung và tiện ích. */
+export async function updateOwnerVenue(venueId, values) {
+  return toUiVenueDetail(await request(`/api/v1/owner/venues/${encodeURIComponent(venueId)}`, {
+    method: 'PUT',
+    body: toVenueInfoBody(values),
+  }))
+}
+
+/** 2.3.4 — thêm sân con. */
+export function addOwnerCourt(venueId, court) {
+  return request(`/api/v1/owner/venues/${encodeURIComponent(venueId)}/courts`, {
+    method: 'POST',
+    body: toCourtBody(court),
+  })
+}
+
+/** 2.3.4 — sửa sân con, kể cả đổi trạng thái hoạt động / bảo trì / ngừng. */
+export function updateOwnerCourt(venueId, court) {
+  return request(`/api/v1/owner/venues/${encodeURIComponent(venueId)}/courts/${encodeURIComponent(court.id)}`, {
+    method: 'PUT',
+    body: { ...toCourtBody(court), status: court.status },
+  })
+}

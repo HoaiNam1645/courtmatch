@@ -43,4 +43,14 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, UUID> 
     boolean existsOverlapping(@Param("courtId") UUID courtId,
                               @Param("startTime") Instant startTime,
                               @Param("endTime") Instant endTime);
+
+    /** So khung gio con giu (pending/confirmed) chua ket thuc cua mot san con (2.3.4). */
+    @Query("""
+            SELECT count(i) FROM BookingItem i
+            WHERE i.court.id = :courtId
+              AND i.status IN (com.courtly.common.enums.BookingItemStatus.PENDING,
+                               com.courtly.common.enums.BookingItemStatus.CONFIRMED)
+              AND i.endTime > :now
+            """)
+    long countUpcomingForCourt(@Param("courtId") UUID courtId, @Param("now") Instant now);
 }

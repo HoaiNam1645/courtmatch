@@ -1,16 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { loginByApi, runSql, SEED_OWNER_EMAIL, watchRuntimeErrors } from './helpers'
+import { deleteE2eVenues, loginByApi, SEED_OWNER_EMAIL, watchRuntimeErrors } from './helpers'
 
 const API_BASE_URL = 'http://127.0.0.1:8080'
 const VENUE_NAME = 'E2E Sân Thử Nghiệm Sơn Trà'
-
-function deleteE2eVenues() {
-  runSql(`
-    DELETE FROM audit_logs WHERE entity_type = 'venues'
-      AND entity_id IN (SELECT id FROM venues WHERE name LIKE 'E2E %');
-    DELETE FROM venues WHERE name LIKE 'E2E %';
-  `)
-}
 
 test.describe.serial('2.3.3 owner adds a new venue', () => {
   test.beforeAll(deleteE2eVenues)

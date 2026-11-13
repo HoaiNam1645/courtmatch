@@ -4,6 +4,7 @@ import com.courtly.api.booking.dto.QuoteRequest;
 import com.courtly.api.booking.dto.QuoteResponse;
 import com.courtly.common.enums.ApprovalStatus;
 import com.courtly.common.enums.BlockStatus;
+import com.courtly.common.enums.CourtStatus;
 import com.courtly.common.enums.VenueStatus;
 import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
@@ -58,6 +59,10 @@ public class QuoteService {
         Venue venue = court.getVenue();
         if (venue.getStatus() != VenueStatus.ACTIVE || venue.getApprovalStatus() != ApprovalStatus.APPROVED) {
             throw ApiException.notFound("Khong tim thay san nay.");
+        }
+        // 2.3.4 - chu san dua san con vao bao tri / ngung thi khong nhan dat moi.
+        if (court.getStatus() != CourtStatus.ACTIVE) {
+            throw ApiException.notFound("San con nay dang tam ngung nhan dat san.");
         }
 
         Instant startAt = request.startTime();

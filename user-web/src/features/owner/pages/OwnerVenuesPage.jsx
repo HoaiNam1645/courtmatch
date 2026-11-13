@@ -1,4 +1,4 @@
-import { CheckCircle2, MapPin, Plus } from 'lucide-react'
+import { CheckCircle2, ChevronRight, MapPin, Plus } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { APPROVAL_STATUS_META, fetchOwnerVenues, statusMeta, VENUE_STATUS_META } from '../../../api/ownerVenues'
 import { useApiResource } from '../../../hooks/useApiResource'
@@ -46,7 +46,12 @@ function OwnerVenuesPage() {
                 </div>
                 <h2 className="mt-2 truncate text-base font-semibold text-emerald-950">{venue.name}</h2>
                 <p className="mt-1 line-clamp-2 text-sm font-medium text-stone-500">{venue.address}{venue.district && !venue.address.includes(venue.district) ? `, ${venue.district}` : ''}</p>
-                <p className="mt-2 text-xs font-semibold text-emerald-700">{venue.courtCount} sân con</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-emerald-700">{venue.courtCount} sân con</p>
+                  <Link to={`/owner/venues/${venue.id}`} className="inline-flex h-9 items-center gap-1 rounded-lg bg-emerald-700 px-3 text-xs font-semibold text-white" aria-label={`Quản lý ${venue.name}`}>
+                    Quản lý<ChevronRight className="size-4" />
+                  </Link>
+                </div>
               </div>
             </article>
           ))}

@@ -65,6 +65,7 @@ public final class ErrorCode {
     // Chu san Sprint 3
     public static final String PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED";
     public static final String CURRENT_PASSWORD_INVALID = "CURRENT_PASSWORD_INVALID";
+    public static final String COURT_HAS_UPCOMING_BOOKINGS = "COURT_HAS_UPCOMING_BOOKINGS";
 
     private ErrorCode() {
     }

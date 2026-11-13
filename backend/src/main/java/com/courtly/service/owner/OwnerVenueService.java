@@ -2,6 +2,8 @@ package com.courtly.service.owner;
 
 import com.courtly.api.owner.dto.CourtInput;
 import com.courtly.api.owner.dto.CreateVenueRequest;
+import com.courtly.api.owner.dto.UpdateCourtRequest;
+import com.courtly.api.owner.dto.UpdateVenueRequest;
 import com.courtly.api.owner.dto.OwnerVenueDetailResponse;
 import com.courtly.api.owner.dto.OwnerVenueSummaryResponse;
 import com.courtly.api.owner.dto.VenueFormOptionsResponse;
@@ -15,6 +17,7 @@ import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
 import com.courtly.domain.account.User;
 import com.courtly.domain.account.UserRepository;
+import com.courtly.domain.booking.BookingItemRepository;
 import com.courtly.domain.venue.Court;
 import com.courtly.domain.venue.CourtRepository;
 import com.courtly.domain.venue.Service;
@@ -42,7 +45,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Chu san quan ly danh sach san cua minh: xem (2.3.3), them moi (2.3.3). */
+/** Chu san quan ly san cua minh: xem va them moi (2.3.3), cap nhat thong tin va san con (2.3.4). */
 @Slf4j
 @org.springframework.stereotype.Service
 @RequiredArgsConstructor
@@ -55,6 +58,8 @@ public class OwnerVenueService {
     private final ServiceRepository serviceRepository;
     private final VenueImageRepository venueImageRepository;
     private final UserRepository userRepository;
+    private final BookingItemRepository bookingItemRepository;
+    private final OwnedVenueLookup ownedVenueLookup;
     private final AuditService auditService;
 
     /** Danh muc cho form: quan/huyen Da Nang, tien ich, loai san, mat san, khung toa do. */
@@ -152,7 +157,111 @@ public class OwnerVenueService {
         return toDetail(venue);
     }
 
+    /** Chi tiet mot san cua chu san, ke ca san chua duyet (2.3.4). */
+    @Transactional(readOnly = true)
+    public OwnerVenueDetailResponse get(UUID ownerId, UUID venueId) {
+        return toDetail(ownedVenueLookup.requireVenue(ownerId, venueId));
+    }
+
+    /**
+     * Cap nhat thong tin chung va tien ich (2.3.4).
+     *
+     * <p>Khong dua san da duyet ve trang thai cho duyet: chuc nang duyet san cua quan tri vien
+     * (2.3.34) chua co, dua ve cho duyet se an san khoi nguoi choi ma khong ai mo lai duoc.
+     * Moi thay doi deu duoc ghi audit_logs de quan tri vien doi chieu.
+     */
+    @Transactional
+    public OwnerVenueDetailResponse update(UUID ownerId, UUID venueId, UpdateVenueRequest request) {
+        Venue venue = ownedVenueLookup.requireVenue(ownerId, venueId);
+        String phone = validateContact(request.district(), request.latitude(), request.longitude(), request.phone());
+        Map<String, Service> services = resolveServices(request.services());
+        Map<String, Object> before = venueSnapshot(venue);
+
+        venue.setName(request.name());
+        venue.setDescription(request.description());
+        venue.setAddress(request.address());
+        venue.setWard(request.ward());
+        venue.setDistrict(request.district());
+        venue.setLatitude(request.latitude());
+        venue.setLongitude(request.longitude());
+        venue.setPhone(phone);
+        venue.setEmail(request.email());
+        replaceServices(venue, request.services(), services);
+
+        venueRepository.saveAndFlush(venue);
+        auditService.record(venue.getOwner(), "venue.update", "venues", venue.getId(), before, venueSnapshot(venue));
+        log.info("Chu san {} cap nhat san {}", ownerId, venueId);
+        return toDetail(venue);
+    }
+
+    /** Them san con vao san da co (2.3.4). */
+    @Transactional
+    public OwnerVenueDetailResponse.CourtItem addCourt(UUID ownerId, UUID venueId, CourtInput input) {
+        Venue venue = ownedVenueLookup.requireVenue(ownerId, venueId);
+        if (venue.getCourts().size() >= VenueCatalog.MAX_COURTS) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED,
+                    "Moi san co toi da " + VenueCatalog.MAX_COURTS + " san con.", Map.of());
+        }
+        validateCourt(input, "");
+        requireUniqueCourtCode(venue, input.courtCode(), null);
+
+        Court court = new Court();
+        court.setId(UUID.randomUUID());
+        court.setVenue(venue);
+        applyCourt(court, input);
+        court.setStatus(CourtStatus.ACTIVE);
+        venue.getCourts().add(court);
+        courtRepository.saveAndFlush(court);
+
+        auditService.record(venue.getOwner(), "court.create", "courts", court.getId(), null, courtSnapshot(court));
+        return toCourtItem(court);
+    }
+
+    /**
+     * Sua san con (2.3.4).
+     *
+     * <p>Dua san con dang hoat dong sang bao tri / ngung bi chan khi con booking chua choi:
+     * nguoi choi da duoc giu cho tren san do, khong duoc de ho den noi ma san khong mo.
+     */
+    @Transactional
+    public OwnerVenueDetailResponse.CourtItem updateCourt(UUID ownerId, UUID venueId, UUID courtId,
+                                                          UpdateCourtRequest request) {
+        Court court = ownedVenueLookup.requireCourt(ownerId, venueId, courtId);
+        CourtInput input = request.toCourtInput();
+        validateCourt(input, "");
+        requireUniqueCourtCode(court.getVenue(), input.courtCode(), court.getId());
+
+        CourtStatus nextStatus = CourtStatus.from(request.status());
+        if (court.getStatus() == CourtStatus.ACTIVE && nextStatus != CourtStatus.ACTIVE) {
+            long upcoming = bookingItemRepository.countUpcomingForCourt(court.getId(), java.time.Instant.now());
+            if (upcoming > 0) {
+                throw ApiException.conflict(ErrorCode.COURT_HAS_UPCOMING_BOOKINGS,
+                        "San con con " + upcoming + " khung gio da duoc dat chua choi. "
+                                + "Hay xu ly cac booking nay truoc khi tam ngung san con.",
+                        Map.of("status", "San con con " + upcoming + " khung gio da duoc dat"));
+            }
+        }
+
+        Map<String, Object> before = courtSnapshot(court);
+        applyCourt(court, input);
+        court.setStatus(nextStatus);
+        courtRepository.saveAndFlush(court);
+        auditService.record(court.getVenue().getOwner(), "court.update", "courts", court.getId(),
+                before, courtSnapshot(court));
+        return toCourtItem(court);
+    }
+
     // ---------------------------------------------------------------- validate
+
+    private void requireUniqueCourtCode(Venue venue, String courtCode, UUID exceptCourtId) {
+        boolean taken = venue.getCourts().stream()
+                .anyMatch(other -> !other.getId().equals(exceptCourtId)
+                        && other.getCourtCode().equalsIgnoreCase(courtCode));
+        if (taken) {
+            throw ApiException.conflict(ErrorCode.VALIDATION_FAILED, "Ma san con da ton tai trong san nay.",
+                    Map.of("courtCode", "Ma san con da ton tai trong san nay"));
+        }
+    }
 
     /**
      * Quan/huyen, toa do va so dien thoai cua san.
@@ -229,6 +338,61 @@ public class OwnerVenueService {
 
     // ---------------------------------------------------------------- helpers
 
+    /**
+     * Cap nhat tien ich theo tung ma thay vi xoa het roi them lai: Hibernate chay INSERT truoc
+     * DELETE trong cung mot lan flush, xoa-roi-them cung ma se dam vao khoa chinh.
+     */
+    private static void replaceServices(Venue venue, List<VenueServiceInput> inputs, Map<String, Service> services) {
+        Map<String, VenueServiceInput> wanted = inputs.stream()
+                .collect(Collectors.toMap(VenueServiceInput::code, Function.identity()));
+        venue.getVenueServices().removeIf(item -> !wanted.containsKey(item.getService().getCode()));
+        Map<String, VenueService> existing = venue.getVenueServices().stream()
+                .collect(Collectors.toMap(item -> item.getService().getCode(), Function.identity()));
+        for (VenueServiceInput input : inputs) {
+            VenueService item = existing.get(input.code());
+            if (item == null) {
+                venue.getVenueServices().add(new VenueService(
+                        venue, services.get(input.code()), input.price(), trimToNull(input.note())));
+            } else {
+                item.setPrice(input.price());
+                item.setNote(trimToNull(input.note()));
+            }
+        }
+    }
+
+    private static Map<String, Object> venueSnapshot(Venue venue) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("name", venue.getName());
+        data.put("address", venue.getAddress());
+        data.put("ward", venue.getWard());
+        data.put("district", venue.getDistrict());
+        data.put("latitude", venue.getLatitude());
+        data.put("longitude", venue.getLongitude());
+        data.put("phone", venue.getPhone());
+        data.put("email", venue.getEmail());
+        data.put("services", venue.getVenueServices().stream()
+                .map(item -> item.getService().getCode()).sorted().toList());
+        return data;
+    }
+
+    private static Map<String, Object> courtSnapshot(Court court) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("venueId", court.getVenue().getId().toString());
+        data.put("name", court.getName());
+        data.put("courtCode", court.getCourtCode());
+        data.put("courtType", court.getCourtType());
+        data.put("surfaceType", court.getSurfaceType());
+        data.put("indoor", court.isIndoor());
+        data.put("status", court.getStatus().getValue());
+        return data;
+    }
+
+    private static OwnerVenueDetailResponse.CourtItem toCourtItem(Court court) {
+        return new OwnerVenueDetailResponse.CourtItem(
+                court.getId(), court.getName(), court.getCourtCode(), court.getCourtType(),
+                court.getSurfaceType(), court.isIndoor(), court.getStatus().getValue());
+    }
+
     /** "Sân Cầu Lông Đà Nẵng" -> "san-cau-long-da-nang", them -2, -3 neu trung. */
     private String uniqueSlug(String name) {
         String base = slugify(name);
@@ -280,9 +444,7 @@ public class OwnerVenueService {
                         .toList(),
                 venue.getCourts().stream()
                         .sorted(Comparator.comparing(Court::getCourtCode))
-                        .map(court -> new OwnerVenueDetailResponse.CourtItem(
-                                court.getId(), court.getName(), court.getCourtCode(), court.getCourtType(),
-                                court.getSurfaceType(), court.isIndoor(), court.getStatus().getValue()))
+                        .map(OwnerVenueService::toCourtItem)
                         .toList(),
                 venue.getCreatedAt(), venue.getUpdatedAt());
     }

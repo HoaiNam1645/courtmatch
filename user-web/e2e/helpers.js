@@ -89,6 +89,61 @@ export function deleteTemporaryOwner(email) {
   `)
 }
 
+const E2E_VENUES = "SELECT id FROM venues WHERE name LIKE 'E2E %'"
+
+/** Xóa mọi sân E2E (tên bắt đầu bằng "E2E ") cùng booking và nhật ký liên quan. */
+export function deleteE2eVenues() {
+  runSql(`
+    DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
+    DELETE FROM bookings WHERE venue_id IN (${E2E_VENUES});
+    DELETE FROM audit_logs WHERE entity_id IN (${E2E_VENUES})
+       OR entity_id IN (SELECT c.id FROM courts c WHERE c.venue_id IN (${E2E_VENUES}))
+       OR (new_data ->> 'venueId')::uuid IN (${E2E_VENUES});
+    DELETE FROM venues WHERE name LIKE 'E2E %';
+  `)
+}
+
+/** Chủ sân tạo một sân E2E qua API (2.3.3); trả về chi tiết sân. */
+export async function createE2eVenue(page, token, name, courts = [{ name: 'Sân A', courtCode: 'A', courtType: 'standard', indoor: true }]) {
+  const response = await page.request.post(`${API_BASE_URL}/api/v1/owner/venues`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      name,
+      address: '1 Bạch Đằng',
+      district: 'Hải Châu',
+      latitude: 16.0609,
+      longitude: 108.2237,
+      phone: '02363111222',
+      services: [],
+      courts,
+    },
+  })
+  expect(response.status(), await response.text()).toBe(201)
+  return response.json()
+}
+
+/**
+ * Cho sân E2E nhận đặt được: đã duyệt, mở cửa 05:00–23:00 mỗi ngày, 120.000đ/giờ.
+ * Duyệt sân là việc của quản trị viên (2.3.34) nên làm thẳng bằng SQL.
+ */
+export function makeVenueBookable(venueId) {
+  runSql(`
+    UPDATE venues SET status = 'active', approval_status = 'approved' WHERE id = '${venueId}';
+    INSERT INTO venue_operating_hours (id, venue_id, day_of_week, open_time, close_time, is_closed)
+    SELECT gen_random_uuid(), '${venueId}', d, '05:00', '23:00', false FROM generate_series(1, 7) AS d
+    ON CONFLICT (venue_id, day_of_week) DO NOTHING;
+    INSERT INTO court_price_rules (id, court_id, start_time, end_time, price_per_hour, effective_from)
+    SELECT gen_random_uuid(), c.id, '05:00', '23:00', 120000, CURRENT_DATE - 1 FROM courts c
+    WHERE c.venue_id = '${venueId}'
+      AND NOT EXISTS (SELECT 1 FROM court_price_rules r WHERE r.court_id = c.id);
+  `)
+}
+
+/** Ngày thứ Hai sắp tới (giờ Việt Nam), dạng YYYY-MM-DD. */
+export function nextMondayIso() {
+  return runSql("SELECT (date_trunc('week', (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) + interval '7 day')::date")
+}
+
 export function resetPartnerE2eData() {
   const sql = `
     DELETE FROM player_connections
