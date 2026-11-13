@@ -26,6 +26,15 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             """)
     List<Court> findActiveWithPriceRules(@Param("venueId") UUID venueId);
 
+    /** Moi san con (moi trang thai) kem bang gia, cho lich san cua chu san (2.3.8). */
+    @Query("""
+            SELECT DISTINCT c FROM Court c
+            LEFT JOIN FETCH c.priceRules
+            WHERE c.venue.id = :venueId
+            ORDER BY c.courtCode
+            """)
+    List<Court> findAllWithPriceRules(@Param("venueId") UUID venueId);
+
     /** So san con (moi trang thai) cua nhieu dia diem trong MOT cau (2.3.3). */
     @Query("""
             SELECT c.venue.id AS venueId, count(c) AS courtCount

@@ -31,6 +31,22 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, UUID> 
                                             @Param("windowStart") Instant windowStart,
                                             @Param("windowEnd") Instant windowEnd);
 
+    /** Nhu findOccupiedForCourts nhung lay kem don va nguoi dat, cho lich san cua chu san (2.3.8). */
+    @Query("""
+            SELECT i FROM BookingItem i
+            JOIN FETCH i.court
+            JOIN FETCH i.booking b
+            JOIN FETCH b.user
+            WHERE i.court.id IN :courtIds
+              AND i.status IN (com.courtly.common.enums.BookingItemStatus.PENDING,
+                               com.courtly.common.enums.BookingItemStatus.CONFIRMED)
+              AND i.startTime < :windowEnd
+              AND i.endTime > :windowStart
+            """)
+    List<BookingItem> findOccupiedWithBookingForCourts(@Param("courtIds") Collection<UUID> courtIds,
+                                                       @Param("windowStart") Instant windowStart,
+                                                       @Param("windowEnd") Instant windowEnd);
+
     /** Kiem tra mot khung gio cu the con trong khong, truoc khi bao gia (2.1.27). */
     @Query("""
             SELECT count(i) > 0 FROM BookingItem i
