@@ -99,13 +99,14 @@ public class UserSeeder implements Seeder {
                     Gender.MALE, LocalDate.of(1999, 12, 2), SkillLevel.BEGINNER, 920,
                     DominantHand.RIGHT, PlayingStyle.BALANCED, PlayType.DOUBLE, "Thanh Khe", 16.065, 108.18650));
 
+    /** @param taxCode ma so thue 10 so (2.3.2 kiem tra dinh dang nay khi chu san luu ho so) */
     private record OwnerSeed(String key, String fullName, String email, String phone,
-                             String businessName, String bankAccountNo) {
+                             String businessName, String taxCode, String bankAccountNo) {
     }
 
     private static final List<OwnerSeed> OWNERS = List.of(
             new OwnerSeed("owner-01", "Nguyen Huu Thang", "thang.owner@example.com", "0902000001",
-                    "Ho kinh doanh San Cau Long Hai Chau", "0359111001"));
+                    "Ho kinh doanh San Cau Long Hai Chau", "0401359111", "0359111001"));
 
     @Override
     public String name() {
@@ -145,7 +146,7 @@ public class UserSeeder implements Seeder {
 
             CourtOwnerProfile profile = new CourtOwnerProfile(owner);
             profile.setBusinessName(seed.businessName());
-            profile.setTaxCode("01" + seed.bankAccountNo());
+            profile.setTaxCode(seed.taxCode());
             profile.setBankName("MBBank");
             profile.setBankAccountNo(seed.bankAccountNo());
             profile.setBankAccountName(seed.fullName().toUpperCase());
