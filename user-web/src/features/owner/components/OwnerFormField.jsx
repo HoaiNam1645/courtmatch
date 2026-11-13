@@ -1,5 +1,5 @@
 import { FieldError } from '../../../shared/FormFeedback'
-import { inputClass } from '../ownerStyles'
+import { inputClass, textareaClass } from '../ownerStyles'
 
 /** Ô nhập có nhãn và lỗi hiển thị ngay bên dưới (theo fieldErrors của backend). */
 function OwnerFormField({ label, name, value, onChange, error, hint, required, as = 'input', className, ...props }) {
@@ -11,7 +11,7 @@ function OwnerFormField({ label, name, value, onChange, error, hint, required, a
         {required && <span className="text-red-600"> *</span>}
       </span>
       <Component
-        className={as === 'textarea' ? `${inputClass} mt-2 h-28 py-2` : `${inputClass} mt-2`}
+        className={as === 'textarea' ? `${textareaClass} mt-2` : `${inputClass} mt-2`}
         name={name}
         value={value ?? ''}
         onChange={(event) => onChange?.(name, event.target.value)}

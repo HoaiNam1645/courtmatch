@@ -8,6 +8,9 @@ public final class PhoneNumbers {
     /** So di dong Viet Nam sau khi chuan hoa ve dang 0xxxxxxxxx. */
     private static final Pattern VN_MOBILE = Pattern.compile("^0[35789]\\d{8}$");
 
+    /** So co dinh (dau 02, 11 so - vd 0236 3xxx xxx) hoac tong dai 1800/1900. */
+    private static final Pattern VN_LANDLINE = Pattern.compile("^(02\\d{9}|1[89]00\\d{4,6})$");
+
     private PhoneNumbers() {
     }
 
@@ -28,5 +31,10 @@ public final class PhoneNumbers {
 
     public static boolean isMobile(String normalized) {
         return normalized != null && VN_MOBILE.matcher(normalized).matches();
+    }
+
+    /** So lien he cua san (2.3.3): chap nhan ca di dong lan so co dinh. */
+    public static boolean isContactNumber(String normalized) {
+        return isMobile(normalized) || (normalized != null && VN_LANDLINE.matcher(normalized).matches());
     }
 }

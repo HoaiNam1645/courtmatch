@@ -16,6 +16,11 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
 
     Optional<Venue> findBySlug(String slug);
 
+    boolean existsBySlug(String slug);
+
+    /** San cua mot chu san, moi trang thai, moi nhat truoc (2.3.3). */
+    Page<Venue> findByOwnerIdOrderByCreatedAtDesc(UUID ownerId, Pageable pageable);
+
     /**
      * Dieu kien loc dung chung cho cau lay du lieu va cau dem.
      *

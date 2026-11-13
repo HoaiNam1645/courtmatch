@@ -12,7 +12,7 @@ const FALLBACK_CENTER = { lat: 16.0544, lng: 108.2022 }
  * @param {{latitude: number|null, longitude: number|null, radiusKm: number,
  *          onChange: (coords: {latitude: number, longitude: number}) => void}} props
  */
-export function LocationPicker({ latitude, longitude, radiusKm, onChange }) {
+export function LocationPicker({ latitude, longitude, radiusKm, onChange, showRadius = true, heightClass = 'h-[220px]' }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
@@ -56,18 +56,21 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange }) {
         iconAnchor: [17, 17],
       })
       const marker = L.marker([start.lat, start.lng], { draggable: true, icon }).addTo(map)
-      const circle = L.circle([start.lat, start.lng], {
-        radius: (radiusKm ?? 5) * 1000,
-        color: '#047857',
-        weight: 1,
-        fillColor: '#10b981',
-        fillOpacity: 0.12,
-      }).addTo(map)
+      // Chọn vị trí sân (2.3.3) không cần vòng bán kính như địa điểm chơi ưu tiên.
+      const circle = showRadius
+        ? L.circle([start.lat, start.lng], {
+          radius: (radiusKm ?? 5) * 1000,
+          color: '#047857',
+          weight: 1,
+          fillColor: '#10b981',
+          fillOpacity: 0.12,
+        }).addTo(map)
+        : null
 
       function commit(lat, lng) {
         const next = { latitude: Number(lat.toFixed(7)), longitude: Number(lng.toFixed(7)) }
         marker.setLatLng([next.latitude, next.longitude])
-        circle.setLatLng([next.latitude, next.longitude])
+        circle?.setLatLng([next.latitude, next.longitude])
         onChangeRef.current?.(next)
       }
 
@@ -152,7 +155,7 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange }) {
 
       <div
         ref={containerRef}
-        className="mt-3 h-[220px] w-full overflow-hidden rounded-lg ring-1 ring-emerald-100"
+        className={`mt-3 ${heightClass} w-full overflow-hidden rounded-lg ring-1 ring-emerald-100`}
       />
 
       {locateError && <p className="mt-2 text-xs font-medium text-red-600">{locateError}</p>}
