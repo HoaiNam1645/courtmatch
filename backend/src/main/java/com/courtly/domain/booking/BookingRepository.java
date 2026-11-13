@@ -95,6 +95,39 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                                        @Param("to") Instant to,
                                        Pageable pageable);
 
+    /**
+     * Lich su dat san cua chu san (2.3.15): loc theo san, nhom trang thai, ngay choi va tu khoa
+     * (ma don hoac ten nguoi dat, khong phan biet dau). Moi tham so luon co gia tri de tranh
+     * tham so NULL kho suy kieu: tu khoa "%" = khong loc.
+     */
+    @Query(value = """
+            SELECT b FROM Booking b
+            JOIN FETCH b.venue v
+            JOIN FETCH b.user u
+            WHERE v.id IN :venueIds
+              AND b.status IN :statuses
+              AND (lower(b.bookingCode) LIKE lower(:keyword)
+                   OR lower(function('courtly_unaccent', u.fullName)) LIKE lower(function('courtly_unaccent', :keyword)))
+              AND EXISTS (SELECT i.id FROM BookingItem i
+                          WHERE i.booking = b AND i.startTime >= :from AND i.startTime < :to)
+            ORDER BY b.createdAt DESC
+            """,
+            countQuery = """
+                    SELECT count(b) FROM Booking b
+                    WHERE b.venue.id IN :venueIds
+                      AND b.status IN :statuses
+                      AND (lower(b.bookingCode) LIKE lower(:keyword)
+                           OR lower(function('courtly_unaccent', b.user.fullName)) LIKE lower(function('courtly_unaccent', :keyword)))
+                      AND EXISTS (SELECT i.id FROM BookingItem i
+                                  WHERE i.booking = b AND i.startTime >= :from AND i.startTime < :to)
+                    """)
+    Page<Booking> searchHistoryForOwner(@Param("venueIds") Collection<UUID> venueIds,
+                                        @Param("statuses") Collection<BookingStatus> statuses,
+                                        @Param("keyword") String keyword,
+                                        @Param("from") Instant from,
+                                        @Param("to") Instant to,
+                                        Pageable pageable);
+
     /** So yeu cau dang cho chu san duyet va so yeu cau sap het han (2.3.12). */
     @Query("""
             SELECT count(b) FROM Booking b

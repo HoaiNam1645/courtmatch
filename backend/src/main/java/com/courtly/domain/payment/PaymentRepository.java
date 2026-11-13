@@ -19,6 +19,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     Optional<Payment> findFirstByBookingIdOrderByCreatedAtDesc(UUID bookingId);
 
+    /** Thanh toan cua nhieu booking trong MOT cau, cho danh sach lich su (2.3.15). */
+    @Query("select p from Payment p where p.booking.id in :bookingIds order by p.createdAt asc")
+    List<Payment> findByBookingIds(@Param("bookingIds") java.util.Collection<UUID> bookingIds);
+
     /** Payments that have not been owner-confirmed before their deadline. */
     @Query("""
             select p from Payment p
