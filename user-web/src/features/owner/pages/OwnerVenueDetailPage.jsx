@@ -12,6 +12,7 @@ import { VenueImagesTab } from '../components/VenueImagesTab'
 import { VenueInfoTab } from '../components/VenueInfoTab'
 import { VenuePricesTab } from '../components/VenuePricesTab'
 import { VenueScheduleTab } from '../components/VenueScheduleTab'
+import { VenueSlotsTab } from '../components/VenueSlotsTab'
 import { secondaryButtonClass } from '../ownerStyles'
 
 /** Các tab quản lý một sân; thêm tab khi chức năng tương ứng hoàn thành. */
@@ -21,6 +22,7 @@ const VENUE_TABS = [
   { id: 'prices', label: 'Bảng giá', component: VenuePricesTab },
   { id: 'images', label: 'Hình ảnh', component: VenueImagesTab },
   { id: 'hours', label: 'Giờ hoạt động', component: VenueHoursTab },
+  { id: 'slots', label: 'Khung giờ', component: VenueSlotsTab },
   { id: 'schedule', label: 'Lịch sân', component: VenueScheduleTab },
 ]
 

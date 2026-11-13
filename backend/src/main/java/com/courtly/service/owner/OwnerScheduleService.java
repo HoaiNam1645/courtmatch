@@ -41,9 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OwnerScheduleService {
 
-    /** Do dai mot o lich. */
-    public static final int STEP_MINUTES = 60;
-
     private static final int MAX_DAYS_BACK = 30;
     private static final int MAX_DAYS_AHEAD = 60;
 
@@ -73,6 +70,7 @@ public class OwnerScheduleService {
                 .collect(Collectors.groupingBy(block -> block.getCourt().getId()));
 
         Instant now = Instant.now();
+        int step = venue.getSlotStepMinutes();
         List<VenueScheduleResponse.Day> result = new ArrayList<>();
         for (int offset = 0; offset < days; offset++) {
             LocalDate date = startDate.plusDays(offset);
@@ -84,12 +82,12 @@ public class OwnerScheduleService {
                     courts.stream()
                             .map(court -> new VenueScheduleResponse.CourtSchedule(
                                     court.getId(), court.getName(), court.getCourtCode(), court.getStatus().getValue(),
-                                    closed ? List.of() : slotsFor(court, date, hours, now,
+                                    closed ? List.of() : slotsFor(court, date, hours, step, now,
                                             itemsByCourt.getOrDefault(court.getId(), List.of()),
                                             blocksByCourt.getOrDefault(court.getId(), List.of()))))
                             .toList()));
         }
-        return new VenueScheduleResponse(venueId, startDate, STEP_MINUTES, result);
+        return new VenueScheduleResponse(venueId, startDate, step, result);
     }
 
     private static void validateRange(LocalDate startDate, int days) {
@@ -106,12 +104,12 @@ public class OwnerScheduleService {
     }
 
     private static List<VenueScheduleResponse.Slot> slotsFor(Court court, LocalDate date, VenueOperatingHours hours,
-                                                             Instant now, List<BookingItem> items, List<CourtBlock> blocks) {
+                                                             int step, Instant now, List<BookingItem> items, List<CourtBlock> blocks) {
         List<VenueScheduleResponse.Slot> slots = new ArrayList<>();
         LocalTime open = hours.getOpenTime();
         LocalTime close = hours.getCloseTime();
         for (LocalTime start = open; start.isBefore(close); ) {
-            LocalTime next = start.plusMinutes(STEP_MINUTES);
+            LocalTime next = start.plusMinutes(step);
             // Gio dong cua le (vd 22:30) hoac 23:59: o cuoi ngan hon, va khong tran sang hom sau.
             LocalTime end = next.isBefore(start) || next.isAfter(close) ? close : next;
             Instant startAt = date.atTime(start).atZone(AvailabilityService.ZONE).toInstant();

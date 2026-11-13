@@ -84,6 +84,10 @@ public class Venue extends AuditedEntity {
     @Column(name = "approval_status", nullable = false, length = 30)
     private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
 
+    /** Buoc sinh khung gio dat san: 30 hoac 60 phut (2.3.9). */
+    @Column(name = "slot_step_minutes", nullable = false)
+    private short slotStepMinutes = 60;
+
     /** Cache tu venue_reviews de khong phai tinh lai moi lan hien danh sach san. */
     @Column(name = "average_rating", nullable = false, precision = 3, scale = 2)
     private BigDecimal averageRating = BigDecimal.ZERO;

@@ -46,9 +46,6 @@ public class AvailabilityService {
 
     public static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
-    /** Giao dien hien khung gio theo gio tron. */
-    private static final int STEP_MINUTES = 60;
-
     /** Chi cho xem lich trong pham vi nay de tranh truy van qua xa. */
     private static final int MAX_DAYS_AHEAD = 60;
 
@@ -110,7 +107,7 @@ public class AvailabilityService {
         Instant now = Instant.now();
         List<AvailabilityResponse.CourtAvailability> result = courts.stream()
                 .map(court -> buildCourtAvailability(
-                        court, date, openTime, closeTime, durationMinutes, now,
+                        court, date, openTime, closeTime, durationMinutes, venue.getSlotStepMinutes(), now,
                         blocksByCourt.getOrDefault(court.getId(), List.of()),
                         itemsByCourt.getOrDefault(court.getId(), List.of())))
                 .toList();
@@ -120,13 +117,13 @@ public class AvailabilityService {
 
     private AvailabilityResponse.CourtAvailability buildCourtAvailability(
             Court court, LocalDate date, LocalTime openTime, LocalTime closeTime,
-            int durationMinutes, Instant now, List<CourtBlock> blocks, List<BookingItem> items) {
+            int durationMinutes, int stepMinutes, Instant now, List<CourtBlock> blocks, List<BookingItem> items) {
 
         List<AvailabilityResponse.Slot> slots = new ArrayList<>();
 
         for (LocalTime start = openTime;
              !start.plusMinutes(durationMinutes).isAfter(closeTime);
-             start = start.plusMinutes(STEP_MINUTES)) {
+             start = start.plusMinutes(stepMinutes)) {
 
             LocalTime end = start.plusMinutes(durationMinutes);
             Instant startAt = LocalDateTime.of(date, start).atZone(ZONE).toInstant();
@@ -140,7 +137,7 @@ public class AvailabilityService {
             slots.add(new AvailabilityResponse.Slot(start, end, startAt, endAt, status, price));
 
             // closeTime co the la 23:59, cong them buoc nua se tran sang hom sau.
-            if (start.plusMinutes(STEP_MINUTES).isBefore(start)) {
+            if (start.plusMinutes(stepMinutes).isBefore(start)) {
                 break;
             }
         }
