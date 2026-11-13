@@ -16,7 +16,8 @@ public record UserResponse(UUID id,
                            String phone,
                            String avatarUrl,
                            String status,
-                           List<String> roles) {
+                           List<String> roles,
+                           boolean passwordChangeRequired) {
 
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -30,6 +31,7 @@ public record UserResponse(UUID id,
                         .map(UserRole::getRole)
                         .map(role -> role.getCode())
                         .sorted()
-                        .toList());
+                        .toList(),
+                user.isPasswordChangeRequired());
     }
 }

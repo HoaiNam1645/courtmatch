@@ -16,6 +16,8 @@ export function toUiUser(user) {
     avatarUrl: user.avatarUrl ?? null,
     status: user.status,
     roles: user.roles ?? [],
+    // 2.3.1 — chủ sân dùng mật khẩu tạm do quản trị viên cấp thì phải đổi trước.
+    passwordChangeRequired: Boolean(user.passwordChangeRequired),
   }
 }
 

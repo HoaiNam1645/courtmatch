@@ -31,6 +31,7 @@ export async function loginByApi(page, emailOrPhone, password = DEFAULT_PASSWORD
     avatarUrl: payload.user.avatarUrl ?? null,
     status: payload.user.status,
     roles: payload.user.roles ?? [],
+    passwordChangeRequired: Boolean(payload.user.passwordChangeRequired),
   }
   await page.addInitScript(({ token, cachedUser }) => {
     window.localStorage.setItem('courtly_access_token', token)
@@ -51,6 +52,41 @@ export async function loginThroughUi(page, identity, { method = 'email', passwor
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('link', { name: /Nguyen Van An|Tran Thi Binh/ })).toBeVisible()
+}
+
+/** Chạy SQL trên database local; chỉ dùng để dựng và dọn dữ liệu E2E. */
+export function runSql(sql) {
+  return execFileSync('psql', ['-h', 'localhost', '-U', 'courtly', '-d', 'courtly', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql], {
+    env: { ...process.env, PGPASSWORD: 'courtly' },
+    encoding: 'utf8',
+  }).trim()
+}
+
+/** Chủ sân mẫu duy nhất của dữ liệu seed. */
+export const SEED_OWNER_EMAIL = 'thang.owner@example.com'
+
+/**
+ * Tài khoản chủ sân tạm cho E2E (2.3.1), dùng mật khẩu mẫu và bị bắt đổi mật khẩu.
+ * Mượn hash mật khẩu của chủ sân seed để không phải tự băm.
+ */
+export function createTemporaryOwner(email) {
+  deleteTemporaryOwner(email)
+  runSql(`
+    INSERT INTO users (id, full_name, email, password_hash, status, email_verified_at, password_change_required)
+    SELECT gen_random_uuid(), 'E2E Chu San Tam', '${email}', password_hash, 'active', now(), true
+    FROM users WHERE email = '${SEED_OWNER_EMAIL}';
+    INSERT INTO user_roles (user_id, role_id)
+    SELECT u.id, r.id FROM users u, roles r WHERE u.email = '${email}' AND r.code = 'owner';
+    INSERT INTO court_owner_profiles (user_id, business_name, verification_status)
+    SELECT id, 'E2E Ho kinh doanh', 'pending' FROM users WHERE email = '${email}';
+  `)
+}
+
+export function deleteTemporaryOwner(email) {
+  runSql(`
+    DELETE FROM audit_logs WHERE actor_id IN (SELECT id FROM users WHERE email = '${email}');
+    DELETE FROM users WHERE email = '${email}';
+  `)
 }
 
 export function resetPartnerE2eData() {

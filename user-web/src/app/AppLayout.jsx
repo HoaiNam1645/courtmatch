@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, CalendarDays, LogOut, Zap } from 'lucide-react'
 import { classNames } from '../shared/utils'
+import { isOwner } from '../shared/roles'
 import { readCachedUser } from '../shared/session'
 import { fallbackSlides, navigationTabs } from './config'
 
@@ -139,7 +140,7 @@ function AppHeader({ user, onLogout }) {
               <Bell className="size-[18px]" />
             </button>
             <a
-              href="/profile"
+              href={isOwner(user) ? '/owner' : '/profile'}
               className="flex h-10 items-center gap-2.5 rounded-lg border border-white/22 bg-white/8 px-3 text-left text-white shadow-sm backdrop-blur"
             >
               <span className="grid size-7 place-items-center rounded-md bg-lime-300 text-xs font-semibold text-emerald-950">
@@ -147,7 +148,7 @@ function AppHeader({ user, onLogout }) {
               </span>
               <span className="hidden leading-tight sm:grid">
                 <span className="text-[13px] font-semibold">{user.name}</span>
-                <span className="text-[11px] font-medium text-lime-200">Người chơi</span>
+                <span className="text-[11px] font-medium text-lime-200">{isOwner(user) ? 'Chủ sân' : 'Người chơi'}</span>
               </span>
             </a>
             <button

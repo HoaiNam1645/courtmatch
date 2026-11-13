@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, ChevronDown, Eye, EyeOff, Mail } from 'lucide-react'
 import { ApiError } from '../../../api/client'
 import { login as loginApi } from '../../../api/auth'
+import { homePathFor } from '../../../shared/roles'
 import { saveCachedUser, savePendingVerification } from '../../../shared/session'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
@@ -50,7 +51,7 @@ function LoginPage() {
     try {
       const user = await loginApi({ emailOrPhone, password })
       saveCachedUser(user)
-      window.location.href = '/'
+      window.location.href = homePathFor(user)
     } catch (error) {
       if (error instanceof ApiError) {
         // Tài khoản đã đăng ký nhưng chưa xác minh email: đưa thẳng sang màn hình
@@ -209,14 +210,12 @@ function LoginPage() {
               Đăng nhập với Google
             </button>
 
-            <a
-              className="login-owner-banner flex min-h-[76px] items-center justify-center rounded-md border border-[#e4b02d] bg-white px-5 text-center text-base leading-7 text-[#e3a528] underline underline-offset-4"
-              href="/owner-app"
-            >
-              Nếu bạn là CHỦ SÂN hoặc NHÂN VIÊN, Bấm vào đây để tải ứng dụng
+            {/* 2.3.1 — chủ sân dùng chung form này với tài khoản do quản trị viên cấp. */}
+            <p className="login-owner-banner flex min-h-[76px] items-center justify-center rounded-md border border-[#e4b02d] bg-white px-5 text-center text-base leading-7 text-[#c98a12]">
+              Bạn là CHỦ SÂN? Đăng nhập bằng tài khoản do quản trị viên Courtly cấp
               <br />
-              Courtly - Quản lý sân cầu lông!
-            </a>
+              để vào trang quản lý sân cầu lông.
+            </p>
           </div>
         </div>
       </section>

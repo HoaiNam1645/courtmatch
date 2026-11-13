@@ -62,6 +62,10 @@ public final class ErrorCode {
     public static final String PARTNER_REVIEW_DUPLICATE = "PARTNER_REVIEW_DUPLICATE";
     public static final String PARTNER_REVIEW_NOT_ALLOWED = "PARTNER_REVIEW_NOT_ALLOWED";
 
+    // Chu san Sprint 3
+    public static final String PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED";
+    public static final String CURRENT_PASSWORD_INVALID = "CURRENT_PASSWORD_INVALID";
+
     private ErrorCode() {
     }
 }

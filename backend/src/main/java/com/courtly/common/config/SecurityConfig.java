@@ -84,6 +84,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
+                        // 2.3.1 - khu quan ly chi danh cho chu san; trang thai tai khoan
+                        // duoc kiem tra lai trong OwnerAccessInterceptor.
+                        .requestMatchers("/api/v1/owner/**").hasRole("owner")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

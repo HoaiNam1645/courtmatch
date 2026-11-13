@@ -52,6 +52,10 @@ public class User extends AuditedEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    /** Mat khau hien tai la mat khau tam do quan tri vien cap, phai doi truoc khi quan ly san (2.3.1). */
+    @Column(name = "password_change_required", nullable = false)
+    private boolean passwordChangeRequired;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles = new LinkedHashSet<>();
 
