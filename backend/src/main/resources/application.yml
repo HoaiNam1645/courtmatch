@@ -58,6 +58,12 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  servlet:
+    multipart:
+      # 2.3.6 - anh san toi da 5MB; de du cho caption va phan dau multipart.
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   jackson:
     default-property-inclusion: non_null
     serialization:
@@ -109,6 +115,11 @@ courtly:
       max-attempts: 5
       resend-cooldown-seconds: 60
       max-sends-per-hour: 5
+  storage:
+    # 2.3.6 - thu muc luu anh san tai len. Production: dat ngoai thu muc deploy.
+    upload-dir: ${UPLOAD_DIR:uploads}
+    # Goc URL cong khai cua backend, dung de dung duong dan anh tra cho frontend.
+    public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
   security:
     jwt:
       # BAT BUOC doi o moi truong that. Toi thieu 32 ky tu cho HS256.

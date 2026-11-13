@@ -34,7 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 /** Cau hinh xac thuc: stateless, xac minh JWT o moi request. */
 @Configuration
 @EnableConfigurationProperties({JwtProperties.class, CorsProperties.class,
-        MailProperties.class, PasswordResetProperties.class, EmailVerificationProperties.class})
+        MailProperties.class, PasswordResetProperties.class, EmailVerificationProperties.class,
+        StorageProperties.class})
 public class SecurityConfig {
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
@@ -55,6 +56,8 @@ public class SecurityConfig {
     private static final String[] PUBLIC_GET_ENDPOINTS = {
             "/api/v1/venues",
             "/api/v1/venues/**",
+            // 2.3.6 - anh san tai len hien o trang cong khai
+            "/api/v1/media/**",
             "/actuator/health"
     };
 

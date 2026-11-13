@@ -13,6 +13,8 @@ public interface VenueImageRepository extends JpaRepository<VenueImage, UUID> {
 
     List<VenueImage> findAllByVenueIdOrderByDisplayOrderAsc(UUID venueId);
 
+    long countByVenueId(UUID venueId);
+
     /**
      * Anh bia cua nhieu dia diem trong MOT cau truy van.
      *

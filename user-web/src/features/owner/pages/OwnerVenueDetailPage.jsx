@@ -7,6 +7,7 @@ import { classNames } from '../../../shared/utils'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { VenueCourtsTab } from '../components/VenueCourtsTab'
+import { VenueImagesTab } from '../components/VenueImagesTab'
 import { VenueInfoTab } from '../components/VenueInfoTab'
 import { VenuePricesTab } from '../components/VenuePricesTab'
 import { secondaryButtonClass } from '../ownerStyles'
@@ -16,6 +17,7 @@ const VENUE_TABS = [
   { id: 'info', label: 'Thông tin', component: VenueInfoTab },
   { id: 'courts', label: 'Sân con', component: VenueCourtsTab },
   { id: 'prices', label: 'Bảng giá', component: VenuePricesTab },
+  { id: 'images', label: 'Hình ảnh', component: VenueImagesTab },
 ]
 
 async function loadVenuePage(venueId) {

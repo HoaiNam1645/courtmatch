@@ -69,14 +69,16 @@ async function parseError(response) {
 
 /**
  * @param {string} path đường dẫn bắt đầu bằng /api/v1
- * @param {{ method?: string, body?: unknown, auth?: boolean }} options
+ * @param {{ method?: string, body?: unknown, auth?: boolean, timeoutMs?: number }} options
  */
-export async function request(path, { method = 'GET', body, auth = true } = {}) {
+export async function request(path, { method = 'GET', body, auth = true, timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
 
+  // FormData (tải ảnh, 2.3.6): để trình duyệt tự đặt Content-Type kèm boundary.
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
   const headers = {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json'
 
   const token = auth ? readToken() : null
   if (token) headers.Authorization = `Bearer ${token}`
@@ -86,7 +88,7 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body)),
       signal: controller.signal,
     })
   } catch (error) {

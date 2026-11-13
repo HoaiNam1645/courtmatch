@@ -16,6 +16,9 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -142,6 +145,27 @@ public class GlobalExceptionHandler {
                 ErrorCode.VALIDATION_FAILED,
                 "Du lieu bi trung hoac xung dot, vui long tai lai trang va thu lai.",
                 Map.of()));
+    }
+
+    /** Thieu tham so hoac phan multipart bat buoc, vd tai anh ma khong gui file (2.3.6). */
+    @ExceptionHandler({MissingServletRequestPartException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<ApiError> handleMissingPart(Exception exception) {
+        String name = exception instanceof MissingServletRequestPartException part
+                ? part.getRequestPartName()
+                : ((MissingServletRequestParameterException) exception).getParameterName();
+        return ResponseEntity.badRequest().body(ApiError.of(
+                ErrorCode.VALIDATION_FAILED,
+                "Du lieu gui len chua hop le, vui long kiem tra lai cac o duoc danh dau.",
+                Map.of(name, "Thieu du lieu bat buoc")));
+    }
+
+    /** 2.3.6 - file tai len vuot gioi han multipart (5MB). */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleUploadTooLarge(MaxUploadSizeExceededException exception) {
+        return ResponseEntity.badRequest().body(ApiError.of(
+                ErrorCode.IMAGE_INVALID,
+                "Anh vuot qua dung luong toi da 5MB.",
+                Map.of("file", "Anh toi da 5MB")));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

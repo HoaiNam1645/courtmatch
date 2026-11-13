@@ -68,6 +68,8 @@ public final class ErrorCode {
     public static final String COURT_HAS_UPCOMING_BOOKINGS = "COURT_HAS_UPCOMING_BOOKINGS";
     public static final String PRICE_RULE_OVERLAP = "PRICE_RULE_OVERLAP";
     public static final String PRICE_RULE_STATE_INVALID = "PRICE_RULE_STATE_INVALID";
+    public static final String IMAGE_INVALID = "IMAGE_INVALID";
+    public static final String IMAGE_LIMIT_REACHED = "IMAGE_LIMIT_REACHED";
 
     private ErrorCode() {
     }

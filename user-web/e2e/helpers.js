@@ -1,5 +1,7 @@
 import { expect } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
+import { rmSync } from 'node:fs'
+import path from 'node:path'
 
 const API_BASE_URL = 'http://127.0.0.1:8080'
 const DEFAULT_PASSWORD = 'Courtly@123'
@@ -93,12 +95,18 @@ const E2E_VENUES = "SELECT id FROM venues WHERE name LIKE 'E2E %'"
 
 /** Xóa mọi sân E2E (tên bắt đầu bằng "E2E ") cùng booking và nhật ký liên quan. */
 export function deleteE2eVenues() {
+  // Ảnh tải lên (2.3.6) nằm trên đĩa của backend: xóa thư mục ảnh của từng sân E2E.
+  const venueIds = runSql(E2E_VENUES).split('\n').filter(Boolean)
+  for (const venueId of venueIds) {
+    rmSync(path.resolve(import.meta.dirname, '../../backend/uploads/venues', venueId), { recursive: true, force: true })
+  }
   runSql(`
     DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM bookings WHERE venue_id IN (${E2E_VENUES});
     DELETE FROM audit_logs WHERE entity_id IN (${E2E_VENUES})
        OR entity_id IN (SELECT c.id FROM courts c WHERE c.venue_id IN (${E2E_VENUES}))
-       OR (new_data ->> 'venueId')::uuid IN (${E2E_VENUES});
+       OR (new_data ->> 'venueId')::uuid IN (${E2E_VENUES})
+       OR (old_data ->> 'venueId')::uuid IN (${E2E_VENUES});
     DELETE FROM venues WHERE name LIKE 'E2E %';
   `)
 }
