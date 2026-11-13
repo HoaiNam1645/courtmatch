@@ -19,6 +19,38 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     Optional<Payment> findFirstByBookingIdOrderByCreatedAtDesc(UUID bookingId);
 
+    /** Thanh toan truc tiep gui toi cac san cua chu san, loc theo trang thai (2.3.16). */
+    @Query(value = """
+            select p from Payment p
+            join fetch p.booking b
+            join fetch b.venue v
+            join fetch b.user
+            where v.id in :venueIds and p.status in :statuses
+            order by p.createdAt desc
+            """,
+            countQuery = """
+                    select count(p) from Payment p
+                    where p.booking.venue.id in :venueIds and p.status in :statuses
+                    """)
+    org.springframework.data.domain.Page<Payment> findForVenues(
+            @Param("venueIds") java.util.Collection<UUID> venueIds,
+            @Param("statuses") java.util.Collection<PaymentStatus> statuses,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** So thanh toan theo tung trang thai cua cac san (2.3.16). */
+    @Query("""
+            select p.status as status, count(p) as total from Payment p
+            where p.booking.venue.id in :venueIds
+            group by p.status
+            """)
+    List<StatusCount> countByStatusForVenues(@Param("venueIds") java.util.Collection<UUID> venueIds);
+
+    interface StatusCount {
+        PaymentStatus getStatus();
+
+        long getTotal();
+    }
+
     /** Thanh toan cua nhieu booking trong MOT cau, cho danh sach lich su (2.3.15). */
     @Query("select p from Payment p where p.booking.id in :bookingIds order by p.createdAt asc")
     List<Payment> findByBookingIds(@Param("bookingIds") java.util.Collection<UUID> bookingIds);
