@@ -8,12 +8,14 @@ import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { VenueCourtsTab } from '../components/VenueCourtsTab'
 import { VenueInfoTab } from '../components/VenueInfoTab'
+import { VenuePricesTab } from '../components/VenuePricesTab'
 import { secondaryButtonClass } from '../ownerStyles'
 
 /** Các tab quản lý một sân; thêm tab khi chức năng tương ứng hoàn thành. */
 const VENUE_TABS = [
   { id: 'info', label: 'Thông tin', component: VenueInfoTab },
   { id: 'courts', label: 'Sân con', component: VenueCourtsTab },
+  { id: 'prices', label: 'Bảng giá', component: VenuePricesTab },
 ]
 
 async function loadVenuePage(venueId) {

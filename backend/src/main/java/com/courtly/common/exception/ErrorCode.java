@@ -66,6 +66,8 @@ public final class ErrorCode {
     public static final String PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED";
     public static final String CURRENT_PASSWORD_INVALID = "CURRENT_PASSWORD_INVALID";
     public static final String COURT_HAS_UPCOMING_BOOKINGS = "COURT_HAS_UPCOMING_BOOKINGS";
+    public static final String PRICE_RULE_OVERLAP = "PRICE_RULE_OVERLAP";
+    public static final String PRICE_RULE_STATE_INVALID = "PRICE_RULE_STATE_INVALID";
 
     private ErrorCode() {
     }

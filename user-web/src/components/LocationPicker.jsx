@@ -28,6 +28,7 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange, showRa
 
   useEffect(() => {
     let cancelled = false
+    let resizeTimer = null
 
     import('leaflet').then((L) => {
       if (cancelled || !containerRef.current || mapRef.current) return
@@ -84,11 +85,13 @@ export function LocationPicker({ latitude, longitude, radiusKm, onChange, showRa
       markerRef.current = marker
       circleRef.current = circle
       // Bản đồ nằm trong khối vừa mở nên phải tính lại kích thước.
-      setTimeout(() => map.invalidateSize(), 120)
+      // Huỷ khi rời trang trước 120ms, nếu không Leaflet thao tác trên bản đồ đã bị gỡ.
+      resizeTimer = setTimeout(() => map.invalidateSize(), 120)
     })
 
     return () => {
       cancelled = true
+      if (resizeTimer) clearTimeout(resizeTimer)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
