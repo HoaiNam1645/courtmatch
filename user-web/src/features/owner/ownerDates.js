@@ -25,3 +25,14 @@ export function formatTime(value) {
   if (!value) return ''
   return new Intl.DateTimeFormat('vi-VN', { timeZone: VN_TIME_ZONE, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value))
 }
+
+/** Cộng/trừ ngày cho chuỗi YYYY-MM-DD, không phụ thuộc múi giờ máy. */
+export function shiftIsoDate(isoDate, days) {
+  const [year, month, day] = isoDate.split(/-/).map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+/** Ngày đầu tháng của chuỗi YYYY-MM-DD. */
+export function firstOfMonth(isoDate) {
+  return `${isoDate.slice(0, 8)}01`
+}

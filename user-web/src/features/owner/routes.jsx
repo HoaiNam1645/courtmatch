@@ -10,6 +10,7 @@ const OwnerVenueDetailPage = lazy(() => import('./pages/OwnerVenueDetailPage'))
 const OwnerBookingRequestsPage = lazy(() => import('./pages/OwnerBookingRequestsPage'))
 const OwnerBookingHistoryPage = lazy(() => import('./pages/OwnerBookingHistoryPage'))
 const OwnerPaymentsPage = lazy(() => import('./pages/OwnerPaymentsPage'))
+const OwnerFinancePage = lazy(() => import('./pages/OwnerFinancePage'))
 
 /** Khu quản lý của chủ sân (Sprint 3, 2.3.x). */
 const ownerRoutes = [
@@ -22,6 +23,7 @@ const ownerRoutes = [
   { path: '/owner/booking-requests', element: <OwnerBookingRequestsPage /> },
   { path: '/owner/bookings', element: <OwnerBookingHistoryPage /> },
   { path: '/owner/payments', element: <OwnerPaymentsPage /> },
+  { path: '/owner/finance', element: <OwnerFinancePage /> },
 ]
 
 export { ownerRoutes }

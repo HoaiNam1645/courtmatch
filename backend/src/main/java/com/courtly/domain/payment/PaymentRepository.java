@@ -45,6 +45,39 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             """)
     List<StatusCount> countByStatusForVenues(@Param("venueIds") java.util.Collection<UUID> venueIds);
 
+    /**
+     * Tien chu san da xac nhan thu truc tiep, gom theo ngay (gio Viet Nam) va theo san (2.3.17).
+     *
+     * <p>Chi tinh payment da duoc chu san xac nhan da thu ({@code confirmed_at}), ke ca sau do bi
+     * hoan mot phan / toan phan: so tien hoan duoc tru o doanh thu thuc nhan (2.3.19).
+     */
+    @Query(value = """
+            SELECT to_char(p.confirmed_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') AS day,
+                   v.id AS venueId,
+                   coalesce(sum(p.amount), 0) AS total,
+                   count(*) AS bookings
+            FROM payments p
+            JOIN bookings b ON b.id = p.booking_id
+            JOIN venues v ON v.id = b.venue_id
+            WHERE v.id IN (:venueIds)
+              AND p.confirmed_at IS NOT NULL
+              AND p.confirmed_at >= :fromTime AND p.confirmed_at < :toTime
+            GROUP BY 1, 2
+            """, nativeQuery = true)
+    List<RevenueRow> revenueByDayAndVenue(@Param("venueIds") java.util.Collection<UUID> venueIds,
+                                          @Param("fromTime") Instant fromTime,
+                                          @Param("toTime") Instant toTime);
+
+    interface RevenueRow {
+        String getDay();
+
+        UUID getVenueId();
+
+        java.math.BigDecimal getTotal();
+
+        long getBookings();
+    }
+
     interface StatusCount {
         PaymentStatus getStatus();
 
