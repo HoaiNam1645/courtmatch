@@ -44,6 +44,7 @@ test.describe.serial('2.3.8 owner manages the venue schedule', () => {
     await loginByApi(page, SEED_OWNER_EMAIL)
     await page.goto(`/owner/venues/${venue.id}?tab=schedule`)
     await page.getByLabel('Chọn ngày').fill(monday)
+    await expect(page.getByTestId('schedule-grid')).toHaveAttribute('data-date', monday)
 
     await expect(page.getByTestId('schedule-grid')).toBeVisible()
     const pending = page.getByTestId('slot-A-09:00')
@@ -67,6 +68,7 @@ test.describe.serial('2.3.8 owner manages the venue schedule', () => {
     await loginByApi(page, SEED_OWNER_EMAIL)
     await page.goto(`/owner/venues/${venue.id}?tab=schedule`)
     await page.getByLabel('Chọn ngày').fill(monday)
+    await expect(page.getByTestId('schedule-grid')).toHaveAttribute('data-date', monday)
     await page.getByRole('button', { name: 'Theo tuần' }).click()
     await expect(page.getByRole('columnheader', { name: /Thứ hai/ })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: /Chủ nhật/ })).toBeVisible()

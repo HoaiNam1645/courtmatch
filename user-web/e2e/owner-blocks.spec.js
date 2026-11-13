@@ -90,6 +90,7 @@ test.describe.serial('2.3.10 owner blocks court time slots', () => {
     await loginByApi(page, SEED_OWNER_EMAIL)
     await page.goto(`/owner/venues/${venue.id}?tab=schedule`)
     await page.getByLabel('Chọn ngày').fill(monday)
+    await expect(page.getByTestId('schedule-grid')).toHaveAttribute('data-date', monday)
     await page.getByTestId('slot-A-18:00').click()
     await page.getByLabel('Lý do khóa ô này').fill('Dọn sân')
     await page.getByRole('button', { name: 'Khóa khung giờ này' }).click()

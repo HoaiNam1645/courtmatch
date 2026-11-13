@@ -18,13 +18,13 @@ function shiftDate(isoDate, days) {
 }
 
 /** Lưới: hàng = giờ bắt đầu, cột = sân con (xem ngày) hoặc ngày (xem tuần). */
-function ScheduleGrid({ columns, selected, onSelect }) {
+function ScheduleGrid({ columns, selected, onSelect, date }) {
   const rows = [...new Set(columns.flatMap((column) => column.slots.map((slot) => slot.startTime)))].sort()
   if (rows.length === 0) return null
 
   return (
     <div className="overflow-x-auto rounded-lg border border-emerald-100">
-      <table className="w-full min-w-[520px] border-collapse text-sm" data-testid="schedule-grid">
+      <table className="w-full min-w-[520px] border-collapse text-sm" data-testid="schedule-grid" data-date={date}>
         <thead>
           <tr className="bg-emerald-50/60">
             <th className="sticky left-0 z-10 w-16 bg-emerald-50 px-2 py-2 text-left text-xs font-semibold text-stone-500">Giờ</th>
@@ -204,6 +204,8 @@ function VenueScheduleTab({ venue }) {
       slots: day.courts.find((court) => court.courtId === activeCourtId)?.slots ?? [],
     }))
   }
+  // Ô đã chọn thuộc dữ liệu cũ (đổi ngày, tải lại...) thì bỏ, tránh thao tác nhầm ô.
+  const liveSelected = selected && columns.some((column) => column.slots.some((slot) => `${column.key}|${slot.startAt}` === selected.key)) ? selected : null
   const noSlots = data && columns.every((column) => column.slots.length === 0)
 
   return (
@@ -241,8 +243,8 @@ function VenueScheduleTab({ venue }) {
           <Legend />
           {view === 'day' && firstDay.closed && <OwnerEmpty title="Sân nghỉ ngày này" description={`${dayLabel(firstDay.dayOfWeek)} ${formatIsoDate(firstDay.date)} không có giờ hoạt động.`} />}
           {noSlots && !(view === 'day' && firstDay.closed) && <OwnerEmpty title="Không có khung giờ" description="Các ngày trong khoảng này đều nghỉ." />}
-          {!noSlots && <ScheduleGrid columns={columns} selected={selected} onSelect={setSelected} />}
-          <SlotDetail selected={selected} venueId={venue.id} onChanged={() => { setSelected(null); reload() }} />
+          {!noSlots && <ScheduleGrid columns={columns} selected={liveSelected} onSelect={setSelected} date={data.startDate} />}
+          <SlotDetail selected={liveSelected} venueId={venue.id} onChanged={() => { setSelected(null); reload() }} />
         </div>
       )}
     </OwnerCard>

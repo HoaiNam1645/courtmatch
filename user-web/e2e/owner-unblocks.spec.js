@@ -73,6 +73,7 @@ test.describe.serial('2.3.11 owner unblocks court time slots', () => {
     await loginByApi(page, SEED_OWNER_EMAIL)
     await page.goto(`/owner/venues/${venue.id}?tab=schedule`)
     await page.getByLabel('Chọn ngày').fill(monday)
+    await expect(page.getByTestId('schedule-grid')).toHaveAttribute('data-date', monday)
     await page.getByTestId('slot-A-15:00').click()
     await expect(page.getByTestId('slot-detail')).toContainText('Dọn sân')
     page.once('dialog', (dialog) => dialog.accept())
