@@ -69,3 +69,17 @@ function toUiRequest(item) {
 export async function acceptBookingRequest(bookingId) {
   return toUiRequest(await request(`/api/v1/owner/booking-requests/${encodeURIComponent(bookingId)}/accept`, { method: 'POST' }))
 }
+
+/** 2.3.14 — danh mục lý do từ chối lấy từ backend. */
+export async function fetchRejectReasons() {
+  const data = await request('/api/v1/owner/booking-requests/reject-reasons')
+  return data.reasons.map((reason) => ({ code: reason.code, label: reason.label, noteRequired: Boolean(reason.noteRequired) }))
+}
+
+/** 2.3.14 — từ chối yêu cầu kèm lý do trong danh mục; khung giờ được giải phóng ngay. */
+export async function rejectBookingRequest(bookingId, { reasonCode, note }) {
+  return toUiRequest(await request(`/api/v1/owner/booking-requests/${encodeURIComponent(bookingId)}/reject`, {
+    method: 'POST',
+    body: { reasonCode, note: note?.trim() || null },
+  }))
+}

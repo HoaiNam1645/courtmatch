@@ -1,6 +1,9 @@
 package com.courtly.service.owner;
 
+import com.courtly.api.booking.dto.RejectBookingRequest;
 import com.courtly.api.owner.dto.BookingRequestResponse;
+import com.courtly.api.owner.dto.RejectBookingRequestRequest;
+import com.courtly.api.owner.dto.RejectReasonsResponse;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
@@ -90,6 +93,38 @@ public class OwnerBookingRequestService {
                 Map.of("venueId", booking.getVenue().getId().toString(), "bookingCode", booking.getBookingCode(),
                         "status", booking.getStatus().getValue()));
         return toItem(booking, Instant.now());
+    }
+
+    /** Tu choi yeu cau (2.3.14): ly do chon tu danh muc, giai phong khung gio ngay. */
+    @Transactional
+    public BookingRequestResponse.Item reject(UUID ownerId, UUID bookingId, RejectBookingRequestRequest request) {
+        String label = RejectReasons.LABELS.get(request.reasonCode());
+        Map<String, String> errors = new java.util.LinkedHashMap<>();
+        if (label == null) {
+            errors.put("reasonCode", "Ly do khong co trong danh muc");
+        } else if (RejectReasons.OTHER.equals(request.reasonCode())
+                && (request.note() == null || request.note().length() < 3)) {
+            errors.put("note", "Vui long nhap ghi chu (it nhat 3 ky tu) khi chon ly do khac");
+        }
+        if (!errors.isEmpty()) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ly do tu choi chua hop le.", errors);
+        }
+        String reason = request.note() == null ? label : label + ": " + request.note();
+
+        bookingService.reject(ownerId, bookingId, new RejectBookingRequest(reason));
+        Booking booking = reload(bookingId);
+        auditService.record(booking.getVenue().getOwner(), "booking.reject", "bookings", bookingId, null,
+                Map.of("venueId", booking.getVenue().getId().toString(), "bookingCode", booking.getBookingCode(),
+                        "reasonCode", request.reasonCode(), "reason", reason));
+        return toItem(booking, Instant.now());
+    }
+
+    /** Danh muc ly do tu choi. */
+    public RejectReasonsResponse rejectReasons() {
+        return new RejectReasonsResponse(RejectReasons.LABELS.entrySet().stream()
+                .map(entry -> new RejectReasonsResponse.Reason(
+                        entry.getKey(), entry.getValue(), RejectReasons.OTHER.equals(entry.getKey())))
+                .toList());
     }
 
     private Booking reload(UUID bookingId) {

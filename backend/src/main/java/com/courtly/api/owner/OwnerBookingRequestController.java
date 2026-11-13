@@ -1,6 +1,9 @@
 package com.courtly.api.owner;
 
 import com.courtly.api.owner.dto.BookingRequestResponse;
+import com.courtly.api.owner.dto.RejectBookingRequestRequest;
+import com.courtly.api.owner.dto.RejectReasonsResponse;
+import jakarta.validation.Valid;
 import com.courtly.service.owner.OwnerBookingRequestService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -15,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +37,19 @@ public class OwnerBookingRequestController {
     public ResponseEntity<BookingRequestResponse.Item> accept(@AuthenticationPrincipal Jwt jwt,
                                                               @PathVariable UUID bookingId) {
         return ResponseEntity.ok(requestService.accept(OwnerVenueController.ownerId(jwt), bookingId));
+    }
+
+    /** 2.3.14 - tu choi yeu cau kem ly do trong danh muc. */
+    @PostMapping("/{bookingId}/reject")
+    public ResponseEntity<BookingRequestResponse.Item> reject(@AuthenticationPrincipal Jwt jwt,
+                                                              @PathVariable UUID bookingId,
+                                                              @Valid @RequestBody RejectBookingRequestRequest request) {
+        return ResponseEntity.ok(requestService.reject(OwnerVenueController.ownerId(jwt), bookingId, request));
+    }
+
+    @GetMapping("/reject-reasons")
+    public ResponseEntity<RejectReasonsResponse> rejectReasons() {
+        return ResponseEntity.ok(requestService.rejectReasons());
     }
 
     @GetMapping

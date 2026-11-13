@@ -7,8 +7,9 @@ import { FormAlert } from '../../../shared/FormFeedback'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../components/OwnerUi'
+import { RejectRequestDialog } from '../components/RejectRequestDialog'
 import { formatDateTime, formatTime } from '../ownerDates'
-import { inputClass, primaryButtonClass, secondaryButtonClass } from '../ownerStyles'
+import { dangerButtonClass, inputClass, primaryButtonClass, secondaryButtonClass } from '../ownerStyles'
 
 /** "còn 12 phút", "còn 45 giây", "đã quá hạn". */
 function formatRemaining(seconds) {
@@ -29,7 +30,7 @@ function useSecondsUntil(deadline) {
   return deadline ? Math.max(0, Math.floor((new Date(deadline).getTime() - now) / 1000)) : 0
 }
 
-function RequestCard({ item, onAccept, busy }) {
+function RequestCard({ item, onAccept, onReject, busy }) {
   const meta = bookingStatusMeta(item.status)
   const remaining = useSecondsUntil(item.respondBy)
   const pending = item.status === 'pending_owner_confirmation'
@@ -66,6 +67,9 @@ function RequestCard({ item, onAccept, busy }) {
         </div>
         <p className="text-lg font-semibold text-emerald-700">{formatCurrency(item.totalAmount)}</p>
       </div>
+      {item.status === 'rejected' && item.rejectionReason && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-800" data-testid="rejection-reason">Lý do từ chối: {item.rejectionReason}</p>
+      )}
       {item.status === 'awaiting_payment' && item.paymentExpiresAt && (
         <p className="mt-3 rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800" data-testid="payment-deadline">
           Đã xác nhận{item.ownerRespondedByName ? ` bởi ${item.ownerRespondedByName}` : ''} lúc {formatDateTime(item.ownerRespondedAt)} · người chơi thanh toán trước {formatDateTime(item.paymentExpiresAt)}
@@ -73,6 +77,7 @@ function RequestCard({ item, onAccept, busy }) {
       )}
       {pending && remaining > 0 && (
         <div className="mt-3 flex flex-wrap justify-end gap-2">
+          <button type="button" className={`${dangerButtonClass} h-10`} disabled={busy} onClick={() => onReject(item)}>Từ chối</button>
           <button type="button" className={`${primaryButtonClass} h-10`} disabled={busy} onClick={() => onAccept(item)}>
             <CheckCircle2 className="size-4" />{busy ? 'Đang xử lý...' : 'Chấp nhận'}
           </button>
@@ -89,6 +94,7 @@ function OwnerBookingRequestsPage() {
   const [busyId, setBusyId] = useState(null)
   const [notice, setNotice] = useState('')
   const [actionError, setActionError] = useState('')
+  const [rejecting, setRejecting] = useState(null)
   const { status, data, error, reload } = useApiResource(
     () => fetchBookingRequests(filters),
     [filters.venueId, filters.status, filters.date, filters.page],
@@ -111,6 +117,13 @@ function OwnerBookingRequestsPage() {
       // Luôn tải lại: yêu cầu có thể đã hết hạn hoặc đã xử lý ở nơi khác.
       reload()
     }
+  }
+
+  function handleRejected(item) {
+    setRejecting(null)
+    setActionError('')
+    setNotice(`Đã từ chối yêu cầu ${item.bookingCode}. Khung giờ đã được giải phóng.`)
+    reload()
   }
 
   function setFilter(patch) {
@@ -167,7 +180,7 @@ function OwnerBookingRequestsPage() {
         {status === 'success' && (
           <>
             <div className="grid gap-4 lg:grid-cols-2" data-testid="request-list">
-              {data.requests.map((item) => <RequestCard key={item.bookingId} item={item} busy={busyId === item.bookingId} onAccept={handleAccept} />)}
+              {data.requests.map((item) => <RequestCard key={item.bookingId} item={item} busy={busyId === item.bookingId} onAccept={handleAccept} onReject={setRejecting} />)}
             </div>
             {data.totalPages > 1 && (
               <div className="mt-5 flex items-center justify-between gap-3">
@@ -179,6 +192,7 @@ function OwnerBookingRequestsPage() {
           </>
         )}
       </OwnerCard>
+      {rejecting && <RejectRequestDialog item={rejecting} onClose={() => setRejecting(null)} onRejected={handleRejected} />}
     </OwnerLayout>
   )
 }
