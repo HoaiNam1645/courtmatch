@@ -77,7 +77,11 @@ test.describe.serial('2.3.17 owner views revenue statistics', () => {
     await page.getByLabel('Doanh thu đến ngày').fill(today)
     await expect(page.getByTestId('revenue-total')).toHaveText('120.000đ')
     await page.getByLabel('Doanh thu từ ngày').fill('2031-01-10')
-    await expect(page.getByRole('alert')).toContainText('ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+    await expect(page.getByRole('alert')).toContainText('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+    // Quá 366 ngày: báo ngay ở client, không gọi API.
+    await page.getByLabel('Doanh thu từ ngày').fill('2020-01-01')
+    await page.getByLabel('Doanh thu đến ngày').fill('2026-01-01')
+    await expect(page.getByRole('alert')).toContainText('Chỉ xem tối đa 366 ngày')
     assertNoErrors()
   })
 

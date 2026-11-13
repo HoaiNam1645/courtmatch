@@ -4,7 +4,7 @@ import { fetchRevenueStats } from '../../../api/ownerRevenue'
 import { fetchOwnerVenues } from '../../../api/ownerVenues'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
-import { firstOfMonth, formatIsoDate, shiftIsoDate, todayInVietnam } from '../ownerDates'
+import { firstOfMonth, formatIsoDate, rangeProblem, shiftIsoDate, todayInVietnam } from '../ownerDates'
 import { inputClass } from '../ownerStyles'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
@@ -62,7 +62,8 @@ function RevenueTab() {
   const [venueId, setVenueId] = useState('')
   const [custom, setCustom] = useState({ from: shiftIsoDate(todayInVietnam(), -29), to: todayInVietnam() })
   const range = useMemo(() => rangeOf(preset, custom), [preset, custom])
-  const invalidRange = preset === 'custom' && (!range.from || !range.to || range.to < range.from)
+  const problem = preset === 'custom' ? (!range.from || !range.to ? 'Chọn đủ ngày bắt đầu và ngày kết thúc.' : rangeProblem(range.from, range.to)) : ''
+  const invalidRange = Boolean(problem)
   const venues = useApiResource(() => fetchOwnerVenues(), [])
   const { status, data, error, reload } = useApiResource(
     () => (invalidRange ? Promise.resolve(null) : fetchRevenueStats({ venueId, ...range })),
@@ -90,7 +91,7 @@ function RevenueTab() {
             {(venues.data?.venues ?? []).map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
           </select>
         </div>
-        {invalidRange && <p className="mt-3 text-sm font-medium text-red-600" role="alert">Chọn khoảng ngày hợp lệ: ngày kết thúc phải sau hoặc bằng ngày bắt đầu.</p>}
+        {problem && <p className="mt-3 text-sm font-medium text-red-600" role="alert">{problem}</p>}
         <p className="mt-3 text-xs font-medium text-stone-500">Doanh thu gộp là số tiền bạn đã xác nhận thu trực tiếp từ người chơi, tính theo ngày xác nhận. Chưa trừ hoa hồng và tiền hoàn.</p>
       </OwnerCard>
 

@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { classNames } from '../../../shared/utils'
 import { CommissionTab } from '../components/CommissionTab'
+import { NetIncomeTab } from '../components/NetIncomeTab'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { RevenueTab } from '../components/RevenueTab'
 
@@ -8,6 +9,7 @@ import { RevenueTab } from '../components/RevenueTab'
 const FINANCE_TABS = [
   { id: 'revenue', label: 'Doanh thu', component: RevenueTab },
   { id: 'commissions', label: 'Hoa hồng', component: CommissionTab },
+  { id: 'net', label: 'Thực nhận', component: NetIncomeTab },
 ]
 
 /** Tài chính của chủ sân: doanh thu, hoa hồng và công nợ với Courtly. */

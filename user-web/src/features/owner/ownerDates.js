@@ -36,3 +36,20 @@ export function shiftIsoDate(isoDate, days) {
 export function firstOfMonth(isoDate) {
   return `${isoDate.slice(0, 8)}01`
 }
+
+/** Giới hạn xem thống kê tài chính mỗi lần; khớp OwnerRevenueService.MAX_DAYS ở backend. */
+export const MAX_RANGE_DAYS = 366
+
+/**
+ * Kiểm tra khoảng ngày trước khi gọi API thống kê (cùng điều kiện với backend).
+ *
+ * @returns chuỗi lỗi hiển thị cho người dùng, hoặc rỗng nếu hợp lệ
+ */
+export function rangeProblem(from, to) {
+  const end = to || todayInVietnam()
+  const start = from || shiftIsoDate(end, -29)
+  if (end < start) return 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'
+  const days = Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000) + 1
+  if (days > MAX_RANGE_DAYS) return `Chỉ xem tối đa ${MAX_RANGE_DAYS} ngày mỗi lần. Hãy chọn khoảng ngắn hơn.`
+  return ''
+}

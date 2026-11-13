@@ -172,6 +172,23 @@ export async function createAcceptedBookings(page, { ownerToken, playerToken, ve
   return bookings
 }
 
+/** Người chơi báo đã trả và chủ sân xác nhận thu tiền cho các booking đã được chấp nhận. */
+export async function collectPayments(page, { ownerToken, playerToken, bookings }) {
+  for (const booking of bookings) {
+    const payment = await (await page.request.get(`${API_BASE_URL}/api/v1/payments/by-booking/${booking.id}`, {
+      headers: { Authorization: `Bearer ${playerToken}` },
+    })).json()
+    const reported = await page.request.post(`${API_BASE_URL}/api/v1/payments/${payment.id}/report-paid`, {
+      headers: { Authorization: `Bearer ${playerToken}` }, data: { method: 'cash' },
+    })
+    expect(reported.status(), await reported.text()).toBe(200)
+    const confirmed = await page.request.post(`${API_BASE_URL}/api/v1/payments/${payment.id}/confirm-received`, {
+      headers: { Authorization: `Bearer ${ownerToken}` },
+    })
+    expect(confirmed.status(), await confirmed.text()).toBe(200)
+  }
+}
+
 /** Ngày thứ Hai sắp tới (giờ Việt Nam), dạng YYYY-MM-DD. */
 export function nextMondayIso() {
   return runSql("SELECT (date_trunc('week', (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) + interval '7 day')::date")
