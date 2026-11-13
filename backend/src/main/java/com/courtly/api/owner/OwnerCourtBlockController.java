@@ -44,6 +44,14 @@ public class OwnerCourtBlockController {
         return ResponseEntity.ok(blockService.list(OwnerVenueController.ownerId(jwt), venueId, page, size));
     }
 
+    /** 2.3.11 - mo khoa mot khoang khoa; khung gio dat duoc lai ngay. */
+    @PostMapping("/{blockId}/unlock")
+    public ResponseEntity<CourtBlockItem> unlock(@AuthenticationPrincipal Jwt jwt,
+                                                 @PathVariable UUID venueId,
+                                                 @PathVariable UUID blockId) {
+        return ResponseEntity.ok(blockService.unlock(OwnerVenueController.ownerId(jwt), venueId, blockId));
+    }
+
     @PostMapping
     public ResponseEntity<List<CourtBlockItem>> create(@AuthenticationPrincipal Jwt jwt,
                                                        @PathVariable UUID venueId,

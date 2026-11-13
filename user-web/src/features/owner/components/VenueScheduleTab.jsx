@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ApiError } from '../../../api/client'
-import { createBlocks } from '../../../api/ownerBlocks'
+import { createBlocks, unlockBlock } from '../../../api/ownerBlocks'
 import { fetchVenueSchedule, slotMeta, SLOT_STATUS_META } from '../../../api/ownerSchedule'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FormAlert } from '../../../shared/FormFeedback'
@@ -103,6 +103,33 @@ function QuickBlock({ venueId, selected, onChanged }) {
   )
 }
 
+/** Mở khóa khoảng khóa đang phủ ô này (2.3.11). */
+function QuickUnlock({ venueId, block, onChanged }) {
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleUnlock() {
+    if (submitting) return
+    if (!window.confirm(`Mở khóa cả khoảng ${formatDateTime(block.startAt)}–${formatTime(block.endAt)}? Khung giờ sẽ nhận đặt lại ngay.`)) return
+    setSubmitting(true)
+    setError('')
+    try {
+      await unlockBlock(venueId, block.blockId)
+      onChanged()
+    } catch (failure) {
+      setError(failure?.message ?? 'Không mở khóa được khoảng này.')
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <button type="button" className={`${secondaryButtonClass} h-10`} disabled={submitting} onClick={handleUnlock}>{submitting ? 'Đang mở khóa...' : 'Mở khóa khoảng này'}</button>
+      <div className="mt-2"><FormAlert message={error} /></div>
+    </div>
+  )
+}
+
 function SlotDetail({ selected, venueId, onChanged }) {
   if (!selected) {
     return <p className="rounded-lg bg-emerald-50/60 px-4 py-3 text-sm font-medium text-stone-500">Chọn một ô trong lịch để xem chi tiết.</p>
@@ -127,7 +154,11 @@ function SlotDetail({ selected, venueId, onChanged }) {
         <QuickBlock key={selected.key} venueId={venueId} selected={selected} onChanged={onChanged} />
       )}
       {slot.block && (
-        <p className="mt-3 font-medium text-stone-700">Lý do khóa: <span className="font-semibold">{slot.block.reason || 'Không ghi lý do'}</span></p>
+        <>
+          <p className="mt-3 font-medium text-stone-700">Lý do khóa: <span className="font-semibold">{slot.block.reason || 'Không ghi lý do'}</span></p>
+          <p className="mt-1 text-xs font-medium text-stone-500">Khoảng khóa: {formatDateTime(slot.block.startAt)}–{formatTime(slot.block.endAt)}</p>
+          {slot.status === 'blocked' && <QuickUnlock key={slot.block.blockId} venueId={venueId} block={slot.block} onChanged={onChanged} />}
+        </>
       )}
     </div>
   )

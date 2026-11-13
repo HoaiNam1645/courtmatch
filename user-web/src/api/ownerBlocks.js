@@ -36,3 +36,8 @@ export async function createBlocks(venueId, { courtIds, startTime, endTime, reas
   const data = await request(path(venueId), { method: 'POST', body: { courtIds, startTime, endTime, reason } })
   return data.map(toUiBlock)
 }
+
+/** 2.3.11 — mở khóa một khoảng khóa; khung giờ đặt được lại ngay. */
+export async function unlockBlock(venueId, blockId) {
+  return toUiBlock(await request(`${path(venueId)}/${encodeURIComponent(blockId)}/unlock`, { method: 'POST' }))
+}

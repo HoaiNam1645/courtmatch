@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Lock } from 'lucide-react'
 import { ApiError } from '../../../api/client'
-import { createBlocks, fetchBlocks, vietnamToIso } from '../../../api/ownerBlocks'
+import { createBlocks, fetchBlocks, unlockBlock, vietnamToIso } from '../../../api/ownerBlocks'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
 import { formatDateTime, formatTime, todayInVietnam } from '../ownerDates'
-import { inputClass, primaryButtonClass } from '../ownerStyles'
+import { dangerButtonClass, inputClass, primaryButtonClass } from '../ownerStyles'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 const emptyForm = (courtIds) => ({ courtIds, date: todayInVietnam(), startTime: '', endTime: '', reason: '' })
@@ -121,6 +121,25 @@ function BlockForm({ venue, onSaved }) {
 /** 2.3.10 — khóa khung giờ sân và xem các khoảng đang khóa. */
 function VenueBlocksTab({ venue, onSaved }) {
   const { status, data, error, reload } = useApiResource(() => fetchBlocks(venue.id), [venue.id], { isEmpty: (result) => result.blocks.length === 0 })
+  const [busyId, setBusyId] = useState(null)
+  const [unlockError, setUnlockError] = useState('')
+
+  async function handleUnlock(block) {
+    if (busyId) return
+    const range = `${block.courtName} · ${formatDateTime(block.startTime)}–${formatTime(block.endTime)}`
+    if (!window.confirm(`Mở khóa ${range}? Khung giờ sẽ nhận đặt lại ngay.`)) return
+    setBusyId(block.id)
+    setUnlockError('')
+    try {
+      await unlockBlock(venue.id, block.id)
+      onSaved(`Đã mở khóa ${block.courtName}.`)
+    } catch (failure) {
+      setUnlockError(failure?.message ?? 'Không mở khóa được khoảng này.')
+      setBusyId(null)
+      // Có thể đã được mở/hết hạn ở nơi khác: tải lại danh sách.
+      if (failure?.status === 404 || failure?.status === 409) reload()
+    }
+  }
 
   return (
     <div className="grid gap-5">
@@ -129,12 +148,18 @@ function VenueBlocksTab({ venue, onSaved }) {
         {status === 'loading' && <OwnerLoading rows={1} />}
         {status === 'error' && <OwnerError message={error?.message} onRetry={reload} />}
         {status === 'empty' && <OwnerEmpty title="Không có khung giờ nào đang bị khóa" />}
+        {unlockError && <div className="mb-3"><FormAlert message={unlockError} /></div>}
         {status === 'success' && (
           <ul className="divide-y divide-emerald-50" data-testid="block-list">
             {data.blocks.map((block) => (
-              <li key={block.id} className="py-3" data-testid={`block-${block.id}`}>
-                <p className="text-sm font-semibold text-emerald-950">{block.courtName} · {formatDateTime(block.startTime)}–{formatTime(block.endTime)}</p>
-                <p className="mt-0.5 text-xs font-medium text-stone-500">{block.reason}{block.createdByName ? ` · ${block.createdByName}` : ''}</p>
+              <li key={block.id} className="flex flex-wrap items-center justify-between gap-3 py-3" data-testid={`block-${block.id}`}>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-emerald-950">{block.courtName} · {formatDateTime(block.startTime)}–{formatTime(block.endTime)}</p>
+                  <p className="mt-0.5 text-xs font-medium text-stone-500">{block.reason}{block.createdByName ? ` · ${block.createdByName}` : ''}</p>
+                </div>
+                <button type="button" className={`${dangerButtonClass} h-9 px-3 text-xs`} disabled={busyId === block.id} aria-label={`Mở khóa ${block.courtName} ${formatDateTime(block.startTime)}`} onClick={() => handleUnlock(block)}>
+                  {busyId === block.id ? 'Đang mở...' : 'Mở khóa'}
+                </button>
               </li>
             ))}
           </ul>

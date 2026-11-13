@@ -101,6 +101,32 @@ public class OwnerCourtBlockService {
         return created.stream().map(OwnerCourtBlockService::toItem).toList();
     }
 
+    /**
+     * Mo khoa (2.3.11): chuyen khoang khoa sang cancelled, khung gio tro lai dat duoc ngay.
+     * Giu ban ghi de con lich su va nguoi da khoa.
+     */
+    @Transactional
+    public CourtBlockItem unlock(UUID ownerId, UUID venueId, UUID blockId) {
+        Venue venue = ownedVenueLookup.requireVenue(ownerId, venueId);
+        CourtBlock block = blockRepository.findById(blockId)
+                .filter(item -> item.getCourt().getVenue().getId().equals(venue.getId()))
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay khoang khoa nay."));
+        if (block.getStatus() != BlockStatus.ACTIVE) {
+            throw ApiException.conflict(ErrorCode.BLOCK_STATE_INVALID,
+                    "Khoang khoa nay da duoc mo truoc do.", Map.of());
+        }
+        if (!block.getEndTime().isAfter(Instant.now())) {
+            throw ApiException.conflict(ErrorCode.BLOCK_STATE_INVALID,
+                    "Khoang khoa nay da ket thuc, khong can mo khoa.", Map.of());
+        }
+        Map<String, Object> before = snapshot(block);
+        block.setStatus(BlockStatus.CANCELLED);
+        blockRepository.saveAndFlush(block);
+        auditService.record(venue.getOwner(), "court_block.cancel", "court_blocks", blockId, before, snapshot(block));
+        log.info("Chu san {} mo khoa khoang khoa {} cua san {}", ownerId, blockId, venueId);
+        return toItem(block);
+    }
+
     private static void validateRange(Instant start, Instant end) {
         Map<String, String> errors = new LinkedHashMap<>();
         if (!end.isAfter(start)) {
