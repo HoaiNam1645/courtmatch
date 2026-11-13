@@ -14,6 +14,7 @@ public final class ErrorCode {
     public static final String FORBIDDEN = "FORBIDDEN";
     public static final String UNAUTHORIZED = "UNAUTHORIZED";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
+    public static final String METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED";
 
     // Dang ky / dang nhap
     public static final String EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS";

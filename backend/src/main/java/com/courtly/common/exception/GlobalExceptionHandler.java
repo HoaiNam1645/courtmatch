@@ -16,7 +16,10 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -166,6 +169,32 @@ public class GlobalExceptionHandler {
                 ErrorCode.IMAGE_INVALID,
                 "Anh vuot qua dung luong toi da 5MB.",
                 Map.of("file", "Anh toi da 5MB")));
+    }
+
+    /** Goi sai HTTP method, vd POST vao endpoint chi co GET/PUT: loi phia client, khong phai 500. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotSupported(HttpRequestMethodNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(ApiError.of(
+                ErrorCode.METHOD_NOT_ALLOWED,
+                "Thao tac nay khong duoc ho tro.",
+                Map.of()));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(ApiError.of(
+                ErrorCode.VALIDATION_FAILED,
+                "Dinh dang du lieu gui len khong duoc ho tro.",
+                Map.of()));
+    }
+
+    /** Duong dan khong ton tai. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResource(NoResourceFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiError.of(
+                ErrorCode.NOT_FOUND,
+                "Khong tim thay duong dan yeu cau.",
+                Map.of()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

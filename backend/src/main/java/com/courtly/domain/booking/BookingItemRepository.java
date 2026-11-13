@@ -53,4 +53,17 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, UUID> 
               AND i.endTime > :now
             """)
     long countUpcomingForCourt(@Param("courtId") UUID courtId, @Param("now") Instant now);
+
+    /** Khung gio con giu (pending/confirmed) chua ket thuc cua ca dia diem, kem don va san con (2.3.7). */
+    @Query("""
+            SELECT i FROM BookingItem i
+            JOIN FETCH i.booking b
+            JOIN FETCH i.court c
+            WHERE c.venue.id = :venueId
+              AND i.status IN (com.courtly.common.enums.BookingItemStatus.PENDING,
+                               com.courtly.common.enums.BookingItemStatus.CONFIRMED)
+              AND i.endTime > :now
+            ORDER BY i.startTime
+            """)
+    List<BookingItem> findUpcomingForVenue(@Param("venueId") UUID venueId, @Param("now") Instant now);
 }
