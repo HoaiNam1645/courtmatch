@@ -13,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class OwnerBookingRequestController {
 
     private final OwnerBookingRequestService requestService;
+
+    /** 2.3.13 - xac nhan yeu cau: booking sang cho thanh toan. */
+    @PostMapping("/{bookingId}/accept")
+    public ResponseEntity<BookingRequestResponse.Item> accept(@AuthenticationPrincipal Jwt jwt,
+                                                              @PathVariable UUID bookingId) {
+        return ResponseEntity.ok(requestService.accept(OwnerVenueController.ownerId(jwt), bookingId));
+    }
 
     @GetMapping
     public ResponseEntity<BookingRequestResponse> list(

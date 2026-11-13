@@ -8,7 +8,9 @@ import com.courtly.domain.booking.Booking;
 import com.courtly.domain.booking.BookingItem;
 import com.courtly.domain.booking.BookingRepository;
 import com.courtly.domain.venue.VenueRepository;
+import com.courtly.service.audit.AuditService;
 import com.courtly.service.booking.AvailabilityService;
+import com.courtly.service.booking.BookingService;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,6 +39,8 @@ public class OwnerBookingRequestService {
     private final OwnedVenueLookup ownedVenueLookup;
     private final VenueRepository venueRepository;
     private final BookingRepository bookingRepository;
+    private final BookingService bookingService;
+    private final AuditService auditService;
 
     /**
      * @param venueId null = moi san cua chu san
@@ -73,6 +77,26 @@ public class OwnerBookingRequestService {
                 awaiting, expiringSoon);
     }
 
+    /**
+     * Xac nhan yeu cau (2.3.13): booking sang awaiting_payment, ghi nguoi xac nhan, thoi diem va
+     * han thanh toan, tao huong dan thanh toan truc tiep. Logic chuyen trang thai dung chung voi
+     * BookingService de khong co hai luong duyet khac nhau.
+     */
+    @Transactional
+    public BookingRequestResponse.Item accept(UUID ownerId, UUID bookingId) {
+        bookingService.accept(ownerId, bookingId);
+        Booking booking = reload(bookingId);
+        auditService.record(booking.getVenue().getOwner(), "booking.accept", "bookings", bookingId, null,
+                Map.of("venueId", booking.getVenue().getId().toString(), "bookingCode", booking.getBookingCode(),
+                        "status", booking.getStatus().getValue()));
+        return toItem(booking, Instant.now());
+    }
+
+    private Booking reload(UUID bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay don dat san."));
+    }
+
     private static List<BookingStatus> parseStatuses(String status) {
         if (status == null || status.isBlank()) {
             return List.of(BookingStatus.PENDING_OWNER_CONFIRMATION);
@@ -103,6 +127,10 @@ public class OwnerBookingRequestService {
                         .map(item -> new BookingRequestResponse.CourtSlot(
                                 item.getCourt().getName(), item.getStartTime(), item.getEndTime()))
                         .toList(),
-                booking.getTotalAmount(), booking.getNote(), respondBy, remaining, expiringSoon, booking.getCreatedAt());
+                booking.getTotalAmount(), booking.getNote(), respondBy, remaining, expiringSoon, booking.getCreatedAt(),
+                booking.getOwnerRespondedAt(),
+                booking.getOwnerRespondedBy() == null ? null : booking.getOwnerRespondedBy().getFullName(),
+                booking.getStatus() == BookingStatus.AWAITING_PAYMENT ? booking.getPaymentExpiresAt() : null,
+                booking.getRejectionReason());
     }
 }

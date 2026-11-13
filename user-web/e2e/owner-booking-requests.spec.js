@@ -66,8 +66,6 @@ test.describe.serial('2.3.12 owner views booking requests', () => {
     await expect(later).toContainText('120.000đ')
     await expect(later.getByTestId('request-status')).toHaveText('Chờ chủ sân duyệt')
 
-    // Chỉ xem: không có nút duyệt / từ chối ở bước này.
-    await expect(page.getByRole('button', { name: /Chấp nhận|Từ chối|Xác nhận/ })).toHaveCount(0)
     expect(Number(await page.getByTestId('expiring-count').textContent())).toBeGreaterThanOrEqual(1)
     assertNoErrors()
   })

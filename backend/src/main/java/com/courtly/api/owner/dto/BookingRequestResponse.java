@@ -21,12 +21,16 @@ public record BookingRequestResponse(List<Item> content, int page, int size, lon
      * @param respondBy        han chu san phai phan hoi; null khi da xu ly
      * @param secondsRemaining so giay con lai den han phan hoi, 0 neu da qua han hoac khong co han
      * @param expiringSoon     con duoi 10 phut
+     * @param ownerRespondedAt thoi diem chu san xac nhan / tu choi (2.3.13, 2.3.14)
+     * @param paymentExpiresAt han nguoi choi phai thanh toan sau khi duoc xac nhan
      */
     public record Item(UUID bookingId, String bookingCode, String status,
                        UUID venueId, String venueName,
                        String playerName, String playerPhone,
                        List<CourtSlot> slots, BigDecimal totalAmount, String note,
-                       Instant respondBy, long secondsRemaining, boolean expiringSoon, Instant createdAt) {
+                       Instant respondBy, long secondsRemaining, boolean expiringSoon, Instant createdAt,
+                       Instant ownerRespondedAt, String ownerRespondedByName, Instant paymentExpiresAt,
+                       String rejectionReason) {
     }
 
     public record CourtSlot(String courtName, Instant startTime, Instant endTime) {

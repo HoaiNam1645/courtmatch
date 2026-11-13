@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Clock, RefreshCw } from 'lucide-react'
-import { bookingStatusMeta, BOOKING_STATUS_META, fetchBookingRequests } from '../../../api/ownerBookingRequests'
+import { CheckCircle2, Clock, RefreshCw } from 'lucide-react'
+import { acceptBookingRequest, bookingStatusMeta, BOOKING_STATUS_META, fetchBookingRequests } from '../../../api/ownerBookingRequests'
 import { fetchOwnerVenues } from '../../../api/ownerVenues'
 import { useApiResource } from '../../../hooks/useApiResource'
+import { FormAlert } from '../../../shared/FormFeedback'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { formatDateTime, formatTime } from '../ownerDates'
-import { inputClass, secondaryButtonClass } from '../ownerStyles'
+import { inputClass, primaryButtonClass, secondaryButtonClass } from '../ownerStyles'
 
 /** "còn 12 phút", "còn 45 giây", "đã quá hạn". */
 function formatRemaining(seconds) {
@@ -28,7 +29,7 @@ function useSecondsUntil(deadline) {
   return deadline ? Math.max(0, Math.floor((new Date(deadline).getTime() - now) / 1000)) : 0
 }
 
-function RequestCard({ item }) {
+function RequestCard({ item, onAccept, busy }) {
   const meta = bookingStatusMeta(item.status)
   const remaining = useSecondsUntil(item.respondBy)
   const pending = item.status === 'pending_owner_confirmation'
@@ -65,19 +66,52 @@ function RequestCard({ item }) {
         </div>
         <p className="text-lg font-semibold text-emerald-700">{formatCurrency(item.totalAmount)}</p>
       </div>
+      {item.status === 'awaiting_payment' && item.paymentExpiresAt && (
+        <p className="mt-3 rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800" data-testid="payment-deadline">
+          Đã xác nhận{item.ownerRespondedByName ? ` bởi ${item.ownerRespondedByName}` : ''} lúc {formatDateTime(item.ownerRespondedAt)} · người chơi thanh toán trước {formatDateTime(item.paymentExpiresAt)}
+        </p>
+      )}
+      {pending && remaining > 0 && (
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          <button type="button" className={`${primaryButtonClass} h-10`} disabled={busy} onClick={() => onAccept(item)}>
+            <CheckCircle2 className="size-4" />{busy ? 'Đang xử lý...' : 'Chấp nhận'}
+          </button>
+        </div>
+      )}
     </article>
   )
 }
 
-/** 2.3.12 — danh sách yêu cầu đặt sân; chỉ xem, duyệt/từ chối ở 2.3.13 và 2.3.14. */
+/** 2.3.12–2.3.14 — danh sách và xử lý yêu cầu đặt sân. */
 function OwnerBookingRequestsPage() {
   const [filters, setFilters] = useState({ venueId: '', status: 'pending_owner_confirmation', date: '', page: 0 })
   const venues = useApiResource(() => fetchOwnerVenues(), [])
+  const [busyId, setBusyId] = useState(null)
+  const [notice, setNotice] = useState('')
+  const [actionError, setActionError] = useState('')
   const { status, data, error, reload } = useApiResource(
     () => fetchBookingRequests(filters),
     [filters.venueId, filters.status, filters.date, filters.page],
     { isEmpty: (result) => result.requests.length === 0 },
   )
+
+  async function handleAccept(item) {
+    if (busyId) return
+    if (!window.confirm(`Chấp nhận yêu cầu ${item.bookingCode}? Người chơi sẽ được yêu cầu thanh toán trực tiếp cho bạn.`)) return
+    setBusyId(item.bookingId)
+    setNotice('')
+    setActionError('')
+    try {
+      await acceptBookingRequest(item.bookingId)
+      setNotice(`Đã chấp nhận yêu cầu ${item.bookingCode}. Đang chờ người chơi thanh toán.`)
+    } catch (error) {
+      setActionError(error?.message ?? 'Không chấp nhận được yêu cầu.')
+    } finally {
+      setBusyId(null)
+      // Luôn tải lại: yêu cầu có thể đã hết hạn hoặc đã xử lý ở nơi khác.
+      reload()
+    }
+  }
 
   function setFilter(patch) {
     setFilters((current) => ({ ...current, page: 0, ...patch }))
@@ -86,11 +120,13 @@ function OwnerBookingRequestsPage() {
   const summary = data ?? null
   return (
     <OwnerLayout
-      eyebrow="2.3.12 · Yêu cầu đặt sân"
+      eyebrow="Yêu cầu đặt sân"
       title="Yêu cầu đặt sân"
       description="Các yêu cầu người chơi gửi tới sân của bạn. Yêu cầu sắp hết hạn phản hồi được xếp lên đầu."
       actions={<button type="button" className={secondaryButtonClass} onClick={reload}><RefreshCw className="size-4" />Tải lại</button>}
     >
+      {notice && <div role="status" className="mb-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><CheckCircle2 className="size-4 shrink-0" />{notice}</div>}
+      {actionError && <div className="mb-5"><FormAlert message={actionError} /></div>}
       {summary && (
         <div className="mb-5 grid gap-3 sm:grid-cols-2" data-testid="request-summary">
           <div className="rounded-xl border border-emerald-100 bg-white p-4"><p className="text-xs font-semibold text-stone-500">Đang chờ bạn duyệt</p><p className="mt-1 text-2xl font-semibold text-emerald-900" data-testid="awaiting-count">{summary.awaitingCount}</p></div>
@@ -131,7 +167,7 @@ function OwnerBookingRequestsPage() {
         {status === 'success' && (
           <>
             <div className="grid gap-4 lg:grid-cols-2" data-testid="request-list">
-              {data.requests.map((item) => <RequestCard key={item.bookingId} item={item} />)}
+              {data.requests.map((item) => <RequestCard key={item.bookingId} item={item} busy={busyId === item.bookingId} onAccept={handleAccept} />)}
             </div>
             {data.totalPages > 1 && (
               <div className="mt-5 flex items-center justify-between gap-3">

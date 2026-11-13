@@ -40,6 +40,10 @@ export async function fetchBookingRequests({ venueId = '', status = 'pending_own
       secondsRemaining: Number(item.secondsRemaining ?? 0),
       expiringSoon: Boolean(item.expiringSoon),
       createdAt: item.createdAt,
+      ownerRespondedAt: item.ownerRespondedAt ?? null,
+      ownerRespondedByName: item.ownerRespondedByName ?? '',
+      paymentExpiresAt: item.paymentExpiresAt ?? null,
+      rejectionReason: item.rejectionReason ?? '',
     })),
     page: data.page,
     totalPages: data.totalPages,
@@ -47,4 +51,21 @@ export async function fetchBookingRequests({ venueId = '', status = 'pending_own
     awaitingCount: Number(data.awaitingCount ?? 0),
     expiringSoonCount: Number(data.expiringSoonCount ?? 0),
   }
+}
+
+function toUiRequest(item) {
+  return {
+    bookingId: item.bookingId,
+    bookingCode: item.bookingCode,
+    status: item.status,
+    ownerRespondedAt: item.ownerRespondedAt ?? null,
+    ownerRespondedByName: item.ownerRespondedByName ?? '',
+    paymentExpiresAt: item.paymentExpiresAt ?? null,
+    rejectionReason: item.rejectionReason ?? '',
+  }
+}
+
+/** 2.3.13 — xác nhận yêu cầu: booking chuyển sang chờ người chơi thanh toán. */
+export async function acceptBookingRequest(bookingId) {
+  return toUiRequest(await request(`/api/v1/owner/booking-requests/${encodeURIComponent(bookingId)}/accept`, { method: 'POST' }))
 }
