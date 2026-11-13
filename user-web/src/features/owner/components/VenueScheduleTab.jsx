@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ApiError } from '../../../api/client'
+import { createBlocks } from '../../../api/ownerBlocks'
 import { fetchVenueSchedule, slotMeta, SLOT_STATUS_META } from '../../../api/ownerSchedule'
 import { useApiResource } from '../../../hooks/useApiResource'
+import { FormAlert } from '../../../shared/FormFeedback'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { dayLabel } from '../dayLabels'
 import { formatDateTime, formatIsoDate, formatTime, todayInVietnam } from '../ownerDates'
-import { inputClass, secondaryButtonClass } from '../ownerStyles'
+import { dangerButtonClass, inputClass, secondaryButtonClass } from '../ownerStyles'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 function shiftDate(isoDate, days) {
@@ -65,7 +68,42 @@ function ScheduleGrid({ columns, selected, onSelect }) {
   )
 }
 
-function SlotDetail({ selected }) {
+/** Khóa nhanh một ô trống (2.3.10). */
+function QuickBlock({ venueId, selected, onChanged }) {
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    if (submitting) return
+    if (reason.trim().length < 3) {
+      setError('Lý do từ 3 đến 255 ký tự')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    try {
+      await createBlocks(venueId, { courtIds: [selected.column.courtId], startTime: selected.slot.startAt, endTime: selected.slot.endAt, reason: reason.trim() })
+      setReason('')
+      onChanged()
+    } catch (failure) {
+      setError(failure instanceof ApiError ? failure.message : 'Đã có lỗi xảy ra, vui lòng thử lại.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="mt-3 flex flex-wrap items-start gap-2" noValidate onSubmit={handleSubmit}>
+      <input className={`${inputClass} h-10 min-w-0 flex-1 basis-48`} aria-label="Lý do khóa ô này" maxLength={255} placeholder="Lý do khóa (bảo trì, sự kiện...)" value={reason} onChange={(event) => setReason(event.target.value)} />
+      <button type="submit" className={`${dangerButtonClass} h-10`} disabled={submitting}>{submitting ? 'Đang khóa...' : 'Khóa khung giờ này'}</button>
+      <div className="basis-full"><FormAlert message={error} /></div>
+    </form>
+  )
+}
+
+function SlotDetail({ selected, venueId, onChanged }) {
   if (!selected) {
     return <p className="rounded-lg bg-emerald-50/60 px-4 py-3 text-sm font-medium text-stone-500">Chọn một ô trong lịch để xem chi tiết.</p>
   }
@@ -84,6 +122,9 @@ function SlotDetail({ selected }) {
           <div>Người đặt: <span className="font-semibold">{slot.booking.playerName}</span>{slot.booking.playerPhone ? ` · ${slot.booking.playerPhone}` : ''}</div>
           <div>Khung giờ giữ: {formatDateTime(slot.booking.startAt)}–{formatTime(slot.booking.endAt)}</div>
         </dl>
+      )}
+      {slot.status === 'available' && selected.column.courtId && (
+        <QuickBlock key={selected.key} venueId={venueId} selected={selected} onChanged={onChanged} />
       )}
       {slot.block && (
         <p className="mt-3 font-medium text-stone-700">Lý do khóa: <span className="font-semibold">{slot.block.reason || 'Không ghi lý do'}</span></p>
@@ -122,10 +163,11 @@ function VenueScheduleTab({ venue }) {
 
   let columns = []
   if (data && view === 'day') {
-    columns = courts.map((court) => ({ key: court.courtCode, label: court.courtName, sublabel: court.courtStatus === 'active' ? null : 'Tạm ngưng', slots: court.slots }))
+    columns = courts.map((court) => ({ key: court.courtCode, courtId: court.courtId, label: court.courtName, sublabel: court.courtStatus === 'active' ? null : 'Tạm ngưng', slots: court.slots }))
   } else if (data) {
     columns = data.days.map((day) => ({
       key: day.date,
+      courtId: activeCourtId,
       label: dayLabel(day.dayOfWeek),
       sublabel: day.closed ? 'Nghỉ' : formatIsoDate(day.date).slice(0, 5),
       slots: day.courts.find((court) => court.courtId === activeCourtId)?.slots ?? [],
@@ -169,7 +211,7 @@ function VenueScheduleTab({ venue }) {
           {view === 'day' && firstDay.closed && <OwnerEmpty title="Sân nghỉ ngày này" description={`${dayLabel(firstDay.dayOfWeek)} ${formatIsoDate(firstDay.date)} không có giờ hoạt động.`} />}
           {noSlots && !(view === 'day' && firstDay.closed) && <OwnerEmpty title="Không có khung giờ" description="Các ngày trong khoảng này đều nghỉ." />}
           {!noSlots && <ScheduleGrid columns={columns} selected={selected} onSelect={setSelected} />}
-          <SlotDetail selected={selected} />
+          <SlotDetail selected={selected} venueId={venue.id} onChanged={() => { setSelected(null); reload() }} />
         </div>
       )}
     </OwnerCard>
