@@ -7,6 +7,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
@@ -61,6 +62,14 @@ public class CourtOwnerProfile implements Persistable<UUID> {
 
     @Column(name = "verified_at")
     private Instant verifiedAt;
+
+    /** Ly do khi quan tri vien tu choi hoac dat lai xac minh (2.3.32). */
+    @Column(name = "verification_note")
+    private String verificationNote;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "verified_by")
+    private User verifiedBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -7,6 +7,7 @@ import com.courtly.domain.account.Role;
 import com.courtly.domain.account.RolePermission;
 import com.courtly.domain.account.RoleRepository;
 import com.courtly.domain.account.User;
+import com.courtly.domain.account.UserRoleRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ public abstract class AdminApiTestBase extends OwnerApiTestBase {
             "user.manage", "user.role.assign", "owner.verify", "venue.approve", "venue.reject");
 
     @Autowired protected PermissionRepository permissionRepository;
-    @Autowired protected RoleRepository adminRoleRepository;
+    @Autowired protected UserRoleRepository userRoleRepository;
 
     /** Du bon vai tro; vai tro admin duoc cap cac quyen quan tri can cho test (rollback cuoi moi test). */
     protected void ensureAdminSetup() {
@@ -39,6 +40,14 @@ public abstract class AdminApiTestBase extends OwnerApiTestBase {
             }
         }
         roleRepository.saveAndFlush(admin);
+    }
+
+    /** He thong chi co mot chu san: go vai tro owner cua moi tai khoan khac {@code keep} (rollback cuoi test). */
+    protected void keepOnlyOwner(User keep) {
+        userRepository.findAll().stream()
+                .filter(user -> keep == null || !user.getId().equals(keep.getId()))
+                .forEach(user -> user.getUserRoles().removeIf(userRole -> Role.OWNER.equals(userRole.getRole().getCode())));
+        userRepository.flush();
     }
 
     protected User persistAdmin(String prefix) {
