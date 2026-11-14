@@ -138,7 +138,7 @@ public class AdminUserService {
                 user.getPhoneVerifiedAt() != null, user.getLastLoginAt(), user.getCreatedAt());
     }
 
-    private AdminUserResponses.Detail toDetail(User user) {
+    AdminUserResponses.Detail toDetail(User user) {
         AdminUserResponses.StatusChange change = auditLogRepository
                 .findFirstByEntityTypeAndEntityIdAndActionOrderByCreatedAtDesc("users", user.getId(), STATUS_ACTION)
                 .map(AdminUserService::toChange).orElse(null);

@@ -70,3 +70,23 @@ export async function changeAdminUserStatus(userId, { status, reason = '' }) {
     body: { status, reason: reason.trim() || null },
   }))
 }
+
+/** 2.3.29 — danh mục vai trò kèm số người dùng và số quyền. */
+export async function fetchAdminRoles() {
+  const data = await request('/api/v1/admin/roles')
+  return data.roles.map((role) => ({
+    code: role.code,
+    name: role.name,
+    description: role.description ?? '',
+    userCount: Number(role.userCount ?? 0),
+    permissionCount: Number(role.permissionCount ?? 0),
+  }))
+}
+
+export async function assignAdminRole(userId, role) {
+  return mapDetail(await request(`/api/v1/admin/users/${encodeURIComponent(userId)}/roles`, { method: 'POST', body: { role } }))
+}
+
+export async function removeAdminRole(userId, role) {
+  return mapDetail(await request(`/api/v1/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(role)}`, { method: 'DELETE' }))
+}

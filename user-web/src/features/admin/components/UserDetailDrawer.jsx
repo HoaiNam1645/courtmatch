@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { ApiError } from '../../../api/client'
-import { changeAdminUserStatus, fetchAdminUser, ROLE_LABEL, userStatusMeta } from '../../../api/adminUsers'
+import { assignAdminRole, changeAdminUserStatus, fetchAdminRoles, fetchAdminUser, removeAdminRole, ROLE_LABEL, userStatusMeta } from '../../../api/adminUsers'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
 import { OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime } from '../../owner/ownerDates'
-import { dangerButtonClass, primaryButtonClass, secondaryButtonClass, textareaClass } from '../../owner/ownerStyles'
+import { dangerButtonClass, inputClass, primaryButtonClass, secondaryButtonClass, textareaClass } from '../../owner/ownerStyles'
 
 const ACTIONS = {
   banned: { label: 'Khóa tài khoản', needsReason: true, className: dangerButtonClass },
@@ -15,7 +15,59 @@ const ACTIONS = {
   active: { label: 'Kích hoạt lại', needsReason: false, className: primaryButtonClass },
 }
 
-/** Chi tiết tài khoản và đổi trạng thái (2.3.28). */
+/** Gán hoặc gỡ vai trò của tài khoản (2.3.29). */
+function RolesSection({ user, onChanged }) {
+  const roles = useApiResource(fetchAdminRoles, [])
+  const [selected, setSelected] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function run(action, message) {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      await action()
+      setSelected('')
+      onChanged(message)
+    } catch (failure) {
+      setError(failure instanceof ApiError ? failure.message : 'Đã có lỗi xảy ra, vui lòng thử lại.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const available = (roles.data ?? []).filter((role) => !user.roles.includes(role.code))
+  return (
+    <section data-testid="user-roles">
+      <h3 className="text-sm font-semibold text-slate-900">Vai trò</h3>
+      <ul className="mt-2 flex flex-wrap gap-2">
+        {user.roles.map((code) => (
+          <li key={code} className="flex items-center gap-1 rounded-full bg-sky-100 py-1 pl-3 pr-1 text-xs font-bold text-sky-800" data-testid={`role-chip-${code}`}>
+            {ROLE_LABEL[code] ?? code}
+            <button type="button" className="grid size-6 place-items-center rounded-full hover:bg-sky-200 disabled:opacity-40" aria-label={`Gỡ vai trò ${ROLE_LABEL[code] ?? code}`} disabled={busy || user.roles.length <= 1}
+              onClick={() => run(() => removeAdminRole(user.id, code), `Đã gỡ vai trò ${ROLE_LABEL[code] ?? code} của ${user.fullName}.`)}><X className="size-3.5" /></button>
+          </li>
+        ))}
+      </ul>
+      {roles.status === 'error' && <p className="mt-2 text-xs font-medium text-red-600">Không tải được danh mục vai trò.</p>}
+      {available.length > 0 && (
+        <div className="mt-3 flex gap-2">
+          <select className={inputClass} aria-label="Chọn vai trò để gán" value={selected} onChange={(event) => setSelected(event.target.value)}>
+            <option value="">Chọn vai trò để gán</option>
+            {available.map((role) => <option key={role.code} value={role.code}>{ROLE_LABEL[role.code] ?? role.name}</option>)}
+          </select>
+          <button type="button" className={secondaryButtonClass} data-testid="role-assign" disabled={!selected || busy}
+            onClick={() => run(() => assignAdminRole(user.id, selected), `Đã gán vai trò ${ROLE_LABEL[selected] ?? selected} cho ${user.fullName}.`)}>Gán</button>
+        </div>
+      )}
+      <div className="mt-2"><FormAlert message={error} /></div>
+      <p className="mt-2 text-xs font-medium text-slate-500">Vai trò mới có hiệu lực từ lần đăng nhập kế tiếp của người dùng.</p>
+    </section>
+  )
+}
+
+/** Chi tiết tài khoản, đổi trạng thái (2.3.28) và phân vai trò (2.3.29). */
 function UserDetailDrawer({ userId, selfId, onClose, onChanged }) {
   const { status, data, error, reload } = useApiResource(() => fetchAdminUser(userId), [userId])
   const [pending, setPending] = useState(null)
@@ -95,6 +147,8 @@ function UserDetailDrawer({ userId, selfId, onClose, onChanged }) {
                 </p>
               )}
             </section>
+
+            <RolesSection user={data} onChanged={(message) => { reload(); onChanged(message) }} />
 
             {isSelf ? <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900" data-testid="user-drawer-self">Đây là tài khoản của bạn nên không thể tự khóa hay ngừng.</p> : (
               <section>
