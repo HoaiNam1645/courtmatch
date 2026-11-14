@@ -6,6 +6,7 @@ import { userStatusMeta } from '../../../api/adminUsers'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames, formatCurrency } from '../../../shared/utils'
+import { CreateOwnerForm, OwnerAccountActions, TemporaryPassword } from '../components/OwnerAccountPanel'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime } from '../../owner/ownerDates'
 import { dangerButtonClass, primaryButtonClass, secondaryButtonClass, textareaClass } from '../../owner/ownerStyles'
@@ -92,6 +93,7 @@ function AdminOwnerPage() {
   const { status, data, error, reload } = useApiResource(fetchAdminOwner, [], { isEmpty: (result) => !result.exists })
   const [notice, setNotice] = useState('')
   const [override, setOverride] = useState(null)
+  const [credentials, setCredentials] = useState(null)
   const view = override ?? data
 
   return (
@@ -99,8 +101,16 @@ function AdminOwnerPage() {
       {notice && <p role="status" className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="admin-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       {status === 'loading' && <OwnerLoading rows={3} />}
       {status === 'error' && <OwnerError message={error?.message} onRetry={reload} />}
-      {status === 'empty' && <OwnerEmpty title="Hệ thống chưa có tài khoản chủ sân" description="Quản trị viên cấp tài khoản chủ sân ở chức năng tạo tài khoản chủ sân." />}
-      {status === 'success' && view?.exists && (
+      {credentials && <div className="mb-5"><TemporaryPassword password={credentials.temporaryPassword} email={credentials.email} onDismiss={() => setCredentials(null)} /></div>}
+      {status === 'empty' && !override && (
+        <div className="grid gap-5">
+          <OwnerEmpty title="Hệ thống chưa có tài khoản chủ sân" description="Cấp tài khoản chủ sân đầu tiên bên dưới. Hệ thống chỉ có một chủ sân." />
+          <OwnerCard title="Cấp tài khoản chủ sân">
+            <CreateOwnerForm onCreated={(result) => { setOverride(result.owner); setCredentials({ temporaryPassword: result.temporaryPassword, email: result.owner.owner.email }); setNotice('Đã cấp tài khoản chủ sân.') }} />
+          </OwnerCard>
+        </div>
+      )}
+      {(status === 'success' || (status === 'empty' && override)) && view?.exists && (
         <div className="grid gap-5 lg:grid-cols-2">
           <OwnerCard title="Tài khoản">
             <dl className="divide-y divide-slate-100">
@@ -109,8 +119,11 @@ function AdminOwnerPage() {
               <Row label="Số điện thoại" value={view.owner.phone} />
               <Row label="Trạng thái" value={userStatusMeta(view.owner.status).label} testId="owner-account-status" />
               <Row label="Đăng nhập gần nhất" value={view.owner.lastLoginAt ? formatDateTime(view.owner.lastLoginAt) : 'Chưa đăng nhập'} />
-              {view.owner.passwordChangeRequired && <Row label="Mật khẩu" value="Đang dùng mật khẩu tạm" />}
+              {view.owner.passwordChangeRequired && <Row label="Mật khẩu" value="Đang dùng mật khẩu tạm" testId="owner-temp-flag" />}
             </dl>
+            {view.owner.lastStatusChange && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600" data-testid="owner-last-change">Lần đổi trạng thái gần nhất: {userStatusMeta(view.owner.lastStatusChange.status).label} · {formatDateTime(view.owner.lastStatusChange.at)}{view.owner.lastStatusChange.reason ? ` · Lý do: ${view.owner.lastStatusChange.reason}` : ''}</p>}
+            <OwnerAccountActions owner={view.owner} onChanged={(result, message) => { setOverride(result); setNotice(message) }}
+              onCredentials={(result) => { setOverride(result.owner); setCredentials({ temporaryPassword: result.temporaryPassword, email: result.owner.owner.email }); setNotice('Đã đặt lại mật khẩu tạm cho chủ sân.') }} />
           </OwnerCard>
 
           <OwnerCard title="Hồ sơ doanh nghiệp">

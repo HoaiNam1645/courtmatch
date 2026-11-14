@@ -61,3 +61,19 @@ export async function fetchAdminOwner() {
 export async function reviewAdminOwner({ status, reason = '' }) {
   return mapDetail(await request('/api/v1/admin/owner/verification', { method: 'POST', body: { status, reason: reason.trim() || null } }))
 }
+
+/** 2.3.33 — cấp tài khoản chủ sân; trả về mật khẩu tạm chỉ hiện một lần. */
+export async function createAdminOwnerAccount({ fullName, email, phone }) {
+  const data = await request('/api/v1/admin/owner/account', { method: 'POST', body: { fullName: fullName.trim(), email: email.trim(), phone: phone.trim() } })
+  return { owner: mapDetail(data.detail), temporaryPassword: data.temporaryPassword }
+}
+
+/** status: active | inactive | banned; reason bắt buộc khi khóa hoặc ngừng. */
+export async function changeAdminOwnerStatus({ status, reason = '' }) {
+  return mapDetail(await request('/api/v1/admin/owner/account/status', { method: 'POST', body: { status, reason: reason.trim() || null } }))
+}
+
+export async function resetAdminOwnerCredentials() {
+  const data = await request('/api/v1/admin/owner/account/reset-credentials', { method: 'POST' })
+  return { owner: mapDetail(data.detail), temporaryPassword: data.temporaryPassword }
+}

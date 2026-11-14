@@ -90,7 +90,7 @@ public class AdminOwnerService {
         return owners.isEmpty() ? null : owners.getFirst();
     }
 
-    private AdminOwnerResponses.Detail build(User owner) {
+    AdminOwnerResponses.Detail build(User owner) {
         if (owner == null) {
             return new AdminOwnerResponses.Detail(null, null, null);
         }

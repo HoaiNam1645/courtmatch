@@ -31,4 +31,12 @@ public final class AdminOwnerResponses {
     /** @param owner null khi he thong chua cap tai khoan chu san */
     public record Detail(AdminUserResponses.Detail owner, Profile profile, Overview overview) {
     }
+
+    /**
+     * Ket qua cap hoac dat lai thong tin dang nhap.
+     *
+     * @param temporaryPassword mat khau tam, chi hien mot lan; he thong khong luu va khong ghi log ban ro
+     */
+    public record Credentials(Detail detail, String temporaryPassword) {
+    }
 }
