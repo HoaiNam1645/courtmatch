@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,6 +84,14 @@ public class Venue extends AuditedEntity {
 
     @Column(name = "approval_status", nullable = false, length = 30)
     private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
+
+    /** Quan tri vien phe duyet san va thoi diem duyet (2.3.34). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
 
     /** Buoc sinh khung gio dat san: 30 hoac 60 phut (2.3.9). */
     @Column(name = "slot_step_minutes", nullable = false)
