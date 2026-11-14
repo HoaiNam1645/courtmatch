@@ -102,6 +102,9 @@ export function deleteE2eVenues() {
   }
   runSql(`
     DELETE FROM booking_commissions WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
+    DELETE FROM audit_logs WHERE entity_type IN ('payments', 'commission_payment_reports')
+       AND (entity_id IN (SELECT p.id FROM payments p JOIN bookings b ON b.id = p.booking_id WHERE b.venue_id IN (${E2E_VENUES}))
+         OR entity_id IN (SELECT id FROM commission_payment_reports WHERE reference_code LIKE 'E2E%'));
     DELETE FROM commission_payment_reports WHERE reference_code LIKE 'E2E%';
     DELETE FROM commission_settlements WHERE note LIKE 'E2E%';
     DELETE FROM refunds WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));

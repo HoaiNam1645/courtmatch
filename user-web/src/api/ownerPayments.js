@@ -47,3 +47,52 @@ export function safeProofUrl(url) {
     return null
   }
 }
+
+function mapPaymentDetail(data) {
+  return {
+    paymentId: data.paymentId,
+    status: data.status,
+    method: data.method,
+    amount: Number(data.amount ?? 0),
+    bankName: data.bankName ?? '',
+    bankAccountNo: data.bankAccountNo ?? '',
+    bankAccountName: data.bankAccountName ?? '',
+    referenceContent: data.referenceContent ?? '',
+    proofUrl: data.proofUrl ?? '',
+    payerReportedAt: data.payerReportedAt ?? null,
+    confirmedAt: data.confirmedAt ?? null,
+    rejectedAt: data.rejectedAt ?? null,
+    rejectionReason: data.rejectionReason ?? '',
+    expiredAt: data.expiredAt ?? null,
+    expired: Boolean(data.expired),
+    canConfirm: Boolean(data.canConfirm),
+    canReject: Boolean(data.canReject),
+    booking: {
+      id: data.booking.id,
+      bookingCode: data.booking.bookingCode,
+      status: data.booking.status,
+      venueName: data.booking.venueName,
+      playerName: data.booking.playerName,
+      playerPhone: data.booking.playerPhone ?? '',
+      totalAmount: Number(data.booking.totalAmount ?? 0),
+      note: data.booking.note ?? '',
+      slots: data.booking.slots,
+    },
+    timeline: data.timeline,
+  }
+}
+
+/** 2.3.27 — chi tiết xác nhận thanh toán trực tiếp của một booking. */
+export async function fetchOwnerPaymentDetail(paymentId) {
+  return mapPaymentDetail(await request(`/api/v1/owner/payments/${encodeURIComponent(paymentId)}`))
+}
+
+/** 2.3.27 — xác nhận đã thu tiền. */
+export async function confirmOwnerPayment(paymentId) {
+  return mapPaymentDetail(await request(`/api/v1/owner/payments/${encodeURIComponent(paymentId)}/confirm`, { method: 'POST' }))
+}
+
+/** 2.3.27 — từ chối báo đã thanh toán kèm lý do. */
+export async function rejectOwnerPayment(paymentId, reason) {
+  return mapPaymentDetail(await request(`/api/v1/owner/payments/${encodeURIComponent(paymentId)}/reject`, { method: 'POST', body: { reason: reason.trim() } }))
+}

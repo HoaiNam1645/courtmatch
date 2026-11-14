@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { ExternalLink, Info } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Info } from 'lucide-react'
 import { PAYMENT_METHOD_LABEL, paymentStatusMeta } from '../../../api/ownerBookings'
 import { fetchOwnerPayments, PAYMENT_TABS, safeProofUrl } from '../../../api/ownerPayments'
 import { fetchOwnerVenues } from '../../../api/ownerVenues'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerLayout } from '../components/OwnerLayout'
+import { PaymentDetailDrawer } from '../components/PaymentDetailDrawer'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { formatDateTime } from '../ownerDates'
 import { inputClass, secondaryButtonClass } from '../ownerStyles'
 
-function PaymentCard({ item }) {
+function PaymentCard({ item, onOpen }) {
   const meta = paymentStatusMeta(item.status)
   const proof = item.proofUrl ? safeProofUrl(item.proofUrl) : null
   return (
@@ -35,6 +36,7 @@ function PaymentCard({ item }) {
         {item.rejectionReason && <div className="text-red-700">Chưa nhận được tiền: {item.rejectionReason}</div>}
         {proof && <div><a className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline" href={proof} target="_blank" rel="noreferrer noopener" data-testid="payment-proof">Xem bằng chứng chuyển khoản<ExternalLink className="size-3" /></a></div>}
       </dl>
+      <button type="button" className={classNames('mt-3 inline-flex h-9 items-center rounded-lg px-3 text-xs font-semibold', item.status === 'payer_reported' ? 'bg-emerald-700 text-white' : 'border border-emerald-200 text-emerald-800')} aria-label={`Xem chi tiết thanh toán ${item.bookingCode}`} onClick={() => onOpen(item.paymentId)}>{item.status === 'payer_reported' ? 'Xác nhận thanh toán' : 'Xem chi tiết'}</button>
     </li>
   )
 }
@@ -42,6 +44,8 @@ function PaymentCard({ item }) {
 /** 2.3.16 — theo dõi thanh toán trực tiếp của người chơi cho các sân của chủ sân. */
 function OwnerPaymentsPage() {
   const [filters, setFilters] = useState({ venueId: '', status: 'all', page: 0 })
+  const [openId, setOpenId] = useState(null)
+  const [notice, setNotice] = useState('')
   const venues = useApiResource(() => fetchOwnerVenues(), [])
   const { status, data, error, reload } = useApiResource(
     () => fetchOwnerPayments(filters),
@@ -60,9 +64,10 @@ function OwnerPaymentsPage() {
     <OwnerLayout eyebrow="2.3.16 · Thanh toán trực tiếp" title="Thanh toán trực tiếp" description="Theo dõi các khoản người chơi thanh toán trực tiếp cho sân của bạn.">
       <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-white p-4 text-sm font-medium text-stone-600">
         <Info className="mt-0.5 size-4 shrink-0 text-emerald-700" />
-        Courtly không nhận, giữ hay chi trả tiền sân nên không có số dư ở đây. Đây là trạng thái và bằng chứng thanh toán giữa người chơi và bạn.
+        Courtly không nhận, giữ hay chi trả tiền sân nên không có số dư ở đây. Khi người chơi báo đã chuyển tiền, hãy đối chiếu tài khoản của bạn rồi xác nhận đã thu hoặc từ chối kèm lý do.
       </div>
 
+      {notice && <p role="status" className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="payment-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       <OwnerCard>
         <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Trạng thái thanh toán">
           {PAYMENT_TABS.map((tab) => {
@@ -90,7 +95,7 @@ function OwnerPaymentsPage() {
           {status === 'success' && (
             <>
               <ul className="grid gap-3 lg:grid-cols-2" data-testid="payment-list">
-                {data.payments.map((item) => <PaymentCard key={item.paymentId} item={item} />)}
+                {data.payments.map((item) => <PaymentCard key={item.paymentId} item={item} onOpen={setOpenId} />)}
               </ul>
               {data.totalPages > 1 && (
                 <div className="mt-5 flex items-center justify-between gap-3">
@@ -103,6 +108,7 @@ function OwnerPaymentsPage() {
           )}
         </div>
       </OwnerCard>
+      {openId && <PaymentDetailDrawer paymentId={openId} onClose={() => setOpenId(null)} onChanged={(message) => { setNotice(message); reload() }} />}
     </OwnerLayout>
   )
 }
