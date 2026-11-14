@@ -98,7 +98,7 @@ public class OwnerCommissionService {
         return new CommissionListResponse.Policy(config.getName(), config.getFeeType().getValue(), config.getFeeValue());
     }
 
-    private static CommissionListResponse.Item toItem(BookingCommission commission, Instant now) {
+    static CommissionListResponse.Item toItem(BookingCommission commission, Instant now) {
         Booking booking = commission.getBooking();
         boolean overdue = OUTSTANDING.contains(commission.getStatus())
                 && commission.getDueAt() != null && commission.getDueAt().isBefore(now);

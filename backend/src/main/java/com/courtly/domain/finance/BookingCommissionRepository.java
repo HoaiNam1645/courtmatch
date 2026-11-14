@@ -87,4 +87,37 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
             where owner_id = :ownerId and status in ('pending', 'due', 'adjusted')
             """, nativeQuery = true)
     BigDecimal sumOutstandingByOwnerId(UUID ownerId);
+
+    /** Booking cau thanh cong no: hoa hong chua doi soat, loc theo han thanh toan [dueFrom, dueTo) (2.3.21). */
+    @Query(value = """
+            select c from BookingCommission c
+            join fetch c.booking b
+            join fetch b.venue v
+            join fetch b.user
+            left join fetch c.feeConfig
+            where v.id in :venueIds and c.status in ('pending', 'due', 'adjusted')
+              and c.dueAt >= :dueFrom and c.dueAt < :dueTo
+            order by c.dueAt asc, c.id asc
+            """,
+            countQuery = """
+                    select count(c) from BookingCommission c
+                    where c.booking.venue.id in :venueIds and c.status in ('pending', 'due', 'adjusted')
+                      and c.dueAt >= :dueFrom and c.dueAt < :dueTo
+                    """)
+    org.springframework.data.domain.Page<BookingCommission> findDebtForVenues(
+            @org.springframework.data.repository.query.Param("venueIds") java.util.Collection<UUID> venueIds,
+            @org.springframework.data.repository.query.Param("dueFrom") java.time.Instant dueFrom,
+            @org.springframework.data.repository.query.Param("dueTo") java.time.Instant dueTo,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** Tong hoa hong cua tap booking cau thanh cong no da loc, khong phan trang (2.3.21). */
+    @Query("""
+            select coalesce(sum(c.commissionAmount), 0) from BookingCommission c
+            where c.booking.venue.id in :venueIds and c.status in ('pending', 'due', 'adjusted')
+              and c.dueAt >= :dueFrom and c.dueAt < :dueTo
+            """)
+    BigDecimal sumDebtForVenues(
+            @org.springframework.data.repository.query.Param("venueIds") java.util.Collection<UUID> venueIds,
+            @org.springframework.data.repository.query.Param("dueFrom") java.time.Instant dueFrom,
+            @org.springframework.data.repository.query.Param("dueTo") java.time.Instant dueTo);
 }

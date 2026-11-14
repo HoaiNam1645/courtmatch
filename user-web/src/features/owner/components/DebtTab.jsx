@@ -3,6 +3,7 @@ import { fetchCommissionDebt } from '../../../api/ownerCommissionDebt'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatDateTime } from '../ownerDates'
+import { DebtBookingsCard } from './DebtBookingsCard'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 function Stat({ label, value, count, testId, tone, note }) {
@@ -58,7 +59,7 @@ function DebtTab() {
             <Stat label="Đã đối soát" value={data.settledAmount} testId="debt-settled" note="Tổng đã thanh toán xong" />
           </div>
 
-          <OwnerCard title="Công nợ theo sân" description="Các booking cấu thành công nợ xem ở tab “Hoa hồng”, lọc trạng thái “Cần thanh toán”.">
+          <OwnerCard title="Công nợ theo sân">
             {data.byVenue.length === 0
               ? <p className="text-sm font-medium text-stone-500" data-testid="debt-by-venue-empty">Không có sân nào còn công nợ.</p>
               : (
@@ -76,6 +77,7 @@ function DebtTab() {
                 </ul>
               )}
           </OwnerCard>
+          <DebtBookingsCard />
           <p className="text-xs font-medium text-stone-400">Cập nhật lúc {formatDateTime(data.asOf)}</p>
         </>
       )}

@@ -1,6 +1,13 @@
 package com.courtly.service.owner;
 
 import com.courtly.api.owner.dto.CommissionDebtResponse;
+import com.courtly.api.owner.dto.DebtBookingListResponse;
+import com.courtly.common.exception.ApiException;
+import com.courtly.common.exception.ErrorCode;
+import com.courtly.domain.finance.BookingCommission;
+import com.courtly.domain.venue.VenueRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import com.courtly.domain.finance.BookingCommissionRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -18,6 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OwnerCommissionDebtService {
 
+    private static final Instant FAR_PAST = Instant.parse("2000-01-01T00:00:00Z");
+    private static final Instant FAR_FUTURE = Instant.parse("2100-01-01T00:00:00Z");
+
+    private final OwnedVenueLookup ownedVenueLookup;
+    private final VenueRepository venueRepository;
     private final BookingCommissionRepository commissionRepository;
 
     @Transactional(readOnly = true)
@@ -77,6 +89,38 @@ public class OwnerCommissionDebtService {
         return new CommissionDebtResponse(now, overdue.add(upcoming), overdueCount + upcomingCount,
                 overdue, overdueCount, upcoming, upcomingCount, suspended, suspendedCount, settled,
                 oldestOverdue, nextDue, byVenue);
+    }
+
+    /**
+     * 2.3.21 - cac booking cau thanh cong no.
+     *
+     * @param bucket all, overdue (da qua han) hoac upcoming (chua den han)
+     * @param venueId null = moi san cua chu san
+     */
+    @Transactional(readOnly = true)
+    public DebtBookingListResponse listBookings(UUID ownerId, UUID venueId, String bucket, int page, int size) {
+        if (!List.of("all", "overdue", "upcoming").contains(bucket)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Nhom cong no khong hop le.",
+                    Map.of("bucket", "Chi nhan all, overdue hoac upcoming"));
+        }
+        List<UUID> venueIds;
+        if (venueId == null) {
+            venueIds = venueRepository.findIdsByOwnerId(ownerId);
+        } else {
+            ownedVenueLookup.requireVenue(ownerId, venueId);
+            venueIds = List.of(venueId);
+        }
+        if (venueIds.isEmpty()) {
+            return new DebtBookingListResponse(List.of(), page, size, 0, 0, BigDecimal.ZERO);
+        }
+        Instant now = Instant.now();
+        Instant dueFrom = "upcoming".equals(bucket) ? now : FAR_PAST;
+        Instant dueTo = "overdue".equals(bucket) ? now : FAR_FUTURE;
+        Page<BookingCommission> commissions = commissionRepository.findDebtForVenues(venueIds, dueFrom, dueTo, PageRequest.of(page, size));
+        return new DebtBookingListResponse(
+                commissions.getContent().stream().map(commission -> OwnerCommissionService.toItem(commission, now)).toList(),
+                commissions.getNumber(), commissions.getSize(), commissions.getTotalElements(), commissions.getTotalPages(),
+                commissionRepository.sumDebtForVenues(venueIds, dueFrom, dueTo));
     }
 
     private static Instant earliest(Instant current, Instant candidate) {

@@ -27,3 +27,28 @@ export async function fetchCommissionDebt() {
     })),
   }
 }
+
+/** 2.3.21 — các booking cấu thành công nợ; bucket: all | overdue | upcoming. */
+export async function fetchDebtBookings({ venueId = '', bucket = 'all', page = 0, size = 10 } = {}) {
+  const search = new URLSearchParams({ bucket, page: String(page), size: String(size) })
+  if (venueId) search.set('venueId', venueId)
+  const data = await request(`/api/v1/owner/commission-debt/bookings?${search.toString()}`)
+  return {
+    bookings: data.content.map((item) => ({
+      bookingId: item.bookingId,
+      bookingCode: item.bookingCode,
+      venueName: item.venueName,
+      playerName: item.playerName,
+      grossAmount: Number(item.grossAmount ?? 0),
+      commissionAmount: Number(item.commissionAmount ?? 0),
+      status: item.status,
+      overdue: Boolean(item.overdue),
+      calculatedAt: item.calculatedAt,
+      dueAt: item.dueAt ?? null,
+    })),
+    page: data.page,
+    totalPages: data.totalPages,
+    totalElements: data.totalElements,
+    totalAmount: Number(data.totalAmount ?? 0),
+  }
+}
