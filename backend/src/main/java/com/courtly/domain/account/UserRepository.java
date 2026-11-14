@@ -56,4 +56,40 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Page<User> searchActivePlayers(@Param("currentUserId") UUID currentUserId,
                                    @Param("keyword") String keyword,
                                    Pageable pageable);
+
+    @Query("SELECT u.status FROM User u WHERE u.id = :id")
+    Optional<com.courtly.common.enums.UserStatus> findStatusById(@Param("id") UUID id);
+
+    /** Danh sach tai khoan cho quan tri vien (2.3.28); keyword la mau LIKE (da them %). */
+    @Query(value = """
+            SELECT u FROM User u
+            WHERE u.status IN :statuses
+              AND (:anyRole = true OR EXISTS (SELECT 1 FROM UserRole ur WHERE ur.user = u AND ur.role.code IN :roles))
+              AND (lower(function('courtly_unaccent', u.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(coalesce(u.email, '')) LIKE lower(:keyword)
+                   OR coalesce(u.phone, '') LIKE :keyword)
+            ORDER BY u.createdAt DESC, u.id DESC
+            """,
+            countQuery = """
+                    SELECT count(u) FROM User u
+                    WHERE u.status IN :statuses
+                      AND (:anyRole = true OR EXISTS (SELECT 1 FROM UserRole ur WHERE ur.user = u AND ur.role.code IN :roles))
+                      AND (lower(function('courtly_unaccent', u.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(coalesce(u.email, '')) LIKE lower(:keyword)
+                           OR coalesce(u.phone, '') LIKE :keyword)
+                    """)
+    Page<User> searchForAdmin(@Param("statuses") java.util.Collection<com.courtly.common.enums.UserStatus> statuses,
+                              @Param("anyRole") boolean anyRole,
+                              @Param("roles") java.util.Collection<String> roles,
+                              @Param("keyword") String keyword,
+                              Pageable pageable);
+
+    @Query("SELECT u.status AS status, count(u) AS total FROM User u GROUP BY u.status")
+    java.util.List<StatusCount> countByStatus();
+
+    interface StatusCount {
+        com.courtly.common.enums.UserStatus getStatus();
+
+        long getTotal();
+    }
 }

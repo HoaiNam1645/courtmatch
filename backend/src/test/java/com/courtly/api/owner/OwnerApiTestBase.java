@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-abstract class OwnerApiTestBase {
+public abstract class OwnerApiTestBase {
 
     protected static final String PASSWORD = "Courtly@123";
     protected static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -174,7 +174,7 @@ abstract class OwnerApiTestBase {
         return objectMapper.readTree(response).get("id").asText();
     }
 
-    private void ensureRole(String code, String name) {
+    protected void ensureRole(String code, String name) {
         if (roleRepository.findByCode(code).isEmpty()) {
             Role role = new Role(code, name, null);
             role.setId(UUID.randomUUID());

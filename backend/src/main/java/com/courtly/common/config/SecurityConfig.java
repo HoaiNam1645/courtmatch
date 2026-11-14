@@ -90,6 +90,9 @@ public class SecurityConfig {
                         // 2.3.1 - khu quan ly chi danh cho chu san; trang thai tai khoan
                         // duoc kiem tra lai trong OwnerAccessInterceptor.
                         .requestMatchers("/api/v1/owner/**").hasRole("owner")
+                        // 2.3.28 - 2.3.35 - khu quan tri chi danh cho quan tri vien; trang thai tai khoan
+                        // va quyen chi tiet duoc kiem tra lai trong AdminAccessInterceptor / AdminAccessService.
+                        .requestMatchers("/api/v1/admin/**").hasRole("admin")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

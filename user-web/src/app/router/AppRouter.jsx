@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { Navigate, useRoutes } from 'react-router-dom'
 import { SplashScreen } from '../AppLayout'
 import { useApp } from '../useApp'
+import { adminRoutes } from '../../features/admin/routes'
 import { authRoutes } from '../../features/auth/routes'
 import { bookingRoutes } from '../../features/bookings/routes'
 import { homeRoutes } from '../../features/home/routes'
@@ -20,6 +21,7 @@ const routes = [
   ...partnerRoutes,
   ...venueRoutes,
   ...ownerRoutes,
+  ...adminRoutes,
   { path: '*', element: <Navigate to="/" replace /> },
 ]
 

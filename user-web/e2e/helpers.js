@@ -5,6 +5,8 @@ import path from 'node:path'
 
 const API_BASE_URL = 'http://127.0.0.1:8080'
 const DEFAULT_PASSWORD = 'Courtly@123'
+export const SEED_ADMIN_EMAIL = 'admin@courtly.vn'
+const E2E_USERS = "SELECT id FROM users WHERE email LIKE 'e2e-%@example.com'"
 
 export function watchRuntimeErrors(page, { ignoredUrls = [] } = {}) {
   const errors = []
@@ -211,4 +213,29 @@ export function resetPartnerE2eData() {
     env: { ...process.env, PGPASSWORD: 'courtly' },
     stdio: 'ignore',
   })
+}
+
+/**
+ * Tạo tài khoản E2E (mật khẩu mặc định Courtly@123) bằng SQL; email luôn dạng e2e-*@example.com
+ * để deleteE2eUsers dọn được. Trả về id.
+ */
+export function createE2eUser({ tag, name, role = 'player', status = 'active', phone = null }) {
+  const email = `e2e-${tag}@example.com`
+  return runSql(`
+    WITH u AS (
+      INSERT INTO users (full_name, email, phone, password_hash, status, email_verified_at)
+      SELECT '${name}', '${email}', ${phone ? `'${phone}'` : 'NULL'}, password_hash, '${status}', now()
+      FROM users WHERE email = 'an.nguyen@example.com'
+      RETURNING id)
+    INSERT INTO user_roles (user_id, role_id)
+    SELECT u.id, r.id FROM u, roles r WHERE r.code = '${role}'
+    RETURNING user_id`)
+}
+
+/** Xóa tài khoản E2E và nhật ký liên quan. */
+export function deleteE2eUsers() {
+  runSql(`
+    DELETE FROM audit_logs WHERE (entity_type = 'users' AND entity_id IN (${E2E_USERS})) OR actor_id IN (${E2E_USERS});
+    DELETE FROM users WHERE email LIKE 'e2e-%@example.com';
+  `)
 }
