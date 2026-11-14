@@ -120,4 +120,30 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
             @org.springframework.data.repository.query.Param("venueIds") java.util.Collection<UUID> venueIds,
             @org.springframework.data.repository.query.Param("dueFrom") java.time.Instant dueFrom,
             @org.springframework.data.repository.query.Param("dueTo") java.time.Instant dueTo);
+
+    /** So booking trong tung ky doi soat (2.3.23). */
+    @Query("select c.settlement.id as settlementId, count(c) as total from BookingCommission c where c.settlement.id in :settlementIds group by c.settlement.id")
+    java.util.List<SettlementBookingCount> countBySettlementIds(
+            @org.springframework.data.repository.query.Param("settlementIds") java.util.Collection<UUID> settlementIds);
+
+    interface SettlementBookingCount {
+        UUID getSettlementId();
+
+        long getTotal();
+    }
+
+    /** Booking thuoc mot ky doi soat, ghi nhan som nhat truoc (2.3.23). */
+    @Query(value = """
+            select c from BookingCommission c
+            join fetch c.booking b
+            join fetch b.venue
+            join fetch b.user
+            left join fetch c.feeConfig
+            where c.settlement.id = :settlementId
+            order by c.calculatedAt asc, c.id asc
+            """,
+            countQuery = "select count(c) from BookingCommission c where c.settlement.id = :settlementId")
+    org.springframework.data.domain.Page<BookingCommission> findBySettlement(
+            @org.springframework.data.repository.query.Param("settlementId") UUID settlementId,
+            org.springframework.data.domain.Pageable pageable);
 }
