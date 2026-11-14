@@ -76,3 +76,25 @@ export async function fetchBookingDetail(bookingId) {
     createdAt: data.createdAt,
   }
 }
+
+/** 2.3.22 — lịch sử đối soát hoa hồng của một booking. */
+export async function fetchBookingReconciliation(bookingId) {
+  const data = await request(`/api/v1/owner/bookings/${encodeURIComponent(bookingId)}/reconciliation`)
+  return {
+    commission: data.commission
+      ? { ...data.commission, grossAmount: Number(data.commission.grossAmount), commissionAmount: Number(data.commission.commissionAmount) }
+      : null,
+    settlement: data.settlement ?? null,
+    events: data.events.map((event) => ({ ...event, amount: Number(event.amount ?? 0), note: event.note ?? '' })),
+  }
+}
+
+/** Nhãn tiếng Việt của sự kiện đối soát, một chỗ duy nhất. */
+export const RECONCILIATION_EVENT_LABEL = {
+  recorded: 'Ghi nhận hoa hồng cho booking',
+  assigned_to_settlement: 'Đưa vào kỳ đối soát',
+  suspended: 'Tạm hoãn do tranh chấp',
+  adjusted: 'Hoa hồng được điều chỉnh',
+  waived: 'Hoa hồng được miễn',
+  settled: 'Đã đối soát xong',
+}

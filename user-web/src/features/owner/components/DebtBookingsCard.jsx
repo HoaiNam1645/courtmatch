@@ -6,6 +6,7 @@ import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatDateTime } from '../ownerDates'
 import { inputClass, secondaryButtonClass } from '../ownerStyles'
+import { BookingDetailDrawer } from './BookingDetailDrawer'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 const BUCKETS = [
@@ -17,6 +18,7 @@ const BUCKETS = [
 /** 2.3.21 — các booking cấu thành công nợ hoa hồng, tổng hợp từ hoa hồng từng booking. */
 function DebtBookingsCard() {
   const [filters, setFilters] = useState({ venueId: '', bucket: 'all', page: 0 })
+  const [openId, setOpenId] = useState(null)
   const venues = useApiResource(() => fetchOwnerVenues(), [])
   const { status, data, error, reload } = useApiResource(
     () => fetchDebtBookings(filters),
@@ -65,6 +67,7 @@ function DebtBookingsCard() {
                     <p className="mt-2 text-sm font-semibold text-emerald-950">{item.venueName}</p>
                     <p className="text-sm font-medium text-stone-600">{item.playerName} · doanh thu gộp {formatCurrency(item.grossAmount)}</p>
                     <p className="mt-1 text-xs font-medium text-stone-500">Ghi nhận {formatDateTime(item.calculatedAt)} · hạn thanh toán {formatDateTime(item.dueAt)}</p>
+                    <button type="button" className="mt-2 text-sm font-semibold text-emerald-700 hover:underline" data-testid="debt-booking-history" onClick={() => setOpenId(item.bookingId)}>Xem lịch sử đối soát</button>
                   </li>
                 )
               })}
@@ -79,6 +82,7 @@ function DebtBookingsCard() {
           </>
         )}
       </div>
+      {openId && <BookingDetailDrawer bookingId={openId} onClose={() => setOpenId(null)} />}
     </OwnerCard>
   )
 }

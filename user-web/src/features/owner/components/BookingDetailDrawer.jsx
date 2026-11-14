@@ -7,6 +7,7 @@ import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatDateTime, formatTime } from '../ownerDates'
 import { OwnerError, OwnerLoading } from './OwnerUi'
+import { ReconciliationHistory } from './ReconciliationHistory'
 
 function Badge({ meta, testId }) {
   return <span data-testid={testId} className={classNames('inline-flex rounded-full px-2.5 py-1 text-xs font-bold', meta.className)}>{meta.label}</span>
@@ -73,6 +74,8 @@ function BookingDetailDrawer({ bookingId, onClose }) {
                 </div>
               </section>
             )}
+
+            {data.fee && !data.fee.estimated && <ReconciliationHistory bookingId={bookingId} />}
 
             <section>
               <h3 className="text-sm font-semibold text-emerald-950">Tiến trình</h3>
