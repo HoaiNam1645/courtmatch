@@ -41,6 +41,10 @@ public final class AdminVenueResponses {
                              BigDecimal minPrice, BigDecimal maxPrice) {
     }
 
+    /** @param code ma ly do trong danh muc; reason la nhan kem ghi chu */
+    public record Rejection(String code, String reason, String rejectedBy, Instant rejectedAt) {
+    }
+
     /** @param code location, active_court, operating_hours, prices */
     public record Check(String code, String label, boolean ok) {
     }
@@ -48,9 +52,16 @@ public final class AdminVenueResponses {
     /**
      * @param approvedBy ten quan tri vien duyet; null neu chua duyet
      * @param canApprove san dang cho duyet va dat du dieu kien hien thi
+     * @param rejection  lan tu choi gan nhat; null neu san chua bao gio bi tu choi (hoac da duoc duyet sau do)
      */
     public record Detail(OwnerVenueDetailResponse venue, Owner owner, List<Image> images, List<Hours> hours,
                          List<CourtPrice> courtPrices, List<Check> checks, boolean canApprove,
-                         String approvedBy, Instant approvedAt) {
+                         String approvedBy, Instant approvedAt, Rejection rejection) {
+    }
+
+    public record RejectReason(String code, String label, boolean noteRequired) {
+    }
+
+    public record RejectReasons(List<RejectReason> reasons) {
     }
 }

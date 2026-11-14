@@ -1,7 +1,9 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminVenueResponses;
+import com.courtly.api.admin.dto.RejectVenueRequest;
 import com.courtly.service.admin.AdminVenueService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -14,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,5 +51,18 @@ public class AdminVenueController {
     @PostMapping("/{venueId}/approve")
     public ResponseEntity<AdminVenueResponses.Detail> approve(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId) {
         return ResponseEntity.ok(venueService.approve(AdminJwt.adminId(jwt), venueId));
+    }
+
+    /** 2.3.35 - danh muc ly do tu choi san. */
+    @GetMapping("/reject-reasons")
+    public ResponseEntity<AdminVenueResponses.RejectReasons> rejectReasons(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(venueService.rejectReasons(AdminJwt.adminId(jwt)));
+    }
+
+    /** 2.3.35 - tu choi san cho duyet kem ly do. */
+    @PostMapping("/{venueId}/reject")
+    public ResponseEntity<AdminVenueResponses.Detail> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId,
+                                                             @Valid @RequestBody RejectVenueRequest request) {
+        return ResponseEntity.ok(venueService.reject(AdminJwt.adminId(jwt), venueId, request.reasonCode(), request.note()));
     }
 }

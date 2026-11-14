@@ -66,6 +66,9 @@ function mapDetail(data) {
     canApprove: Boolean(data.canApprove),
     approvedBy: data.approvedBy ?? '',
     approvedAt: data.approvedAt ?? null,
+    rejection: data.rejection
+      ? { code: data.rejection.code, reason: data.rejection.reason, rejectedBy: data.rejection.rejectedBy ?? '', rejectedAt: data.rejection.rejectedAt }
+      : null,
   }
 }
 
@@ -75,4 +78,17 @@ export async function fetchAdminVenue(venueId) {
 
 export async function approveAdminVenue(venueId) {
   return mapDetail(await request(`/api/v1/admin/venues/${encodeURIComponent(venueId)}/approve`, { method: 'POST' }))
+}
+
+/** Danh mục lý do từ chối lấy từ backend; "other" bắt buộc kèm ghi chú. */
+export async function fetchVenueRejectReasons() {
+  const data = await request('/api/v1/admin/venues/reject-reasons')
+  return data.reasons.map((reason) => ({ code: reason.code, label: reason.label, noteRequired: Boolean(reason.noteRequired) }))
+}
+
+export async function rejectAdminVenue(venueId, { reasonCode, note = '' }) {
+  return mapDetail(await request(`/api/v1/admin/venues/${encodeURIComponent(venueId)}/reject`, {
+    method: 'POST',
+    body: { reasonCode, note: note.trim() || null },
+  }))
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, ExternalLink } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { APPROVAL_STATUS_META, fetchOwnerVenue, fetchVenueOptions, statusMeta, VENUE_STATUS_META } from '../../../api/ownerVenues'
+import { APPROVAL_STATUS_META, fetchOwnerVenue, fetchVenueOptions, resubmitOwnerVenue, statusMeta, VENUE_STATUS_META } from '../../../api/ownerVenues'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames } from '../../../shared/utils'
 import { OwnerLayout } from '../components/OwnerLayout'
@@ -39,10 +39,27 @@ function OwnerVenueDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { status, data, error, reload } = useApiResource(() => loadVenuePage(venueId), [venueId])
   const [notice, setNotice] = useState('')
+  const [resubmitting, setResubmitting] = useState(false)
+  const [resubmitError, setResubmitError] = useState('')
   const activeTab = VENUE_TABS.find((tab) => tab.id === searchParams.get('tab')) ?? VENUE_TABS[0]
   const TabComponent = activeTab.component
 
   const venue = data?.venue
+  async function resubmit() {
+    if (resubmitting) return
+    setResubmitting(true)
+    setResubmitError('')
+    try {
+      await resubmitOwnerVenue(venueId)
+      setNotice('Đã gửi sân để quản trị viên duyệt lại.')
+      reload()
+    } catch (failure) {
+      setResubmitError(failure?.message ?? 'Đã có lỗi xảy ra, vui lòng thử lại.')
+    } finally {
+      setResubmitting(false)
+    }
+  }
+
   const published = venue?.status === 'active' && venue?.approvalStatus === 'approved'
 
   return (
@@ -77,6 +94,15 @@ function OwnerVenueDetailPage() {
               <span key={meta.label} className={classNames('rounded-full px-3 py-1.5 text-xs font-bold', meta.className)}>{meta.label}</span>
             ))}
           </div>
+          {venue.approvalStatus === 'rejected' && (
+            <section className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4" data-testid="venue-rejection">
+              <h2 className="text-sm font-semibold text-red-800">Quản trị viên đã từ chối sân này</h2>
+              <p className="mt-1 text-sm font-medium text-red-700" data-testid="venue-rejection-reason">Lý do: {venue.rejectionReason}</p>
+              <p className="mt-1 text-xs font-medium text-red-700">Hãy chỉnh sửa theo yêu cầu rồi gửi duyệt lại. Sân chưa hiển thị cho người chơi cho tới khi được duyệt.</p>
+              {resubmitError && <p role="alert" className="mt-2 text-sm font-semibold text-red-800">{resubmitError}</p>}
+              <button type="button" className={`${secondaryButtonClass} mt-3`} data-testid="venue-resubmit" disabled={resubmitting} onClick={resubmit}>{resubmitting ? 'Đang gửi...' : 'Gửi duyệt lại'}</button>
+            </section>
+          )}
           <div className="mb-5 flex gap-1 overflow-x-auto rounded-xl border border-emerald-100 bg-white p-1.5" role="tablist" aria-label="Quản lý sân">
             {VENUE_TABS.map((tab) => (
               <button

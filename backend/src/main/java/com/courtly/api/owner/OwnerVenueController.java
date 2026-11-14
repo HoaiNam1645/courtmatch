@@ -67,6 +67,12 @@ public class OwnerVenueController {
         return ResponseEntity.ok(ownerVenueService.get(ownerId(jwt), venueId));
     }
 
+    /** 2.3.35 - gui lai san bi tu choi de duyet lai. */
+    @PostMapping("/venues/{venueId}/resubmit")
+    public ResponseEntity<OwnerVenueDetailResponse> resubmit(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId) {
+        return ResponseEntity.ok(ownerVenueService.resubmit(ownerId(jwt), venueId));
+    }
+
     /** 2.3.4 - cap nhat thong tin chung va tien ich. */
     @PutMapping("/venues/{venueId}")
     public ResponseEntity<OwnerVenueDetailResponse> update(@AuthenticationPrincipal Jwt jwt,

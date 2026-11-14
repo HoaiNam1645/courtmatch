@@ -11,6 +11,7 @@ import com.courtly.domain.account.User;
 import com.courtly.domain.venue.AdminVenueQueries;
 import com.courtly.domain.venue.Court;
 import com.courtly.domain.venue.CourtPriceRule;
+import com.courtly.domain.booking.BookingRepository;
 import com.courtly.domain.venue.CourtRepository;
 import com.courtly.domain.venue.Venue;
 import com.courtly.domain.venue.VenueImage;
@@ -50,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminVenueService {
 
     static final String APPROVE_PERMISSION = "venue.approve";
+    static final String REJECT_PERMISSION = "venue.reject";
 
     private final AdminAccessService accessService;
     private final AdminVenueQueries venueQueries;
@@ -58,6 +60,7 @@ public class AdminVenueService {
     private final VenueImageRepository imageRepository;
     private final VenueOperatingHoursRepository hoursRepository;
     private final OwnerVenueService ownerVenueService;
+    private final BookingRepository bookingRepository;
     private final AuditService auditService;
 
     /**
@@ -119,9 +122,66 @@ public class AdminVenueService {
         venue.setStatus(VenueStatus.ACTIVE);
         venue.setApprovedBy(admin);
         venue.setApprovedAt(Instant.now());
+        venue.setRejectedBy(null);
+        venue.setRejectedAt(null);
+        venue.setRejectionCode(null);
+        venue.setRejectionReason(null);
         venueRepository.saveAndFlush(venue);
         auditService.record(admin, "venue.approve", "venues", venue.getId(), before,
                 Map.of("approvalStatus", "approved", "status", "active", "venueName", venue.getName()));
+        return toDetail(venue);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminVenueResponses.RejectReasons rejectReasons(UUID adminId) {
+        accessService.requirePermission(adminId, REJECT_PERMISSION);
+        return new AdminVenueResponses.RejectReasons(VenueRejectReasons.LABELS.entrySet().stream()
+                .map(entry -> new AdminVenueResponses.RejectReason(entry.getKey(), entry.getValue(),
+                        VenueRejectReasons.OTHER.equals(entry.getKey())))
+                .toList());
+    }
+
+    /**
+     * Tu choi san dang cho duyet kem ly do. San dang co booking dang xu ly thi khong tu choi duoc
+     * de khong lam hong don cua nguoi choi.
+     */
+    @Transactional
+    public AdminVenueResponses.Detail reject(UUID adminId, UUID venueId, String reasonCode, String note) {
+        User admin = accessService.requirePermission(adminId, REJECT_PERMISSION);
+        String label = VenueRejectReasons.LABELS.get(reasonCode);
+        if (label == null) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ly do tu choi khong hop le.",
+                    Map.of("reasonCode", "Chi nhan ly do trong danh muc"));
+        }
+        if (VenueRejectReasons.OTHER.equals(reasonCode) && (note == null || note.length() < 3)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Vui long nhap ghi chu (it nhat 3 ky tu) khi chon ly do khac.",
+                    Map.of("note", "Bat buoc nhap ghi chu khi chon ly do khac"));
+        }
+        Venue venue = requireVenue(venueId);
+        if (venue.getApprovalStatus() != ApprovalStatus.PENDING) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_INVALID, "Chi tu choi duoc san dang cho duyet.",
+                    Map.of("approvalStatus", "San khong o trang thai cho duyet"));
+        }
+        long open = bookingRepository.countOpenByVenueId(venueId);
+        if (open > 0) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_INVALID,
+                    "San dang co " + open + " booking dang xu ly, hay xu ly cac booking truoc khi tu choi san.",
+                    Map.of("bookings", "San con booking dang xu ly"));
+        }
+
+        String reason = note == null ? label : label + ": " + note;
+        Instant now = Instant.now();
+        Map<String, Object> before = Map.of("approvalStatus", venue.getApprovalStatus().getValue(), "status", venue.getStatus().getValue());
+        venue.setApprovalStatus(ApprovalStatus.REJECTED);
+        venue.setStatus(VenueStatus.REJECTED);
+        venue.setRejectedBy(admin);
+        venue.setRejectedAt(now);
+        venue.setRejectionCode(reasonCode);
+        venue.setRejectionReason(reason);
+        venueRepository.saveAndFlush(venue);
+        auditService.record(admin, "venue.reject", "venues", venue.getId(), before,
+                Map.of("approvalStatus", "rejected", "status", "rejected", "reasonCode", reasonCode, "reason", reason,
+                        "venueName", venue.getName()));
         return toDetail(venue);
     }
 
@@ -143,7 +203,10 @@ public class AdminVenueService {
                         .map(hours -> new AdminVenueResponses.Hours(hours.getDayOfWeek(), hours.isClosed(), hours.getOpenTime(), hours.getCloseTime())).toList(),
                 courts.stream().sorted(Comparator.comparing(Court::getCourtCode)).map(AdminVenueService::toCourtPrice).toList(),
                 checks, canApprove,
-                venue.getApprovedBy() == null ? null : venue.getApprovedBy().getFullName(), venue.getApprovedAt());
+                venue.getApprovedBy() == null ? null : venue.getApprovedBy().getFullName(), venue.getApprovedAt(),
+                venue.getRejectionReason() == null ? null : new AdminVenueResponses.Rejection(venue.getRejectionCode(),
+                        venue.getRejectionReason(), venue.getRejectedBy() == null ? null : venue.getRejectedBy().getFullName(),
+                        venue.getRejectedAt()));
     }
 
     private List<AdminVenueResponses.Check> checksOf(Venue venue) {

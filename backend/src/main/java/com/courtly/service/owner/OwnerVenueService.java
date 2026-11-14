@@ -195,6 +195,21 @@ public class OwnerVenueService {
     }
 
     /** Them san con vao san da co (2.3.4). */
+    /** 2.3.35 - gui lai san bi tu choi de duyet lai sau khi da chinh sua; san quay ve cho duyet. */
+    @Transactional
+    public OwnerVenueDetailResponse resubmit(UUID ownerId, UUID venueId) {
+        Venue venue = ownedVenueLookup.requireVenue(ownerId, venueId);
+        if (venue.getApprovalStatus() != ApprovalStatus.REJECTED) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_INVALID, "Chi gui duyet lai duoc san da bi tu choi.",
+                    Map.of("approvalStatus", "San khong o trang thai bi tu choi"));
+        }
+        venue.setApprovalStatus(ApprovalStatus.PENDING);
+        venue.setStatus(VenueStatus.PENDING);
+        auditService.record(venue.getOwner(), "venue.resubmit", "venues", venue.getId(),
+                Map.of("approvalStatus", "rejected"), Map.of("approvalStatus", "pending", "venueName", venue.getName()));
+        return toDetail(venue);
+    }
+
     @Transactional
     public OwnerVenueDetailResponse.CourtItem addCourt(UUID ownerId, UUID venueId, CourtInput input) {
         Venue venue = ownedVenueLookup.requireVenue(ownerId, venueId);
@@ -446,6 +461,8 @@ public class OwnerVenueService {
                         .sorted(Comparator.comparing(Court::getCourtCode))
                         .map(OwnerVenueService::toCourtItem)
                         .toList(),
-                venue.getCreatedAt(), venue.getUpdatedAt());
+                venue.getCreatedAt(), venue.getUpdatedAt(),
+                venue.getApprovalStatus() == ApprovalStatus.REJECTED ? venue.getRejectionReason() : null,
+                venue.getApprovalStatus() == ApprovalStatus.REJECTED ? venue.getRejectedAt() : null);
     }
 }

@@ -204,4 +204,11 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     Page<Booking> findMatchSuggestions(@Param("userId") UUID userId,
                                        @Param("since") Instant since,
                                        Pageable pageable);
+
+    /** Booking dang xu ly cua mot san: cho chu san duyet, cho thanh toan hoac da xac nhan chua choi (2.3.35). */
+    @Query(value = """
+            select count(*) from bookings
+            where venue_id = :venueId and status in ('pending_owner_confirmation', 'awaiting_payment', 'confirmed')
+            """, nativeQuery = true)
+    long countOpenByVenueId(@org.springframework.data.repository.query.Param("venueId") UUID venueId);
 }

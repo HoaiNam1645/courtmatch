@@ -93,6 +93,20 @@ public class Venue extends AuditedEntity {
     @Column(name = "approved_at")
     private Instant approvedAt;
 
+    /** Quan tri vien tu choi san: ai, khi nao va ly do (2.3.35); giu lai cho toi khi duoc duyet. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rejected_by")
+    private User rejectedBy;
+
+    @Column(name = "rejected_at")
+    private Instant rejectedAt;
+
+    @Column(name = "rejection_code", length = 50)
+    private String rejectionCode;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
     /** Buoc sinh khung gio dat san: 30 hoac 60 phut (2.3.9). */
     @Column(name = "slot_step_minutes", nullable = false)
     private short slotStepMinutes = 60;

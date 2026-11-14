@@ -82,6 +82,8 @@ export function toUiVenueDetail(venue) {
     email: venue.email ?? '',
     status: venue.status,
     approvalStatus: venue.approvalStatus,
+    rejectionReason: venue.rejectionReason ?? '',
+    rejectedAt: venue.rejectedAt ?? null,
     services: (venue.services ?? []).map((service) => ({
       code: service.code,
       name: service.name,
@@ -168,4 +170,9 @@ export function updateOwnerCourt(venueId, court) {
     method: 'PUT',
     body: { ...toCourtBody(court), status: court.status },
   })
+}
+
+/** 2.3.35 — gửi lại sân bị từ chối để quản trị viên duyệt lại. */
+export async function resubmitOwnerVenue(venueId) {
+  return toUiVenueDetail(await request(`/api/v1/owner/venues/${encodeURIComponent(venueId)}/resubmit`, { method: 'POST' }))
 }
