@@ -4,6 +4,7 @@ import { CommissionTab } from '../components/CommissionTab'
 import { DebtTab } from '../components/DebtTab'
 import { NetIncomeTab } from '../components/NetIncomeTab'
 import { OwnerLayout } from '../components/OwnerLayout'
+import { PaymentHistoryTab } from '../components/PaymentHistoryTab'
 import { RevenueTab } from '../components/RevenueTab'
 import { SettlementsTab } from '../components/SettlementsTab'
 
@@ -14,6 +15,7 @@ const FINANCE_TABS = [
   { id: 'net', label: 'Thực nhận', component: NetIncomeTab },
   { id: 'debt', label: 'Công nợ', component: DebtTab },
   { id: 'settlements', label: 'Đối soát', component: SettlementsTab },
+  { id: 'payment-history', label: 'Lịch sử thanh toán', component: PaymentHistoryTab },
 ]
 
 /** Tài chính của chủ sân: doanh thu, hoa hồng và công nợ với Courtly. */

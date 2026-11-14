@@ -56,4 +56,31 @@ public interface CommissionPaymentReportRepository extends JpaRepository<Commiss
 
         BigDecimal getAmount();
     }
+
+    /** Lich su thanh toan hoa hong, loc theo trang thai va ngay thanh toan [fromDate, toDate], moi nhat truoc (2.3.26). */
+    @Query(value = """
+            select r from CommissionPaymentReport r
+            left join fetch r.settlement
+            where r.owner.id = :ownerId and r.status in :statuses
+              and r.paidOn >= :fromDate and r.paidOn <= :toDate
+            order by r.createdAt desc, r.id desc
+            """,
+            countQuery = """
+                    select count(r) from CommissionPaymentReport r
+                    where r.owner.id = :ownerId and r.status in :statuses
+                      and r.paidOn >= :fromDate and r.paidOn <= :toDate
+                    """)
+    org.springframework.data.domain.Page<CommissionPaymentReport> findHistory(
+            @Param("ownerId") UUID ownerId, @Param("statuses") java.util.Collection<String> statuses,
+            @Param("fromDate") java.time.LocalDate fromDate, @Param("toDate") java.time.LocalDate toDate,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** Tong tien cua tap da loc, khong phan trang (2.3.26). */
+    @Query("""
+            select coalesce(sum(r.amount), 0) from CommissionPaymentReport r
+            where r.owner.id = :ownerId and r.status in :statuses
+              and r.paidOn >= :fromDate and r.paidOn <= :toDate
+            """)
+    BigDecimal sumHistory(@Param("ownerId") UUID ownerId, @Param("statuses") java.util.Collection<String> statuses,
+                          @Param("fromDate") java.time.LocalDate fromDate, @Param("toDate") java.time.LocalDate toDate);
 }

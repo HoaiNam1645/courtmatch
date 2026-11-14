@@ -69,3 +69,21 @@ export async function fetchCommissionPaymentStatus() {
     })),
   }
 }
+
+export const COMMISSION_PAYMENT_TABS = ['all', 'pending_review', 'confirmed', 'rejected']
+
+/** 2.3.26 — lịch sử thanh toán hoa hồng; from/to lọc theo ngày thanh toán. */
+export async function fetchCommissionPaymentHistory({ status = 'all', from = '', to = '', page = 0, size = 10 } = {}) {
+  const search = new URLSearchParams({ status, page: String(page), size: String(size) })
+  if (from) search.set('from', from)
+  if (to) search.set('to', to)
+  const data = await request(`/api/v1/owner/commission-payments?${search.toString()}`)
+  return {
+    payments: data.content.map(mapCommissionPayment),
+    page: data.page,
+    totalPages: data.totalPages,
+    totalElements: data.totalElements,
+    totalAmount: Number(data.totalAmount ?? 0),
+    statusCounts: data.statusCounts,
+  }
+}
