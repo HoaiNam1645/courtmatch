@@ -1,8 +1,11 @@
-import { AlertTriangle, Info } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { fetchCommissionDebt } from '../../../api/ownerCommissionDebt'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatDateTime } from '../ownerDates'
+import { primaryButtonClass } from '../ownerStyles'
+import { CommissionPaymentDialog } from './CommissionPaymentDialog'
 import { DebtBookingsCard } from './DebtBookingsCard'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
@@ -24,8 +27,12 @@ function DebtTab() {
     isEmpty: (result) => result.outstandingCount === 0 && result.suspendedCount === 0 && result.settledAmount === 0,
   })
 
+  const [paying, setPaying] = useState(false)
+  const [notice, setNotice] = useState('')
+
   return (
     <div className="grid gap-5">
+      {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="payment-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       <div className="flex items-start gap-3 rounded-xl border border-emerald-100 bg-white p-4 text-sm font-medium text-stone-600">
         <Info className="mt-0.5 size-4 shrink-0 text-emerald-700" />
         <p>Công nợ là tổng hoa hồng Courtly của các booking chưa đối soát. Courtly không giữ tiền sân của bạn nên đây không phải số dư ví. Hoa hồng đang tranh chấp được tạm hoãn và chưa tính vào công nợ.</p>
@@ -50,6 +57,7 @@ function DebtTab() {
               <p className="mt-3 text-sm font-medium text-stone-600" data-testid="debt-next-due">Hạn thanh toán gần nhất: {formatDateTime(data.nextDueAt)}</p>
             )}
             {data.totalOutstanding === 0 && <p className="mt-3 text-sm font-semibold text-emerald-800">Bạn không còn khoản hoa hồng nào phải thanh toán.</p>}
+            {data.totalOutstanding > 0 && <button type="button" className={`${primaryButtonClass} mt-4`} data-testid="pay-debt" onClick={() => setPaying(true)}>Gửi thông tin thanh toán</button>}
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -79,6 +87,17 @@ function DebtTab() {
           </OwnerCard>
           <DebtBookingsCard />
           <p className="text-xs font-medium text-stone-400">Cập nhật lúc {formatDateTime(data.asOf)}</p>
+          {paying && (
+            <CommissionPaymentDialog
+              maxAmount={data.totalOutstanding}
+              onClose={() => setPaying(false)}
+              onSubmitted={(payment) => {
+                setPaying(false)
+                setNotice(`Đã gửi thông tin thanh toán ${payment.referenceCode}. Courtly sẽ xác nhận sau khi đối chiếu, công nợ giảm khi được xác nhận.`)
+                reload()
+              }}
+            />
+          )}
         </>
       )}
     </div>

@@ -74,6 +74,7 @@ public final class ErrorCode {
     public static final String BLOCK_STATE_INVALID = "BLOCK_STATE_INVALID";
     public static final String IMAGE_INVALID = "IMAGE_INVALID";
     public static final String IMAGE_LIMIT_REACHED = "IMAGE_LIMIT_REACHED";
+    public static final String COMMISSION_PAYMENT_INVALID = "COMMISSION_PAYMENT_INVALID";
 
     private ErrorCode() {
     }

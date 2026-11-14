@@ -1,0 +1,31 @@
+package com.courtly.domain.finance;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface CommissionPaymentReportRepository extends JpaRepository<CommissionPaymentReport, UUID> {
+
+    /** Ma tham chieu da dung cho bao cao chua bi tu choi (2.3.24). */
+    @Query("""
+            select count(r) > 0 from CommissionPaymentReport r
+            where r.owner.id = :ownerId and lower(r.referenceCode) = lower(:referenceCode) and r.status <> 'rejected'
+            """)
+    boolean referenceInUse(@Param("ownerId") UUID ownerId, @Param("referenceCode") String referenceCode);
+
+    /** Tong tien dang cho Courtly xac nhan cua mot ky (2.3.24). */
+    @Query("""
+            select coalesce(sum(r.amount), 0) from CommissionPaymentReport r
+            where r.settlement.id = :settlementId and r.status = 'pending_review'
+            """)
+    BigDecimal sumPendingForSettlement(@Param("settlementId") UUID settlementId);
+
+    /** Tong tien dang cho xac nhan khong gan ky doi soat nao (2.3.24). */
+    @Query("""
+            select coalesce(sum(r.amount), 0) from CommissionPaymentReport r
+            where r.owner.id = :ownerId and r.settlement is null and r.status = 'pending_review'
+            """)
+    BigDecimal sumPendingWithoutSettlement(@Param("ownerId") UUID ownerId);
+}

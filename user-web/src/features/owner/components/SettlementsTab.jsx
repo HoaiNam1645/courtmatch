@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Info } from 'lucide-react'
+import { CheckCircle2, Info } from 'lucide-react'
 import { fetchSettlements, SETTLEMENT_TABS, settlementStatusMeta } from '../../../api/ownerSettlements'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatIsoDate } from '../ownerDates'
-import { secondaryButtonClass } from '../ownerStyles'
+import { primaryButtonClass, secondaryButtonClass } from '../ownerStyles'
+import { CommissionPaymentDialog } from './CommissionPaymentDialog'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 import { SettlementDrawer } from './SettlementDrawer'
 
@@ -12,6 +13,9 @@ import { SettlementDrawer } from './SettlementDrawer'
 function SettlementsTab() {
   const [filters, setFilters] = useState({ status: 'all', page: 0 })
   const [openId, setOpenId] = useState(null)
+  const [paying, setPaying] = useState(null)
+  const [notice, setNotice] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
   const { status, data, error, reload } = useApiResource(
     () => fetchSettlements(filters),
     [filters.status, filters.page],
@@ -20,6 +24,7 @@ function SettlementsTab() {
 
   return (
     <div className="grid gap-5">
+      {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="payment-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       <div className="flex items-start gap-3 rounded-xl border border-emerald-100 bg-white p-4 text-sm font-medium text-stone-600">
         <Info className="mt-0.5 size-4 shrink-0 text-emerald-700" />
         <p>Courtly chốt hoa hồng của các booking thành từng kỳ đối soát. Mỗi kỳ cho biết số phải thanh toán, số đã thanh toán và số còn lại.</p>
@@ -70,7 +75,29 @@ function SettlementsTab() {
           )}
         </div>
       </OwnerCard>
-      {openId && <SettlementDrawer settlementId={openId} onClose={() => setOpenId(null)} />}
+      {openId && (
+        <SettlementDrawer
+          key={`${openId}-${reloadKey}`}
+          settlementId={openId}
+          onClose={() => setOpenId(null)}
+          footer={(settlement) => (settlement.remainingAmount > 0 && !['paid', 'disputed', 'pending_review'].includes(settlement.status)
+            ? <button type="button" className={primaryButtonClass} data-testid="pay-settlement" onClick={() => setPaying(settlement)}>Gửi thông tin thanh toán</button>
+            : null)}
+        />
+      )}
+      {paying && (
+        <CommissionPaymentDialog
+          settlement={paying}
+          maxAmount={paying.remainingAmount}
+          onClose={() => setPaying(null)}
+          onSubmitted={(payment) => {
+            setPaying(null)
+            setNotice(`Đã gửi thông tin thanh toán ${payment.referenceCode}. Courtly sẽ xác nhận sau khi đối chiếu.`)
+            setReloadKey((current) => current + 1)
+            reload()
+          }}
+        />
+      )}
     </div>
   )
 }
