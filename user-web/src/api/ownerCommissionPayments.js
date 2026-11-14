@@ -43,3 +43,29 @@ export async function submitCommissionPayment({ settlementId = null, amount, pai
     },
   }))
 }
+
+/** 2.3.25 — trạng thái thanh toán công nợ hoa hồng. */
+export async function fetchCommissionPaymentStatus() {
+  const data = await request('/api/v1/owner/commission-payments/status')
+  const money = (value) => Number(value ?? 0)
+  return {
+    totalOutstanding: money(data.totalOutstanding),
+    pendingAmount: money(data.pendingAmount),
+    pendingCount: Number(data.pendingCount ?? 0),
+    confirmedAmount: money(data.confirmedAmount),
+    confirmedCount: Number(data.confirmedCount ?? 0),
+    rejectedCount: Number(data.rejectedCount ?? 0),
+    lastPayment: data.lastPayment ? mapCommissionPayment(data.lastPayment) : null,
+    unpaidSettlements: data.unpaidSettlements.map((item) => ({
+      id: item.id,
+      periodFrom: item.periodFrom,
+      periodTo: item.periodTo,
+      status: item.status,
+      amountDue: money(item.amountDue),
+      amountPaid: money(item.amountPaid),
+      remainingAmount: money(item.remainingAmount),
+      pendingAmount: money(item.pendingAmount),
+      payableAmount: money(item.payableAmount),
+    })),
+  }
+}

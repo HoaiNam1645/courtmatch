@@ -7,6 +7,7 @@ import { formatDateTime } from '../ownerDates'
 import { primaryButtonClass } from '../ownerStyles'
 import { CommissionPaymentDialog } from './CommissionPaymentDialog'
 import { DebtBookingsCard } from './DebtBookingsCard'
+import { PaymentStatusCard } from './PaymentStatusCard'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 function Stat({ label, value, count, testId, tone, note }) {
@@ -29,6 +30,7 @@ function DebtTab() {
 
   const [paying, setPaying] = useState(false)
   const [notice, setNotice] = useState('')
+  const [statusKey, setStatusKey] = useState(0)
 
   return (
     <div className="grid gap-5">
@@ -40,7 +42,12 @@ function DebtTab() {
 
       {status === 'loading' && <OwnerLoading rows={2} />}
       {status === 'error' && <OwnerError message={error?.message} onRetry={reload} />}
-      {status === 'empty' && <OwnerEmpty title="Bạn chưa có công nợ hoa hồng" description="Hoa hồng phát sinh khi một booking đã xác nhận được chơi xong." />}
+      {status === 'empty' && (
+        <>
+          <OwnerEmpty title="Bạn chưa có công nợ hoa hồng" description="Hoa hồng phát sinh khi một booking đã xác nhận được chơi xong." />
+          <PaymentStatusCard key={statusKey} />
+        </>
+      )}
       {status === 'success' && (
         <>
           <section className={classNames('rounded-xl border p-5', data.overdueAmount > 0 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50')} data-testid="debt-summary">
@@ -85,6 +92,7 @@ function DebtTab() {
                 </ul>
               )}
           </OwnerCard>
+          <PaymentStatusCard key={statusKey} />
           <DebtBookingsCard />
           <p className="text-xs font-medium text-stone-400">Cập nhật lúc {formatDateTime(data.asOf)}</p>
           {paying && (
@@ -94,6 +102,7 @@ function DebtTab() {
               onSubmitted={(payment) => {
                 setPaying(false)
                 setNotice(`Đã gửi thông tin thanh toán ${payment.referenceCode}. Courtly sẽ xác nhận sau khi đối chiếu, công nợ giảm khi được xác nhận.`)
+                setStatusKey((current) => current + 1)
                 reload()
               }}
             />

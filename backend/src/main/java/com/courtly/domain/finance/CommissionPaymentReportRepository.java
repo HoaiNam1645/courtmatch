@@ -1,6 +1,8 @@
 package com.courtly.domain.finance;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,4 +30,30 @@ public interface CommissionPaymentReportRepository extends JpaRepository<Commiss
             where r.owner.id = :ownerId and r.settlement is null and r.status = 'pending_review'
             """)
     BigDecimal sumPendingWithoutSettlement(@Param("ownerId") UUID ownerId);
+
+    Optional<CommissionPaymentReport> findByIdAndOwnerId(UUID id, UUID ownerId);
+
+    Optional<CommissionPaymentReport> findFirstByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
+
+    /** Tong so tien va so lan bao cao theo trang thai (2.3.25, 2.3.26). */
+    @Query("select r.status as status, count(r) as total, coalesce(sum(r.amount), 0) as amount from CommissionPaymentReport r where r.owner.id = :ownerId group by r.status")
+    List<StatusTotal> totalsByStatus(@Param("ownerId") UUID ownerId);
+
+    /** Tien dang cho xac nhan theo tung ky doi soat (2.3.25). */
+    @Query("select r.settlement.id as settlementId, coalesce(sum(r.amount), 0) as amount from CommissionPaymentReport r where r.owner.id = :ownerId and r.settlement is not null and r.status = 'pending_review' group by r.settlement.id")
+    List<SettlementPending> pendingBySettlement(@Param("ownerId") UUID ownerId);
+
+    interface StatusTotal {
+        String getStatus();
+
+        long getTotal();
+
+        BigDecimal getAmount();
+    }
+
+    interface SettlementPending {
+        UUID getSettlementId();
+
+        BigDecimal getAmount();
+    }
 }

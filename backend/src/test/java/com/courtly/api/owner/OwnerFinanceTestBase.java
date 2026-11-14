@@ -9,6 +9,8 @@ import com.courtly.domain.booking.Booking;
 import com.courtly.domain.booking.BookingRepository;
 import com.courtly.domain.finance.BookingCommission;
 import com.courtly.domain.finance.BookingCommissionRepository;
+import com.courtly.domain.finance.CommissionPaymentReport;
+import com.courtly.domain.finance.CommissionPaymentReportRepository;
 import com.courtly.domain.finance.CommissionSettlement;
 import com.courtly.domain.finance.CommissionSettlementRepository;
 import com.courtly.domain.finance.PlatformFeeConfig;
@@ -32,6 +34,7 @@ abstract class OwnerFinanceTestBase extends OwnerApiTestBase {
     @Autowired protected CommissionSettlementRepository settlementRepository;
     @Autowired protected PlatformFeeConfigRepository feeConfigRepository;
     @Autowired protected CommissionService commissionService;
+    @Autowired protected CommissionPaymentReportRepository paymentReportRepository;
 
     protected User owner;
     protected String ownerToken;
@@ -89,5 +92,19 @@ abstract class OwnerFinanceTestBase extends OwnerApiTestBase {
         settlement.setAmountPaid(new BigDecimal(amountPaid));
         settlement.setStatus(status);
         return settlementRepository.saveAndFlush(settlement);
+    }
+
+    protected CommissionPaymentReport report(User forOwner, CommissionSettlement settlement, String amount, String status,
+                                             String reference, LocalDate paidOn, Instant createdAt) {
+        CommissionPaymentReport report = new CommissionPaymentReport();
+        report.setId(UUID.randomUUID());
+        report.setCreatedAt(createdAt);
+        report.setOwner(forOwner);
+        report.setSettlement(settlement);
+        report.setAmount(new BigDecimal(amount));
+        report.setPaidOn(paidOn);
+        report.setReferenceCode(reference);
+        report.setStatus(status);
+        return paymentReportRepository.saveAndFlush(report);
     }
 }

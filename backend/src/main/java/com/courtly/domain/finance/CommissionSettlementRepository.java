@@ -32,4 +32,8 @@ public interface CommissionSettlementRepository extends JpaRepository<Commission
 
         long getTotal();
     }
+
+    /** Cac ky chua thanh toan xong, ky moi nhat truoc (2.3.25). */
+    @Query("select s from CommissionSettlement s where s.owner.id = :ownerId and s.status <> 'paid' order by s.periodTo desc, s.id desc")
+    List<CommissionSettlement> findUnpaidForOwner(@Param("ownerId") UUID ownerId, Pageable pageable);
 }
