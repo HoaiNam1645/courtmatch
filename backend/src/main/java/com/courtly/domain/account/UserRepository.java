@@ -92,4 +92,34 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
         long getTotal();
     }
+
+    /** Danh sach nguoi choi cho quan tri vien (2.3.31); loc theo trinh do va ngay dang ky [fromTime, toTime). */
+    @Query(value = """
+            SELECT u FROM User u LEFT JOIN u.playerProfile p
+            WHERE u.status IN :statuses
+              AND EXISTS (SELECT 1 FROM UserRole ur WHERE ur.user = u AND ur.role.code = 'player')
+              AND (:anySkill = true OR p.skillLevel IN :skills)
+              AND u.createdAt >= :fromTime AND u.createdAt < :toTime
+              AND (lower(function('courtly_unaccent', u.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(coalesce(u.email, '')) LIKE lower(:keyword)
+                   OR coalesce(u.phone, '') LIKE :keyword)
+            ORDER BY u.createdAt DESC, u.id DESC
+            """,
+            countQuery = """
+                    SELECT count(u) FROM User u LEFT JOIN u.playerProfile p
+                    WHERE u.status IN :statuses
+                      AND EXISTS (SELECT 1 FROM UserRole ur WHERE ur.user = u AND ur.role.code = 'player')
+                      AND (:anySkill = true OR p.skillLevel IN :skills)
+                      AND u.createdAt >= :fromTime AND u.createdAt < :toTime
+                      AND (lower(function('courtly_unaccent', u.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(coalesce(u.email, '')) LIKE lower(:keyword)
+                           OR coalesce(u.phone, '') LIKE :keyword)
+                    """)
+    Page<User> searchPlayersForAdmin(@Param("statuses") java.util.Collection<com.courtly.common.enums.UserStatus> statuses,
+                                     @Param("anySkill") boolean anySkill,
+                                     @Param("skills") java.util.Collection<com.courtly.common.enums.SkillLevel> skills,
+                                     @Param("fromTime") java.time.Instant fromTime,
+                                     @Param("toTime") java.time.Instant toTime,
+                                     @Param("keyword") String keyword,
+                                     Pageable pageable);
 }
