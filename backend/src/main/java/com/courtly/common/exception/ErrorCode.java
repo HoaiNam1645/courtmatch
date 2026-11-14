@@ -79,6 +79,7 @@ public final class ErrorCode {
     public static final String USER_STATE_INVALID = "USER_STATE_INVALID";
     public static final String ROLE_ASSIGNMENT_INVALID = "ROLE_ASSIGNMENT_INVALID";
     public static final String PERMISSION_DENIED = "PERMISSION_DENIED";
+    public static final String PERMISSION_ASSIGNMENT_INVALID = "PERMISSION_ASSIGNMENT_INVALID";
     public static final String OWNER_ACCOUNT_INVALID = "OWNER_ACCOUNT_INVALID";
     public static final String VENUE_REVIEW_INVALID = "VENUE_REVIEW_INVALID";
 
