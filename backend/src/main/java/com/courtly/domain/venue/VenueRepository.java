@@ -40,6 +40,8 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
     String SEARCH_FILTER = """
             WHERE v.status = 'active'
               AND v.approval_status = 'approved'
+              AND NOT EXISTS (SELECT 1 FROM court_owner_profiles cop
+                              WHERE cop.user_id = v.owner_id AND cop.restriction_level >= 2)
               AND (CAST(:keyword AS text) IS NULL
                    OR courtly_unaccent(v.name) ILIKE courtly_unaccent(CAST(:keyword AS text))
                    OR courtly_unaccent(v.district) ILIKE courtly_unaccent(CAST(:keyword AS text))
@@ -163,6 +165,8 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
             SELECT v.district AS "district", count(*) AS "venueCount"
             FROM venues v
             WHERE v.status = 'active' AND v.approval_status = 'approved' AND v.district IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM court_owner_profiles cop
+                              WHERE cop.user_id = v.owner_id AND cop.restriction_level >= 2)
             GROUP BY v.district
             ORDER BY count(*) DESC, v.district
             """, nativeQuery = true)

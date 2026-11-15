@@ -41,6 +41,7 @@ public class AdminFeePolicyService {
     private final PlatformFeeConfigRepository configRepository;
     private final DebtRestrictionLevelRepository restrictionRepository;
     private final AuditService auditService;
+    private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
 
     /** Gia tri phi co dinh toi da moi booking (VND), chan nhap nham nhieu so 0. */
     static final BigDecimal MAX_FIXED_FEE = new BigDecimal("10000000");
@@ -221,6 +222,8 @@ public class AdminFeePolicyService {
                     Map.of("levels", "Chua thay doi nguong nao"));
         }
         auditService.record(admin, "fee.restriction.update", "debt_restriction_levels", null, before, after);
+        // Nguong moi ap dung ngay cho moi chu san, khong cho toi lan chay dinh ky ke tiep.
+        restrictionService.recomputeAll();
         return view();
     }
 

@@ -71,6 +71,7 @@ public class BookingService {
     private final QuoteService quoteService;
     private final PaymentService paymentService;
     private final CommissionService commissionService;
+    private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
 
     /**
      * Tao yeu cau dat san (2.1.28).
@@ -98,6 +99,8 @@ public class BookingService {
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan."));
         Court court = courtRepository.findById(request.courtId()).orElseThrow();
         Venue venue = court.getVenue();
+        // B2 - chu san co cong no hoa hong qua han vuot nguong thi khong nhan booking moi.
+        restrictionService.requireAcceptingBookings(venue.getOwner().getId());
         Instant now = Instant.now();
 
         Booking booking = new Booking();

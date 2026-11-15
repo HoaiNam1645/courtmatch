@@ -43,6 +43,7 @@ public class VenueQueryService {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final VenueRepository venueRepository;
+    private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final CourtRepository courtRepository;
     private final VenueImageRepository venueImageRepository;
     private final VenueServiceRepository venueServiceRepository;
@@ -189,7 +190,8 @@ public class VenueQueryService {
             found = parseUuid(slugOrId).flatMap(venueRepository::findById);
         }
         return found.filter(venue -> venue.getStatus() == VenueStatus.ACTIVE
-                && venue.getApprovalStatus() == ApprovalStatus.APPROVED);
+                && venue.getApprovalStatus() == ApprovalStatus.APPROVED
+                && !restrictionService.isHidden(venue));
     }
 
     private static Optional<UUID> parseUuid(String value) {

@@ -18,6 +18,19 @@ export async function fetchCommissionDebt() {
     settledAmount: money(data.settledAmount),
     oldestOverdueAt: data.oldestOverdueAt ?? null,
     nextDueAt: data.nextDueAt ?? null,
+    restriction: {
+      level: Number(data.restriction?.level ?? 0),
+      byAmount: Boolean(data.restriction?.byAmount),
+      byDays: Boolean(data.restriction?.byDays),
+      overdueAmount: money(data.restriction?.overdueAmount),
+      overdueDays: Number(data.restriction?.overdueDays ?? 0),
+      levels: (data.restriction?.levels ?? []).map((item) => ({
+        level: Number(item.level),
+        enabled: Boolean(item.enabled),
+        minOverdueAmount: item.minOverdueAmount == null ? null : Number(item.minOverdueAmount),
+        minOverdueDays: item.minOverdueDays == null ? null : Number(item.minOverdueDays),
+      })),
+    },
     byVenue: data.byVenue.map((venue) => ({
       venueId: venue.venueId,
       venueName: venue.venueName,

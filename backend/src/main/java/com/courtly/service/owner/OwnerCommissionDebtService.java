@@ -31,6 +31,8 @@ public class OwnerCommissionDebtService {
     private final OwnedVenueLookup ownedVenueLookup;
     private final VenueRepository venueRepository;
     private final BookingCommissionRepository commissionRepository;
+    private final OwnerRestrictionService restrictionService;
+    private final com.courtly.domain.finance.DebtRestrictionLevelRepository restrictionLevelRepository;
 
     @Transactional(readOnly = true)
     public CommissionDebtResponse get(UUID ownerId) {
@@ -88,7 +90,19 @@ public class OwnerCommissionDebtService {
 
         return new CommissionDebtResponse(now, overdue.add(upcoming), overdueCount + upcomingCount,
                 overdue, overdueCount, upcoming, upcomingCount, suspended, suspendedCount, settled,
-                oldestOverdue, nextDue, byVenue);
+                oldestOverdue, nextDue, byVenue, restriction(ownerId, now));
+    }
+
+    private CommissionDebtResponse.Restriction restriction(UUID ownerId, Instant now) {
+        OwnerRestrictionService.Evaluation evaluation = restrictionService.evaluate(ownerId, now);
+        int stored = restrictionService.levelOf(ownerId);
+        // Muc dang ap dung la muc da luu; ly do (so tien / so ngay) lay tu danh gia hien tai khi muc con khop.
+        boolean sameLevel = evaluation.level() == stored;
+        return new CommissionDebtResponse.Restriction(stored, sameLevel && evaluation.byAmount(), sameLevel && evaluation.byDays(),
+                evaluation.overdueAmount(), evaluation.overdueDays(),
+                restrictionLevelRepository.findAllByOrderByLevelAsc().stream()
+                        .map(item -> new CommissionDebtResponse.Level(item.getLevel(), item.isEnabled(), item.getMinOverdueAmount(),
+                                item.getMinOverdueDays())).toList());
     }
 
     /**

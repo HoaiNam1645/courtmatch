@@ -42,6 +42,7 @@ public class QuoteService {
     private static final List<Integer> ALLOWED_DURATIONS = List.of(60, 90, 120);
 
     private final CourtRepository courtRepository;
+    private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final CourtBlockRepository courtBlockRepository;
     private final BookingItemRepository bookingItemRepository;
     private final VenueOperatingHoursRepository operatingHoursRepository;
@@ -57,7 +58,8 @@ public class QuoteService {
         Court court = courtRepository.findById(request.courtId())
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay san con nay."));
         Venue venue = court.getVenue();
-        if (venue.getStatus() != VenueStatus.ACTIVE || venue.getApprovalStatus() != ApprovalStatus.APPROVED) {
+        if (venue.getStatus() != VenueStatus.ACTIVE || venue.getApprovalStatus() != ApprovalStatus.APPROVED
+                || restrictionService.isHidden(venue)) {
             throw ApiException.notFound("Khong tim thay san nay.");
         }
         // 2.3.4 - chu san dua san con vao bao tri / ngung thi khong nhan dat moi.

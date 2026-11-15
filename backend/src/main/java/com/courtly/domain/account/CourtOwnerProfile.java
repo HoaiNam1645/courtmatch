@@ -71,6 +71,13 @@ public class CourtOwnerProfile implements Persistable<UUID> {
     @JoinColumn(name = "verified_by")
     private User verifiedBy;
 
+    /** 0 = khong han che, 1 = chan nhan booking moi, 2 = tam an san (cong no hoa hong qua han). */
+    @Column(name = "restriction_level", nullable = false)
+    private short restrictionLevel;
+
+    @Column(name = "restriction_changed_at")
+    private Instant restrictionChangedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

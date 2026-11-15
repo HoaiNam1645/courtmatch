@@ -8,6 +8,7 @@ import { primaryButtonClass } from '../ownerStyles'
 import { CommissionPaymentDialog } from './CommissionPaymentDialog'
 import { DebtBookingsCard } from './DebtBookingsCard'
 import { PaymentStatusCard } from './PaymentStatusCard'
+import { RestrictionNotice } from './RestrictionNotice'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
 
 function Stat({ label, value, count, testId, tone, note }) {
@@ -50,6 +51,7 @@ function DebtTab() {
       )}
       {status === 'success' && (
         <>
+          <RestrictionNotice restriction={data.restriction} overdueAmount={data.overdueAmount} />
           <section className={classNames('rounded-xl border p-5', data.overdueAmount > 0 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50')} data-testid="debt-summary">
             <p className="text-sm font-semibold text-stone-600">Tổng công nợ hiện tại</p>
             <p className="mt-1 text-4xl font-semibold text-emerald-900" data-testid="debt-total">{formatCurrency(data.totalOutstanding)}</p>

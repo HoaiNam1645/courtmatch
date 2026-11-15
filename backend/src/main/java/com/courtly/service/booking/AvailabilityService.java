@@ -50,6 +50,7 @@ public class AvailabilityService {
     private static final int MAX_DAYS_AHEAD = 60;
 
     private final VenueRepository venueRepository;
+    private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final CourtRepository courtRepository;
     private final CourtBlockRepository courtBlockRepository;
     private final BookingItemRepository bookingItemRepository;
@@ -70,7 +71,8 @@ public class AvailabilityService {
 
         Venue venue = venueRepository.findById(venueId)
                 .filter(item -> item.getStatus() == VenueStatus.ACTIVE
-                        && item.getApprovalStatus() == ApprovalStatus.APPROVED)
+                        && item.getApprovalStatus() == ApprovalStatus.APPROVED
+                        && !restrictionService.isHidden(item))
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay san nay."));
 
         short dayOfWeek = (short) date.getDayOfWeek().getValue();

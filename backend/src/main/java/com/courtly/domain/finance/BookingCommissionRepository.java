@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface BookingCommissionRepository extends JpaRepository<BookingCommission, UUID> {
 
@@ -146,4 +147,18 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
     org.springframework.data.domain.Page<BookingCommission> findBySettlement(
             @org.springframework.data.repository.query.Param("settlementId") UUID settlementId,
             org.springframework.data.domain.Pageable pageable);
+
+    /** Tong hoa hong chua thu da qua han va han thanh toan cu nhat dang qua han cua mot chu san. */
+    @Query("""
+            SELECT coalesce(sum(bc.commissionAmount), 0) AS amount, min(bc.dueAt) AS oldest
+            FROM BookingCommission bc
+            WHERE bc.owner.id = :ownerId AND bc.status IN ('pending', 'due', 'adjusted') AND bc.dueAt < :now
+            """)
+    OverdueSummary overdueSummary(@Param("ownerId") UUID ownerId, @Param("now") java.time.Instant now);
+
+    interface OverdueSummary {
+        BigDecimal getAmount();
+
+        java.time.Instant getOldest();
+    }
 }

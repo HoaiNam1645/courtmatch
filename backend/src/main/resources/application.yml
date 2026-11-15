@@ -92,6 +92,11 @@ courtly:
       # Het han yeu cau/checkout va hoan tat booking sau gio choi.
       enabled: ${BOOKING_EXPIRY_JOB_ENABLED:true}
       interval-ms: 60000
+    owner-restriction:
+      # Tinh lai muc han che chu san co cong no hoa hong qua han (B2).
+      enabled: ${OWNER_RESTRICTION_JOB_ENABLED:true}
+      initial-delay-ms: 60000
+      interval-ms: ${OWNER_RESTRICTION_JOB_INTERVAL_MS:300000}
     match-data:
       enabled: ${MATCH_DATA_JOB_ENABLED:true}
       confirmation-interval-ms: ${MATCH_CONFIRMATION_JOB_INTERVAL_MS:3600000}

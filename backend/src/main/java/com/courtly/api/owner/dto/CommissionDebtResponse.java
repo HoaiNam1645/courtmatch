@@ -25,7 +25,24 @@ public record CommissionDebtResponse(Instant asOf, BigDecimal totalOutstanding, 
                                      BigDecimal upcomingAmount, long upcomingCount,
                                      BigDecimal suspendedAmount, long suspendedCount,
                                      BigDecimal settledAmount, Instant oldestOverdueAt, Instant nextDueAt,
-                                     List<VenueDebt> byVenue) {
+                                     List<VenueDebt> byVenue, Restriction restriction) {
+
+    /**
+     * Han che do cong no qua han (B2).
+     *
+     * @param level       0 = khong han che, 1 = chan nhan booking moi, 2 = tam an san
+     * @param byAmount    muc hien tai ap dung vi dat nguong so tien qua han
+     * @param byDays      muc hien tai ap dung vi dat nguong so ngay qua han
+     * @param overdueDays so ngay ke tu han thanh toan cu nhat dang qua han
+     * @param levels      nguong dang cau hinh de chu san biet ngay nao se bi han che
+     */
+    public record Restriction(int level, boolean byAmount, boolean byDays, BigDecimal overdueAmount, long overdueDays,
+                              List<Level> levels) {
+    }
+
+    /** @param minOverdueAmount null neu khong dung nguong so tien; minOverdueDays null neu khong dung nguong so ngay */
+    public record Level(int level, boolean enabled, BigDecimal minOverdueAmount, Integer minOverdueDays) {
+    }
 
     public record VenueDebt(UUID venueId, String venueName, BigDecimal outstanding, BigDecimal overdue, long bookings) {
     }
