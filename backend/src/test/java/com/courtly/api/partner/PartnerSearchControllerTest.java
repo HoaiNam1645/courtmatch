@@ -75,8 +75,17 @@ class PartnerSearchControllerTest {
         requester = persistPlayer("requester", "1200.00", 12);
         token = loginAs(requester);
         requesterLocation = persistLocation(requester, 16.0609, 108.2237, 10);
+        // Chon ngay khong trung voi lich ranh cua nguoi choi seed trong database dung chung, neu khong ket qua
+        // tim kiem se doi theo thu trong tuan cua ngay chay test.
+        @SuppressWarnings("unchecked")
+        java.util.Set<Integer> busyDays = ((java.util.List<Number>) entityManager.createNativeQuery(
+                "SELECT DISTINCT day_of_week FROM player_availability_slots WHERE start_time < time '19:30' AND end_time > time '18:00'")
+                .getResultList()).stream().map(Number::intValue).collect(java.util.stream.Collectors.toSet());
         requestedTime = ZonedDateTime.now(VIETNAM_ZONE).plusDays(2)
                 .withHour(18).withMinute(0).withSecond(0).withNano(0);
+        for (int attempt = 0; attempt < 7 && busyDays.contains(requestedTime.getDayOfWeek().getValue()); attempt++) {
+            requestedTime = requestedTime.plusDays(1);
+        }
         // Nap lai entity de cot geography do trigger PostgreSQL sinh ra co mat trong test.
         entityManager.clear();
     }
