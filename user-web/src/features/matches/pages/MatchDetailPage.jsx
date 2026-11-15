@@ -54,6 +54,7 @@ function MatchDetailPage({ matchId, user, onLogout }) {
       <section className="mx-auto max-w-[1050px] px-4 py-7 md:px-6 md:py-10">
         <PageBackLink href="/matches" label="Về dữ liệu thi đấu" />
         <div className="mt-6 flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.2.41 · Kết quả trận đấu</p><h1 className="mt-2 text-3xl font-semibold">Kết quả trận đấu</h1><p className="mt-2 text-sm text-stone-500">{match.venue?.name ?? 'Ngoài hệ thống'} · {new Date(match.scheduledAt).toLocaleString('vi-VN')}</p></div><span className={classNames('rounded-full px-3 py-1 text-xs font-bold', meta.className)}>{match.games.length === 0 && match.status === 'scheduled' ? 'Chờ ghi kết quả' : meta.label}</span></div>
+        {match.dataSource === 'manual' && <p className="mt-4 rounded-lg bg-stone-100 px-4 py-3 text-xs font-semibold text-stone-600" data-testid="match-detail-not-rated">Trận nhập thủ công (không gắn với booking trên Courtly) chỉ để lưu lịch sử: không được tính vào Elo, thống kê hiệu suất hoặc điều kiện nhận voucher.</p>}
         {notice && <p className="mt-5 rounded-xl border border-emerald-100 bg-white p-4 text-sm font-semibold text-emerald-800">{notice}</p>}
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">

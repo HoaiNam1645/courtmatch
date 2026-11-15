@@ -29,6 +29,7 @@ public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatisti
                 WHERE mp.user_id IN (:userIds)
                   AND m.status = 'completed'
                   AND mr.confirmed_at IS NOT NULL
+                  AND m.data_source <> 'manual'
                   AND NOT (m.excluded_from_rating = true
                       AND m.exclusion_reason = 'INVALID_BADMINTON_SCORE_LEGACY')
                 GROUP BY mp.user_id, mp.team_no, m.id, m.scheduled_at, mr.winning_team
@@ -54,6 +55,7 @@ public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatisti
             JOIN match_results mr ON mr.match_id = m.id
             WHERE m.status = 'completed'
               AND mr.confirmed_at IS NOT NULL
+              AND m.data_source <> 'manual'
               AND NOT (m.excluded_from_rating = true
                   AND m.exclusion_reason = 'INVALID_BADMINTON_SCORE_LEGACY')
             """, nativeQuery = true)
@@ -81,6 +83,7 @@ public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatisti
             WHERE mp.user_id IN (:userIds)
               AND m.status = 'completed'
               AND mr.confirmed_at IS NOT NULL
+              AND m.data_source <> 'manual'
               AND NOT (m.excluded_from_rating = true
                   AND m.exclusion_reason = 'INVALID_BADMINTON_SCORE_LEGACY')
             GROUP BY mp.user_id, mp.team_no, m.id, m.match_type,

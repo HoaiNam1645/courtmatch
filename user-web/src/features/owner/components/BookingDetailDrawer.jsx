@@ -57,6 +57,7 @@ function BookingDetailDrawer({ bookingId, onClose }) {
                   <p>{PAYMENT_METHOD_LABEL[data.payment.method] ?? data.payment.method} · {formatCurrency(Number(data.payment.amount))}</p>
                   {data.payment.payerReportedAt && <p>Người chơi báo đã trả: {formatDateTime(data.payment.payerReportedAt)}</p>}
                   {data.payment.confirmedAt && <p>Chủ sân xác nhận thu: {formatDateTime(data.payment.confirmedAt)}</p>}
+                  {data.status === 'completed' && data.payment.status !== 'confirmed' && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900" data-testid="drawer-unconfirmed">Booking đã tự hoàn thành sau giờ chơi nhưng bạn chưa xác nhận thu tiền. Hoa hồng vẫn được ghi nhận.</p>}
                   {data.payment.rejectionReason && <p className="text-red-700">Chưa nhận được tiền: {data.payment.rejectionReason}</p>}
                 </div>
               ) : <p className="mt-2 text-sm font-medium text-stone-500">Chưa có thanh toán — booking chưa được chủ sân chấp nhận.</p>}

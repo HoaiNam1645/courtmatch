@@ -145,6 +145,10 @@ public class PaymentService {
                 "Chu san xac nhan da thu tien", owner, now);
 
         Booking booking = payment.getBooking();
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            // Da tu hoan thanh sau gio choi: chi ghi nhan da thu tien, khong dua booking ve confirmed.
+            return toResponse(payment, now);
+        }
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(now);
         booking.setPaymentExpiresAt(null);

@@ -79,6 +79,7 @@ function OwnerBookingHistoryPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={classNames('rounded-full px-2.5 py-1 text-xs font-bold', meta.className)} data-testid="history-status">{meta.label}</span>
                           {item.paymentStatus && <span className={classNames('rounded-full px-2.5 py-1 text-xs font-bold', paymentStatusMeta(item.paymentStatus).className)} data-testid="history-payment">{paymentStatusMeta(item.paymentStatus).label}</span>}
+                          {item.status === 'completed' && item.paymentStatus && item.paymentStatus !== 'confirmed' && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800" data-testid="history-unconfirmed" title="Booking đã tự hoàn thành sau giờ chơi; hoa hồng vẫn được ghi nhận">Chưa xác nhận thu tiền</span>}
                           <span className="text-xs font-bold text-stone-400">{item.bookingCode}</span>
                         </div>
                         <p className="text-base font-semibold text-emerald-700">{formatCurrency(item.totalAmount)}</p>

@@ -50,6 +50,7 @@ class MatchManagementControllerTest {
     @Autowired private MatchRepository matchRepository;
     @Autowired private PlayerRatingHistoryRepository ratingHistoryRepository;
     @Autowired private PlayerStatisticsRepository statisticsRepository;
+    @Autowired private com.courtly.service.match.PlayerPerformanceService performanceService;
 
     private User creator;
     private User opponent;
@@ -191,9 +192,10 @@ class MatchManagementControllerTest {
     }
 
     @Test
-    @DisplayName("2.2.39 xac nhan tran cap nhat Elo mot lan cho moi nguoi choi")
+    @DisplayName("2.2.39 xac nhan tran co booking cap nhat Elo mot lan cho moi nguoi choi")
     void confirmationUpdatesRatingsExactlyOnce() throws Exception {
         UUID matchId = createAndRecordResult();
+        markAsBookingMatch(matchId);
 
         mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", matchId)
                         .header("Authorization", bearer(opponentToken)))
@@ -215,9 +217,10 @@ class MatchManagementControllerTest {
     }
 
     @Test
-    @DisplayName("2.2.40 xac nhan tran cap nhat day du thong ke hieu suat")
+    @DisplayName("2.2.40 xac nhan tran co booking cap nhat day du thong ke hieu suat")
     void confirmationUpdatesPlayerPerformanceStatistics() throws Exception {
         UUID matchId = createAndRecordResult();
+        markAsBookingMatch(matchId);
         mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", matchId)
                         .header("Authorization", bearer(opponentToken)))
                 .andExpect(status().isOk());
@@ -302,6 +305,81 @@ class MatchManagementControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return UUID.fromString(objectMapper.readTree(response).get("id").asText());
+    }
+
+    @Test
+    @DisplayName("Tran nhap thu cong: xac nhan xong van completed nhung khong cong Elo, khong tinh thong ke, bi danh dau loai")
+    void manualMatchIsNotRated() throws Exception {
+        UUID matchId = createAndRecordResult();
+        mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", matchId)
+                        .header("Authorization", bearer(opponentToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("completed"));
+
+        assertThat(ratingHistoryRepository.findByMatchId(matchId)).isEmpty();
+        Match saved = matchRepository.findById(matchId).orElseThrow();
+        assertThat(saved.isExcludedFromRating()).isTrue();
+        assertThat(saved.getExclusionReason()).isEqualTo("MANUAL_MATCH_NOT_RATED");
+        assertThat(statisticsRepository.findById(creator.getId()))
+                .hasValueSatisfying(item -> {
+                    assertThat(item.getRatingScore()).isEqualByComparingTo(PlayerStatistics.DEFAULT_RATING);
+                    assertThat(item.getTotalMatches()).isZero();
+                });
+        assertThat(statisticsRepository.findById(opponent.getId()))
+                .hasValueSatisfying(item -> assertThat(item.getTotalMatches()).isZero());
+    }
+
+    @Test
+    @DisplayName("Doi soat toan he thong: tran thu cong cu da cong Elo se bi loai, tran co booking giu nguyen")
+    void reconcileExcludesLegacyManualMatches() throws Exception {
+        UUID manualId = createAndRecordResult();
+        UUID bookingId = createAndRecordResult();
+        markAsBookingMatch(bookingId);
+        for (UUID id : new UUID[] {manualId, bookingId}) {
+            mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", id)
+                            .header("Authorization", bearer(opponentToken)))
+                    .andExpect(status().isOk());
+        }
+        Match manual = matchRepository.findById(manualId).orElseThrow();
+        manual.setExcludedFromRating(false);
+        manual.setExclusionReason(null);
+        matchRepository.saveAndFlush(manual);
+
+        performanceService.reconcileAll();
+
+        assertThat(matchRepository.findById(manualId).orElseThrow().isExcludedFromRating()).isTrue();
+        assertThat(matchRepository.findById(bookingId).orElseThrow().isExcludedFromRating()).isFalse();
+        assertThat(ratingHistoryRepository.findByMatchId(manualId)).isEmpty();
+        assertThat(ratingHistoryRepository.findByMatchId(bookingId)).hasSize(2);
+        PlayerStatistics winner = statisticsRepository.findById(creator.getId()).orElseThrow();
+        assertThat(winner.getTotalMatches()).isEqualTo(1);
+        assertThat(winner.getRatingScore()).isGreaterThan(PlayerStatistics.DEFAULT_RATING);
+    }
+
+    @Test
+    @DisplayName("Tran thu cong khong tinh vao gioi han cap doi thu 20 tran trong 7 ngay")
+    void manualMatchesDoNotCountTowardsPairLimit() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            UUID id = createAndRecordResult();
+            mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", id)
+                            .header("Authorization", bearer(opponentToken)))
+                    .andExpect(status().isOk());
+            assertThat(matchRepository.findById(id).orElseThrow().getExclusionReason())
+                    .isEqualTo("MANUAL_MATCH_NOT_RATED");
+        }
+        UUID bookingId = createAndRecordResult();
+        markAsBookingMatch(bookingId);
+        mockMvc.perform(post("/api/v1/matches/{matchId}/confirm", bookingId)
+                        .header("Authorization", bearer(opponentToken)))
+                .andExpect(status().isOk());
+        assertThat(matchRepository.findById(bookingId).orElseThrow().isExcludedFromRating()).isFalse();
+        assertThat(ratingHistoryRepository.findByMatchId(bookingId)).hasSize(2);
+    }
+
+    private void markAsBookingMatch(UUID matchId) {
+        Match match = matchRepository.findById(matchId).orElseThrow();
+        match.setDataSource(com.courtly.common.enums.MatchDataSource.BOOKING);
+        matchRepository.saveAndFlush(match);
     }
 
     private UUID createAndRecordResult() throws Exception {

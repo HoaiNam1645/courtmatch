@@ -10,6 +10,7 @@ test.describe.serial('2.2.37 - 2.2.42 match management', () => {
     await page.goto('/matches/new')
     await expect(page.getByRole('heading', { name: 'Tạo trận đấu' })).toBeVisible()
     await page.getByRole('button', { name: 'Nhập thủ công' }).click()
+    await expect(page.getByTestId('manual-not-rated')).toContainText('không được tính vào Elo')
     await page.getByRole('button', { name: 'Đánh đơn' }).click()
 
     const playedAt = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -23,6 +24,7 @@ test.describe.serial('2.2.37 - 2.2.42 match management', () => {
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]{36}$/)
     matchPath = new URL(page.url()).pathname
     await expect(page.getByText('Chờ ghi kết quả').first()).toBeVisible()
+    await expect(page.getByTestId('match-detail-not-rated')).toBeVisible()
     await expect(page.getByText('Trận đấu đã được tạo và đang chờ người tạo ghi kết quả.')).toBeVisible()
     assertNoErrors()
   })
@@ -39,7 +41,7 @@ test.describe.serial('2.2.37 - 2.2.42 match management', () => {
     assertNoErrors()
   })
 
-  test('2.2.39 confirms the match and updates player ratings', async ({ page }) => {
+  test('2.2.39 confirms a manual match without changing player ratings', async ({ page }) => {
     const assertNoErrors = watchRuntimeErrors(page)
     const { token } = await loginByApi(page, 'binh.tran@example.com')
     await page.goto(matchPath)
@@ -53,7 +55,9 @@ test.describe.serial('2.2.37 - 2.2.42 match management', () => {
     )
     expect(response.ok()).toBeTruthy()
     const ratingHistory = await response.json()
-    expect(ratingHistory.content.some((item) => item.matchId === matchPath.split('/').at(-1))).toBeTruthy()
+    // Trận nhập thủ công chỉ để tham khảo: được xác nhận nhưng không cộng/trừ Elo.
+    expect(ratingHistory.content.some((item) => item.matchId === matchPath.split('/').at(-1))).toBeFalsy()
+    await expect(page.getByTestId('match-detail-not-rated')).toContainText('không được tính vào Elo')
     assertNoErrors()
   })
 
@@ -84,6 +88,7 @@ test.describe.serial('2.2.37 - 2.2.42 match management', () => {
     await page.goto('/matches')
     await page.getByRole('button', { name: 'Đã xác nhận' }).click()
     await expect(page.locator(`a[href="${matchPath}"]`)).toBeVisible()
+    await expect(page.locator(`a[href="${matchPath}"]`).getByTestId('match-not-rated')).toHaveText('Không tính Elo')
     await expect(page.getByText('2.2.42 · Lịch sử trận đấu')).toBeVisible()
     assertNoErrors()
   })

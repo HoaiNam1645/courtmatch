@@ -423,20 +423,36 @@ public class BookingService {
         return overdue.size();
     }
 
-    /** Marks played bookings completed and creates exactly one commission snapshot. */
+    /**
+     * Marks played bookings completed and creates exactly one commission snapshot.
+     *
+     * <p>Booking chu san chua bam xac nhan thu tien nhung nguoi choi da bao thanh toan cung duoc
+     * hoan thanh sau gio choi; thanh toan van o trang thai payer_reported nen giao dien danh dau
+     * "chua xac nhan thu tien".
+     */
     @Transactional
     public int completeFinishedBookings() {
         Instant now = Instant.now();
-        List<Booking> finished = bookingRepository.findConfirmedFinished(now);
-        for (Booking booking : finished) {
-            booking.setStatus(BookingStatus.COMPLETED);
-            booking.setCompletedAt(now);
-            booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.COMPLETED));
-            addHistory(booking, BookingStatus.CONFIRMED, BookingStatus.COMPLETED,
-                    "Khung gio choi da ket thuc", null, now);
-            commissionService.createForCompletedBooking(booking, now);
+        int count = 0;
+        for (Booking booking : bookingRepository.findConfirmedFinished(now)) {
+            complete(booking, "Khung gio choi da ket thuc", now);
+            count++;
         }
-        return finished.size();
+        for (Booking booking : bookingRepository.findUnconfirmedFinished(now)) {
+            complete(booking, "Khung gio choi da ket thuc, chu san chua xac nhan thu tien", now);
+            count++;
+        }
+        return count;
+    }
+
+    private void complete(Booking booking, String reason, Instant now) {
+        BookingStatus previous = booking.getStatus();
+        booking.setStatus(BookingStatus.COMPLETED);
+        booking.setCompletedAt(now);
+        booking.setPaymentExpiresAt(null);
+        booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.COMPLETED));
+        addHistory(booking, previous, BookingStatus.COMPLETED, reason, null, now);
+        commissionService.createForCompletedBooking(booking, now);
     }
 
     private Booking requireOwnerBooking(UUID ownerId, UUID bookingId) {

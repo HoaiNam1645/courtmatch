@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.courtly.common.enums.MatchDataSource;
 import com.courtly.domain.account.User;
 import com.courtly.domain.match.Match;
 import com.courtly.domain.match.MatchPlayer;
@@ -52,10 +54,41 @@ class PlayerDataQualityServiceTest {
                 eq(match.getPlayers().get(1).getUser().getId()), any(), any(), any());
     }
 
+    @Test
+    void excludesManualMatchWithoutCheckingPairLimit() {
+        MatchRepository repository = mock(MatchRepository.class);
+        PlayerDataQualityService service = new PlayerDataQualityService(repository);
+        Match match = matchWithOpponents();
+        match.setDataSource(MatchDataSource.MANUAL);
+        when(repository.findConfirmedWithPlayers(match.getId())).thenReturn(Optional.of(match));
+
+        service.evaluateConfirmedMatch(match.getId());
+
+        assertThat(match.isExcludedFromRating()).isTrue();
+        assertThat(match.getExclusionReason()).isEqualTo(PlayerDataQualityService.MANUAL_MATCH_REASON);
+        verify(repository, never()).countPriorRatedMeetings(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void keepsSeededMatchesRated() {
+        MatchRepository repository = mock(MatchRepository.class);
+        PlayerDataQualityService service = new PlayerDataQualityService(repository);
+        Match match = matchWithOpponents();
+        match.setDataSource(MatchDataSource.SEEDED);
+        when(repository.findConfirmedWithPlayers(match.getId())).thenReturn(Optional.of(match));
+        when(repository.countPriorRatedMeetings(any(), any(), any(), any(), any())).thenReturn(0L);
+
+        service.evaluateConfirmedMatch(match.getId());
+
+        assertThat(match.isExcludedFromRating()).isFalse();
+        assertThat(match.getExclusionReason()).isNull();
+    }
+
     private static Match matchWithOpponents() {
         Instant playedAt = Instant.parse("2026-10-20T12:00:00Z");
         Match match = new Match();
         match.setId(UUID.randomUUID());
+        match.setDataSource(MatchDataSource.BOOKING);
         match.setScheduledAt(playedAt);
         match.setCreatedAt(playedAt.plusSeconds(3600));
         match.getPlayers().add(player(match, (short) 1));

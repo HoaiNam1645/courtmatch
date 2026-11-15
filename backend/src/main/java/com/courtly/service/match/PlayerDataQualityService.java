@@ -1,5 +1,6 @@
 package com.courtly.service.match;
 
+import com.courtly.common.enums.MatchDataSource;
 import com.courtly.domain.match.Match;
 import com.courtly.domain.match.MatchPlayer;
 import com.courtly.domain.match.MatchRepository;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerDataQualityService {
 
     public static final String PAIR_LIMIT_REASON = "PAIR_LIMIT_20_IN_7_DAYS";
+    /** Tran nhap thu cong khong co booking: chi de tham khao, khong tinh Elo (Van de.docx muc 6). */
+    public static final String MANUAL_MATCH_REASON = "MANUAL_MATCH_NOT_RATED";
     private static final int MAX_RATED_MEETINGS = 20;
 
     private final MatchRepository matchRepository;
@@ -48,6 +51,11 @@ public class PlayerDataQualityService {
     }
 
     private void evaluate(Match match) {
+        if (match.getDataSource() == MatchDataSource.MANUAL) {
+            match.setExcludedFromRating(true);
+            match.setExclusionReason(MANUAL_MATCH_REASON);
+            return;
+        }
         if (match.getScheduledAt() == null || match.getCreatedAt() == null) {
             return;
         }

@@ -153,7 +153,11 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             WHERE (b.status = com.courtly.common.enums.BookingStatus.PENDING_OWNER_CONFIRMATION
                    AND b.ownerResponseExpiresAt IS NOT NULL AND b.ownerResponseExpiresAt < :now)
                OR (b.status = com.courtly.common.enums.BookingStatus.AWAITING_PAYMENT
-                   AND b.paymentExpiresAt IS NOT NULL AND b.paymentExpiresAt < :now)
+                   AND b.paymentExpiresAt IS NOT NULL AND b.paymentExpiresAt < :now
+                   AND NOT EXISTS (
+                       SELECT p.id FROM Payment p
+                       WHERE p.booking = b
+                         AND p.status = com.courtly.common.enums.PaymentStatus.PAYER_REPORTED))
             """)
     List<Booking> findExpiredPending(@Param("now") Instant now);
 
@@ -166,6 +170,24 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
               )
             """)
     List<Booking> findConfirmedFinished(@Param("now") Instant now);
+
+    /**
+     * Booking da choi xong, nguoi choi da bao thanh toan nhung chu san chua xac nhan thu tien.
+     * Van phai hoan thanh de ghi nhan hoa hong, tranh viec khong bam xac nhan de ne phi.
+     */
+    @Query("""
+            SELECT b FROM Booking b
+            WHERE b.status = com.courtly.common.enums.BookingStatus.AWAITING_PAYMENT
+              AND EXISTS (
+                  SELECT p.id FROM Payment p
+                  WHERE p.booking = b
+                    AND p.status = com.courtly.common.enums.PaymentStatus.PAYER_REPORTED)
+              AND NOT EXISTS (
+                  SELECT i.id FROM BookingItem i
+                  WHERE i.booking = b AND i.endTime > :now
+              )
+            """)
+    List<Booking> findUnconfirmedFinished(@Param("now") Instant now);
 
     /** Dem don tao trong ngay, dung de sinh so thu tu trong ma don. */
     @Query("""
