@@ -1,4 +1,4 @@
-import { BarChart3, Building2, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
+import { BarChart3, Building2, Coins, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
 
 /**
  * Mục điều hướng của khu quản trị, chia nhóm để thanh bên không rối khi thêm chức năng.
@@ -27,6 +27,12 @@ export const adminNavigationGroups = [
       { label: 'Duyệt sân', to: '/admin/venues', icon: ClipboardCheck },
       { label: 'Báo cáo người dùng', to: '/admin/user-reports', icon: Flag },
       { label: 'Báo cáo đánh giá', to: '/admin/review-reports', icon: MessageSquareWarning },
+    ],
+  },
+  {
+    label: 'Tài chính',
+    items: [
+      { label: 'Phí nền tảng', to: '/admin/fees', icon: Coins },
     ],
   },
 ]
