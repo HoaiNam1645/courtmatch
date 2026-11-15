@@ -83,6 +83,7 @@ public final class ErrorCode {
     public static final String OWNER_ACCOUNT_INVALID = "OWNER_ACCOUNT_INVALID";
     public static final String VENUE_REVIEW_INVALID = "VENUE_REVIEW_INVALID";
     public static final String REPORT_STATE_INVALID = "REPORT_STATE_INVALID";
+    public static final String FEE_POLICY_INVALID = "FEE_POLICY_INVALID";
 
     private ErrorCode() {
     }

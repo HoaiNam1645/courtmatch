@@ -61,3 +61,25 @@ export function mapFeeConfig(data) {
 export async function fetchFeePolicies() {
   return mapFeeConfig(await request('/api/v1/admin/fee-policies'))
 }
+
+/** Giá trị tối đa của phí cố định mỗi booking; khớp AdminFeePolicyService.MAX_FIXED_FEE. */
+export const MAX_FIXED_FEE = 10_000_000
+
+/** Kiểm tra giá trị phí theo đúng quy tắc của backend; trả về chuỗi lỗi hoặc rỗng. */
+export function feeValueProblem(feeType, rawValue) {
+  const text = String(rawValue ?? '').trim().replace(',', '.')
+  if (text === '') return 'Vui lòng nhập giá trị phí'
+  if (!/^\d+(\.\d+)?$/.test(text)) return 'Giá trị phí phải là số không âm'
+  if (/\.\d{3,}/.test(text) && Number(text) !== Number(Number(text).toFixed(2))) return 'Giá trị phí tối đa 2 chữ số thập phân'
+  const value = Number(text)
+  if (feeType === 'percentage' && value > 100) return 'Phí phần trăm không được vượt quá 100'
+  if (feeType === 'fixed' && value > MAX_FIXED_FEE) return 'Phí cố định tối đa 10.000.000đ mỗi booking'
+  return ''
+}
+
+export async function createFeePolicy({ name, feeType, feeValue }) {
+  return mapFeeConfig(await request('/api/v1/admin/fee-policies', {
+    method: 'POST',
+    body: { name: name.trim(), feeType, feeValue: Number(String(feeValue).trim().replace(',', '.')) },
+  }))
+}

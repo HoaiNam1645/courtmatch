@@ -1,10 +1,13 @@
-import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, CheckCircle2, Plus, ShieldAlert } from 'lucide-react'
 import { fetchFeePolicies, feeLabel, FEE_TYPE_LABEL, RESTRICTION_LEVEL_META, thresholdLabel } from '../../../api/adminFeePolicies'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime } from '../../owner/ownerDates'
 import { AdminLayout } from '../components/AdminLayout'
+import { FeePolicyDialog } from '../components/FeePolicyDialog'
+import { primaryButtonClass } from '../../owner/ownerStyles'
 
 function Stat({ label, value, testId }) {
   return (
@@ -63,10 +66,18 @@ function RestrictionCard({ restriction }) {
 /** 2.3.41 — xem cấu hình phí nền tảng. */
 function AdminFeePoliciesPage() {
   const { status, data, error, reload } = useApiResource(fetchFeePolicies, [])
+  const [creating, setCreating] = useState(false)
+  const [notice, setNotice] = useState('')
   const history = data?.policies.filter((policy) => policy.status !== 'active') ?? []
 
   return (
-    <AdminLayout eyebrow="2.3.41 · Phí nền tảng" title="Phí nền tảng" description="Chính sách hoa hồng Courtly thu từ chủ sân và ngưỡng hạn chế khi công nợ quá hạn.">
+    <AdminLayout
+      eyebrow="2.3.39 · Phí nền tảng"
+      title="Phí nền tảng"
+      description="Chính sách hoa hồng Courtly thu từ chủ sân và ngưỡng hạn chế khi công nợ quá hạn."
+      actions={data && <button type="button" className={`${primaryButtonClass} inline-flex items-center gap-2`} data-testid="fee-create-open" onClick={() => setCreating(true)}><Plus className="size-4" />Tạo chính sách mới</button>}
+    >
+      {notice && <p role="status" className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="admin-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       {status === 'loading' && <OwnerLoading rows={3} />}
       {status === 'error' && <OwnerError message={error?.message} onRetry={reload} />}
       {data && (
@@ -100,6 +111,7 @@ function AdminFeePoliciesPage() {
           </OwnerCard>
         </div>
       )}
+      {creating && <FeePolicyDialog current={data?.active} onClose={() => setCreating(false)} onCreated={(updated, message) => { setCreating(false); setNotice(message); reload() }} />}
     </AdminLayout>
   )
 }
