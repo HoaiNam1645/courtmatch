@@ -98,6 +98,8 @@ test.describe.serial('2.3.28 admin manages user accounts', () => {
     await loginByApi(page, SEED_ADMIN_EMAIL)
     await page.goto('/admin/users')
     await page.getByLabel('Tìm tài khoản').fill('e2e-owner')
+    // Chờ tìm kiếm (trễ 300ms) áp dụng xong, nếu không yêu cầu muộn sẽ đè lên trạng thái lỗi ở dưới.
+    await expect(page.getByTestId('user-list').getByRole('listitem')).toHaveCount(1)
     await page.getByRole('button', { name: 'Xem chi tiết E2E Chủ Thử' }).click()
     const drawer = page.getByTestId('user-drawer')
     await drawer.getByTestId('user-action-inactive').click()

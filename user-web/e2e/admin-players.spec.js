@@ -82,6 +82,8 @@ test.describe.serial('2.3.31 admin manages player accounts', () => {
     await loginByApi(page, SEED_ADMIN_EMAIL)
     await page.goto('/admin/players')
     await page.getByLabel('Tìm người chơi').fill('e2e-choi2')
+    // Chờ tìm kiếm (trễ 300ms) áp dụng xong, nếu không yêu cầu muộn sẽ đè lên trạng thái lỗi ở dưới.
+    await expect(page.getByTestId('player-list').getByRole('listitem')).toHaveCount(1)
     await page.getByRole('button', { name: 'Xem chi tiết E2E Người Chơi Hai' }).click()
     const drawer = page.getByTestId('player-drawer')
     await drawer.getByTestId('player-lock').click()

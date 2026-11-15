@@ -4,7 +4,7 @@ import { BrandMark } from '../../../app/AppLayout'
 import { useApp } from '../../../app/useApp'
 import { isAdmin } from '../../../shared/roles'
 import { classNames } from '../../../shared/utils'
-import { adminNavigation } from '../adminNavigation'
+import { adminNavigation, adminNavigationGroups } from '../adminNavigation'
 
 function AdminGate({ title, description, href, action }) {
   return (
@@ -22,6 +22,9 @@ function AdminGate({ title, description, href, action }) {
 /**
  * Khung chung của khu quản trị (2.3.28 trở đi).
  *
+ * Màn hình rộng dùng thanh bên có nhóm; màn hình nhỏ dùng thanh cuộn ngang trong tiêu đề (mờ dần ở
+ * mép phải để gợi ý còn mục). Chỉ một trong hai hiện cùng lúc nên tên điều hướng không bị trùng.
+ *
  * Ẩn nội dung với người không phải quản trị viên chỉ để giao diện rõ ràng; quyền thật được
  * backend kiểm tra ở mọi API `/api/v1/admin/**`.
  */
@@ -38,7 +41,7 @@ function AdminLayout({ eyebrow, title, description, actions, children }) {
   return (
     <main className="min-h-screen bg-[linear-gradient(145deg,#eef2fa,#f8f9fb)] pb-16 text-slate-900">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900 text-white shadow-[0_8px_22px_rgba(15,23,42,0.18)]">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-2.5 md:px-6">
+        <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-2.5 md:px-6">
           <NavLink to="/admin" className="flex min-w-0 items-center gap-3 text-white">
             <BrandMark mini />
             <span className="min-w-0 leading-tight">
@@ -56,8 +59,8 @@ function AdminLayout({ eyebrow, title, description, actions, children }) {
             </button>
           </div>
         </div>
-        <nav className="mx-auto max-w-[1200px] px-4 md:px-6" aria-label="Điều hướng quản trị">
-          <div className="-mb-px flex gap-1 overflow-x-auto">
+        <nav className="mx-auto max-w-[1320px] px-4 md:px-6 lg:hidden" aria-label="Điều hướng quản trị">
+          <div className="-mb-px flex gap-1 overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
             {adminNavigation.map((item) => {
               const Icon = item.icon
               return (
@@ -79,17 +82,48 @@ function AdminLayout({ eyebrow, title, description, actions, children }) {
         </nav>
       </header>
 
-      <section className="mx-auto max-w-[1200px] px-4 py-7 md:px-6 md:py-9">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="min-w-0">
-            {eyebrow && <p className="text-xs font-bold uppercase tracking-[0.15em] text-sky-700">{eyebrow}</p>}
-            <h1 className="mt-2 text-2xl font-semibold md:text-3xl">{title}</h1>
-            {description && <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">{description}</p>}
+      <div className="mx-auto max-w-[1320px] px-4 md:px-6 lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-8">
+        <nav className="hidden lg:block" aria-label="Điều hướng quản trị">
+          <div className="sticky top-24 grid gap-5 py-9">
+            {adminNavigationGroups.map((group) => (
+              <div key={group.label}>
+                <p className="px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">{group.label}</p>
+                <div className="mt-1.5 grid gap-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        className={({ isActive }) => classNames(
+                          'flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold transition',
+                          isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900',
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        {item.label}
+                      </NavLink>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
-          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-        </div>
-        <div className="mt-7">{children}</div>
-      </section>
+        </nav>
+
+        <section className="min-w-0 py-7 md:py-9">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              {eyebrow && <p className="text-xs font-bold uppercase tracking-[0.15em] text-sky-700">{eyebrow}</p>}
+              <h1 className="mt-2 text-2xl font-semibold md:text-3xl">{title}</h1>
+              {description && <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">{description}</p>}
+            </div>
+            {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          </div>
+          <div className="mt-7">{children}</div>
+        </section>
+      </div>
     </main>
   )
 }
