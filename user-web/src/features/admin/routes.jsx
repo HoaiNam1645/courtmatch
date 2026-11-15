@@ -7,6 +7,7 @@ const AdminPlayersPage = lazy(() => import('./pages/AdminPlayersPage'))
 const AdminOwnerPage = lazy(() => import('./pages/AdminOwnerPage'))
 const AdminVenuesPage = lazy(() => import('./pages/AdminVenuesPage'))
 const AdminUserReportsPage = lazy(() => import('./pages/AdminUserReportsPage'))
+const AdminReviewReportsPage = lazy(() => import('./pages/AdminReviewReportsPage'))
 const AdminPermissionsPage = lazy(() => import('./pages/AdminPermissionsPage'))
 
 /** Khu quản trị (Sprint 3, 2.3.28 - 2.3.43). */
@@ -17,6 +18,7 @@ const adminRoutes = [
   { path: '/admin/owner', element: <AdminOwnerPage /> },
   { path: '/admin/venues', element: <AdminVenuesPage /> },
   { path: '/admin/user-reports', element: <AdminUserReportsPage /> },
+  { path: '/admin/review-reports', element: <AdminReviewReportsPage /> },
   { path: '/admin/permissions', element: <AdminPermissionsPage /> },
 ]
 

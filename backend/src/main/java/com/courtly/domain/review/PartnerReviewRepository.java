@@ -38,4 +38,19 @@ public interface PartnerReviewRepository extends JpaRepository<PartnerReview, UU
             """)
     Double averageRating(@Param("reviewedUserId") UUID reviewedUserId,
                          @Param("status") ReviewStatus status);
+
+    /** Nap san nguoi danh gia va nguoi duoc danh gia de man quan tri khong bi N+1. */
+    @Query("""
+            SELECT review FROM PartnerReview review
+            JOIN FETCH review.reviewer JOIN FETCH review.reviewedUser
+            WHERE review.id IN :ids
+            """)
+    List<PartnerReview> findAllWithPeople(@Param("ids") java.util.Collection<UUID> ids);
+
+    @Query("""
+            SELECT review FROM PartnerReview review
+            JOIN FETCH review.reviewer JOIN FETCH review.reviewedUser
+            WHERE review.id = :id
+            """)
+    java.util.Optional<PartnerReview> findWithPeopleById(@Param("id") UUID id);
 }
