@@ -50,4 +50,11 @@ public class Report extends BaseEntity {
 
     @Column(name = "handled_at")
     private Instant handledAt;
+
+    /** warning, account_banned, account_inactive, other, review_hidden, review_kept; null khi chua ket luan. */
+    @Column(name = "handling_action", length = 30)
+    private String handlingAction;
+
+    @Column(name = "handling_note")
+    private String handlingNote;
 }

@@ -239,3 +239,9 @@ export function deleteE2eUsers() {
     DELETE FROM users WHERE email LIKE 'e2e-%@example.com';
   `)
 }
+
+/** Chụp ảnh để xem giao diện thật; chỉ chạy khi đặt biến môi trường SHOTS_DIR. */
+export async function shot(page, name) {
+  if (!process.env.SHOTS_DIR) return
+  await page.screenshot({ path: `${process.env.SHOTS_DIR}/${name}.png`, fullPage: false })
+}

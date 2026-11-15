@@ -16,7 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class AdminApiTestBase extends OwnerApiTestBase {
 
     protected static final List<String> ADMIN_PERMISSIONS = List.of(
-            "user.manage", "user.role.assign", "owner.verify", "venue.approve", "venue.reject");
+            "user.manage", "user.role.assign", "owner.verify", "venue.approve", "venue.reject", "report.handle",
+            "stats.system.view", "finance.fee.config", "finance.commission.view");
 
     @Autowired protected PermissionRepository permissionRepository;
     @Autowired protected UserRoleRepository userRoleRepository;
