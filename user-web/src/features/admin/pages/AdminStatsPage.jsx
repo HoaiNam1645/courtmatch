@@ -140,17 +140,17 @@ function AdminStatsPage() {
       <div className="mt-5">
         <OwnerCard title="Xu hướng">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex gap-1 rounded-lg border border-slate-200 p-1" role="group" aria-label="Khoảng thời gian">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-slate-200 p-1" role="group" aria-label="Khoảng thời gian">
               {PRESETS.map((item) => (
-                <button key={item.id} type="button" aria-pressed={preset === item.id} data-testid={`stats-preset-${item.id}`} className={classNames('h-9 rounded-md px-3 text-sm font-semibold', preset === item.id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100')} onClick={() => { setPreset(item.id); if (item.id === 'year') setGranularity('month') }}>{item.label}</button>
+                <button key={item.id} type="button" aria-pressed={preset === item.id} data-testid={`stats-preset-${item.id}`} className={classNames('h-9 shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-semibold', preset === item.id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100')} onClick={() => { setPreset(item.id); if (item.id === 'year') setGranularity('month') }}>{item.label}</button>
               ))}
             </div>
             <div className="flex gap-1 rounded-lg border border-slate-200 p-1" role="group" aria-label="Đơn vị thời gian">
               {[['day', 'Theo ngày'], ['month', 'Theo tháng']].map(([id, label]) => (
-                <button key={id} type="button" aria-pressed={granularity === id} data-testid={`stats-granularity-${id}`} className={classNames('h-9 rounded-md px-3 text-sm font-semibold', granularity === id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100')} onClick={() => setGranularity(id)}>{label}</button>
+                <button key={id} type="button" aria-pressed={granularity === id} data-testid={`stats-granularity-${id}`} className={classNames('h-9 shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-semibold', granularity === id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100')} onClick={() => setGranularity(id)}>{label}</button>
               ))}
             </div>
-            <select className={`${inputClass} w-48`} aria-label="Chỉ số" value={metricId} onChange={(event) => setMetricId(event.target.value)}>
+            <select className={`${inputClass} sm:max-w-48`} aria-label="Chỉ số" value={metricId} onChange={(event) => setMetricId(event.target.value)}>
               {TREND_METRICS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </div>

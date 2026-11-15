@@ -1,4 +1,4 @@
-import { BarChart3, Building2, Coins, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
+import { BarChart3, Building2, Coins, HandCoins, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
 
 /**
  * Mục điều hướng của khu quản trị, chia nhóm để thanh bên không rối khi thêm chức năng.
@@ -33,6 +33,7 @@ export const adminNavigationGroups = [
     label: 'Tài chính',
     items: [
       { label: 'Phí nền tảng', to: '/admin/fees', icon: Coins },
+      { label: 'Doanh thu phí', to: '/admin/fee-revenue', icon: HandCoins },
     ],
   },
 ]
