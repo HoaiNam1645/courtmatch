@@ -245,3 +245,11 @@ export async function shot(page, name) {
   if (!process.env.SHOTS_DIR) return
   await page.screenshot({ path: `${process.env.SHOTS_DIR}/${name}.png`, fullPage: false })
 }
+
+/** Chính sách phí seed (10%). Các spec phí không bao giờ được xóa bản ghi này, kể cả khi đang bị đổi tên. */
+export const SEED_FEE_POLICY_ID = 'a62ebf89-b950-3039-bd0e-156a7523a800'
+
+/** Xóa chính sách phí do E2E tạo; luôn giữ chính sách seed. */
+export function deleteE2eFeePolicies() {
+  runSql(`DELETE FROM platform_fee_configs WHERE name LIKE 'E2E %' AND id <> '${SEED_FEE_POLICY_ID}'`)
+}

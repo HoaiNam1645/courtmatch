@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle2, Plus, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Pencil, Plus, RotateCcw, ShieldAlert } from 'lucide-react'
 import { fetchFeePolicies, feeLabel, FEE_TYPE_LABEL, RESTRICTION_LEVEL_META, thresholdLabel } from '../../../api/adminFeePolicies'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime } from '../../owner/ownerDates'
 import { AdminLayout } from '../components/AdminLayout'
+import { ActivatePolicyDialog } from '../components/ActivatePolicyDialog'
 import { FeePolicyDialog } from '../components/FeePolicyDialog'
-import { primaryButtonClass } from '../../owner/ownerStyles'
+import { RestrictionDialog } from '../components/RestrictionDialog'
+import { primaryButtonClass, secondaryButtonClass } from '../../owner/ownerStyles'
 
 function Stat({ label, value, testId }) {
   return (
@@ -19,7 +21,7 @@ function Stat({ label, value, testId }) {
 }
 
 /** Chính sách đang áp dụng: nổi bật hơn các chính sách cũ. */
-function ActivePolicy({ policy }) {
+function ActivePolicy({ policy, onEdit }) {
   if (!policy) {
     return (
       <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4" role="alert" data-testid="fee-no-active">
@@ -35,7 +37,10 @@ function ActivePolicy({ policy }) {
     <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5" data-testid="fee-active">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700"><CheckCircle2 className="size-3.5" />Đang áp dụng</span>
-        <span className="text-xs font-medium text-slate-500">Hiệu lực từ {formatDateTime(policy.effectiveFrom)}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-500">Hiệu lực từ {formatDateTime(policy.effectiveFrom)}</span>
+          <button type="button" className={`${secondaryButtonClass} inline-flex h-9 items-center gap-1.5 px-3 text-xs`} data-testid="fee-edit-active" onClick={onEdit}><Pencil className="size-3.5" />Sửa</button>
+        </div>
       </div>
       <p className="mt-3 text-sm font-semibold text-slate-600" data-testid="fee-active-name">{policy.name}</p>
       <p className="mt-1 text-3xl font-semibold text-slate-900" data-testid="fee-active-value">{feeLabel(policy.feeType, policy.feeValue)}</p>
@@ -67,12 +72,15 @@ function RestrictionCard({ restriction }) {
 function AdminFeePoliciesPage() {
   const { status, data, error, reload } = useApiResource(fetchFeePolicies, [])
   const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [activating, setActivating] = useState(null)
+  const [editingRestrictions, setEditingRestrictions] = useState(false)
   const [notice, setNotice] = useState('')
   const history = data?.policies.filter((policy) => policy.status !== 'active') ?? []
 
   return (
     <AdminLayout
-      eyebrow="2.3.39 · Phí nền tảng"
+      eyebrow="2.3.39 – 2.3.41 · Phí nền tảng"
       title="Phí nền tảng"
       description="Chính sách hoa hồng Courtly thu từ chủ sân và ngưỡng hạn chế khi công nợ quá hạn."
       actions={data && <button type="button" className={`${primaryButtonClass} inline-flex items-center gap-2`} data-testid="fee-create-open" onClick={() => setCreating(true)}><Plus className="size-4" />Tạo chính sách mới</button>}
@@ -83,10 +91,10 @@ function AdminFeePoliciesPage() {
       {data && (
         <div className="grid gap-5">
           <OwnerCard title="Chính sách đang áp dụng" description="Hoa hồng đã ghi nhận giữ nguyên loại phí và giá trị lúc ghi nhận; chính sách mới chỉ áp dụng cho hoa hồng ghi nhận sau đó.">
-            <ActivePolicy policy={data.active} />
+            <ActivePolicy policy={data.active} onEdit={() => setEditing(data.active)} />
           </OwnerCard>
 
-          <OwnerCard title="Hạn chế chủ sân có công nợ quá hạn" description="Đạt một trong hai ngưỡng (số tiền hoặc số ngày quá hạn) là áp dụng mức hạn chế tương ứng.">
+          <OwnerCard title="Hạn chế chủ sân có công nợ quá hạn" description="Đạt một trong hai ngưỡng (số tiền hoặc số ngày quá hạn) là áp dụng mức hạn chế tương ứng." actions={<button type="button" className={`${secondaryButtonClass} inline-flex h-9 items-center gap-1.5 px-3 text-xs`} data-testid="restriction-edit" onClick={() => setEditingRestrictions(true)}><Pencil className="size-3.5" />Sửa ngưỡng</button>}>
             <div className="grid gap-3 lg:grid-cols-2">{data.restrictions.map((restriction) => <RestrictionCard key={restriction.level} restriction={restriction} />)}</div>
             {data.restrictions.every((restriction) => !restriction.enabled) && (
               <p className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500" data-testid="restriction-all-off"><ShieldAlert className="size-4" />Chưa bật mức hạn chế nào nên chủ sân quá hạn công nợ vẫn nhận booking bình thường.</p>
@@ -103,7 +111,13 @@ function AdminFeePoliciesPage() {
                       <p className="text-base font-semibold text-slate-700">{feeLabel(policy.feeType, policy.feeValue)}</p>
                     </div>
                     <p className="mt-1 text-xs font-medium text-slate-500">{formatDateTime(policy.effectiveFrom)}{policy.effectiveTo ? ` → ${formatDateTime(policy.effectiveTo)}` : ''} · tạo bởi {policy.createdBy || 'hệ thống'}</p>
-                    <p className="mt-2 text-xs font-semibold text-slate-600" data-testid="fee-policy-usage">{policy.commissionCount === 0 ? 'Chưa ghi nhận hoa hồng nào' : `${policy.commissionCount.toLocaleString('vi-VN')} hoa hồng · ${formatCurrency(policy.commissionTotal)}`}</p>
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-slate-600" data-testid="fee-policy-usage">{policy.commissionCount === 0 ? 'Chưa ghi nhận hoa hồng nào' : `${policy.commissionCount.toLocaleString('vi-VN')} hoa hồng · ${formatCurrency(policy.commissionTotal)}`}</p>
+                      <div className="flex gap-2">
+                        <button type="button" className={`${secondaryButtonClass} inline-flex h-8 items-center gap-1.5 px-3 text-xs`} aria-label={`Sửa chính sách ${policy.name}`} data-testid="fee-edit-old" onClick={() => setEditing(policy)}><Pencil className="size-3.5" />Sửa</button>
+                        <button type="button" className={`${secondaryButtonClass} inline-flex h-8 items-center gap-1.5 px-3 text-xs`} aria-label={`Kích hoạt lại chính sách ${policy.name}`} data-testid="fee-activate" onClick={() => setActivating(policy)}><RotateCcw className="size-3.5" />Kích hoạt lại</button>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -111,7 +125,9 @@ function AdminFeePoliciesPage() {
           </OwnerCard>
         </div>
       )}
-      {creating && <FeePolicyDialog current={data?.active} onClose={() => setCreating(false)} onCreated={(updated, message) => { setCreating(false); setNotice(message); reload() }} />}
+      {(creating || editing) && <FeePolicyDialog current={data?.active} policy={editing} onClose={() => { setCreating(false); setEditing(null) }} onCreated={(updated, message) => { setCreating(false); setEditing(null); setNotice(message); reload() }} />}
+      {activating && <ActivatePolicyDialog policy={activating} current={data?.active} onClose={() => setActivating(null)} onDone={(updated, message) => { setActivating(null); setNotice(message); reload() }} />}
+      {editingRestrictions && <RestrictionDialog restrictions={data.restrictions} onClose={() => setEditingRestrictions(false)} onSaved={(updated, message) => { setEditingRestrictions(false); setNotice(message); reload() }} />}
     </AdminLayout>
   )
 }

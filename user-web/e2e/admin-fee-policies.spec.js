@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { loginByApi, runSql, SEED_ADMIN_EMAIL, shot, watchRuntimeErrors } from './helpers'
+import { deleteE2eFeePolicies, loginByApi, runSql, SEED_ADMIN_EMAIL, shot, watchRuntimeErrors } from './helpers'
 
 const vnd = (value) => `${Number(value).toLocaleString('vi-VN')}đ`
 
@@ -8,16 +8,16 @@ test.describe.serial('2.3.41 admin views platform fee configuration', () => {
   let restrictionsBackup
 
   test.beforeAll(() => {
-    runSql("DELETE FROM platform_fee_configs WHERE name LIKE 'E2E %'")
+    deleteE2eFeePolicies()
     activeId = runSql("SELECT id FROM platform_fee_configs WHERE status = 'active'")
     restrictionsBackup = runSql('SELECT level, enabled, coalesce(min_overdue_amount::text, \'NULL\'), coalesce(min_overdue_days::text, \'NULL\') FROM debt_restriction_levels ORDER BY level')
   })
   test.afterAll(() => {
-    runSql("DELETE FROM platform_fee_configs WHERE name LIKE 'E2E %'")
+    deleteE2eFeePolicies()
     runSql(`UPDATE platform_fee_configs SET status = 'active', effective_to = NULL WHERE id = '${activeId}'`)
     for (const line of restrictionsBackup.split('\n')) {
       const [level, enabled, amount, days] = line.split('|')
-      runSql(`UPDATE debt_restriction_levels SET enabled = ${enabled === 't'}, min_overdue_amount = ${amount === 'NULL' ? 'NULL' : amount}, min_overdue_days = ${days === 'NULL' ? 'NULL' : days} WHERE level = ${level}`)
+      runSql(`UPDATE debt_restriction_levels SET enabled = ${enabled === 't'}, min_overdue_amount = ${amount === 'NULL' ? 'NULL' : amount}, min_overdue_days = ${days === 'NULL' ? 'NULL' : days}, updated_by = NULL WHERE level = ${level}`)
     }
   })
 

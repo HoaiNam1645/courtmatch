@@ -10,6 +10,7 @@ import com.courtly.service.audit.AuditService;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import org.springframework.dao.DataIntegrityViolationException;
+import com.courtly.api.admin.dto.UpdateDebtRestrictionsRequest;
 import com.courtly.domain.finance.DebtRestrictionLevel;
 import com.courtly.domain.finance.DebtRestrictionLevelRepository;
 import com.courtly.domain.finance.PlatformFeeConfig;
@@ -43,6 +44,8 @@ public class AdminFeePolicyService {
 
     /** Gia tri phi co dinh toi da moi booking (VND), chan nhap nham nhieu so 0. */
     static final BigDecimal MAX_FIXED_FEE = new BigDecimal("10000000");
+    static final BigDecimal MAX_OVERDUE_AMOUNT = new BigDecimal("100000000000");
+    static final int MAX_OVERDUE_DAYS = 3650;
 
     /** 2.3.41 - chinh sach dang ap dung, cac chinh sach cu va nguong han che cong no. */
     @Transactional(readOnly = true)
@@ -97,6 +100,169 @@ public class AdminFeePolicyService {
         after.put("feeValue", value);
         auditService.record(admin, "fee.create", "platform_fee_configs", created.getId(), before, after);
         return view();
+    }
+
+    /** 2.3.40 - sua ten, loai phi, gia tri; khong dong den hoa hong da ghi nhan (da chot gia tri rieng). */
+    @Transactional
+    public AdminFeePolicyResponses.ListResponse update(UUID adminId, UUID policyId, String name, String feeTypeValue, BigDecimal feeValue) {
+        User admin = accessService.requirePermission(adminId, PERMISSION);
+        PlatformFeeConfig config = requirePolicy(policyId);
+        String cleanName = name == null ? "" : name.trim();
+        FeeType feeType = validate(cleanName, feeTypeValue, feeValue);
+        BigDecimal value = feeValue.setScale(2, java.math.RoundingMode.HALF_UP);
+        if (cleanName.equals(config.getName()) && feeType == config.getFeeType() && value.compareTo(config.getFeeValue()) == 0) {
+            throw ApiException.conflict(ErrorCode.FEE_POLICY_INVALID, "Khong co thay doi nao de luu.",
+                    Map.of("name", "Chua thay doi thong tin nao"));
+        }
+        Map<String, Object> before = snapshot(config);
+        config.setName(cleanName);
+        config.setFeeType(feeType);
+        config.setFeeValue(value);
+        configRepository.saveAndFlush(config);
+        auditService.record(admin, "fee.update", "platform_fee_configs", config.getId(), before, snapshot(config));
+        return view();
+    }
+
+    /**
+     * 2.3.40 - kich hoat lai mot chinh sach cu: chinh sach dang active chuyen inactive va duoc dong
+     * hieu luc, chinh sach nay co hieu luc tu bay gio. Muon dung mot chinh sach phai kich hoat chinh
+     * sach khac, vi khong duoc de he thong khong con chinh sach active (khong ghi nhan duoc hoa hong).
+     */
+    @Transactional
+    public AdminFeePolicyResponses.ListResponse activate(UUID adminId, UUID policyId) {
+        User admin = accessService.requirePermission(adminId, PERMISSION);
+        PlatformFeeConfig target = requirePolicy(policyId);
+        if (target.getStatus() == ActiveStatus.ACTIVE) {
+            throw ApiException.conflict(ErrorCode.FEE_POLICY_INVALID, "Chinh sach nay da dang ap dung.",
+                    Map.of("status", "Chinh sach da active"));
+        }
+        Instant now = Instant.now();
+        Map<String, Object> before = new LinkedHashMap<>();
+        configRepository.findFirstByStatusOrderByEffectiveFromDesc(ActiveStatus.ACTIVE).ifPresent(current -> {
+            before.putAll(snapshot(current));
+            current.setStatus(ActiveStatus.INACTIVE);
+            current.setEffectiveTo(now.isAfter(current.getEffectiveFrom()) ? now : current.getEffectiveFrom().plusMillis(1));
+            configRepository.saveAndFlush(current);
+        });
+        target.setStatus(ActiveStatus.ACTIVE);
+        target.setEffectiveFrom(now);
+        target.setEffectiveTo(null);
+        try {
+            configRepository.saveAndFlush(target);
+        } catch (DataIntegrityViolationException exception) {
+            throw ApiException.conflict(ErrorCode.FEE_POLICY_INVALID, "Chinh sach phi vua duoc quan tri vien khac thay doi, vui long tai lai.",
+                    Map.of("status", "Chinh sach phi vua duoc thay doi"));
+        }
+        auditService.record(admin, "fee.activate", "platform_fee_configs", target.getId(), before, snapshot(target));
+        return view();
+    }
+
+    /**
+     * 2.3.40 - cap nhat nguong han che cong no qua han. Muc 2 phai nghiem hon hoac bang muc 1 o moi
+     * nguong ca hai muc cung dung.
+     */
+    @Transactional
+    public AdminFeePolicyResponses.ListResponse updateRestrictions(UUID adminId, List<UpdateDebtRestrictionsRequest.Level> levels) {
+        User admin = accessService.requirePermission(adminId, PERMISSION);
+        Map<Integer, UpdateDebtRestrictionsRequest.Level> byLevel = new LinkedHashMap<>();
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (UpdateDebtRestrictionsRequest.Level level : levels) {
+            if (level.level() == null || (level.level() != 1 && level.level() != 2)) {
+                errors.put("levels", "Chi nhan muc 1 va muc 2");
+            } else if (byLevel.put(level.level(), level) != null) {
+                errors.put("levels", "Muc " + level.level() + " bi gui nhieu lan");
+            }
+        }
+        if (errors.isEmpty() && byLevel.size() != 2) {
+            errors.put("levels", "Phai gui du muc 1 va muc 2");
+        }
+        byLevel.forEach((number, level) -> validateLevel(number, level, errors));
+        UpdateDebtRestrictionsRequest.Level first = byLevel.get(1);
+        UpdateDebtRestrictionsRequest.Level second = byLevel.get(2);
+        if (errors.isEmpty() && first.enabled() && second.enabled()) {
+            if (first.minOverdueAmount() != null && second.minOverdueAmount() != null
+                    && second.minOverdueAmount().compareTo(first.minOverdueAmount()) < 0) {
+                errors.put("level2.minOverdueAmount", "Nguong so tien cua muc 2 phai tu nguong muc 1 tro len");
+            }
+            if (first.minOverdueDays() != null && second.minOverdueDays() != null && second.minOverdueDays() < first.minOverdueDays()) {
+                errors.put("level2.minOverdueDays", "Nguong so ngay cua muc 2 phai tu nguong muc 1 tro len");
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Nguong han che khong hop le.", errors);
+        }
+
+        Map<String, Object> before = new LinkedHashMap<>();
+        Map<String, Object> after = new LinkedHashMap<>();
+        boolean changed = false;
+        Instant now = Instant.now();
+        for (DebtRestrictionLevel stored : restrictionRepository.findAllByOrderByLevelAsc()) {
+            UpdateDebtRestrictionsRequest.Level wanted = byLevel.get((int) stored.getLevel());
+            BigDecimal amount = wanted.minOverdueAmount() == null ? null : wanted.minOverdueAmount().setScale(2, java.math.RoundingMode.HALF_UP);
+            boolean same = stored.isEnabled() == wanted.enabled()
+                    && java.util.Objects.equals(stored.getMinOverdueDays(), wanted.minOverdueDays())
+                    && (stored.getMinOverdueAmount() == null ? amount == null
+                            : amount != null && stored.getMinOverdueAmount().compareTo(amount) == 0);
+            if (same) {
+                continue;
+            }
+            changed = true;
+            before.put("level" + stored.getLevel(), restrictionSnapshot(stored));
+            stored.setEnabled(wanted.enabled());
+            stored.setMinOverdueAmount(amount);
+            stored.setMinOverdueDays(wanted.minOverdueDays());
+            stored.setUpdatedBy(admin);
+            stored.setUpdatedAt(now);
+            restrictionRepository.saveAndFlush(stored);
+            after.put("level" + stored.getLevel(), restrictionSnapshot(stored));
+        }
+        if (!changed) {
+            throw ApiException.conflict(ErrorCode.FEE_POLICY_INVALID, "Khong co thay doi nao de luu.",
+                    Map.of("levels", "Chua thay doi nguong nao"));
+        }
+        auditService.record(admin, "fee.restriction.update", "debt_restriction_levels", null, before, after);
+        return view();
+    }
+
+    private static void validateLevel(int number, UpdateDebtRestrictionsRequest.Level level, Map<String, String> errors) {
+        String prefix = "level" + number + ".";
+        if (level.minOverdueAmount() != null) {
+            if (level.minOverdueAmount().signum() <= 0) {
+                errors.put(prefix + "minOverdueAmount", "Nguong so tien phai lon hon 0");
+            } else if (level.minOverdueAmount().compareTo(MAX_OVERDUE_AMOUNT) > 0) {
+                errors.put(prefix + "minOverdueAmount", "Nguong so tien toi da 100.000.000.000 dong");
+            } else if (level.minOverdueAmount().stripTrailingZeros().scale() > 2) {
+                errors.put(prefix + "minOverdueAmount", "Nguong so tien toi da 2 chu so thap phan");
+            }
+        }
+        if (level.minOverdueDays() != null && (level.minOverdueDays() < 1 || level.minOverdueDays() > MAX_OVERDUE_DAYS)) {
+            errors.put(prefix + "minOverdueDays", "Nguong so ngay tu 1 den " + MAX_OVERDUE_DAYS);
+        }
+        if (level.enabled() && level.minOverdueAmount() == null && level.minOverdueDays() == null) {
+            errors.put(prefix + "enabled", "Muc dang bat phai co it nhat mot nguong (so tien hoac so ngay)");
+        }
+    }
+
+    private PlatformFeeConfig requirePolicy(UUID policyId) {
+        return configRepository.findById(policyId).orElseThrow(() -> ApiException.notFound("Khong tim thay chinh sach phi."));
+    }
+
+    private static Map<String, Object> snapshot(PlatformFeeConfig config) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", config.getId().toString());
+        data.put("name", config.getName());
+        data.put("feeType", config.getFeeType().getValue());
+        data.put("feeValue", config.getFeeValue());
+        data.put("status", config.getStatus().getValue());
+        return data;
+    }
+
+    private static Map<String, Object> restrictionSnapshot(DebtRestrictionLevel level) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("enabled", level.isEnabled());
+        data.put("minOverdueAmount", level.getMinOverdueAmount());
+        data.put("minOverdueDays", level.getMinOverdueDays());
+        return data;
     }
 
     static FeeType validate(String name, String feeTypeValue, BigDecimal feeValue) {

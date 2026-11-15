@@ -1,18 +1,18 @@
 import { expect, test } from '@playwright/test'
-import { loginByApi, runSql, SEED_ADMIN_EMAIL, shot, watchRuntimeErrors } from './helpers'
+import { deleteE2eFeePolicies, loginByApi, runSql, SEED_ADMIN_EMAIL, shot, watchRuntimeErrors } from './helpers'
 
 test.describe.serial('2.3.39 admin creates a platform fee policy', () => {
   let originalActiveId
   let commissionBookingId
 
   test.beforeAll(() => {
-    runSql("DELETE FROM platform_fee_configs WHERE name LIKE 'E2E %'")
+    deleteE2eFeePolicies()
     originalActiveId = runSql("SELECT id FROM platform_fee_configs WHERE status = 'active'")
     // Dọn hoa hồng thử còn sót nếu lần chạy trước bị ngắt giữa chừng.
     runSql(`DELETE FROM booking_commissions WHERE fee_config_id = '${originalActiveId}' AND gross_amount = 100000 AND commission_amount = 10000`)
   })
   test.afterAll(() => {
-    runSql("DELETE FROM platform_fee_configs WHERE name LIKE 'E2E %'")
+    deleteE2eFeePolicies()
     runSql("UPDATE platform_fee_configs SET status = 'inactive' WHERE status = 'active'")
     runSql(`UPDATE platform_fee_configs SET status = 'active', effective_to = NULL WHERE id = '${originalActiveId}'`)
     if (commissionBookingId) runSql(`DELETE FROM booking_commissions WHERE booking_id = '${commissionBookingId}'`)

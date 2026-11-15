@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { ApiError } from '../../../api/client'
-import { createFeePolicy, feeLabel, feeValueProblem, FEE_TYPE_LABEL } from '../../../api/adminFeePolicies'
+import { createFeePolicy, feeLabel, feeValueProblem, FEE_TYPE_LABEL, updateFeePolicy } from '../../../api/adminFeePolicies'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { inputClass, primaryButtonClass, secondaryButtonClass } from '../../owner/ownerStyles'
 
-/** Hộp thoại tạo chính sách phí mới (2.3.39); chính sách có hiệu lực ngay khi xác nhận. */
-function FeePolicyDialog({ current, onClose, onCreated }) {
-  const [form, setForm] = useState({ name: '', feeType: 'percentage', feeValue: '' })
+/**
+ * Hộp thoại tạo chính sách phí mới (2.3.39) hoặc sửa một chính sách (2.3.40, khi có `policy`).
+ * Chính sách mới có hiệu lực ngay khi xác nhận.
+ */
+function FeePolicyDialog({ current, policy = null, onClose, onCreated }) {
+  const editing = Boolean(policy)
+  const [form, setForm] = useState(editing
+    ? { name: policy.name, feeType: policy.feeType, feeValue: String(policy.feeValue).replace('.', ',') }
+    : { name: '', feeType: 'percentage', feeValue: '' })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,8 +44,13 @@ function FeePolicyDialog({ current, onClose, onCreated }) {
     if (Object.keys(next).length > 0) return
     setBusy(true)
     try {
-      const updated = await createFeePolicy(form)
-      onCreated(updated, `Đã áp dụng chính sách "${form.name.trim()}".`)
+      if (editing) {
+        const updated = await updateFeePolicy(policy.id, form)
+        onCreated(updated, `Đã cập nhật chính sách "${form.name.trim()}".`)
+      } else {
+        const updated = await createFeePolicy(form)
+        onCreated(updated, `Đã áp dụng chính sách "${form.name.trim()}".`)
+      }
     } catch (failure) {
       if (failure instanceof ApiError) {
         setErrors(failure.fieldErrors ?? {})
@@ -52,11 +63,12 @@ function FeePolicyDialog({ current, onClose, onCreated }) {
   }
 
   const valid = !feeValueProblem(form.feeType, form.feeValue) && form.name.trim().length >= 2
+  const unchanged = editing && form.name.trim() === policy.name && form.feeType === policy.feeType && Number(form.feeValue.replace(',', '.')) === policy.feeValue
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/40 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}>
-      <form role="dialog" aria-modal="true" aria-label="Tạo chính sách phí" noValidate onSubmit={submit} className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" data-testid="fee-dialog">
+      <form role="dialog" aria-modal="true" aria-label={editing ? 'Sửa chính sách phí' : 'Tạo chính sách phí'} noValidate onSubmit={submit} className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" data-testid="fee-dialog">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-900">Tạo chính sách phí mới</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{editing ? 'Sửa chính sách phí' : 'Tạo chính sách phí mới'}</h2>
           <button type="button" className="grid size-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Đóng" onClick={onClose} disabled={busy}><X className="size-5" /></button>
         </div>
         <div className="mt-4 grid gap-4">
@@ -86,13 +98,17 @@ function FeePolicyDialog({ current, onClose, onCreated }) {
           </label>
 
           <div className="rounded-lg bg-slate-50 p-3 text-xs font-medium leading-5 text-slate-600" data-testid="fee-preview">
-            {valid ? <>Từ lúc xác nhận, hoa hồng mới sẽ tính <strong className="text-slate-900">{feeLabel(form.feeType, Number(form.feeValue.replace(',', '.')))}</strong>{current ? <>, thay cho "{current.name}" ({feeLabel(current.feeType, current.feeValue)}).</> : '.'}</> : 'Nhập tên và giá trị hợp lệ để xem tác động.'}
+            {editing ? (
+              policy.status === 'active'
+                ? <>Thay đổi áp dụng cho hoa hồng ghi nhận từ lúc lưu{valid ? <>: <strong className="text-slate-900">{feeLabel(form.feeType, Number(form.feeValue.replace(',', '.')))}</strong></> : ''}.</>
+                : <>Chính sách đang dừng nên thay đổi chỉ có hiệu lực khi bạn kích hoạt lại chính sách này.</>
+            ) : valid ? <>Từ lúc xác nhận, hoa hồng mới sẽ tính <strong className="text-slate-900">{feeLabel(form.feeType, Number(form.feeValue.replace(',', '.')))}</strong>{current ? <>, thay cho "{current.name}" ({feeLabel(current.feeType, current.feeValue)}).</> : '.'}</> : 'Nhập tên và giá trị hợp lệ để xem tác động.'}
             <br />Hoa hồng đã ghi nhận giữ nguyên mức phí cũ.
           </div>
           <FormAlert message={formError} />
           <div className="flex justify-end gap-2">
             <button type="button" className={secondaryButtonClass} disabled={busy} onClick={onClose}>Hủy</button>
-            <button type="submit" className={primaryButtonClass} disabled={busy} data-testid="fee-submit">{busy ? 'Đang áp dụng...' : 'Áp dụng chính sách'}</button>
+            <button type="submit" className={primaryButtonClass} disabled={busy || unchanged} data-testid="fee-submit">{busy ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : 'Áp dụng chính sách'}</button>
           </div>
         </div>
       </form>
