@@ -77,6 +77,35 @@ public class MailService {
                 "ma dat lai mat khau");
     }
 
+    // --- Thong bao he thong (2.3.53 - 2.3.60) ------------------------------
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onNotificationEmailRequested(NotificationEmailRequested event) {
+        String body = event.content() == null ? "" : event.content();
+        send(event.email(), "-", event.title(),
+                "Xin chao " + event.fullName() + ",\n\n" + body + "\n\nMo Courtly de xem chi tiet.",
+                notificationHtml(event.fullName(), event.title(), body),
+                "thong bao");
+    }
+
+    private String notificationHtml(String fullName, String title, String content) {
+        return """
+                <div style="margin:0;padding:24px;background:#f5f5f4;font-family:'Segoe UI',Roboto,Arial,sans-serif">
+                  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e7e5e4">
+                    <div style="background:#047857;padding:20px 28px">
+                      <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:.5px">Courtly</span>
+                    </div>
+                    <div style="padding:28px">
+                      <p style="margin:0 0 6px;font-size:15px;color:#1c1917">Xin chào <strong>%s</strong>,</p>
+                      <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#1c1917">%s</p>
+                      <p style="margin:0;font-size:14px;line-height:22px;color:#57534e">%s</p>
+                    </div>
+                  </div>
+                </div>
+                """.formatted(escape(fullName), escape(title), escape(content));
+    }
+
     // --- Dung chung --------------------------------------------------------
 
     private void send(String to, String code, String subject, String plainText, String html,

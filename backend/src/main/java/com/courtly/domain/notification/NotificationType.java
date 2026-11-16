@@ -16,6 +16,8 @@ public final class NotificationType {
     public static final String PARTNER_REQUEST_RESPONSE = "partner_request_response";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
+    /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
+    public static final String DEBT_RESTRICTION = "debt_restriction";
 
     /** Danh sach day du, dung khi tao notification_preferences mac dinh cho user moi. */
     public static final String[] ALL = {
@@ -26,8 +28,12 @@ public final class NotificationType {
             PARTNER_REQUEST,
             PARTNER_REQUEST_RESPONSE,
             MATCH_SCHEDULED,
-            MATCH_REMINDER
+            MATCH_REMINDER,
+            DEBT_RESTRICTION
     };
+
+    /** Loai bat buoc: luon co thong bao trong ung dung du nguoi dung tat tuy chon. */
+    public static final java.util.Set<String> MANDATORY = java.util.Set.of(DEBT_RESTRICTION);
 
     private NotificationType() {
     }

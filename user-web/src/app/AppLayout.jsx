@@ -3,6 +3,7 @@ import { Bell, CalendarDays, LogOut, Zap } from 'lucide-react'
 import { classNames } from '../shared/utils'
 import { isOwner } from '../shared/roles'
 import { readCachedUser } from '../shared/session'
+import { NotificationBell } from '../features/notifications/NotificationBell'
 import { fallbackSlides, navigationTabs } from './config'
 
 function SplashScreen() {
@@ -136,9 +137,7 @@ function AppHeader({ user, onLogout }) {
 
         {user ? (
           <div className="flex items-center gap-2">
-            <button className="hidden size-9 place-items-center rounded-lg text-white/90 hover:bg-white/8 sm:grid">
-              <Bell className="size-[18px]" />
-            </button>
+            <NotificationBell />
             <a
               href={isOwner(user) ? '/owner' : '/profile'}
               className="flex h-10 items-center gap-2.5 rounded-lg border border-white/22 bg-white/8 px-3 text-left text-white shadow-sm backdrop-blur"

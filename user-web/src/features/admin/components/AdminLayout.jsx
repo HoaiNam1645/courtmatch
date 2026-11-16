@@ -4,6 +4,7 @@ import { BrandMark } from '../../../app/AppLayout'
 import { useApp } from '../../../app/useApp'
 import { isAdmin } from '../../../shared/roles'
 import { classNames } from '../../../shared/utils'
+import { NotificationBell } from '../../notifications/NotificationBell'
 import { adminNavigation, adminNavigationGroups } from '../adminNavigation'
 
 function AdminGate({ title, description, href, action }) {
@@ -54,6 +55,7 @@ function AdminLayout({ eyebrow, title, description, actions, children }) {
               <span className="block truncate text-[13px] font-semibold" data-testid="admin-name">{user.name}</span>
               <span className="block text-[11px] font-medium text-sky-200">Quản trị viên</span>
             </span>
+            <NotificationBell theme="slate" />
             <button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg border border-white/22 text-white hover:bg-white/8" onClick={logout} aria-label="Đăng xuất" title="Đăng xuất">
               <LogOut className="size-[18px]" />
             </button>

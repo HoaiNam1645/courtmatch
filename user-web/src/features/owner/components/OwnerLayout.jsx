@@ -4,6 +4,7 @@ import { BrandMark } from '../../../app/AppLayout'
 import { useApp } from '../../../app/useApp'
 import { isOwner } from '../../../shared/roles'
 import { classNames } from '../../../shared/utils'
+import { NotificationBell } from '../../notifications/NotificationBell'
 import { ownerNavigation } from '../ownerNavigation'
 
 const CHANGE_PASSWORD_PATH = '/owner/change-password'
@@ -74,6 +75,7 @@ function OwnerLayout({ eyebrow, title, description, actions, children }) {
               <span className="block truncate text-[13px] font-semibold" data-testid="owner-name">{user.name}</span>
               <span className="block text-[11px] font-medium text-lime-200">Chủ sân</span>
             </span>
+            {showNavigation && <NotificationBell />}
             <button
               type="button"
               className="grid size-10 shrink-0 place-items-center rounded-lg border border-white/22 text-white hover:bg-white/8"
