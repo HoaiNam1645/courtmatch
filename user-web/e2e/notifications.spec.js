@@ -20,8 +20,8 @@ test.describe.serial('2.3.61 - 2.3.62 notifications history, bell and preference
     for (let i = 0; i < 15; i += 1) insertNotification(PLAYER, { type: 'booking_confirmed', title: `E2E Đặt sân ${i}`, minutesAgo: 100 + i, read: i % 3 === 0 })
     for (let i = 0; i < 6; i += 1) insertNotification(PLAYER, { type: 'payment_status', title: `E2E Thanh toán ${i}`, minutesAgo: 1 + i })
     for (let i = 0; i < 4; i += 1) insertNotification(PLAYER, { type: 'booking_reminder', title: `E2E Nhắc ${i}`, minutesAgo: 50 + i })
-    insertNotification(SEED_OWNER_EMAIL, { type: 'payment_status', title: 'E2E Thông báo cho chủ sân', route: '/owner/payments', minutesAgo: 1 })
-    insertNotification(SEED_ADMIN_EMAIL, { type: 'payment_status', title: 'E2E Thông báo cho quản trị', route: '/admin/commission-payments', minutesAgo: 1 })
+    insertNotification(SEED_OWNER_EMAIL, { type: 'payment_status', title: 'E2E Thông báo cho chủ sân', route: '/owner/payments', minutesAgo: 0 })
+    insertNotification(SEED_ADMIN_EMAIL, { type: 'payment_status', title: 'E2E Thông báo cho quản trị', route: '/admin/commission-payments', minutesAgo: 0 })
   })
   test.afterAll(() => {
     runSql("DELETE FROM notifications WHERE title LIKE 'E2E %'")
@@ -178,7 +178,8 @@ test.describe.serial('2.3.61 - 2.3.62 notifications history, bell and preference
     await page.goto('/owner')
     await expect(page.getByTestId('bell-count')).toBeVisible()
     await page.getByTestId('bell').click()
-    await page.getByTestId('bell-list').getByRole('listitem').first().getByRole('button').click()
+    // Các spec khác cũng tạo thông báo cho chủ sân seed, nên chọn đúng mục theo nội dung thay vì mục đầu tiên.
+    await page.getByTestId('bell-list').getByRole('listitem').filter({ hasText: 'E2E Thông báo cho chủ sân' }).getByRole('button').click()
     await expect(page).toHaveURL('/owner/payments')
     await page.goto('/notifications')
     await expect(page.getByRole('navigation', { name: 'Điều hướng quản lý sân' })).toBeVisible()

@@ -66,8 +66,9 @@ class BookingCancelledNotificationTest extends NotificationFlowTestBase {
         reportPaid(confirmed);
         mockMvcPost("/api/v1/payments/" + paymentOf(confirmed).getId() + "/confirm-received", ownerToken, null, 200);
         cancel(confirmed, "Bi om khong choi duoc", 200);
-        assertThat(notificationsOf(owner)).hasSize(2);
-        assertThat(notificationsOf(owner).getFirst().getContent()).contains("Bi om khong choi duoc");
+        // Chi dem thong bao huy: khi nguoi choi bao da thanh toan chu san con nhan thong bao payment_status (2.3.55).
+        assertThat(notificationsOf(owner, "booking_cancelled")).hasSize(2);
+        assertThat(notificationsOf(owner, "booking_cancelled").getFirst().getContent()).contains("Bi om khong choi duoc");
     }
 
     @Test

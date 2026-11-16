@@ -102,8 +102,8 @@ test.describe.serial('2.3.53 the player is notified when the owner accepts, reje
     expect(Number(runSql(`SELECT count(*) FROM notifications WHERE type = 'booking_confirmed' AND user_id = (SELECT id FROM users WHERE email = '${BOOKER}')`))).toBe(3)
   })
 
-  test('the owner who performed the actions gets no notification of their own, and a player who turned the type off gets none', async ({ page }) => {
-    expect(Number(runSql(`SELECT count(*) FROM notifications WHERE created_at >= '${startedAt}' AND user_id = (SELECT id FROM users WHERE email = '${SEED_OWNER_EMAIL}')`))).toBe(0)
+  test('the owner who performed the actions gets no booking-confirmed notification of their own, and a player who turned the type off gets none', async ({ page }) => {
+    expect(Number(runSql(`SELECT count(*) FROM notifications WHERE type = 'booking_confirmed' AND created_at >= '${startedAt}' AND user_id = (SELECT id FROM users WHERE email = '${SEED_OWNER_EMAIL}')`))).toBe(0)
     await loginByApi(page, BOOKER)
     await page.goto('/notifications?tab=settings')
     await page.getByTestId('pref-booking_confirmed').getByTestId('pref-in-app').uncheck()
