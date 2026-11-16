@@ -52,6 +52,14 @@ public class BookingCommission extends AuditedEntity {
     @Column(name = "commission_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal commissionAmount;
 
+    /** Phan giam voucher cua booking do Courtly chiu, da tru vao commissionAmount (B4). */
+    @Column(name = "voucher_discount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal voucherDiscount = BigDecimal.ZERO;
+
+    /** Phan giam vuot hoa hong: Courtly con no chu san khoan nay. */
+    @Column(name = "courtly_owed", nullable = false, precision = 12, scale = 2)
+    private BigDecimal courtlyOwed = BigDecimal.ZERO;
+
     @Column(name = "status", nullable = false, length = 30)
     private String status = "pending";
 

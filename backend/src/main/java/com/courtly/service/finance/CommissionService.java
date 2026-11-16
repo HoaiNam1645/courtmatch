@@ -37,7 +37,12 @@ public class CommissionService {
                 .findFirstByStatusOrderByEffectiveFromDesc(ActiveStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalStateException("Chua co chinh sach hoa hong dang active."));
 
-        BigDecimal commissionAmount = commissionFor(config, booking.getTotalAmount());
+        // Hoa hong tinh tren gia goc. Phan voucher Courtly chiu duoc tru vao cong no cua chu san; phan vuot hoa hong
+        // la khoan Courtly con no chu san (courtlyOwed).
+        BigDecimal baseCommission = commissionFor(config, booking.getTotalAmount());
+        BigDecimal discount = booking.getDiscountAmount();
+        BigDecimal commissionAmount = baseCommission.subtract(discount).max(BigDecimal.ZERO);
+        BigDecimal courtlyOwed = discount.subtract(baseCommission).max(BigDecimal.ZERO);
 
         BookingCommission commission = new BookingCommission();
         commission.setBooking(booking);
@@ -47,6 +52,8 @@ public class CommissionService {
         commission.setFeeType(config.getFeeType());
         commission.setFeeValue(config.getFeeValue());
         commission.setCommissionAmount(commissionAmount);
+        commission.setVoucherDiscount(discount);
+        commission.setCourtlyOwed(courtlyOwed);
         commission.setStatus("due");
         commission.setCalculatedAt(now);
         commission.setDueAt(now.plus(7, ChronoUnit.DAYS));

@@ -47,6 +47,19 @@ public class Booking extends AuditedEntity {
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
+    /** Voucher da ap dung (B4); totalAmount van la gia goc, nguoi choi tra totalAmount - discountAmount. */
+    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinColumn(name = "voucher_id")
+    private com.courtly.domain.voucher.Voucher voucher;
+
+    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    /** So tien nguoi choi phai tra sau khi tru voucher. */
+    public BigDecimal getPayableAmount() {
+        return totalAmount.subtract(discountAmount);
+    }
+
     @Column(name = "note")
     private String note;
 

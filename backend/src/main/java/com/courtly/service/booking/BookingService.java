@@ -23,6 +23,7 @@ import com.courtly.domain.venue.CourtRepository;
 import com.courtly.domain.venue.VenueImageRepository;
 import com.courtly.service.payment.PaymentService;
 import com.courtly.service.finance.CommissionService;
+import com.courtly.service.voucher.VoucherService;
 import com.courtly.domain.venue.Venue;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -72,6 +73,7 @@ public class BookingService {
     private final PaymentService paymentService;
     private final CommissionService commissionService;
     private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
+    private final VoucherService voucherService;
 
     /**
      * Tao yeu cau dat san (2.1.28).
@@ -101,6 +103,9 @@ public class BookingService {
         Venue venue = court.getVenue();
         // B2 - chu san co cong no hoa hong qua han vuot nguong thi khong nhan booking moi.
         restrictionService.requireAcceptingBookings(venue.getOwner().getId());
+        // B4 - voucher: kiem tra va khoa truoc khi tao booking; Courtly chiu phan giam.
+        VoucherService.Application voucher = request.voucherCode() == null ? null
+                : voucherService.prepare(userId, request.voucherCode(), quote.totalAmount());
         Instant now = Instant.now();
 
         Booking booking = new Booking();
@@ -110,6 +115,10 @@ public class BookingService {
         booking.setVenue(venue);
         booking.setStatus(BookingStatus.PENDING_OWNER_CONFIRMATION);
         booking.setTotalAmount(quote.totalAmount());
+        if (voucher != null) {
+            booking.setVoucher(voucher.voucher());
+            booking.setDiscountAmount(voucher.discountAmount());
+        }
         booking.setNote(request.note());
         booking.setCreatedAt(now);
         booking.setPriceLockedAt(now);
@@ -140,6 +149,9 @@ public class BookingService {
                     Map.of("startTime", "Khung gio vua bi giu"));
         }
 
+        if (voucher != null) {
+            voucherService.record(voucher, user, booking);
+        }
         log.info("Tao don {} cho nguoi dung {}", booking.getBookingCode(), userId);
         return toDetail(booking, now);
     }
@@ -215,6 +227,7 @@ public class BookingService {
 
         BookingStatus previous = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
+        voucherService.release(booking);
         booking.setCancelledAt(now);
         booking.setCancellationReason(request.reason());
         // Doi trang thai tung khung gio de giai phong cho cho nguoi khac dat.
@@ -326,6 +339,9 @@ public class BookingService {
                 booking.getBookingCode(),
                 booking.getStatus(),
                 booking.getTotalAmount(),
+                booking.getDiscountAmount(),
+                booking.getPayableAmount(),
+                booking.getVoucher() == null ? null : booking.getVoucher().getCode(),
                 booking.getNote(),
                 activeDeadline(booking),
                 booking.getConfirmedAt(),
@@ -392,6 +408,7 @@ public class BookingService {
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay tai khoan chu san."));
         Instant now = Instant.now();
         booking.setStatus(BookingStatus.REJECTED);
+        voucherService.release(booking);
         booking.setOwnerRespondedAt(now);
         booking.setOwnerRespondedBy(owner);
         booking.setOwnerResponseExpiresAt(null);
@@ -412,6 +429,7 @@ public class BookingService {
         for (Booking booking : overdue) {
             BookingStatus previous = booking.getStatus();
             booking.setStatus(BookingStatus.EXPIRED);
+            voucherService.release(booking);
             booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.EXPIRED));
             String reason = previous == BookingStatus.PENDING_OWNER_CONFIRMATION
                     ? "Chu san khong phan hoi dung han"

@@ -24,9 +24,13 @@ public record CreateBookingRequest(
         Integer durationMinutes,
 
         @Size(max = 500, message = "Ghi chu toi da 500 ky tu")
-        String note) {
+        String note,
+
+        @Size(max = 40, message = "Ma voucher toi da 40 ky tu")
+        String voucherCode) {
 
     public CreateBookingRequest {
         note = note == null || note.isBlank() ? null : note.trim();
+        voucherCode = voucherCode == null || voucherCode.isBlank() ? null : voucherCode.trim();
     }
 }

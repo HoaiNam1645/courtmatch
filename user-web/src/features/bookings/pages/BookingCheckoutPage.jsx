@@ -8,6 +8,7 @@ import { formatError } from '../../../shared/formatError'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { PageBackLink, ProfileEmptyState, ProfileSectionTitle } from '../../profile/components/ProfileUi'
 import { BookingEmptyState } from '../components/BookingEmptyState'
+import { VoucherPicker } from '../components/VoucherPicker'
 
 function formatBookingDate(value) {
   return new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value))
@@ -18,9 +19,12 @@ function BookingCheckoutPage({ user, onLogout }) {
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+  const [voucher, setVoucher] = useState(null)
 
   // Người chơi trả trực tiếp cho chủ sân sau khi yêu cầu được chấp nhận.
-  const totalAmount = Number(pending?.price ?? 0)
+  const originalAmount = Number(pending?.price ?? 0)
+  // Voucher (B4): server tính mức giảm; người chơi trả phần sau giảm, Courtly chịu phần giảm.
+  const totalAmount = voucher ? voucher.payableAmount : originalAmount
   const venue = pending ? { id: pending.venueId, name: pending.venueName } : null
   const court = pending ? { id: pending.courtId, name: pending.courtName } : null
 
@@ -39,6 +43,7 @@ function BookingCheckoutPage({ user, onLogout }) {
         startTime: pending.startAt,
         durationMinutes: pending.durationMinutes,
         note: note.trim(),
+        voucherCode: voucher?.code,
       })
       // Tạo xong thì bỏ lựa chọn tạm để bấm back không tạo đơn thứ hai.
       clearPendingBooking()
@@ -81,6 +86,8 @@ function BookingCheckoutPage({ user, onLogout }) {
                 <label className="mt-5 block"><span className="text-sm font-semibold">Ghi chú cho sân</span><textarea className="mt-2.5 min-h-24 w-full resize-none rounded-lg border border-stone-200 p-4 text-sm leading-6 outline-none focus:border-emerald-500" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ví dụ: chuẩn bị nước, thuê vợt..." maxLength={240} /></label>
               </section>
 
+              <VoucherPicker pending={pending} applied={voucher} onApply={setVoucher} />
+
               <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_12px_34px_rgba(24,65,44,0.08)]">
                 <ProfileSectionTitle icon={CreditCard} eyebrow="Thanh toán" title="Thanh toán sau khi được duyệt" />
                 <div className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm font-medium leading-6 text-emerald-900 ring-1 ring-emerald-100">Bạn có thể trả tiền mặt hoặc chuyển khoản trực tiếp vào tài khoản của chủ sân. Courtly không thu và không giữ tiền sân.</div>
@@ -89,7 +96,7 @@ function BookingCheckoutPage({ user, onLogout }) {
 
             <aside className="rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_14px_38px_rgba(24,65,44,0.10)] lg:sticky lg:top-20">
               <ProfileSectionTitle icon={FileText} eyebrow="Đơn đặt sân" title="Chi tiết thanh toán" />
-              <div className="mt-5 grid gap-3 text-sm font-medium text-stone-500"><p className="flex justify-between gap-4"><span>Tiền sân</span><span className="font-semibold text-emerald-950">{formatCurrency(pending.price)}</span></p><p className="flex justify-between gap-4"><span>Giảm giá</span><span className="font-semibold text-emerald-700">0đ</span></p></div>
+              <div className="mt-5 grid gap-3 text-sm font-medium text-stone-500"><p className="flex justify-between gap-4"><span>Tiền sân</span><span className="font-semibold text-emerald-950">{formatCurrency(pending.price)}</span></p>{voucher && <p className="flex justify-between gap-4" data-testid="checkout-discount"><span>Voucher {voucher.code}</span><span className="font-semibold text-emerald-700">-{formatCurrency(voucher.discountAmount)}</span></p>}<p className="flex justify-between gap-4"><span>Giảm giá</span><span className="font-semibold text-emerald-700">0đ</span></p></div>
               <div className="mt-5 flex items-center justify-between border-t border-emerald-100 pt-5"><span className="text-sm font-semibold">Tổng thanh toán</span><span className="text-2xl font-semibold text-emerald-700">{formatCurrency(totalAmount)}</span></div>
               <div className="mt-5 rounded-lg bg-amber-50 p-4 text-xs font-medium leading-5 text-amber-800 ring-1 ring-amber-100"><strong>Quy trình:</strong> chủ sân duyệt yêu cầu trước, sau đó bạn thanh toán trực tiếp và báo đã thanh toán để chủ sân xác nhận.</div>
               <label className="mt-5 flex items-start gap-3 text-xs font-medium leading-5 text-stone-500"><input className="mt-1 accent-emerald-600" type="checkbox" required /><span>Tôi xác nhận thông tin đặt sân và đồng ý với chính sách hủy sân.</span></label>

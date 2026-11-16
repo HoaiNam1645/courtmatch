@@ -51,7 +51,8 @@ public class PaymentService {
         payment.setBooking(booking);
         payment.setRecipientOwner(owner);
         payment.setMethod("owner_bank_transfer");
-        payment.setAmount(booking.getTotalAmount());
+        // Nguoi choi tra phan sau giam voucher (B4); phan giam do Courtly chiu.
+        payment.setAmount(booking.getPayableAmount());
         payment.setStatus(PaymentStatus.AWAITING_PAYMENT);
         payment.setBankName(profile == null ? null : profile.getBankName());
         payment.setBankAccountNo(profile == null ? null : profile.getBankAccountNo());
