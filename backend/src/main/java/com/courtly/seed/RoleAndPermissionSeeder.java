@@ -45,6 +45,7 @@ public class RoleAndPermissionSeeder implements Seeder {
         PERMISSIONS.put("refund.process", "Xu ly hoan tien");
         PERMISSIONS.put("finance.fee.config", "Thiet lap phi nen tang");
         PERMISSIONS.put("finance.commission.view", "Xem cong no hoa hong");
+        PERMISSIONS.put("finance.commission.manage", "Xu ly cong no hoa hong");
         PERMISSIONS.put("finance.settlement.submit", "Gui bang chung thanh toan cong no");
         PERMISSIONS.put("finance.settlement.review", "Duyet ky doi soat hoa hong");
         PERMISSIONS.put("match.record", "Ghi nhan ket qua tran dau");

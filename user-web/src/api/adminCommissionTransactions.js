@@ -50,6 +50,11 @@ export const HISTORY_ACTION_LABEL = {
   'commission.waive': 'Miễn hoa hồng',
   'commission.refund_adjust': 'Điều chỉnh theo hoàn tiền',
   'commission.courtly_owed.clear': 'Bù trừ khoản Courtly nợ',
+  'settlement.create': 'Chốt kỳ công nợ',
+  'settlement.payment.confirm': 'Xác nhận thanh toán công nợ',
+  'settlement.payment.reject': 'Từ chối báo cáo thanh toán',
+  'settlement.payment.record': 'Ghi nhận giao dịch đối soát',
+  'settlement.adjust': 'Điều chỉnh công nợ',
 }
 
 export async function fetchCommissionDetail(commissionId) {
