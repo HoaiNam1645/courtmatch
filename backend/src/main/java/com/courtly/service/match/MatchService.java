@@ -59,6 +59,7 @@ public class MatchService {
     private static final int AUTO_CONFIRM_HOURS = 72;
     private static final int DISPUTE_EXPIRY_DAYS = 7;
 
+    private final com.courtly.service.notification.MatchNotifier matchNotifier;
     private final MatchRepository matchRepository;
     private final MatchGameRepository matchGameRepository;
     private final PlayerRatingHistoryRepository ratingHistoryRepository;
@@ -180,6 +181,7 @@ public class MatchService {
             }
             throw exception;
         }
+        matchNotifier.created(match, creator);
         return toResponse(match, userId);
     }
 
@@ -216,6 +218,7 @@ public class MatchService {
         });
         match.setStatus(MatchStatus.SCHEDULED);
         matchRepository.flush();
+        matchNotifier.resultRecorded(match, participant(match, userId).getUser());
         return toResponse(match, userId);
     }
 
@@ -266,6 +269,7 @@ public class MatchService {
         }
         match.setStatus(MatchStatus.CANCELLED);
         matchRepository.save(match);
+        matchNotifier.cancelled(match, participant(match, userId).getUser());
     }
 
     @Transactional
