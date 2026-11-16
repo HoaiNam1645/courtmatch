@@ -35,94 +35,13 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** 2.3.47 - Xac nhan chu san da thanh toan cong no; 2.3.50 - danh sach thanh toan. */
-class AdminPaymentConfirmTest extends AdminApiTestBase {
+class AdminPaymentConfirmTest extends AdminFinanceTestBase {
 
     private static final String PATH = "/api/v1/admin/finance/commission-payments";
-    private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
-
-    @Autowired private BookingRepository bookingRepository;
-    @Autowired private BookingCommissionRepository commissionRepository;
-    @Autowired private CommissionSettlementRepository settlementRepository;
-    @Autowired private JdbcTemplate jdbc;
-    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
-
-    private String adminToken;
-    private User admin;
-    private User owner;
-    private User otherOwner;
-    private Venue venue;
-    private Venue otherVenue;
-    private String player;
-    private int index;
-    private int refCounter;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        ensureAdminSetup();
-        admin = persistAdmin("admin-confirm");
-        adminToken = loginAs(admin);
-        owner = persistOwner("owner-confirm");
-        otherOwner = persistOwner("owner-confirm-2");
-        venue = persistVenue(owner, "San Xac Nhan");
-        otherVenue = persistVenue(otherOwner, "San Xac Nhan 2");
-        player = loginAs(persistUser("player-confirm", Role.PLAYER));
-    }
-
-    private BookingCommission commission(User commissionOwner, Venue target, String status, String amount, int dueInDays,
-                                         CommissionSettlement settlement) throws Exception {
-        String id = createBooking(player, target.getCourts().getFirst(), nextMonday().plusDays(index++), LocalTime.of(9, 0));
-        Booking booking = bookingRepository.findById(UUID.fromString(id)).orElseThrow();
-        BookingCommission commission = new BookingCommission();
-        commission.setId(UUID.randomUUID());
-        commission.setBooking(booking);
-        commission.setOwner(commissionOwner);
-        commission.setGrossAmount(new BigDecimal("180000"));
-        commission.setFeeType(FeeType.PERCENTAGE);
-        commission.setFeeValue(BigDecimal.TEN);
-        commission.setCommissionAmount(new BigDecimal(amount));
-        commission.setStatus(status);
-        Instant calculated = Instant.now().minus(10, ChronoUnit.DAYS).plusSeconds(index);
-        commission.setCalculatedAt(calculated);
-        commission.setDueAt(Instant.now().plus(dueInDays, ChronoUnit.DAYS));
-        commission.setCreatedAt(calculated);
-        commission.setSettlement(settlement);
-        return commissionRepository.saveAndFlush(commission);
-    }
-
-    private CommissionSettlement settlement(User settlementOwner, String due, String paid, String status) {
-        CommissionSettlement settlement = new CommissionSettlement();
-        settlement.setId(UUID.randomUUID());
-        settlement.setOwner(settlementOwner);
-        LocalDate start = LocalDate.now(VN).minusDays(60L + index);
-        settlement.setPeriodFrom(start);
-        settlement.setPeriodTo(start.plusDays(6));
-        settlement.setStatus(status);
-        settlement.setCommissionTotal(new BigDecimal(due));
-        settlement.setAmountDue(new BigDecimal(due));
-        settlement.setAmountPaid(new BigDecimal(paid));
-        return settlementRepository.saveAndFlush(settlement);
-    }
-
-    private UUID report(User reportOwner, CommissionSettlement settlement, String amount) {
-        UUID id = UUID.randomUUID();
-        jdbc.update("INSERT INTO commission_payment_reports (id, owner_id, settlement_id, amount, paid_on, reference_code, status) "
-                + "VALUES (?, ?, ?, ?::numeric, current_date, ?, 'pending_review')", id, reportOwner.getId(),
-                settlement == null ? null : settlement.getId(), amount, "REF-" + (++refCounter) + "-" + id.toString().substring(0, 6));
-        return id;
-    }
-
     private JsonNode confirm(UUID reportId, String body) throws Exception {
         return objectMapper.readTree(mockMvc.perform(post(PATH + "/" + reportId + "/confirm").header("Authorization", bearer(adminToken))
                         .contentType(MediaType.APPLICATION_JSON).content(body == null ? "" : body))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
-    }
-
-    private String statusOf(BookingCommission commission) {
-        return jdbc.queryForObject("SELECT status FROM booking_commissions WHERE id = ?", String.class, commission.getId());
-    }
-
-    private Map<String, Object> settlementRow(CommissionSettlement settlement) {
-        return jdbc.queryForMap("SELECT status, amount_paid, paid_at, reviewed_by FROM commission_settlements WHERE id = ?", settlement.getId());
     }
 
     @Test
@@ -200,10 +119,6 @@ class AdminPaymentConfirmTest extends AdminApiTestBase {
         assertThat((BigDecimal) settlementRow(other).get("amount_paid")).isEqualByComparingTo("0");
     }
 
-    private BigDecimal credit(User target) {
-        return jdbc.queryForObject("SELECT commission_credit FROM court_owner_profiles WHERE user_id = ?", BigDecimal.class, target.getId());
-    }
-
     @Test
     @DisplayName("Bu tru khoan Courtly no chu san vao cong no con lai: chi bu tru phan vua du, bo qua khoan mien / tam hoan / da bu tru")
     void offsetsCourtlyOwed() throws Exception {
@@ -248,10 +163,6 @@ class AdminPaymentConfirmTest extends AdminApiTestBase {
         assertThat(settlementRow(settlement).get("status")).isEqualTo("paid");
         assertThat((BigDecimal) settlementRow(settlement).get("amount_paid")).isEqualByComparingTo("30000");
         assertThat(clearedAt(owed)).isNotNull();
-    }
-
-    private Object clearedAt(BookingCommission commission) {
-        return jdbc.queryForObject("SELECT courtly_owed_cleared_at FROM booking_commissions WHERE id = ?", Object.class, commission.getId());
     }
 
     @Test

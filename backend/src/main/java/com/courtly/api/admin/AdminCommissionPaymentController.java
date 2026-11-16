@@ -1,6 +1,7 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminPaymentResponses;
+import com.courtly.api.admin.dto.RejectPaymentRequest;
 import com.courtly.api.admin.dto.ReviewPaymentRequest;
 import com.courtly.service.admin.AdminCommissionPaymentService;
 import jakarta.validation.Valid;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** 2.3.47 - xac nhan thanh toan cong no cua chu san; 2.3.50 - lich su thanh toan hoa hong. */
+/** 2.3.47 - xac nhan thanh toan cong no cua chu san; 2.3.48 - tu choi / yeu cau bo sung; 2.3.50 - lich su thanh toan hoa hong. */
 @Validated
 @RestController
 @RequestMapping("/api/v1/admin/finance/commission-payments")
@@ -52,5 +53,11 @@ public class AdminCommissionPaymentController {
     public ResponseEntity<AdminPaymentResponses.Row> confirm(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID reportId,
                                                              @Valid @RequestBody(required = false) ReviewPaymentRequest request) {
         return ResponseEntity.ok(paymentService.confirm(AdminJwt.adminId(jwt), reportId, request == null ? null : request.note()));
+    }
+
+    @PostMapping("/{reportId}/reject")
+    public ResponseEntity<AdminPaymentResponses.Row> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID reportId,
+                                                            @Valid @RequestBody RejectPaymentRequest request) {
+        return ResponseEntity.ok(paymentService.reject(AdminJwt.adminId(jwt), reportId, request.reason()));
     }
 }

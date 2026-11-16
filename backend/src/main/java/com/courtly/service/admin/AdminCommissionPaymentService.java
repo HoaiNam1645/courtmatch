@@ -268,6 +268,61 @@ public class AdminCommissionPaymentService {
         return jdbc.queryForObject(ROW_SELECT + " WHERE r.id = ?", (rs, index) -> row(rs), reportId);
     }
 
+    /**
+     * 2.3.48 - tu choi bao cao thanh toan hoac yeu cau bo sung bang chung.
+     *
+     * <p>Ly do bat buoc. Cong no khong doi; ma tham chieu cua bao cao bi tu choi duoc dung lai khi chu san gui bao cao moi.
+     * Ky chi quay lai trang thai truoc khi gui neu khong con bao cao nao khac dang cho xac nhan.
+     */
+    @Transactional
+    public Row reject(UUID adminId, UUID reportId, String reason) {
+        User admin = accessService.requirePermission(adminId, MANAGE);
+        Report report = lockPending(reportId);
+        Instant now = Instant.now();
+        String cleanReason = reason.trim();
+        if (cleanReason.length() < 5) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ly do tu choi qua ngan.",
+                    Map.of("reason", "Ly do tu 5 den 500 ky tu"));
+        }
+        jdbc.update("""
+                UPDATE commission_payment_reports SET status = 'rejected', reviewed_by = ?, reviewed_at = ?, review_note = ? WHERE id = ?
+                """, admin.getId(), Timestamp.from(now), cleanReason, reportId);
+
+        Map<String, Object> audit = new LinkedHashMap<>();
+        audit.put("reportId", reportId.toString());
+        audit.put("ownerId", report.ownerId.toString());
+        audit.put("referenceCode", report.referenceCode);
+        audit.put("amount", report.amount.toPlainString());
+        audit.put("reason", cleanReason);
+        Map<String, Object> before = Map.of("status", "pending_review");
+        auditService.record(admin, "settlement.payment.reject", "commission_payment_reports", reportId, before, audit);
+
+        if (report.settlementId != null) {
+            Map<String, Object> settlement = jdbc.queryForMap(
+                    "SELECT amount_paid, status FROM commission_settlements WHERE id = ? FOR UPDATE", report.settlementId);
+            String current = (String) settlement.get("status");
+            String restored = current;
+            Long stillPending = jdbc.queryForObject(
+                    "SELECT count(*) FROM commission_payment_reports WHERE settlement_id = ? AND status = 'pending_review'",
+                    Long.class, report.settlementId);
+            if ("pending_review".equals(current) && stillPending == 0) {
+                BigDecimal paid = (BigDecimal) settlement.get("amount_paid");
+                boolean overdue = Boolean.TRUE.equals(jdbc.queryForObject("""
+                        SELECT EXISTS (SELECT 1 FROM booking_commissions WHERE settlement_id = ?
+                                       AND status IN ('pending', 'due', 'adjusted') AND due_at < now())
+                        """, Boolean.class, report.settlementId));
+                restored = paid.signum() > 0 ? "partial" : overdue ? "overdue" : "open";
+                jdbc.update("UPDATE commission_settlements SET status = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?",
+                        restored, admin.getId(), Timestamp.from(now), report.settlementId);
+            }
+            Map<String, Object> settlementAudit = new LinkedHashMap<>(audit);
+            settlementAudit.put("settlementStatus", restored);
+            auditService.record(admin, "settlement.payment.reject", "commission_settlement", report.settlementId,
+                    Map.of("status", current), settlementAudit);
+        }
+        return jdbc.queryForObject(ROW_SELECT + " WHERE r.id = ?", (rs, index) -> row(rs), reportId);
+    }
+
     /** Dong dan hoa hong cua ky theo han thanh toan: du tien thi dong, thanh toan du ky thi dong het. */
     private List<UUID> settleSettlementCommissions(UUID settlementId, BigDecimal paidAfter, boolean fullyPaid, Instant now) {
         BigDecimal alreadySettled = jdbc.queryForObject(

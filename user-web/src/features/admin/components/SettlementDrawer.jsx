@@ -27,17 +27,18 @@ function Line({ label, value, testId, strong }) {
 function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, escapeDisabled = false }) {
   const [page, setPage] = useState(0)
   const [reviewing, setReviewing] = useState(null)
+  const [rejecting, setRejecting] = useState(null)
   const [notice, setNotice] = useState('')
   const { status, data, error, reload } = useApiResource(() => fetchAdminSettlementDetail(settlementId, { page }), [settlementId, page])
 
   useEffect(() => {
     // Khi một ngăn khác mở chồng lên, Escape chỉ đóng ngăn trên cùng.
     function onKey(event) {
-      if (event.key === 'Escape' && !escapeDisabled && !reviewing) onClose()
+      if (event.key === 'Escape' && !escapeDisabled && !reviewing && !rejecting) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, escapeDisabled, reviewing])
+  }, [onClose, escapeDisabled, reviewing, rejecting])
 
   const settlement = data?.settlement
   const meta = settlement ? settlementStatusMeta(settlement.status) : null
@@ -98,7 +99,12 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, esc
                         <p className="mt-1 text-xs font-medium text-slate-500">Thanh toán {formatIsoDate(report.paidOn)} · gửi {formatDateTime(report.createdAt)}</p>
                         {report.note && <p className="mt-1 text-xs font-medium text-slate-600">{report.note}</p>}
                         {report.proofUrl && <a className="mt-1 inline-block break-all text-xs font-semibold text-sky-700 underline" href={report.proofUrl} target="_blank" rel="noreferrer noopener">Xem bằng chứng</a>}
-                        {report.status === 'pending_review' && <button type="button" className="mt-2 h-9 rounded-lg bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-900" data-testid="sd-report-confirm" onClick={() => setReviewing({ ...report, ownerName: settlement.ownerName, settlement: { periodFrom: settlement.periodFrom, periodTo: settlement.periodTo } })}>Xác nhận</button>}
+                        {report.status === 'pending_review' && (
+                          <div className="mt-2 flex gap-2">
+                            <button type="button" className="h-9 rounded-lg bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-900" data-testid="sd-report-confirm" onClick={() => setReviewing({ ...report, ownerName: settlement.ownerName, settlement: { periodFrom: settlement.periodFrom, periodTo: settlement.periodTo } })}>Xác nhận</button>
+                            <button type="button" className="h-9 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50" data-testid="sd-report-reject" onClick={() => setRejecting({ ...report, ownerName: settlement.ownerName, settlement: { periodFrom: settlement.periodFrom, periodTo: settlement.periodTo } })}>Từ chối</button>
+                          </div>
+                        )}
                         {report.reviewedAt && <p className="mt-1 text-xs font-medium text-slate-500">{report.reviewedByName ?? 'Quản trị viên'} xử lý {formatDateTime(report.reviewedAt)}{report.reviewNote ? ` · ${report.reviewNote}` : ''}</p>}
                       </li>
                     )
@@ -156,6 +162,7 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, esc
           </div>
         )}
       </aside>
+      {rejecting && <PaymentReviewDialog payment={rejecting} mode="reject" onClose={() => setRejecting(null)} onDone={(result, message) => { setRejecting(null); setNotice(message); reload(); onChanged?.() }} />}
       {reviewing && <PaymentReviewDialog payment={reviewing} onClose={() => setReviewing(null)} onDone={(result, message) => { setReviewing(null); setNotice(message); reload(); onChanged?.() }} />}
     </div>
   )

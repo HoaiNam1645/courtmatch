@@ -51,4 +51,11 @@ export async function confirmAdminPayment(reportId, note) {
   }))
 }
 
+export async function rejectAdminPayment(reportId, reason) {
+  return mapPayment(await request(`/api/v1/admin/finance/commission-payments/${encodeURIComponent(reportId)}/reject`, {
+    method: 'POST',
+    body: { reason: reason.trim() },
+  }))
+}
+
 export const PAYMENT_TABS = ['all', 'pending_review', 'confirmed', 'rejected']

@@ -19,6 +19,7 @@ function AdminCommissionPaymentsPage() {
   const [query, setQuery] = useState('')
   const q = useDebounced(query)
   const [reviewing, setReviewing] = useState(null)
+  const [rejecting, setRejecting] = useState(null)
   const [notice, setNotice] = useState('')
   const invalidRange = Boolean(filters.from && filters.to && filters.to < filters.from)
   const { status, data, error, reload } = useApiResource(
@@ -39,9 +40,9 @@ function AdminCommissionPaymentsPage() {
 
   return (
     <AdminLayout
-      eyebrow="2.3.47 · Thanh toán công nợ"
+      eyebrow="2.3.47 – 2.3.48 · Thanh toán công nợ"
       title="Thanh toán công nợ"
-      description="Báo cáo chủ sân đã chuyển hoa hồng cho Courtly: đối chiếu số tiền, mã tham chiếu, bằng chứng rồi xác nhận."
+      description="Báo cáo chủ sân đã chuyển hoa hồng cho Courtly: đối chiếu số tiền, mã tham chiếu, bằng chứng rồi xác nhận, hoặc từ chối kèm lý do."
     >
       {notice && <p role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="admin-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       <OwnerCard>
@@ -96,6 +97,7 @@ function AdminCommissionPaymentsPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <p className="text-base font-semibold text-slate-900" data-testid="payment-amount">{formatCurrency(row.amount)}</p>
+                          {row.status === 'pending_review' && <button type="button" className="h-9 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50" data-testid="payment-reject" aria-label={`Từ chối ${row.referenceCode}`} onClick={() => setRejecting(row)}>Từ chối</button>}
                           {row.status === 'pending_review' && <button type="button" className="h-9 rounded-lg bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-900" data-testid="payment-confirm" aria-label={`Xác nhận ${row.referenceCode}`} onClick={() => setReviewing(row)}>Xác nhận</button>}
                         </div>
                       </div>
@@ -120,6 +122,7 @@ function AdminCommissionPaymentsPage() {
           )}
         </div>
       </OwnerCard>
+      {rejecting && <PaymentReviewDialog payment={rejecting} mode="reject" onClose={() => setRejecting(null)} onDone={(result, message) => { setRejecting(null); setNotice(message); reload() }} />}
       {reviewing && <PaymentReviewDialog payment={reviewing} onClose={() => setReviewing(null)} onDone={(result, message) => { setReviewing(null); setNotice(message); reload() }} />}
     </AdminLayout>
   )
