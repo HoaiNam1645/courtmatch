@@ -117,4 +117,16 @@ abstract class AdminFinanceTestBase extends AdminApiTestBase {
     protected Object clearedAt(BookingCommission commission) {
         return jdbc.queryForObject("SELECT courtly_owed_cleared_at FROM booking_commissions WHERE id = ?", Object.class, commission.getId());
     }
+
+    /** Khoan thanh toan truc tiep cua booking cua hoa hong; amount mac dinh la gia booking. */
+    protected UUID payment(BookingCommission commission, String paymentStatus, String amount) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO payments (id, booking_id, amount, status, recipient_owner_id, method, payer_reported_at, confirmed_at)
+                VALUES (?, ?, COALESCE(?::numeric, (SELECT total_amount FROM bookings WHERE id = ?)), ?, ?, 'cash', now(),
+                        CASE WHEN ? IN ('confirmed', 'partially_refunded', 'refunded') THEN now() ELSE NULL END)
+                """, id, commission.getBooking().getId(), amount, commission.getBooking().getId(), paymentStatus, commission.getOwner().getId(),
+                paymentStatus);
+        return id;
+    }
 }

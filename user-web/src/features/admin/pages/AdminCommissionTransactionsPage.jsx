@@ -37,7 +37,7 @@ function AdminCommissionTransactionsPage() {
   }
 
   return (
-    <AdminLayout eyebrow="2.3.43 – 2.3.44 · 2.3.51 · Giao dịch đối soát" title="Giao dịch đối soát" description="Hoa hồng của từng booking: trạng thái, hạn thanh toán và kỳ đối soát đã gán.">
+    <AdminLayout eyebrow="2.3.43 – 2.3.44 · 2.3.51 – 2.3.52 · Giao dịch đối soát" title="Giao dịch đối soát" description="Hoa hồng của từng booking: trạng thái, hạn thanh toán và kỳ đối soát đã gán.">
       <OwnerCard>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 focus-within:border-slate-700 sm:col-span-2 lg:col-span-1">

@@ -8,6 +8,7 @@ import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { AdjustCommissionDialog } from './AdjustCommissionDialog'
+import { RecordRefundDialog, refundedTotal } from './RecordRefundDialog'
 import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
 import { secondaryButtonClass } from '../../owner/ownerStyles'
 
@@ -49,18 +50,21 @@ function describeChange(entry) {
 /** 2.3.44 — chi tiết đối soát của một booking: hoa hồng đã chốt, thanh toán trực tiếp, hoàn tiền, tranh chấp và lịch sử. */
 function CommissionDetailDrawer({ commissionId, onClose, onChanged }) {
   const [adjusting, setAdjusting] = useState(false)
+  const [refunding, setRefunding] = useState(false)
   const [notice, setNotice] = useState('')
   const { status, data, error, reload } = useApiResource(() => fetchCommissionDetail(commissionId), [commissionId])
 
   useEffect(() => {
     function onKey(event) {
-      if (event.key === 'Escape' && !adjusting) onClose()
+      if (event.key === 'Escape' && !adjusting && !refunding) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, adjusting])
+  }, [onClose, adjusting, refunding])
 
   const canAdjust = data && ['pending', 'due', 'adjusted'].includes(data.commission.status)
+  const canRefund = data && data.payment && ['confirmed', 'partially_refunded'].includes(data.payment.status)
+    && ['pending', 'due', 'adjusted', 'settled'].includes(data.commission.status) && data.payment.amount - refundedTotal(data.refunds) > 0
   const meta = data ? commissionStatusMeta(data.commission.status) : null
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -121,6 +125,7 @@ function CommissionDetailDrawer({ commissionId, onClose, onChanged }) {
             </Section>
 
             <Section title={`Hoàn tiền (${data.refunds.length})`} testId="drawer-refunds">
+              {canRefund && <button type="button" className={`${secondaryButtonClass} mb-3`} data-testid="drawer-record-refund" onClick={() => setRefunding(true)}>Ghi nhận hoàn tiền</button>}
               {data.refunds.length === 0 ? <p className="text-sm font-medium text-slate-500" data-testid="drawer-refunds-empty">Không có khoản hoàn nào.</p> : (
                 <ul className="grid gap-2">
                   {data.refunds.map((item) => (
@@ -163,6 +168,7 @@ function CommissionDetailDrawer({ commissionId, onClose, onChanged }) {
           </div>
         )}
       </aside>
+      {refunding && data && <RecordRefundDialog detail={data} onClose={() => setRefunding(false)} onDone={(result, message) => { setRefunding(false); setNotice(message); reload(); onChanged?.() }} />}
       {adjusting && data && <AdjustCommissionDialog detail={data} onClose={() => setAdjusting(false)} onDone={(result, message) => { setAdjusting(false); setNotice(message); reload(); onChanged?.() }} />}
     </div>
   )

@@ -125,7 +125,7 @@ test.describe.serial('2.3.44 admin views the reconciliation detail of a booking'
     await expect(drawer.getByTestId('drawer-dispute')).toContainText('Đang xem xét')
     await expect(drawer.getByTestId('drawer-history-item')).toHaveCount(1)
     await expect(drawer.getByTestId('drawer-history-item')).toContainText('Điều chỉnh hoa hồng')
-    await expect(drawer.getByTestId('drawer-history-item')).toContainText('18000 → 12000')
+    await expect(drawer.getByTestId('drawer-history-item')).toContainText('Hoa hồng: 18.000đ → 12.000đ')
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('commission-drawer')).toHaveCount(0)
   })

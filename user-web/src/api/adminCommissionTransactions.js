@@ -49,6 +49,8 @@ export const HISTORY_ACTION_LABEL = {
   'commission.adjust': 'Điều chỉnh hoa hồng',
   'commission.waive': 'Miễn hoa hồng',
   'commission.refund_adjust': 'Điều chỉnh theo hoàn tiền',
+  'commission.settle': 'Đối soát hoa hồng',
+  'refund.record': 'Ghi nhận hoàn tiền',
   'commission.courtly_owed.clear': 'Bù trừ khoản Courtly nợ',
   'settlement.create': 'Chốt kỳ công nợ',
   'settlement.payment.confirm': 'Xác nhận thanh toán công nợ',
@@ -90,5 +92,13 @@ export async function adjustCommission(commissionId, { newAmount, reason }) {
   return mapDetail(await request(`/api/v1/admin/finance/commission-transactions/${commissionId}/adjustments`, {
     method: 'POST',
     body: { newAmount: Number(newAmount), reason: reason.trim() },
+  }))
+}
+
+/** 2.3.52 — ghi nhận chủ sân đã hoàn tiền trực tiếp cho người chơi; hoa hồng của booking giảm theo phần hoàn. */
+export async function recordRefund(commissionId, { amount, reason }) {
+  return mapDetail(await request(`/api/v1/admin/finance/commission-transactions/${commissionId}/refunds`, {
+    method: 'POST',
+    body: { amount: Number(amount), reason: reason.trim() },
   }))
 }

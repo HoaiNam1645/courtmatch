@@ -2,9 +2,11 @@ package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdjustCommissionRequest;
 import com.courtly.api.admin.dto.AdminCommissionDetailResponse;
+import com.courtly.api.admin.dto.RecordRefundRequest;
 import com.courtly.api.admin.dto.AdminCommissionTransactionResponse;
 import com.courtly.service.admin.AdminCommissionAdjustmentService;
 import com.courtly.service.admin.AdminCommissionDetailService;
+import com.courtly.service.admin.AdminRefundService;
 import com.courtly.service.admin.AdminCommissionTransactionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -27,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 2.3.43 - xem danh sach giao dich doi soat; 2.3.44 - xem chi tiet doi soat cua mot booking;
- * 2.3.51 - dieu chinh hoa hong. */
+ * 2.3.51 - dieu chinh hoa hong; 2.3.52 - ghi nhan hoan tien truc tiep. */
 @Validated
 @RestController
 @RequestMapping("/api/v1/admin/finance")
@@ -37,6 +39,7 @@ public class AdminCommissionTransactionController {
     private final AdminCommissionTransactionService transactionService;
     private final AdminCommissionDetailService detailService;
     private final AdminCommissionAdjustmentService adjustmentService;
+    private final AdminRefundService refundService;
 
     @GetMapping("/commission-transactions")
     public ResponseEntity<AdminCommissionTransactionResponse> list(
@@ -64,5 +67,11 @@ public class AdminCommissionTransactionController {
     public ResponseEntity<AdminCommissionDetailResponse> adjust(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID commissionId,
                                                                 @Valid @RequestBody AdjustCommissionRequest request) {
         return ResponseEntity.ok(adjustmentService.adjust(AdminJwt.adminId(jwt), commissionId, request.newAmount(), request.reason()));
+    }
+
+    @PostMapping("/commission-transactions/{commissionId}/refunds")
+    public ResponseEntity<AdminCommissionDetailResponse> recordRefund(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID commissionId,
+                                                                      @Valid @RequestBody RecordRefundRequest request) {
+        return ResponseEntity.ok(refundService.record(AdminJwt.adminId(jwt), commissionId, request.amount(), request.reason()));
     }
 }
