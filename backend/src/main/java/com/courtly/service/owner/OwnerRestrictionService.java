@@ -38,6 +38,7 @@ public class OwnerRestrictionService {
     private final DebtRestrictionLevelRepository levelRepository;
     private final BookingCommissionRepository commissionRepository;
     private final AuditService auditService;
+    private final com.courtly.service.notification.PaymentNotifier paymentNotifier;
 
     /**
      * Ket qua danh gia cong no qua han cua mot chu san.
@@ -116,6 +117,7 @@ public class OwnerRestrictionService {
         newData.put("overdueAmount", evaluation.overdueAmount());
         newData.put("overdueDays", evaluation.overdueDays());
         auditService.record(null, "owner.restriction.change", "court_owner_profiles", ownerId, oldData, newData);
+        paymentNotifier.restrictionChanged(ownerId, before, evaluation.level(), evaluation.overdueAmount());
         log.info("Chu san {} doi muc han che cong no {} -> {}", ownerId, before, evaluation.level());
         return true;
     }

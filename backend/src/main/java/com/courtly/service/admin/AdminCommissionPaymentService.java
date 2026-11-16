@@ -59,6 +59,7 @@ public class AdminCommissionPaymentService {
     private final AuditService auditService;
     private final OwnerRestrictionService restrictionService;
     private final CommissionAllocator allocator;
+    private final com.courtly.service.notification.PaymentNotifier paymentNotifier;
 
     /**
      * @param q            tim theo ma tham chieu hoac ten/email chu san
@@ -255,8 +256,20 @@ public class AdminCommissionPaymentService {
                     Map.of("reportId", reportId.toString()));
         }
 
+        paymentNotifier.commissionPaymentConfirmed(report.ownerId, reportId, report.amount, report.referenceCode,
+                periodOf(report.settlementId), offset);
         restrictionService.recompute(report.ownerId);
         return jdbc.queryForObject(ROW_SELECT + " WHERE r.id = ?", (rs, index) -> row(rs), reportId);
+    }
+
+    /** Khoang ngay cua ky de dua vao thong bao; null neu khong gan ky. */
+    private String periodOf(UUID settlementId) {
+        if (settlementId == null) {
+            return null;
+        }
+        return jdbc.queryForObject("SELECT period_from, period_to FROM commission_settlements WHERE id = ?",
+                (rs, index) -> com.courtly.service.notification.PaymentNotifier.period(rs.getDate("period_from").toLocalDate(),
+                        rs.getDate("period_to").toLocalDate()), settlementId);
     }
 
     /**
@@ -383,6 +396,7 @@ public class AdminCommissionPaymentService {
             auditService.record(admin, "settlement.payment.reject", "commission_settlement", report.settlementId,
                     Map.of("status", current), settlementAudit);
         }
+        paymentNotifier.commissionPaymentRejected(report.ownerId, reportId, report.amount, report.referenceCode, cleanReason);
         return jdbc.queryForObject(ROW_SELECT + " WHERE r.id = ?", (rs, index) -> row(rs), reportId);
     }
 

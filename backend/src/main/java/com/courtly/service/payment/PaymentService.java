@@ -37,6 +37,7 @@ public class PaymentService {
     public static final int PAYMENT_WINDOW_MINUTES = 30;
 
     private final com.courtly.service.notification.BookingNotifier bookingNotifier;
+    private final com.courtly.service.notification.PaymentNotifier paymentNotifier;
     private final PaymentRepository paymentRepository;
     private final PaymentStatusHistoryRepository historyRepository;
     private final CourtOwnerProfileRepository ownerProfileRepository;
@@ -122,6 +123,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PAYER_REPORTED);
         addHistory(payment, previous, PaymentStatus.PAYER_REPORTED,
                 "Nguoi choi bao da thanh toan", payment.getBooking().getUser(), now);
+        paymentNotifier.playerReported(payment);
         return toResponse(payment, now);
     }
 
@@ -178,6 +180,7 @@ public class PaymentService {
         payment.setRejectionReason(request.reason().trim());
         addHistory(payment, PaymentStatus.PAYER_REPORTED, PaymentStatus.REJECTED,
                 request.reason().trim(), owner, now);
+        paymentNotifier.ownerRejected(payment, request.reason().trim());
         return toResponse(payment, now);
     }
 
