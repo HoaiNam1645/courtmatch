@@ -120,6 +120,14 @@ function BookingDetailPage({ bookingId, user, onLogout }) {
               <div className="p-5"><h2 className="text-xl font-semibold">{venue.name}</h2><p className="mt-2 flex gap-2 text-sm font-medium leading-6 text-stone-500"><MapPin className="mt-0.5 size-4 shrink-0 text-emerald-600" />{venue.address}</p><div className="mt-5 grid gap-3 sm:grid-cols-3">{[[court.name, 'Sân con'], [formatBookingDate(booking.startTime), 'Ngày chơi'], [`${formatBookingTime(booking.startTime)} - ${formatBookingTime(booking.endTime)}`, `${booking.durationMinutes} phút`]].map(([value, label]) => <div key={label} className="rounded-lg bg-emerald-50/70 p-3 ring-1 ring-emerald-100"><p className="text-xs font-medium text-stone-400">{label}</p><p className="mt-1 text-sm font-semibold">{value}</p></div>)}</div><div className="mt-5 flex flex-wrap gap-3"><a className="flex h-10 items-center gap-2 rounded-lg bg-emerald-700 px-4 text-xs font-semibold text-white" href={directionsHref} target="_blank" rel="noreferrer"><Navigation className="size-4" />Chỉ đường</a><a className="flex h-10 items-center gap-2 rounded-lg border border-emerald-100 px-4 text-xs font-semibold text-emerald-700" href={`tel:${venue.phone}`}><Phone className="size-4" />Gọi sân</a></div></div>
             </section>
 
+            {booking.partner && (
+              <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_12px_34px_rgba(24,65,44,0.08)]" data-testid="detail-partner">
+                <ProfileSectionTitle icon={FileText} eyebrow="Chơi cùng" title={booking.partner.fullName} />
+                {booking.status === 'completed' && <a className="mt-4 inline-flex h-10 items-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white" href={`/matches/new?booking=${booking.id}`} data-testid="detail-record-match">Ghi kết quả trận với {booking.partner.fullName}</a>}
+                {booking.status !== 'completed' && <p className="mt-3 text-sm font-medium text-stone-500">Sau khi chơi xong, bạn có thể ghi kết quả trận cùng người chơi này.</p>}
+              </section>
+            )}
+
             {booking.note && <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_12px_34px_rgba(24,65,44,0.08)]"><ProfileSectionTitle icon={FileText} eyebrow="Ghi chú" title="Yêu cầu với sân" /><p className="mt-4 text-sm font-medium leading-6 text-stone-600">{booking.note}</p></section>}
           </div>
 

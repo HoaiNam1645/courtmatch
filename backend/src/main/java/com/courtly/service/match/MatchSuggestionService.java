@@ -46,6 +46,8 @@ public class MatchSuggestionService {
                 first == null ? null : first.getCourt().getName(),
                 first == null ? booking.getCompletedAt() : first.getStartTime(),
                 first == null ? 0 : Math.toIntExact(Duration.between(
-                        first.getStartTime(), first.getEndTime()).toMinutes()));
+                        first.getStartTime(), first.getEndTime()).toMinutes()),
+                booking.getPartner() == null ? null : booking.getPartner().getId(),
+                booking.getPartner() == null ? null : booking.getPartner().getFullName());
     }
 }

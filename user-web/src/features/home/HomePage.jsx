@@ -1,3 +1,4 @@
+import { PendingPartnerBanner } from '../bookings/components/PendingPartnerBanner'
 import { useEffect, useMemo, useState } from 'react'
 import { Zap } from 'lucide-react'
 import { fetchDistricts } from '../../api/venues'
@@ -92,6 +93,7 @@ function HomePage() {
       />
 
       <section id="venues" className="mx-auto mt-8 max-w-[1680px] px-4 md:px-6 lg:px-8">
+        <div className="mb-4 empty:hidden"><PendingPartnerBanner /></div>
         <SectionTitle eyebrow="Sân phù hợp hôm nay" title="Gần bạn và còn lịch đẹp" icon={Zap} />
 
         {venueSearch.status === 'loading' && (

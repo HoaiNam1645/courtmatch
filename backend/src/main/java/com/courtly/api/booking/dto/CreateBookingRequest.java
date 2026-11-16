@@ -27,7 +27,9 @@ public record CreateBookingRequest(
         String note,
 
         @Size(max = 40, message = "Ma voucher toi da 40 ky tu")
-        String voucherCode) {
+        String voucherCode,
+
+        UUID partnerUserId) {
 
     public CreateBookingRequest {
         note = note == null || note.isBlank() ? null : note.trim();

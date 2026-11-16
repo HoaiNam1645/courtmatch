@@ -1,3 +1,4 @@
+import { PendingPartnerBanner } from '../../bookings/components/PendingPartnerBanner'
 import { useMemo, useState } from 'react'
 import { CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, Heart, Map, MapPin, MapPinned, Navigation, Phone, Share2, Star, Tag, Users, X } from 'lucide-react'
 import { fetchQuote } from '../../../api/venues'
@@ -196,6 +197,7 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
       <AppHeader user={user} onLogout={onLogout} activeLabel="Khám phá" />
 
       <section className="mx-auto max-w-[1680px] px-4 pt-4 md:px-6 lg:px-8">
+        <div className="mb-3 empty:hidden"><PendingPartnerBanner /></div>
         <div className="mb-3"><PageBackLink href="/#venues" label="Về danh sách sân" /></div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-emerald-700/70">

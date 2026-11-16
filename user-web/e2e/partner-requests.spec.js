@@ -127,7 +127,7 @@ test.describe('partner requests', () => {
     expect(names).not.toContain('Bui Thanh Lam')
     expect(names).not.toContain('Tran Thi Binh')
     await expect(page.getByRole('heading', { name: 'Đối tác của bạn' })).toBeVisible()
-    await expect(page.getByText('Pham Thu Dung')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Pham Thu Dung' })).toBeVisible()
     await expect(page.getByText('Bui Thanh Lam')).not.toBeVisible()
     await expect(page.getByText('Tran Thi Binh')).not.toBeVisible()
     assertNoRuntimeErrors()

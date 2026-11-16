@@ -130,3 +130,31 @@ export function maskRecoveryDestination(method, destination) {
   if (!domain) return destination
   return `${name.slice(0, 1)}${'•'.repeat(Math.max(3, name.length - 1))}@${domain}`
 }
+
+const PENDING_PARTNER_STORAGE_KEY = 'courtly_pending_partner'
+
+/** Người chơi cùng được chọn từ kết quả ghép cặp (B5), giữ cho tới khi đặt xong hoặc bỏ chọn. */
+export function readPendingPartner() {
+  try {
+    const value = window.sessionStorage.getItem(PENDING_PARTNER_STORAGE_KEY)
+    return value ? JSON.parse(value) : null
+  } catch {
+    return null
+  }
+}
+
+export function savePendingPartner(partner) {
+  try {
+    window.sessionStorage.setItem(PENDING_PARTNER_STORAGE_KEY, JSON.stringify(partner))
+  } catch {
+    // Không lưu được thì người chơi vẫn đặt sân bình thường, chỉ không ghi nhớ người chơi cùng.
+  }
+}
+
+export function clearPendingPartner() {
+  try {
+    window.sessionStorage.removeItem(PENDING_PARTNER_STORAGE_KEY)
+  } catch {
+    // Bỏ qua: xóa không được thì lần sau banner sẽ hiện lại và người chơi tự bỏ chọn.
+  }
+}

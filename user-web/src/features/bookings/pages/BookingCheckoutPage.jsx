@@ -3,11 +3,12 @@ import { ClipboardCheck, ChevronRight, CreditCard, FileText, MapPin, UserRound }
 import { createBooking as createBookingApi } from '../../../api/bookings'
 import { ApiError } from '../../../api/client'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
-import { clearPendingBooking, readPendingBooking } from '../../../shared/session'
+import { clearPendingBooking, clearPendingPartner, readPendingBooking, readPendingPartner } from '../../../shared/session'
 import { formatError } from '../../../shared/formatError'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { PageBackLink, ProfileEmptyState, ProfileSectionTitle } from '../../profile/components/ProfileUi'
 import { BookingEmptyState } from '../components/BookingEmptyState'
+import { PendingPartnerBanner } from '../components/PendingPartnerBanner'
 import { VoucherPicker } from '../components/VoucherPicker'
 
 function formatBookingDate(value) {
@@ -20,6 +21,7 @@ function BookingCheckoutPage({ user, onLogout }) {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [voucher, setVoucher] = useState(null)
+  const [partnerVersion, setPartnerVersion] = useState(0)
 
   // Người chơi trả trực tiếp cho chủ sân sau khi yêu cầu được chấp nhận.
   const originalAmount = Number(pending?.price ?? 0)
@@ -44,9 +46,11 @@ function BookingCheckoutPage({ user, onLogout }) {
         durationMinutes: pending.durationMinutes,
         note: note.trim(),
         voucherCode: voucher?.code,
+        partnerUserId: readPendingPartner()?.userId,
       })
       // Tạo xong thì bỏ lựa chọn tạm để bấm back không tạo đơn thứ hai.
       clearPendingBooking()
+      clearPendingPartner()
       window.location.href = `/bookings/${booking.id}`
     } catch (error) {
       setSubmitting(false)
@@ -65,6 +69,7 @@ function BookingCheckoutPage({ user, onLogout }) {
       <AppHeader user={user} onLogout={onLogout} />
       <section className="mx-auto max-w-[1100px] px-4 py-7 md:px-6 md:py-10">
         <PageBackLink href={venue ? `/san/${venue.id}#booking` : '/'} label="Quay lại chọn lịch" />
+        <div className="mt-6"><PendingPartnerBanner key={partnerVersion} onChange={() => setPartnerVersion((value) => value + 1)} /></div>
         <div className="mt-6"><p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-600">2.1.28 · Tạo yêu cầu đặt sân</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Xác nhận đặt sân</h1><p className="mt-2 text-sm font-medium text-stone-500">Sau khi gửi yêu cầu, chủ sân sẽ kiểm tra lịch trước khi mở bước thanh toán.</p></div>
 
         {!pending || !venue || !court ? (

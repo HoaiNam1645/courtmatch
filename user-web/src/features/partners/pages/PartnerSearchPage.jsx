@@ -1,3 +1,4 @@
+import { savePendingPartner } from '../../../shared/session'
 import { useMemo, useState } from 'react'
 import {
   ArrowLeft, ArrowRight, CalendarDays, Clock3, Gauge,
@@ -47,6 +48,10 @@ function InitialAvatar({ name }) {
 }
 
 function PartnerCard({ partner, requestSent, onInvite }) {
+  const bookTogether = () => {
+    savePendingPartner({ userId: partner.id, name: partner.fullName })
+    window.location.href = '/#venues'
+  }
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white p-5 shadow-[0_12px_32px_rgba(26,72,49,0.07)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(26,72,49,0.11)]">
       <div className="absolute right-0 top-0 h-28 w-28 rounded-bl-full bg-[radial-gradient(circle_at_top_right,rgba(190,242,100,0.48),rgba(236,253,245,0.25))]" />
@@ -92,6 +97,7 @@ function PartnerCard({ partner, requestSent, onInvite }) {
         <button type="button" disabled={requestSent} onClick={() => onInvite(partner)} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 text-sm font-semibold text-white disabled:bg-emerald-100 disabled:text-emerald-700">
           <Send className="size-4" />{requestSent ? 'Đã gửi lời mời' : 'Gửi yêu cầu ghép cặp'}
         </button>
+        <button type="button" onClick={bookTogether} data-testid={`book-with-${partner.id}`} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white text-sm font-semibold text-emerald-800 hover:bg-emerald-50">Đặt sân cùng {partner.fullName}</button>
       </div>
     </article>
   )

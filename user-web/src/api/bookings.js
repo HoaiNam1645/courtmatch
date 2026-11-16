@@ -31,6 +31,7 @@ function toUiBooking(booking) {
     discountAmount: Number(booking.discountAmount ?? 0),
     payableAmount: Number(booking.payableAmount ?? booking.totalAmount ?? 0),
     voucherCode: booking.voucherCode ?? null,
+    partner: booking.partner ? { id: booking.partner.id, fullName: booking.partner.fullName } : null,
     note: booking.note ?? '',
     expiresAt: booking.expiresAt ?? null,
     confirmedAt: booking.confirmedAt ?? null,
@@ -110,10 +111,10 @@ function toUiSummary(booking) {
  * Chỉ gửi lựa chọn, **không gửi số tiền**. Server tính lại từ court_price_rules
  * và kiểm tra lại khung giờ còn trống.
  */
-export async function createBooking({ courtId, startTime, durationMinutes, note, voucherCode }) {
+export async function createBooking({ courtId, startTime, durationMinutes, note, voucherCode, partnerUserId }) {
   const data = await request('/api/v1/bookings', {
     method: 'POST',
-    body: { courtId, startTime, durationMinutes, note: note || null, voucherCode: voucherCode || null },
+    body: { courtId, startTime, durationMinutes, note: note || null, voucherCode: voucherCode || null, partnerUserId: partnerUserId || null },
   })
   return toUiBooking(data)
 }

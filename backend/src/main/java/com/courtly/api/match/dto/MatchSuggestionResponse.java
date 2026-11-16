@@ -11,5 +11,7 @@ public record MatchSuggestionResponse(
         UUID courtId,
         String courtName,
         Instant playedAt,
-        int durationMinutes) {
+        int durationMinutes,
+        UUID partnerUserId,
+        String partnerName) {
 }

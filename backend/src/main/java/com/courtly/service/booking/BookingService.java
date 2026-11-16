@@ -103,6 +103,7 @@ public class BookingService {
         Venue venue = court.getVenue();
         // B2 - chu san co cong no hoa hong qua han vuot nguong thi khong nhan booking moi.
         restrictionService.requireAcceptingBookings(venue.getOwner().getId());
+        User partner = request.partnerUserId() == null ? null : requirePartner(user, request.partnerUserId());
         // B4 - voucher: kiem tra va khoa truoc khi tao booking; Courtly chiu phan giam.
         VoucherService.Application voucher = request.voucherCode() == null ? null
                 : voucherService.prepare(userId, request.voucherCode(), quote.totalAmount());
@@ -115,6 +116,7 @@ public class BookingService {
         booking.setVenue(venue);
         booking.setStatus(BookingStatus.PENDING_OWNER_CONFIRMATION);
         booking.setTotalAmount(quote.totalAmount());
+        booking.setPartner(partner);
         if (voucher != null) {
             booking.setVoucher(voucher.voucher());
             booking.setDiscountAmount(voucher.discountAmount());
@@ -154,6 +156,17 @@ public class BookingService {
         }
         log.info("Tao don {} cho nguoi dung {}", booking.getBookingCode(), userId);
         return toDetail(booking, now);
+    }
+
+    /** Nguoi choi cung (B5) phai la mot nguoi choi khac dang hoat dong. */
+    private User requirePartner(User user, UUID partnerId) {
+        User partner = userRepository.findById(partnerId).orElse(null);
+        if (partner == null || partner.getId().equals(user.getId()) || partner.getStatus() != com.courtly.common.enums.UserStatus.ACTIVE
+                || !userRepository.hasPlayerRole(partnerId)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Nguoi choi cung khong hop le.",
+                    Map.of("partnerUserId", "Chi chon duoc nguoi choi khac dang hoat dong"));
+        }
+        return partner;
     }
 
     /** Lich su dat san cua chinh nguoi dang dang nhap (2.1.32). */
@@ -364,7 +377,9 @@ public class BookingService {
                         .map(history -> new BookingDetailResponse.StatusChange(
                                 history.getOldStatus(), history.getNewStatus(), history.getReason(),
                                 history.getChangedBy() == null, history.getCreatedAt()))
-                        .toList());
+                        .toList(),
+                booking.getPartner() == null ? null
+                        : new BookingDetailResponse.Partner(booking.getPartner().getId(), booking.getPartner().getFullName()));
     }
 
     /** Owner accepts the request and opens the direct-payment step. */

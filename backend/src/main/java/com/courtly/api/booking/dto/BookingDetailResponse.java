@@ -28,7 +28,12 @@ public record BookingDetailResponse(UUID id,
                                     boolean cancellable,
                                     VenueInfo venue,
                                     List<Item> items,
-                                    List<StatusChange> statusHistory) {
+                                    List<StatusChange> statusHistory,
+                                    Partner partner) {
+
+    /** Nguoi choi cung do nguoi dat chon khi dat san tu ket qua ghep cap (B5). */
+    public record Partner(UUID id, String fullName) {
+    }
 
     public record VenueInfo(UUID id,
                             String slug,

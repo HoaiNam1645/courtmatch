@@ -8,6 +8,12 @@ import { classNames } from '../../../shared/utils'
 
 const matchTypeLabels = { single: 'Đánh đơn', double: 'Đánh đôi', mixed_double: 'Đôi nam nữ' }
 
+/** Người chơi cùng của booking đang chọn, nếu có trong danh sách người chơi có thể ghi trận. */
+function selectedSuggestionPartner(setup, bookingId) {
+  const partnerUserId = setup.suggestions.find((item) => item.bookingId === bookingId)?.partnerUserId
+  return partnerUserId && setup.players.some((player) => player.id === partnerUserId) ? partnerUserId : ''
+}
+
 function NewMatchPage({ user, onLogout }) {
   const requestedBookingId = new URLSearchParams(window.location.search).get('booking')
   const setup = useMatchSetup()
@@ -24,8 +30,11 @@ function NewMatchPage({ user, onLogout }) {
   const effectiveBookingId = setup.suggestions.some((item) => item.bookingId === bookingId)
     ? bookingId : setup.suggestions[0]?.bookingId ?? ''
   const effectiveVenueId = venueId || setup.venues[0]?.id || ''
-  const effectiveTeam1Partner = team1Partner || setup.players[0]?.id || ''
-  const effectiveTeam2First = team2First || setup.players[1]?.id || setup.players[0]?.id || ''
+
+  // B5: booking đặt từ kết quả ghép cặp gợi ý sẵn người chơi cùng làm đối thủ.
+  const partnerId = source === 'booking' ? selectedSuggestionPartner(setup, effectiveBookingId) : ''
+  const effectiveTeam1Partner = team1Partner || setup.players.find((player) => player.id !== partnerId)?.id || ''
+  const effectiveTeam2First = team2First || partnerId || setup.players[1]?.id || setup.players[0]?.id || ''
   const effectiveTeam2Second = team2Second || setup.players[2]?.id || setup.players[1]?.id || setup.players[0]?.id || ''
 
   const selectedSuggestion = useMemo(
