@@ -1,6 +1,7 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminPaymentResponses;
+import com.courtly.api.admin.dto.RecordPaymentRequest;
 import com.courtly.api.admin.dto.RejectPaymentRequest;
 import com.courtly.api.admin.dto.ReviewPaymentRequest;
 import com.courtly.service.admin.AdminCommissionPaymentService;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** 2.3.47 - xac nhan thanh toan cong no cua chu san; 2.3.48 - tu choi / yeu cau bo sung; 2.3.50 - lich su thanh toan hoa hong. */
+/** 2.3.47 - xac nhan thanh toan cong no cua chu san; 2.3.48 - tu choi / yeu cau bo sung; 2.3.49 - ghi nhan giao dich doi soat; 2.3.50 - lich su thanh toan hoa hong. */
 @Validated
 @RestController
 @RequestMapping("/api/v1/admin/finance/commission-payments")
@@ -59,5 +61,10 @@ public class AdminCommissionPaymentController {
     public ResponseEntity<AdminPaymentResponses.Row> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID reportId,
                                                             @Valid @RequestBody RejectPaymentRequest request) {
         return ResponseEntity.ok(paymentService.reject(AdminJwt.adminId(jwt), reportId, request.reason()));
+    }
+
+    @PostMapping
+    public ResponseEntity<AdminPaymentResponses.Row> record(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody RecordPaymentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.record(AdminJwt.adminId(jwt), request));
     }
 }

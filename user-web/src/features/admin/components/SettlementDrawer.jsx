@@ -11,6 +11,7 @@ import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
 import { secondaryButtonClass } from '../../owner/ownerStyles'
 import { HISTORY_ACTION_LABEL } from '../../../api/adminCommissionTransactions'
 import { PaymentReviewDialog } from './PaymentReviewDialog'
+import { RecordPaymentDialog } from './RecordPaymentDialog'
 
 const RESTRICTION_LABEL = { 0: 'Không bị hạn chế', 1: 'Mức 1 · chặn nhận booking mới', 2: 'Mức 2 · tạm ẩn sân' }
 
@@ -28,17 +29,18 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, esc
   const [page, setPage] = useState(0)
   const [reviewing, setReviewing] = useState(null)
   const [rejecting, setRejecting] = useState(null)
+  const [recording, setRecording] = useState(false)
   const [notice, setNotice] = useState('')
   const { status, data, error, reload } = useApiResource(() => fetchAdminSettlementDetail(settlementId, { page }), [settlementId, page])
 
   useEffect(() => {
     // Khi một ngăn khác mở chồng lên, Escape chỉ đóng ngăn trên cùng.
     function onKey(event) {
-      if (event.key === 'Escape' && !escapeDisabled && !reviewing && !rejecting) onClose()
+      if (event.key === 'Escape' && !escapeDisabled && !reviewing && !rejecting && !recording) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, escapeDisabled, reviewing, rejecting])
+  }, [onClose, escapeDisabled, reviewing, rejecting, recording])
 
   const settlement = data?.settlement
   const meta = settlement ? settlementStatusMeta(settlement.status) : null
@@ -85,7 +87,10 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, esc
             </section>
 
             <section data-testid="sd-reports">
-              <h3 className="text-sm font-semibold text-slate-900">Báo cáo thanh toán ({data.reports.length})</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">Báo cáo thanh toán ({data.reports.length})</h3>
+                {settlement.remaining > 0 && settlement.status !== 'disputed' && <button type="button" className="h-9 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-testid="sd-record" onClick={() => setRecording(true)}>Ghi nhận thanh toán</button>}
+              </div>
               {data.reports.length === 0 ? <p className="mt-2 text-sm font-medium text-slate-500" data-testid="sd-reports-empty">Chủ sân chưa gửi báo cáo thanh toán cho kỳ này.</p> : (
                 <ul className="mt-2 grid gap-2">
                   {data.reports.map((report) => {
@@ -162,6 +167,7 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, esc
           </div>
         )}
       </aside>
+      {recording && <RecordPaymentDialog owners={[{ id: settlement.ownerId, fullName: settlement.ownerName, email: settlement.ownerEmail }]} fixed={{ ownerId: settlement.ownerId, settlementId: settlement.id, remaining: settlement.remaining, label: `Kỳ ${formatIsoDate(settlement.periodFrom)} – ${formatIsoDate(settlement.periodTo)} · còn ${formatCurrency(settlement.remaining)}` }} onClose={() => setRecording(false)} onDone={(result, message) => { setRecording(false); setNotice(message); reload(); onChanged?.() }} />}
       {rejecting && <PaymentReviewDialog payment={rejecting} mode="reject" onClose={() => setRejecting(null)} onDone={(result, message) => { setRejecting(null); setNotice(message); reload(); onChanged?.() }} />}
       {reviewing && <PaymentReviewDialog payment={reviewing} onClose={() => setReviewing(null)} onDone={(result, message) => { setReviewing(null); setNotice(message); reload(); onChanged?.() }} />}
     </div>

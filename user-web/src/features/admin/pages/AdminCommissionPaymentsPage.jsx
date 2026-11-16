@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { CheckCircle2, Search, X } from 'lucide-react'
+import { CheckCircle2, Plus, Search, X } from 'lucide-react'
 import { fetchAdminPayments, PAYMENT_TABS } from '../../../api/adminCommissionPayments'
 import { commissionPaymentStatusMeta } from '../../../api/ownerCommissionPayments'
 import { useApiResource } from '../../../hooks/useApiResource'
@@ -7,9 +7,10 @@ import { useDebounced } from '../../../hooks/useDebounced'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
-import { inputClass, secondaryButtonClass } from '../../owner/ownerStyles'
+import { inputClass, primaryButtonClass, secondaryButtonClass } from '../../owner/ownerStyles'
 import { AdminLayout } from '../components/AdminLayout'
 import { PaymentReviewDialog } from '../components/PaymentReviewDialog'
+import { RecordPaymentDialog } from '../components/RecordPaymentDialog'
 
 const EMPTY_FILTERS = { status: 'pending_review', ownerId: '', from: '', to: '', page: 0 }
 
@@ -20,6 +21,7 @@ function AdminCommissionPaymentsPage() {
   const q = useDebounced(query)
   const [reviewing, setReviewing] = useState(null)
   const [rejecting, setRejecting] = useState(null)
+  const [recording, setRecording] = useState(false)
   const [notice, setNotice] = useState('')
   const invalidRange = Boolean(filters.from && filters.to && filters.to < filters.from)
   const { status, data, error, reload } = useApiResource(
@@ -40,9 +42,10 @@ function AdminCommissionPaymentsPage() {
 
   return (
     <AdminLayout
-      eyebrow="2.3.47 – 2.3.48 · Thanh toán công nợ"
+      eyebrow="2.3.47 – 2.3.49 · Thanh toán công nợ"
+      actions={<button type="button" className={primaryButtonClass} data-testid="payment-record" onClick={() => setRecording(true)}><Plus className="size-4" />Ghi nhận thanh toán</button>}
       title="Thanh toán công nợ"
-      description="Báo cáo chủ sân đã chuyển hoa hồng cho Courtly: đối chiếu số tiền, mã tham chiếu, bằng chứng rồi xác nhận, hoặc từ chối kèm lý do."
+      description="Báo cáo chủ sân đã chuyển hoa hồng cho Courtly: đối chiếu số tiền, mã tham chiếu, bằng chứng rồi xác nhận, hoặc từ chối kèm lý do. Khoản chủ sân trả ngoài hệ thống thì ghi nhận trực tiếp."
     >
       {notice && <p role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" data-testid="admin-notice"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
       <OwnerCard>
@@ -94,6 +97,7 @@ function AdminCommissionPaymentsPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={classNames('rounded-full px-2.5 py-1 text-xs font-bold', meta.className)} data-testid="payment-status">{meta.label}</span>
                           <span className="text-xs font-bold text-slate-400" data-testid="payment-ref">{row.referenceCode}</span>
+                          {row.recordedByAdmin && <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-700" data-testid="payment-recorded">Admin ghi nhận</span>}
                         </div>
                         <div className="flex items-center gap-3">
                           <p className="text-base font-semibold text-slate-900" data-testid="payment-amount">{formatCurrency(row.amount)}</p>
@@ -122,6 +126,7 @@ function AdminCommissionPaymentsPage() {
           )}
         </div>
       </OwnerCard>
+      {recording && <RecordPaymentDialog owners={owners} onClose={() => setRecording(false)} onDone={(result, message) => { setRecording(false); setNotice(message); reload() }} />}
       {rejecting && <PaymentReviewDialog payment={rejecting} mode="reject" onClose={() => setRejecting(null)} onDone={(result, message) => { setRejecting(null); setNotice(message); reload() }} />}
       {reviewing && <PaymentReviewDialog payment={reviewing} onClose={() => setReviewing(null)} onDone={(result, message) => { setReviewing(null); setNotice(message); reload() }} />}
     </AdminLayout>

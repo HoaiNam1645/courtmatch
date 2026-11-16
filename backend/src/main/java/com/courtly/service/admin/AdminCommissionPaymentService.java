@@ -5,6 +5,7 @@ import com.courtly.api.admin.dto.AdminPaymentResponses.OwnerOption;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Row;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Settlement;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Totals;
+import com.courtly.api.admin.dto.RecordPaymentRequest;
 import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
 import com.courtly.domain.account.User;
@@ -44,7 +45,7 @@ public class AdminCommissionPaymentService {
     private static final String ROW_SELECT = """
             SELECT r.id, r.owner_id, u.full_name AS owner_name, u.email AS owner_email, r.settlement_id, cs.period_from, cs.period_to,
                    cs.status AS settlement_status, r.amount, r.courtly_offset_amount, r.paid_on, r.reference_code, r.proof_url, r.note,
-                   r.status, r.review_note, rv.full_name AS reviewer, r.reviewed_at, r.created_at
+                   r.status, r.review_note, rv.full_name AS reviewer, r.reviewed_at, r.created_at, (r.recorded_by IS NOT NULL) AS recorded
             FROM commission_payment_reports r
             JOIN users u ON u.id = r.owner_id
             LEFT JOIN users rv ON rv.id = r.reviewed_by
@@ -146,33 +147,12 @@ public class AdminCommissionPaymentService {
         Instant now = Instant.now();
         jdbc.queryForObject("SELECT user_id FROM court_owner_profiles WHERE user_id = ? FOR UPDATE", UUID.class, report.ownerId);
 
-        BigDecimal credit = jdbc.queryForObject("SELECT commission_credit FROM court_owner_profiles WHERE user_id = ?",
-                BigDecimal.class, report.ownerId);
-        BigDecimal remaining;
-        BigDecimal paidBefore = BigDecimal.ZERO;
-        BigDecimal due = BigDecimal.ZERO;
-        String settlementStatus = null;
-        if (report.settlementId != null) {
-            Map<String, Object> settlement = jdbc.queryForMap(
-                    "SELECT amount_due, amount_paid, status FROM commission_settlements WHERE id = ? FOR UPDATE", report.settlementId);
-            due = (BigDecimal) settlement.get("amount_due");
-            paidBefore = (BigDecimal) settlement.get("amount_paid");
-            settlementStatus = (String) settlement.get("status");
-            if ("paid".equals(settlementStatus)) {
-                throw conflict("Ky doi soat nay da thanh toan xong.");
-            }
-            remaining = due.subtract(paidBefore);
-        } else {
-            BigDecimal debt = jdbc.queryForObject("""
-                    SELECT coalesce(sum(commission_amount), 0) FROM booking_commissions
-                    WHERE owner_id = ? AND settlement_id IS NULL AND status IN ('pending', 'due', 'adjusted')
-                    """, BigDecimal.class, report.ownerId);
-            remaining = debt.subtract(credit);
-        }
-        if (report.amount.compareTo(remaining) > 0) {
-            throw conflict("So tien bao cao vuot qua so con no (" + remaining.max(BigDecimal.ZERO).stripTrailingZeros().toPlainString()
-                    + " dong). Hay tu choi bao cao hoac dieu chinh cong no truoc.");
-        }
+        Scope scope = scopeOf(report.ownerId, report.settlementId, report.amount);
+        BigDecimal credit = scope.credit;
+        BigDecimal remaining = scope.remaining;
+        BigDecimal paidBefore = scope.paid;
+        BigDecimal due = scope.due;
+        String settlementStatus = scope.settlementStatus;
 
         // Bu tru khoan Courtly no chu san vao phan cong no con lai sau khi tru tien thanh toan.
         BigDecimal budget = remaining.subtract(report.amount);
@@ -204,9 +184,10 @@ public class AdminCommissionPaymentService {
             settled = settleSettlementCommissions(report.settlementId, paidAfter, fullyPaid, now);
             newSettlementStatus = fullyPaid ? "paid" : "partial";
             jdbc.update("""
-                    UPDATE commission_settlements SET amount_paid = ?, status = ?, paid_at = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?
+                    UPDATE commission_settlements SET amount_paid = ?, status = ?, paid_at = ?, reviewed_by = ?, reviewed_at = ?,
+                           payment_reference = ?, proof_url = coalesce(?, proof_url) WHERE id = ?
                     """, paidAfter, newSettlementStatus, fullyPaid ? Timestamp.from(now) : null, admin.getId(), Timestamp.from(now),
-                    report.settlementId);
+                    report.referenceCode, report.proofUrl, report.settlementId);
         } else {
             BigDecimal[] left = {credit.add(pool)};
             settled = new ArrayList<>();
@@ -269,6 +250,78 @@ public class AdminCommissionPaymentService {
     }
 
     /**
+     * 2.3.49 - quan tri vien ghi nhan giao dich doi soat: chu san da tra ngoai he thong (tien mat, chuyen khoan truc tiep) nen
+     * khong co bao cao. Tao bao cao da duoc xac nhan va ap dung cung quy tac voi {@link #confirm}; that bai thi khong ghi gi.
+     */
+    @Transactional
+    public Row record(UUID adminId, RecordPaymentRequest request) {
+        User admin = accessService.requirePermission(adminId, MANAGE);
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        if (request.paidOn().isAfter(today)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ngay thanh toan khong duoc o tuong lai.",
+                    Map.of("paidOn", "Ngay thanh toan khong duoc sau hom nay"));
+        }
+        if (request.paidOn().isBefore(today.minusDays(365))) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ngay thanh toan qua xa.",
+                    Map.of("paidOn", "Chi ghi nhan thanh toan trong 365 ngay gan day"));
+        }
+        if (!Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM court_owner_profiles WHERE user_id = ?)",
+                Boolean.class, request.ownerId()))) {
+            throw ApiException.notFound("Khong tim thay chu san.");
+        }
+        if (request.settlementId() != null) {
+            List<UUID> owners = jdbc.query("SELECT owner_id FROM commission_settlements WHERE id = ?",
+                    (rs, index) -> rs.getObject("owner_id", UUID.class), request.settlementId());
+            if (owners.isEmpty()) {
+                throw ApiException.notFound("Khong tim thay ky doi soat.");
+            }
+            if (!owners.getFirst().equals(request.ownerId())) {
+                throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ky doi soat khong thuoc chu san nay.",
+                        Map.of("settlementId", "Ky doi soat khong thuoc chu san da chon"));
+            }
+        }
+        String reference = request.referenceCode().trim();
+        if (Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT EXISTS (SELECT 1 FROM commission_payment_reports
+                               WHERE owner_id = ? AND lower(reference_code) = lower(?) AND status <> 'rejected')
+                """, Boolean.class, request.ownerId(), reference))) {
+            throw ApiException.conflict(ErrorCode.COMMISSION_PAYMENT_INVALID, "Ma tham chieu nay da duoc dung cho mot lan thanh toan khac.",
+                    Map.of("referenceCode", "Ma tham chieu da duoc su dung"));
+        }
+
+        // Kiem tra so con no truoc khi ghi: that bai thi khong tao ban ghi nao.
+        scopeOf(request.ownerId(), request.settlementId(), request.amount());
+
+        UUID id = UUID.randomUUID();
+        String proof = request.proofUrl() == null || request.proofUrl().isBlank() ? null : request.proofUrl().trim();
+        String note = request.note() == null || request.note().isBlank() ? null : request.note().trim();
+        try {
+            jdbc.update("""
+                    INSERT INTO commission_payment_reports (id, owner_id, settlement_id, amount, paid_on, reference_code, proof_url, note,
+                                                            status, recorded_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?)
+                    """, id, request.ownerId(), request.settlementId(), request.amount(), java.sql.Date.valueOf(request.paidOn()),
+                    reference, proof, note, admin.getId());
+        } catch (org.springframework.dao.DuplicateKeyException exception) {
+            // Hai quan tri vien ghi cung ma tham chieu cung luc: rang buoc duy nhat o database chan lai.
+            throw ApiException.conflict(ErrorCode.COMMISSION_PAYMENT_INVALID, "Ma tham chieu nay da duoc dung cho mot lan thanh toan khac.",
+                    Map.of("referenceCode", "Ma tham chieu da duoc su dung"));
+        }
+        Row confirmed = confirm(adminId, id, null);
+        Map<String, Object> audit = new LinkedHashMap<>();
+        audit.put("reportId", id.toString());
+        audit.put("ownerId", request.ownerId().toString());
+        audit.put("referenceCode", reference);
+        audit.put("amount", request.amount().toPlainString());
+        audit.put("paidOn", request.paidOn().toString());
+        if (request.settlementId() != null) {
+            audit.put("settlementId", request.settlementId().toString());
+        }
+        auditService.record(admin, "settlement.payment.record", "commission_payment_reports", id, null, audit);
+        return confirmed;
+    }
+
+    /**
      * 2.3.48 - tu choi bao cao thanh toan hoac yeu cau bo sung bang chung.
      *
      * <p>Ly do bat buoc. Cong no khong doi; ma tham chieu cua bao cao bi tu choi duoc dung lai khi chu san gui bao cao moi.
@@ -323,6 +376,48 @@ public class AdminCommissionPaymentService {
         return jdbc.queryForObject(ROW_SELECT + " WHERE r.id = ?", (rs, index) -> row(rs), reportId);
     }
 
+    /** Cong no con lai cua pham vi (ky hoac cong no chung) va trang thai de kiem tra truoc khi ap dung mot khoan thanh toan. */
+    private record Scope(BigDecimal remaining, BigDecimal due, BigDecimal paid, String settlementStatus, BigDecimal credit) {
+    }
+
+    /**
+     * Khoa chu san va ky roi tinh so con no; nem 409 neu ky da thanh toan / dang tranh chap hoac so tien vuot so con no.
+     * Goi truoc khi ghi bat ky thay doi nao de that bai khong de lai du lieu.
+     */
+    private Scope scopeOf(UUID ownerId, UUID settlementId, BigDecimal amount) {
+        jdbc.queryForObject("SELECT user_id FROM court_owner_profiles WHERE user_id = ? FOR UPDATE", UUID.class, ownerId);
+        BigDecimal credit = jdbc.queryForObject("SELECT commission_credit FROM court_owner_profiles WHERE user_id = ?", BigDecimal.class, ownerId);
+        BigDecimal remaining;
+        BigDecimal paid = BigDecimal.ZERO;
+        BigDecimal due = BigDecimal.ZERO;
+        String settlementStatus = null;
+        if (settlementId != null) {
+            Map<String, Object> settlement = jdbc.queryForMap(
+                    "SELECT amount_due, amount_paid, status FROM commission_settlements WHERE id = ? FOR UPDATE", settlementId);
+            due = (BigDecimal) settlement.get("amount_due");
+            paid = (BigDecimal) settlement.get("amount_paid");
+            settlementStatus = (String) settlement.get("status");
+            if ("paid".equals(settlementStatus)) {
+                throw conflict("Ky doi soat nay da thanh toan xong.");
+            }
+            if ("disputed".equals(settlementStatus)) {
+                throw conflict("Ky doi soat dang tranh chap, chua the xac nhan thanh toan.");
+            }
+            remaining = due.subtract(paid);
+        } else {
+            BigDecimal debt = jdbc.queryForObject("""
+                    SELECT coalesce(sum(commission_amount), 0) FROM booking_commissions
+                    WHERE owner_id = ? AND settlement_id IS NULL AND status IN ('pending', 'due', 'adjusted')
+                    """, BigDecimal.class, ownerId);
+            remaining = debt.subtract(credit);
+        }
+        if (amount.compareTo(remaining) > 0) {
+            throw conflict("So tien bao cao vuot qua so con no (" + remaining.max(BigDecimal.ZERO).stripTrailingZeros().toPlainString()
+                    + " dong). Hay tu choi bao cao hoac dieu chinh cong no truoc.");
+        }
+        return new Scope(remaining, due, paid, settlementStatus, credit);
+    }
+
     /** Dong dan hoa hong cua ky theo han thanh toan: du tien thi dong, thanh toan du ky thi dong het. */
     private List<UUID> settleSettlementCommissions(UUID settlementId, BigDecimal paidAfter, boolean fullyPaid, Instant now) {
         BigDecimal alreadySettled = jdbc.queryForObject(
@@ -348,10 +443,10 @@ public class AdminCommissionPaymentService {
 
     private Report lockPending(UUID reportId) {
         List<Report> found = jdbc.query("""
-                SELECT id, owner_id, settlement_id, amount, reference_code, status FROM commission_payment_reports WHERE id = ? FOR UPDATE
+                SELECT id, owner_id, settlement_id, amount, reference_code, proof_url, status FROM commission_payment_reports WHERE id = ? FOR UPDATE
                 """, (rs, index) -> new Report(rs.getObject("id", UUID.class), rs.getObject("owner_id", UUID.class),
                 rs.getObject("settlement_id", UUID.class), rs.getBigDecimal("amount"), rs.getString("reference_code"),
-                rs.getString("status")), reportId);
+                rs.getString("proof_url"), rs.getString("status")), reportId);
         if (found.isEmpty()) {
             throw ApiException.notFound("Khong tim thay bao cao thanh toan.");
         }
@@ -366,7 +461,8 @@ public class AdminCommissionPaymentService {
         return ApiException.conflict(ErrorCode.COMMISSION_PAYMENT_INVALID, message, Map.of("report", message));
     }
 
-    private record Report(UUID id, UUID ownerId, UUID settlementId, BigDecimal amount, String referenceCode, String status) {
+    private record Report(UUID id, UUID ownerId, UUID settlementId, BigDecimal amount, String referenceCode, String proofUrl,
+                          String status) {
     }
 
     private Row row(ResultSet rs) throws SQLException {
@@ -378,7 +474,7 @@ public class AdminCommissionPaymentService {
                 rs.getString("owner_email"), settlement, rs.getBigDecimal("amount"), rs.getBigDecimal("courtly_offset_amount"),
                 rs.getDate("paid_on").toLocalDate(), rs.getString("reference_code"), rs.getString("proof_url"), rs.getString("note"),
                 rs.getString("status"), rs.getString("review_note"), rs.getString("reviewer"), instant(rs, "reviewed_at"),
-                instant(rs, "created_at"));
+                instant(rs, "created_at"), rs.getBoolean("recorded"));
     }
 
     private List<OwnerOption> ownerOptions() {

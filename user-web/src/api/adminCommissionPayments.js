@@ -22,6 +22,7 @@ export function mapPayment(item) {
     reviewedByName: item.reviewedByName ?? null,
     reviewedAt: item.reviewedAt ?? null,
     createdAt: item.createdAt,
+    recordedByAdmin: Boolean(item.recordedByAdmin),
   }
 }
 
@@ -55,6 +56,21 @@ export async function rejectAdminPayment(reportId, reason) {
   return mapPayment(await request(`/api/v1/admin/finance/commission-payments/${encodeURIComponent(reportId)}/reject`, {
     method: 'POST',
     body: { reason: reason.trim() },
+  }))
+}
+
+export async function recordAdminPayment({ ownerId, settlementId, amount, paidOn, referenceCode, proofUrl, note }) {
+  return mapPayment(await request('/api/v1/admin/finance/commission-payments', {
+    method: 'POST',
+    body: {
+      ownerId,
+      settlementId: settlementId || undefined,
+      amount: Number(amount),
+      paidOn,
+      referenceCode: referenceCode.trim(),
+      proofUrl: proofUrl?.trim() || undefined,
+      note: note?.trim() || undefined,
+    },
   }))
 }
 

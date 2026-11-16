@@ -45,6 +45,7 @@ abstract class AdminFinanceTestBase extends AdminApiTestBase {
     protected String player;
     protected int index;
     protected int refCounter;
+    protected int settlementCounter;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -83,7 +84,7 @@ abstract class AdminFinanceTestBase extends AdminApiTestBase {
         CommissionSettlement settlement = new CommissionSettlement();
         settlement.setId(UUID.randomUUID());
         settlement.setOwner(settlementOwner);
-        LocalDate start = LocalDate.now(VN).minusDays(60L + index);
+        LocalDate start = LocalDate.now(VN).minusDays(60L + 10L * settlementCounter++);
         settlement.setPeriodFrom(start);
         settlement.setPeriodTo(start.plusDays(6));
         settlement.setStatus(status);

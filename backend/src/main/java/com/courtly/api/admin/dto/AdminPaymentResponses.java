@@ -18,11 +18,13 @@ public final class AdminPaymentResponses {
     /**
      * @param status              pending_review, confirmed, rejected
      * @param courtlyOffsetAmount phan Courtly no chu san da bu tru vao cong no khi xac nhan
+     * @param recordedByAdmin     quan tri vien tu ghi nhan thay chu san (khong co bao cao cua chu san)
      * @param settlement          ky doi soat bao cao gan voi; null = tra chung vao cong no hien tai
      */
     public record Row(UUID id, UUID ownerId, String ownerName, String ownerEmail, Settlement settlement, BigDecimal amount,
                       BigDecimal courtlyOffsetAmount, LocalDate paidOn, String referenceCode, String proofUrl, String note,
-                      String status, String reviewNote, String reviewedByName, Instant reviewedAt, Instant createdAt) {
+                      String status, String reviewNote, String reviewedByName, Instant reviewedAt, Instant createdAt,
+                      boolean recordedByAdmin) {
     }
 
     public record Totals(long count, BigDecimal amount) {
