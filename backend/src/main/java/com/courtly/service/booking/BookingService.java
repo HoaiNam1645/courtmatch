@@ -65,6 +65,7 @@ public class BookingService {
                     BookingStatus.EXPIRED, BookingStatus.REFUNDED),
             "all", List.of(BookingStatus.values()));
 
+    private final com.courtly.service.notification.BookingNotifier bookingNotifier;
     private final BookingRepository bookingRepository;
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
@@ -407,6 +408,7 @@ public class BookingService {
         addHistory(booking, BookingStatus.PENDING_OWNER_CONFIRMATION, BookingStatus.AWAITING_PAYMENT,
                 "Chu san da chap nhan, cho nguoi choi thanh toan", owner, now);
         paymentService.createFor(booking, now);
+        bookingNotifier.accepted(booking, PaymentService.PAYMENT_WINDOW_MINUTES);
         return toDetail(booking, now);
     }
 
@@ -432,6 +434,7 @@ public class BookingService {
         booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CANCELLED));
         addHistory(booking, BookingStatus.PENDING_OWNER_CONFIRMATION, BookingStatus.REJECTED,
                 request.reason().trim(), owner, now);
+        bookingNotifier.rejected(booking, request.reason().trim());
         return toDetail(booking, now);
     }
 

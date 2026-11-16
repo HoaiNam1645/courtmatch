@@ -36,6 +36,7 @@ public class PaymentService {
 
     public static final int PAYMENT_WINDOW_MINUTES = 30;
 
+    private final com.courtly.service.notification.BookingNotifier bookingNotifier;
     private final PaymentRepository paymentRepository;
     private final PaymentStatusHistoryRepository historyRepository;
     private final CourtOwnerProfileRepository ownerProfileRepository;
@@ -148,6 +149,7 @@ public class PaymentService {
         Booking booking = payment.getBooking();
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             // Da tu hoan thanh sau gio choi: chi ghi nhan da thu tien, khong dua booking ve confirmed.
+            bookingNotifier.paymentConfirmed(booking);
             return toResponse(payment, now);
         }
         booking.setStatus(BookingStatus.CONFIRMED);
@@ -156,6 +158,7 @@ public class PaymentService {
         booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CONFIRMED));
         addBookingHistory(booking, BookingStatus.AWAITING_PAYMENT, BookingStatus.CONFIRMED,
                 "Chu san xac nhan da thu tien", owner, now);
+        bookingNotifier.paymentConfirmed(booking);
         return toResponse(payment, now);
     }
 
