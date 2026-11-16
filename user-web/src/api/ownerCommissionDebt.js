@@ -31,6 +31,8 @@ export async function fetchCommissionDebt() {
         minOverdueDays: item.minOverdueDays == null ? null : Number(item.minOverdueDays),
       })),
     },
+    commissionCredit: money(data.commissionCredit),
+    payableWithoutSettlement: money(data.payableWithoutSettlement),
     courtlyOwed: {
       amount: money(data.courtlyOwed?.amount),
       count: Number(data.courtlyOwed?.count ?? 0),

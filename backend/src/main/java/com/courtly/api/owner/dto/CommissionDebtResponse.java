@@ -18,6 +18,10 @@ import java.util.UUID;
  * @param suspendedAmount  hoa hong tam hoan do tranh chap, chua tinh vao cong no
  * @param settledAmount    tong hoa hong da doi soat xong tu truoc den nay
  * @param oldestOverdueAt  han thanh toan cu nhat dang qua han; null neu khong co
+ * @param commissionCredit         so du da thanh toan nhung chua du dong mot hoa hong, se tru vao hoa hong cu nhat khi xac nhan lan sau
+ * @param payableWithoutSettlement so tien toi da co the gui thanh toan chung (hoa hong chua thuoc ky, da tru so du)
+ * @param commissionCredit         so du da thanh toan nhung chua du dong mot hoa hong, tru vao hoa hong cu nhat o lan xac nhan sau
+ * @param payableWithoutSettlement so tien toi da gui thanh toan chung (hoa hong chua thuoc ky, da tru so du)
  * @param nextDueAt        han thanh toan gan nhat sap toi trong phan chua den han; null neu khong co
  */
 public record CommissionDebtResponse(Instant asOf, BigDecimal totalOutstanding, long outstandingCount,
@@ -26,7 +30,7 @@ public record CommissionDebtResponse(Instant asOf, BigDecimal totalOutstanding, 
                                      BigDecimal suspendedAmount, long suspendedCount,
                                      BigDecimal settledAmount, Instant oldestOverdueAt, Instant nextDueAt,
                                      List<VenueDebt> byVenue, Restriction restriction,
-                                     CourtlyOwed courtlyOwed) {
+                                     CourtlyOwed courtlyOwed, BigDecimal commissionCredit, BigDecimal payableWithoutSettlement) {
 
     /**
      * Han che do cong no qua han (B2).

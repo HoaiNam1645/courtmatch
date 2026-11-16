@@ -13,6 +13,7 @@ const AdminFeePoliciesPage = lazy(() => import('./pages/AdminFeePoliciesPage'))
 const AdminFeeRevenuePage = lazy(() => import('./pages/AdminFeeRevenuePage'))
 const AdminCommissionTransactionsPage = lazy(() => import('./pages/AdminCommissionTransactionsPage'))
 const AdminSettlementsPage = lazy(() => import('./pages/AdminSettlementsPage'))
+const AdminCommissionPaymentsPage = lazy(() => import('./pages/AdminCommissionPaymentsPage'))
 const AdminVouchersPage = lazy(() => import('./pages/AdminVouchersPage'))
 const AdminPermissionsPage = lazy(() => import('./pages/AdminPermissionsPage'))
 
@@ -30,6 +31,7 @@ const adminRoutes = [
   { path: '/admin/fee-revenue', element: <AdminFeeRevenuePage /> },
   { path: '/admin/commission-transactions', element: <AdminCommissionTransactionsPage /> },
   { path: '/admin/settlements', element: <AdminSettlementsPage /> },
+  { path: '/admin/commission-payments', element: <AdminCommissionPaymentsPage /> },
   { path: '/admin/vouchers', element: <AdminVouchersPage /> },
   { path: '/admin/permissions', element: <AdminPermissionsPage /> },
 ]

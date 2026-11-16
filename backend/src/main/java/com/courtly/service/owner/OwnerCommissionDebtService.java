@@ -32,6 +32,7 @@ public class OwnerCommissionDebtService {
     private final VenueRepository venueRepository;
     private final BookingCommissionRepository commissionRepository;
     private final OwnerRestrictionService restrictionService;
+    private final com.courtly.domain.account.CourtOwnerProfileRepository profileRepository;
     private final com.courtly.domain.finance.DebtRestrictionLevelRepository restrictionLevelRepository;
 
     @Transactional(readOnly = true)
@@ -52,6 +53,7 @@ public class OwnerCommissionDebtService {
         Map<UUID, BigDecimal> overdueByVenue = new LinkedHashMap<>();
         Map<UUID, Long> countByVenue = new LinkedHashMap<>();
 
+        BigDecimal credit = profileRepository.commissionCreditOf(ownerId);
         for (BookingCommissionRepository.DebtRow row : rows) {
             String status = row.getStatus();
             if ("suspended".equals(status)) {
@@ -90,7 +92,8 @@ public class OwnerCommissionDebtService {
 
         return new CommissionDebtResponse(now, overdue.add(upcoming), overdueCount + upcomingCount,
                 overdue, overdueCount, upcoming, upcomingCount, suspended, suspendedCount, settled,
-                oldestOverdue, nextDue, byVenue, restriction(ownerId, now), courtlyOwed(ownerId));
+                oldestOverdue, nextDue, byVenue, restriction(ownerId, now), courtlyOwed(ownerId), credit,
+                commissionRepository.sumOutstandingWithoutSettlement(ownerId).subtract(credit).max(BigDecimal.ZERO));
     }
 
     private CommissionDebtResponse.CourtlyOwed courtlyOwed(UUID ownerId) {

@@ -1,4 +1,4 @@
-import { BarChart3, Building2, Coins, HandCoins, ReceiptText, Scale, Ticket, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
+import { BarChart3, Building2, Coins, HandCoins, ReceiptText, Scale, Wallet, Ticket, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
 
 /**
  * Mục điều hướng của khu quản trị, chia nhóm để thanh bên không rối khi thêm chức năng.
@@ -36,6 +36,7 @@ export const adminNavigationGroups = [
       { label: 'Doanh thu phí', to: '/admin/fee-revenue', icon: HandCoins },
       { label: 'Giao dịch đối soát', to: '/admin/commission-transactions', icon: ReceiptText },
       { label: 'Kỳ công nợ', to: '/admin/settlements', icon: Scale },
+      { label: 'Thanh toán công nợ', to: '/admin/commission-payments', icon: Wallet },
       { label: 'Voucher', to: '/admin/vouchers', icon: Ticket },
     ],
   },

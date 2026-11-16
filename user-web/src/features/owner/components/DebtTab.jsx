@@ -67,7 +67,9 @@ function DebtTab() {
               <p className="mt-3 text-sm font-medium text-stone-600" data-testid="debt-next-due">Hạn thanh toán gần nhất: {formatDateTime(data.nextDueAt)}</p>
             )}
             {data.totalOutstanding === 0 && <p className="mt-3 text-sm font-semibold text-emerald-800">Bạn không còn khoản hoa hồng nào phải thanh toán.</p>}
-            {data.totalOutstanding > 0 && <button type="button" className={`${primaryButtonClass} mt-4`} data-testid="pay-debt" onClick={() => setPaying(true)}>Gửi thông tin thanh toán</button>}
+            {data.commissionCredit > 0 && <p className="mt-3 text-sm font-medium text-emerald-800" data-testid="debt-credit">Bạn đã thanh toán trước {formatCurrency(data.commissionCredit)}, khoản này sẽ được trừ vào hoa hồng cũ nhất khi Courtly xác nhận lần sau.</p>}
+            {data.payableWithoutSettlement > 0 && <button type="button" className={`${primaryButtonClass} mt-4`} data-testid="pay-debt" onClick={() => setPaying(true)}>Gửi thông tin thanh toán</button>}
+            {data.totalOutstanding > 0 && data.payableWithoutSettlement === 0 && <p className="mt-3 text-sm font-medium text-stone-600" data-testid="debt-pay-by-period">Công nợ của bạn đã được chốt theo kỳ. Hãy gửi thông tin thanh toán trong tab Đối soát, ở từng kỳ.</p>}
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -102,7 +104,7 @@ function DebtTab() {
           <p className="text-xs font-medium text-stone-400">Cập nhật lúc {formatDateTime(data.asOf)}</p>
           {paying && (
             <CommissionPaymentDialog
-              maxAmount={data.totalOutstanding}
+              maxAmount={data.payableWithoutSettlement}
               onClose={() => setPaying(false)}
               onSubmitted={(payment) => {
                 setPaying(false)

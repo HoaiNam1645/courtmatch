@@ -130,7 +130,7 @@ function AdminSettlementsPage() {
         </div>
       </OwnerCard>
       {creating && <SettlementDialog owners={owners} onClose={() => setCreating(false)} onCreated={(created, message) => { setCreating(false); setNotice(message); setFilters(EMPTY_FILTERS); setQuery(''); reload() }} />}
-      {openId && <SettlementDrawer settlementId={openId} onClose={() => setOpenId(null)} onOpenBooking={(id) => setCommissionId(id)} escapeDisabled={Boolean(commissionId)} />}
+      {openId && <SettlementDrawer settlementId={openId} onClose={() => setOpenId(null)} onOpenBooking={(id) => setCommissionId(id)} onChanged={reload} escapeDisabled={Boolean(commissionId)} />}
       {commissionId && <CommissionDetailDrawer commissionId={commissionId} onClose={() => setCommissionId(null)} />}
     </AdminLayout>
   )

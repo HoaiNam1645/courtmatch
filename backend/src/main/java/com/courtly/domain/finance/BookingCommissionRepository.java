@@ -103,6 +103,13 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
             """)
     java.util.List<BookingCommission> findCourtlyOwed(@org.springframework.data.repository.query.Param("ownerId") UUID ownerId);
 
+    /** Hoa hong chua thu va chua thuoc ky doi soat nao: phan chu san co the tra chung, khong gan ky (2.3.47). */
+    @Query(value = """
+            select coalesce(sum(commission_amount), 0) from booking_commissions
+            where owner_id = :ownerId and settlement_id is null and status in ('pending', 'due', 'adjusted')
+            """, nativeQuery = true)
+    BigDecimal sumOutstandingWithoutSettlement(UUID ownerId);
+
     /** Booking cau thanh cong no: hoa hong chua doi soat, loc theo han thanh toan [dueFrom, dueTo) (2.3.21). */
     @Query(value = """
             select c from BookingCommission c

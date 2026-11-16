@@ -10,6 +10,7 @@ import { OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
 import { secondaryButtonClass } from '../../owner/ownerStyles'
 import { HISTORY_ACTION_LABEL } from '../../../api/adminCommissionTransactions'
+import { PaymentReviewDialog } from './PaymentReviewDialog'
 
 const RESTRICTION_LABEL = { 0: 'Không bị hạn chế', 1: 'Mức 1 · chặn nhận booking mới', 2: 'Mức 2 · tạm ẩn sân' }
 
@@ -23,18 +24,20 @@ function Line({ label, value, testId, strong }) {
 }
 
 /** 2.3.46 — chi tiết công nợ của một kỳ và các booking cấu thành. */
-function SettlementDrawer({ settlementId, onClose, onOpenBooking, escapeDisabled = false }) {
+function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, escapeDisabled = false }) {
   const [page, setPage] = useState(0)
+  const [reviewing, setReviewing] = useState(null)
+  const [notice, setNotice] = useState('')
   const { status, data, error, reload } = useApiResource(() => fetchAdminSettlementDetail(settlementId, { page }), [settlementId, page])
 
   useEffect(() => {
     // Khi một ngăn khác mở chồng lên, Escape chỉ đóng ngăn trên cùng.
     function onKey(event) {
-      if (event.key === 'Escape' && !escapeDisabled) onClose()
+      if (event.key === 'Escape' && !escapeDisabled && !reviewing) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, escapeDisabled])
+  }, [onClose, escapeDisabled, reviewing])
 
   const settlement = data?.settlement
   const meta = settlement ? settlementStatusMeta(settlement.status) : null
@@ -47,6 +50,7 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, escapeDisabled
         </div>
         {status === 'loading' && !data && <div className="mt-4"><OwnerLoading rows={3} /></div>}
         {status === 'error' && <div className="mt-4"><OwnerError message={error?.message} onRetry={reload} /></div>}
+        {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800" data-testid="sd-notice">{notice}</p>}
         {data && (
           <div className="mt-4 grid gap-6">
             <section>
@@ -94,6 +98,7 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, escapeDisabled
                         <p className="mt-1 text-xs font-medium text-slate-500">Thanh toán {formatIsoDate(report.paidOn)} · gửi {formatDateTime(report.createdAt)}</p>
                         {report.note && <p className="mt-1 text-xs font-medium text-slate-600">{report.note}</p>}
                         {report.proofUrl && <a className="mt-1 inline-block break-all text-xs font-semibold text-sky-700 underline" href={report.proofUrl} target="_blank" rel="noreferrer noopener">Xem bằng chứng</a>}
+                        {report.status === 'pending_review' && <button type="button" className="mt-2 h-9 rounded-lg bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-900" data-testid="sd-report-confirm" onClick={() => setReviewing({ ...report, ownerName: settlement.ownerName, settlement: { periodFrom: settlement.periodFrom, periodTo: settlement.periodTo } })}>Xác nhận</button>}
                         {report.reviewedAt && <p className="mt-1 text-xs font-medium text-slate-500">{report.reviewedByName ?? 'Quản trị viên'} xử lý {formatDateTime(report.reviewedAt)}{report.reviewNote ? ` · ${report.reviewNote}` : ''}</p>}
                       </li>
                     )
@@ -151,6 +156,7 @@ function SettlementDrawer({ settlementId, onClose, onOpenBooking, escapeDisabled
           </div>
         )}
       </aside>
+      {reviewing && <PaymentReviewDialog payment={reviewing} onClose={() => setReviewing(null)} onDone={(result, message) => { setReviewing(null); setNotice(message); reload(); onChanged?.() }} />}
     </div>
   )
 }

@@ -32,6 +32,7 @@ public class OwnerCommissionPaymentService {
     private static final int MAX_DAYS_BACK = 365;
 
     private final UserRepository userRepository;
+    private final com.courtly.domain.account.CourtOwnerProfileRepository profileRepository;
     private final CommissionSettlementRepository settlementRepository;
     private final CommissionPaymentReportRepository reportRepository;
     private final BookingCommissionRepository commissionRepository;
@@ -59,7 +60,9 @@ public class OwnerCommissionPaymentService {
             payable = settlement.getAmountDue().subtract(settlement.getAmountPaid())
                     .subtract(reportRepository.sumPendingForSettlement(settlement.getId()));
         } else {
-            payable = commissionRepository.sumOutstandingByOwnerId(ownerId)
+            // Tra chung chi dong duoc hoa hong chua thuoc ky nao (hoa hong trong ky phai tra theo ky), da tru so du tra truoc.
+            payable = commissionRepository.sumOutstandingWithoutSettlement(ownerId)
+                    .subtract(profileRepository.commissionCreditOf(ownerId))
                     .subtract(reportRepository.sumPendingWithoutSettlement(ownerId));
         }
         if (payable.signum() <= 0) {
