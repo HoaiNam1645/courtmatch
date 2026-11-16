@@ -39,6 +39,11 @@ public class AdminCommissionDetailService {
     @Transactional(readOnly = true)
     public AdminCommissionDetailResponse get(UUID adminId, UUID commissionId) {
         accessService.requirePermission(adminId, AdminCommissionTransactionService.PERMISSION);
+        return load(commissionId);
+    }
+
+    /** Doc chi tiet khong kiem tra quyen: nguoi goi da kiem tra (vi du sau khi dieu chinh hoa hong, 2.3.51). */
+    AdminCommissionDetailResponse load(UUID commissionId) {
 
         List<Row> found = jdbc.query("""
                 SELECT bc.id, bc.status, bc.fee_type, bc.fee_value, pfc.name AS policy_name, bc.gross_amount, bc.commission_amount,

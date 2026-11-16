@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { DISPUTE_STATUS_LABEL, fetchCommissionDetail, HISTORY_ACTION_LABEL, REFUND_STATUS_LABEL } from '../../../api/adminCommissionTransactions'
 import { commissionStatusMeta, describeFee } from '../../../api/ownerCommissions'
@@ -7,7 +7,9 @@ import { settlementStatusMeta } from '../../../api/ownerSettlements'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
+import { AdjustCommissionDialog } from './AdjustCommissionDialog'
 import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
+import { secondaryButtonClass } from '../../owner/ownerStyles'
 
 function Line({ label, value, testId, strong }) {
   return (
@@ -27,25 +29,38 @@ function Section({ title, children, testId }) {
   )
 }
 
-/** Mô tả thay đổi trong audit log: các khóa có trong dữ liệu mới, kèm giá trị cũ nếu có. */
+const CHANGE_LABEL = { commissionAmount: 'Hoa hồng', status: 'Trạng thái', amountDue: 'Phải thu', adjustmentTotal: 'Tổng điều chỉnh', credit: 'Số dư trả trước' }
+const MONEY_KEYS = ['commissionAmount', 'amountDue', 'adjustmentTotal', 'credit']
+
+function formatChange(key, value) {
+  if (value == null) return '—'
+  if (MONEY_KEYS.includes(key)) return formatCurrency(Number(value))
+  if (key === 'status') return commissionStatusMeta(value).label
+  return String(value)
+}
+
+/** Mô tả thay đổi trong audit log: các khóa có nhãn kèm giá trị cũ, mới; lý do hiển thị riêng. */
 function describeChange(entry) {
-  const keys = Object.keys(entry.newData ?? {})
+  const keys = Object.keys(entry.newData ?? {}).filter((key) => CHANGE_LABEL[key])
   if (keys.length === 0) return null
-  return keys.map((key) => `${key}: ${entry.oldData?.[key] ?? '—'} → ${entry.newData[key]}`).join(' · ')
+  return keys.map((key) => `${CHANGE_LABEL[key]}: ${entry.oldData?.[key] != null ? `${formatChange(key, entry.oldData[key])} → ` : ''}${formatChange(key, entry.newData[key])}`).join(' · ')
 }
 
 /** 2.3.44 — chi tiết đối soát của một booking: hoa hồng đã chốt, thanh toán trực tiếp, hoàn tiền, tranh chấp và lịch sử. */
-function CommissionDetailDrawer({ commissionId, onClose }) {
+function CommissionDetailDrawer({ commissionId, onClose, onChanged }) {
+  const [adjusting, setAdjusting] = useState(false)
+  const [notice, setNotice] = useState('')
   const { status, data, error, reload } = useApiResource(() => fetchCommissionDetail(commissionId), [commissionId])
 
   useEffect(() => {
     function onKey(event) {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape' && !adjusting) onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, adjusting])
 
+  const canAdjust = data && ['pending', 'due', 'adjusted'].includes(data.commission.status)
   const meta = data ? commissionStatusMeta(data.commission.status) : null
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -69,6 +84,7 @@ function CommissionDetailDrawer({ commissionId, onClose }) {
               <p className="text-xs font-medium text-slate-500">Người chơi {data.booking.playerName} · chơi {formatDateTime(data.booking.startTime)} – {formatDateTime(data.booking.endTime)}</p>
             </section>
 
+            {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800" data-testid="drawer-notice">{notice}</p>}
             <Section title="Hoa hồng đã chốt" testId="drawer-commission">
               <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 px-3">
                 <Line label="Chính sách phí" value={`${data.commission.feePolicyName ?? 'Không rõ'} · ${describeFee(data.commission.feeType, data.commission.feeValue, formatCurrency)}`} />
@@ -83,6 +99,7 @@ function CommissionDetailDrawer({ commissionId, onClose }) {
                 <Line label="Hạn thanh toán" value={formatDateTime(data.commission.dueAt)} testId="drawer-due" />
                 {data.commission.settledAt && <Line label="Đối soát xong" value={formatDateTime(data.commission.settledAt)} />}
               </dl>
+              {canAdjust && <button type="button" className={`${secondaryButtonClass} mt-3`} data-testid="drawer-adjust" onClick={() => setAdjusting(true)}>Điều chỉnh hoa hồng</button>}
             </Section>
 
             <Section title="Booking và thanh toán trực tiếp" testId="drawer-booking">
@@ -136,7 +153,8 @@ function CommissionDetailDrawer({ commissionId, onClose }) {
                     <li key={entry.id} className="rounded-lg border border-slate-200 p-3 text-sm" data-testid="drawer-history-item">
                       <p className="font-semibold text-slate-800">{HISTORY_ACTION_LABEL[entry.action] ?? entry.action}</p>
                       <p className="text-xs font-medium text-slate-500">{entry.actorName ?? 'Hệ thống'} · {formatDateTime(entry.createdAt)}</p>
-                      {describeChange(entry) && <p className="mt-1 break-words text-xs font-medium text-slate-600">{describeChange(entry)}</p>}
+                      {describeChange(entry) && <p className="mt-1 break-words text-xs font-medium text-slate-600" data-testid="drawer-history-change">{describeChange(entry)}</p>}
+                      {entry.newData?.reason && <p className="mt-1 break-words text-xs font-medium text-slate-600" data-testid="drawer-history-reason">Lý do: {entry.newData.reason}</p>}
                     </li>
                   ))}
                 </ol>
@@ -145,6 +163,7 @@ function CommissionDetailDrawer({ commissionId, onClose }) {
           </div>
         )}
       </aside>
+      {adjusting && data && <AdjustCommissionDialog detail={data} onClose={() => setAdjusting(false)} onDone={(result, message) => { setAdjusting(false); setNotice(message); reload(); onChanged?.() }} />}
     </div>
   )
 }

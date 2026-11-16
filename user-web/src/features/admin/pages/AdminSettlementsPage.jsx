@@ -24,6 +24,7 @@ function AdminSettlementsPage() {
   const [commissionId, setCommissionId] = useState(null)
   const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
   const invalidRange = Boolean(filters.from && filters.to && filters.to < filters.from)
   const { status, data, error, reload } = useApiResource(
     () => (invalidRange ? Promise.resolve(null) : fetchAdminSettlements({ ...filters, q })),
@@ -130,8 +131,8 @@ function AdminSettlementsPage() {
         </div>
       </OwnerCard>
       {creating && <SettlementDialog owners={owners} onClose={() => setCreating(false)} onCreated={(created, message) => { setCreating(false); setNotice(message); setFilters(EMPTY_FILTERS); setQuery(''); reload() }} />}
-      {openId && <SettlementDrawer settlementId={openId} onClose={() => setOpenId(null)} onOpenBooking={(id) => setCommissionId(id)} onChanged={reload} escapeDisabled={Boolean(commissionId)} />}
-      {commissionId && <CommissionDetailDrawer commissionId={commissionId} onClose={() => setCommissionId(null)} />}
+      {openId && <SettlementDrawer settlementId={openId} onClose={() => setOpenId(null)} onOpenBooking={(id) => setCommissionId(id)} onChanged={reload} refreshKey={refreshKey} escapeDisabled={Boolean(commissionId)} />}
+      {commissionId && <CommissionDetailDrawer commissionId={commissionId} onClose={() => setCommissionId(null)} onChanged={() => { setRefreshKey((current) => current + 1); reload() }} />}
     </AdminLayout>
   )
 }

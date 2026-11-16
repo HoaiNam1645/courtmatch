@@ -107,7 +107,7 @@ abstract class AdminFinanceTestBase extends AdminApiTestBase {
     }
 
     protected Map<String, Object> settlementRow(CommissionSettlement settlement) {
-        return jdbc.queryForMap("SELECT status, amount_paid, paid_at, reviewed_by FROM commission_settlements WHERE id = ?", settlement.getId());
+        return jdbc.queryForMap("SELECT status, amount_due, amount_paid, adjustment_total, paid_at, reviewed_by FROM commission_settlements WHERE id = ?", settlement.getId());
     }
 
     protected BigDecimal credit(User target) {

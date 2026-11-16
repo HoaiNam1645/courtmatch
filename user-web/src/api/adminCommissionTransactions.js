@@ -57,8 +57,7 @@ export const HISTORY_ACTION_LABEL = {
   'settlement.adjust': 'Điều chỉnh công nợ',
 }
 
-export async function fetchCommissionDetail(commissionId) {
-  const data = await request(`/api/v1/admin/finance/commission-transactions/${commissionId}`)
+function mapDetail(data) {
   const c = data.commission
   return {
     commission: {
@@ -80,4 +79,16 @@ export async function fetchCommissionDetail(commissionId) {
     disputes: data.disputes,
     history: data.history,
   }
+}
+
+export async function fetchCommissionDetail(commissionId) {
+  return mapDetail(await request(`/api/v1/admin/finance/commission-transactions/${commissionId}`))
+}
+
+/** 2.3.51 — điều chỉnh hoa hồng của một booking (số tiền chủ sân phải trả) kèm lý do; trả về chi tiết mới. */
+export async function adjustCommission(commissionId, { newAmount, reason }) {
+  return mapDetail(await request(`/api/v1/admin/finance/commission-transactions/${commissionId}/adjustments`, {
+    method: 'POST',
+    body: { newAmount: Number(newAmount), reason: reason.trim() },
+  }))
 }

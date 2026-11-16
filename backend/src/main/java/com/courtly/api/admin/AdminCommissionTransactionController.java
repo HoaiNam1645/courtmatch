@@ -1,9 +1,12 @@
 package com.courtly.api.admin;
 
+import com.courtly.api.admin.dto.AdjustCommissionRequest;
 import com.courtly.api.admin.dto.AdminCommissionDetailResponse;
 import com.courtly.api.admin.dto.AdminCommissionTransactionResponse;
+import com.courtly.service.admin.AdminCommissionAdjustmentService;
 import com.courtly.service.admin.AdminCommissionDetailService;
 import com.courtly.service.admin.AdminCommissionTransactionService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -17,11 +20,14 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** 2.3.43 - xem danh sach giao dich doi soat; 2.3.44 - xem chi tiet doi soat cua mot booking. */
+/** 2.3.43 - xem danh sach giao dich doi soat; 2.3.44 - xem chi tiet doi soat cua mot booking;
+ * 2.3.51 - dieu chinh hoa hong. */
 @Validated
 @RestController
 @RequestMapping("/api/v1/admin/finance")
@@ -30,6 +36,7 @@ public class AdminCommissionTransactionController {
 
     private final AdminCommissionTransactionService transactionService;
     private final AdminCommissionDetailService detailService;
+    private final AdminCommissionAdjustmentService adjustmentService;
 
     @GetMapping("/commission-transactions")
     public ResponseEntity<AdminCommissionTransactionResponse> list(
@@ -51,5 +58,11 @@ public class AdminCommissionTransactionController {
     @GetMapping("/commission-transactions/{commissionId}")
     public ResponseEntity<AdminCommissionDetailResponse> detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID commissionId) {
         return ResponseEntity.ok(detailService.get(AdminJwt.adminId(jwt), commissionId));
+    }
+
+    @PostMapping("/commission-transactions/{commissionId}/adjustments")
+    public ResponseEntity<AdminCommissionDetailResponse> adjust(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID commissionId,
+                                                                @Valid @RequestBody AdjustCommissionRequest request) {
+        return ResponseEntity.ok(adjustmentService.adjust(AdminJwt.adminId(jwt), commissionId, request.newAmount(), request.reason()));
     }
 }

@@ -11,6 +11,7 @@ import com.courtly.common.exception.ApiException;
 import com.courtly.common.exception.ErrorCode;
 import com.courtly.domain.account.User;
 import com.courtly.service.audit.AuditService;
+import com.courtly.service.finance.CommissionAllocator;
 import com.courtly.service.owner.OwnerRestrictionService;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -57,6 +58,7 @@ public class AdminCommissionPaymentService {
     private final JdbcTemplate jdbc;
     private final AuditService auditService;
     private final OwnerRestrictionService restrictionService;
+    private final CommissionAllocator allocator;
 
     /**
      * @param q            tim theo ma tham chieu hoac ten/email chu san
@@ -203,7 +205,7 @@ public class AdminCommissionPaymentService {
         if (report.settlementId != null) {
             paidAfter = paidBefore.add(pool);
             boolean fullyPaid = paidAfter.compareTo(due) >= 0;
-            settled = settleSettlementCommissions(report.settlementId, paidAfter, fullyPaid, now);
+            settled = allocator.settleForSettlement(report.settlementId, paidAfter, fullyPaid, now);
             newSettlementStatus = fullyPaid ? "paid" : "partial";
             jdbc.update("""
                     UPDATE commission_settlements SET amount_paid = ?, status = ?, paid_at = ?, reviewed_by = ?, reviewed_at = ?,
@@ -211,23 +213,9 @@ public class AdminCommissionPaymentService {
                     """, paidAfter, newSettlementStatus, fullyPaid ? Timestamp.from(now) : null, admin.getId(), Timestamp.from(now),
                     report.referenceCode, report.proofUrl, report.settlementId);
         } else {
-            BigDecimal[] left = {credit.add(pool)};
-            settled = new ArrayList<>();
-            List<Object[]> unsettled = jdbc.query("""
-                    SELECT id, commission_amount FROM booking_commissions
-                    WHERE owner_id = ? AND settlement_id IS NULL AND status IN ('pending', 'due', 'adjusted')
-                    ORDER BY due_at, id FOR UPDATE
-                    """, (rs, index) -> new Object[] {rs.getObject("id", UUID.class), rs.getBigDecimal("commission_amount")}, report.ownerId);
-            for (Object[] item : unsettled) {
-                BigDecimal amount = (BigDecimal) item[1];
-                if (amount.compareTo(left[0]) > 0) {
-                    break;
-                }
-                jdbc.update("UPDATE booking_commissions SET status = 'settled', settled_at = ? WHERE id = ?", Timestamp.from(now), item[0]);
-                left[0] = left[0].subtract(amount);
-                settled.add((UUID) item[0]);
-            }
-            creditAfter = left[0];
+            CommissionAllocator.CreditResult result = allocator.applyCredit(report.ownerId, credit.add(pool), now);
+            settled = result.settled();
+            creditAfter = result.creditLeft();
             jdbc.update("UPDATE court_owner_profiles SET commission_credit = ? WHERE user_id = ?", creditAfter, report.ownerId);
         }
 
@@ -438,29 +426,6 @@ public class AdminCommissionPaymentService {
                     + " dong). Hay tu choi bao cao hoac dieu chinh cong no truoc.");
         }
         return new Scope(remaining, due, paid, settlementStatus, credit);
-    }
-
-    /** Dong dan hoa hong cua ky theo han thanh toan: du tien thi dong, thanh toan du ky thi dong het. */
-    private List<UUID> settleSettlementCommissions(UUID settlementId, BigDecimal paidAfter, boolean fullyPaid, Instant now) {
-        BigDecimal alreadySettled = jdbc.queryForObject(
-                "SELECT coalesce(sum(commission_amount), 0) FROM booking_commissions WHERE settlement_id = ? AND status = 'settled'",
-                BigDecimal.class, settlementId);
-        BigDecimal budget = paidAfter.subtract(alreadySettled);
-        List<UUID> settled = new ArrayList<>();
-        List<Object[]> unsettled = jdbc.query("""
-                SELECT id, commission_amount FROM booking_commissions
-                WHERE settlement_id = ? AND status IN ('pending', 'due', 'adjusted') ORDER BY due_at, id FOR UPDATE
-                """, (rs, index) -> new Object[] {rs.getObject("id", UUID.class), rs.getBigDecimal("commission_amount")}, settlementId);
-        for (Object[] item : unsettled) {
-            BigDecimal amount = (BigDecimal) item[1];
-            if (!fullyPaid && amount.compareTo(budget) > 0) {
-                break;
-            }
-            jdbc.update("UPDATE booking_commissions SET status = 'settled', settled_at = ? WHERE id = ?", Timestamp.from(now), item[0]);
-            budget = budget.subtract(amount);
-            settled.add((UUID) item[0]);
-        }
-        return settled;
     }
 
     private Report lockPending(UUID reportId) {

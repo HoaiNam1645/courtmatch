@@ -25,13 +25,13 @@ function Line({ label, value, testId, strong }) {
 }
 
 /** 2.3.46 — chi tiết công nợ của một kỳ và các booking cấu thành. */
-function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, escapeDisabled = false }) {
+function SettlementDrawer({ settlementId, onClose, onOpenBooking, onChanged, refreshKey = 0, escapeDisabled = false }) {
   const [page, setPage] = useState(0)
   const [reviewing, setReviewing] = useState(null)
   const [rejecting, setRejecting] = useState(null)
   const [recording, setRecording] = useState(false)
   const [notice, setNotice] = useState('')
-  const { status, data, error, reload } = useApiResource(() => fetchAdminSettlementDetail(settlementId, { page }), [settlementId, page])
+  const { status, data, error, reload } = useApiResource(() => fetchAdminSettlementDetail(settlementId, { page }), [settlementId, page, refreshKey])
 
   useEffect(() => {
     // Khi một ngăn khác mở chồng lên, Escape chỉ đóng ngăn trên cùng.
