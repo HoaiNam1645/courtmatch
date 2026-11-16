@@ -54,7 +54,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     @Query(value = """
             SELECT to_char(p.confirmed_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') AS day,
                    v.id AS venueId,
-                   coalesce(sum(p.amount), 0) AS total,
+                   coalesce(sum(b.total_amount), 0) AS total,
                    count(*) AS bookings
             FROM payments p
             JOIN bookings b ON b.id = p.booking_id
@@ -79,10 +79,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     @Query(value = """
             SELECT p.id AS paymentId, b.id AS bookingId, b.booking_code AS bookingCode, b.status AS bookingStatus,
                    v.id AS venueId, v.name AS venueName, u.full_name AS playerName, p.confirmed_at AS confirmedAt,
-                   p.amount AS grossAmount,
+                   b.total_amount AS grossAmount,
                    (bc.id IS NULL) AS commissionEstimated, bc.status AS commissionStatus,
-                   CASE WHEN bc.id IS NOT NULL THEN (CASE WHEN bc.status = 'waived' THEN 0 ELSE bc.commission_amount END)
-                        WHEN :feeType = 'percentage' THEN round(p.amount * :feeValue / 100, 2)
+                   CASE WHEN bc.id IS NOT NULL THEN (CASE WHEN bc.status = 'waived' THEN 0 ELSE bc.commission_amount + bc.voucher_discount - bc.courtly_owed END)
+                        WHEN :feeType = 'percentage' THEN round(b.total_amount * :feeValue / 100, 2)
                         ELSE :feeValue END AS commissionAmount,
                    coalesce(r.refunded, 0) AS refundedAmount,
                    coalesce(r.pending, 0) AS pendingRefundAmount
@@ -119,9 +119,9 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     /** Tong gop / hoa hong / hoan cua toan bo tap da loc, cung cong thuc voi {@link #netIncome} (2.3.19). */
     @Query(value = """
-            SELECT coalesce(sum(p.amount), 0) AS gross,
-                   coalesce(sum(CASE WHEN bc.id IS NOT NULL THEN (CASE WHEN bc.status = 'waived' THEN 0 ELSE bc.commission_amount END)
-                                     WHEN :feeType = 'percentage' THEN round(p.amount * :feeValue / 100, 2)
+            SELECT coalesce(sum(b.total_amount), 0) AS gross,
+                   coalesce(sum(CASE WHEN bc.id IS NOT NULL THEN (CASE WHEN bc.status = 'waived' THEN 0 ELSE bc.commission_amount + bc.voucher_discount - bc.courtly_owed END)
+                                     WHEN :feeType = 'percentage' THEN round(b.total_amount * :feeValue / 100, 2)
                                      ELSE :feeValue END), 0) AS commission,
                    coalesce(sum(coalesce(r.refunded, 0)), 0) AS refunded,
                    coalesce(sum(coalesce(r.pending, 0)), 0) AS pendingRefund,

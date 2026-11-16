@@ -178,6 +178,29 @@ class OwnerNetIncomeTest extends OwnerApiTestBase {
 
     // ------------------------------------------------------------ helpers
 
+    @Test
+    @DisplayName("Voucher do Courtly chiu: gop = gia goc, hoa hong day du, thuc nhan khong doi (ke ca voucher lon hon hoa hong)")
+    void voucherDoesNotAffectOwner() throws Exception {
+        Payment small = collect();
+        applyVoucher(small, "10000");
+        recordCommission(small);
+        Payment large = collect();
+        applyVoucher(large, "40000");
+        recordCommission(large);
+
+        mockMvc.perform(get(PATH).header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + small.getId() + "')].grossAmount", hasItem(180000.0)))
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + small.getId() + "')].commissionAmount", hasItem(22500.0)))
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + small.getId() + "')].netAmount", hasItem(157500.0)))
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + large.getId() + "')].grossAmount", hasItem(180000.0)))
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + large.getId() + "')].commissionAmount", hasItem(22500.0)))
+                .andExpect(jsonPath("$.content[?(@.paymentId=='" + large.getId() + "')].netAmount", hasItem(157500.0)))
+                .andExpect(jsonPath("$.totals.grossAmount").value(360000))
+                .andExpect(jsonPath("$.totals.commissionAmount").value(45000))
+                .andExpect(jsonPath("$.totals.netAmount").value(315000));
+    }
+
     private Payment collect() throws Exception {
         return collect(court);
     }
@@ -202,6 +225,12 @@ class OwnerNetIncomeTest extends OwnerApiTestBase {
         bookingRepository.saveAndFlush(booking);
         commissionService.createForCompletedBooking(booking, Instant.now());
         commissionRepository.flush();
+    }
+
+    /** Gia lap booking dung voucher: nguoi choi tra it hon gia goc, phan giam do Courtly chiu. */
+    private void applyVoucher(Payment payment, String discount) {
+        jdbc.update("UPDATE bookings SET discount_amount = ?::numeric WHERE id = ?", discount, payment.getBooking().getId());
+        jdbc.update("UPDATE payments SET amount = amount - ?::numeric WHERE id = ?", discount, payment.getId());
     }
 
     private void refund(Payment payment, String status, String amount) {
