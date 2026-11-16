@@ -31,6 +31,19 @@ export async function fetchCommissionDebt() {
         minOverdueDays: item.minOverdueDays == null ? null : Number(item.minOverdueDays),
       })),
     },
+    courtlyOwed: {
+      amount: money(data.courtlyOwed?.amount),
+      count: Number(data.courtlyOwed?.count ?? 0),
+      items: (data.courtlyOwed?.items ?? []).map((item) => ({
+        bookingId: item.bookingId,
+        bookingCode: item.bookingCode,
+        venueName: item.venueName,
+        grossAmount: money(item.grossAmount),
+        voucherDiscount: money(item.voucherDiscount),
+        owedAmount: money(item.owedAmount),
+        calculatedAt: item.calculatedAt,
+      })),
+    },
     byVenue: data.byVenue.map((venue) => ({
       venueId: venue.venueId,
       venueName: venue.venueName,

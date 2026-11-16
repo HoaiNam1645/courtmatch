@@ -7,6 +7,7 @@ import { formatDateTime } from '../ownerDates'
 import { primaryButtonClass } from '../ownerStyles'
 import { CommissionPaymentDialog } from './CommissionPaymentDialog'
 import { DebtBookingsCard } from './DebtBookingsCard'
+import { CourtlyOwedCard } from './CourtlyOwedCard'
 import { PaymentStatusCard } from './PaymentStatusCard'
 import { RestrictionNotice } from './RestrictionNotice'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
@@ -26,7 +27,7 @@ function Stat({ label, value, count, testId, tone, note }) {
 /** 2.3.20 — tổng công nợ hoa hồng hiện tại, tổng hợp từ hoa hồng từng booking. */
 function DebtTab() {
   const { status, data, error, reload } = useApiResource(fetchCommissionDebt, [], {
-    isEmpty: (result) => result.outstandingCount === 0 && result.suspendedCount === 0 && result.settledAmount === 0,
+    isEmpty: (result) => result.outstandingCount === 0 && result.suspendedCount === 0 && result.settledAmount === 0 && result.courtlyOwed.count === 0,
   })
 
   const [paying, setPaying] = useState(false)
@@ -75,6 +76,8 @@ function DebtTab() {
             <Stat label="Tạm hoãn do tranh chấp" value={data.suspendedAmount} count={data.suspendedCount} testId="debt-suspended" tone={data.suspendedAmount > 0 ? 'warn' : 'ok'} note="Chưa tính vào công nợ" />
             <Stat label="Đã đối soát" value={data.settledAmount} testId="debt-settled" note="Tổng đã thanh toán xong" />
           </div>
+
+          <CourtlyOwedCard owed={data.courtlyOwed} />
 
           <OwnerCard title="Công nợ theo sân">
             {data.byVenue.length === 0

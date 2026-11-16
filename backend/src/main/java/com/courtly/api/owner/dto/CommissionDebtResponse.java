@@ -25,7 +25,8 @@ public record CommissionDebtResponse(Instant asOf, BigDecimal totalOutstanding, 
                                      BigDecimal upcomingAmount, long upcomingCount,
                                      BigDecimal suspendedAmount, long suspendedCount,
                                      BigDecimal settledAmount, Instant oldestOverdueAt, Instant nextDueAt,
-                                     List<VenueDebt> byVenue, Restriction restriction) {
+                                     List<VenueDebt> byVenue, Restriction restriction,
+                                     CourtlyOwed courtlyOwed) {
 
     /**
      * Han che do cong no qua han (B2).
@@ -42,6 +43,20 @@ public record CommissionDebtResponse(Instant asOf, BigDecimal totalOutstanding, 
 
     /** @param minOverdueAmount null neu khong dung nguong so tien; minOverdueDays null neu khong dung nguong so ngay */
     public record Level(int level, boolean enabled, BigDecimal minOverdueAmount, Integer minOverdueDays) {
+    }
+
+    /**
+     * Khoan Courtly con no chu san: phan giam voucher vuot hoa hong cua booking (B4). Khong tinh vao cong no
+     * cua chu san; se duoc bu tru khi doi soat.
+     *
+     * @param amount tong so tien Courtly con no
+     * @param items  cac booking cau thanh, moi nhat truoc
+     */
+    public record CourtlyOwed(BigDecimal amount, long count, List<Item> items) {
+    }
+
+    public record Item(UUID bookingId, String bookingCode, String venueName, BigDecimal grossAmount,
+                       BigDecimal voucherDiscount, BigDecimal owedAmount, Instant calculatedAt) {
     }
 
     public record VenueDebt(UUID venueId, String venueName, BigDecimal outstanding, BigDecimal overdue, long bookings) {

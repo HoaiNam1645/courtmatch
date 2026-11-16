@@ -90,7 +90,19 @@ public class OwnerCommissionDebtService {
 
         return new CommissionDebtResponse(now, overdue.add(upcoming), overdueCount + upcomingCount,
                 overdue, overdueCount, upcoming, upcomingCount, suspended, suspendedCount, settled,
-                oldestOverdue, nextDue, byVenue, restriction(ownerId, now));
+                oldestOverdue, nextDue, byVenue, restriction(ownerId, now), courtlyOwed(ownerId));
+    }
+
+    private CommissionDebtResponse.CourtlyOwed courtlyOwed(UUID ownerId) {
+        List<BookingCommission> owed = commissionRepository.findCourtlyOwed(ownerId);
+        BigDecimal total = owed.stream().map(BookingCommission::getCourtlyOwed).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<CommissionDebtResponse.Item> items = owed.stream()
+                .map(commission -> new CommissionDebtResponse.Item(commission.getBooking().getId(),
+                        commission.getBooking().getBookingCode(), commission.getBooking().getVenue().getName(),
+                        commission.getGrossAmount(), commission.getVoucherDiscount(), commission.getCourtlyOwed(),
+                        commission.getCalculatedAt()))
+                .toList();
+        return new CommissionDebtResponse.CourtlyOwed(total, items.size(), items);
     }
 
     private CommissionDebtResponse.Restriction restriction(UUID ownerId, Instant now) {

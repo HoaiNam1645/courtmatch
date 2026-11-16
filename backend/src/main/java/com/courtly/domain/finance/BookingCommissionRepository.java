@@ -89,6 +89,20 @@ public interface BookingCommissionRepository extends JpaRepository<BookingCommis
             """, nativeQuery = true)
     BigDecimal sumOutstandingByOwnerId(UUID ownerId);
 
+    /**
+     * Cac booking ma Courtly con no chu san do voucher vuot hoa hong (courtly_owed), moi nhat truoc.
+     * Hoa hong duoc mien hoac tam hoan do tranh chap khong tinh.
+     */
+    @Query("""
+            select c from BookingCommission c
+            join fetch c.booking b
+            join fetch b.venue v
+            where c.owner.id = :ownerId and c.courtlyOwed > 0 and c.courtlyOwedClearedAt is null
+              and c.status not in ('waived', 'suspended')
+            order by c.calculatedAt desc
+            """)
+    java.util.List<BookingCommission> findCourtlyOwed(@org.springframework.data.repository.query.Param("ownerId") UUID ownerId);
+
     /** Booking cau thanh cong no: hoa hong chua doi soat, loc theo han thanh toan [dueFrom, dueTo) (2.3.21). */
     @Query(value = """
             select c from BookingCommission c

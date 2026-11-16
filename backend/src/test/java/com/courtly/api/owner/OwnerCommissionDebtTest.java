@@ -157,8 +157,57 @@ class OwnerCommissionDebtTest extends OwnerApiTestBase {
         mockMvc.perform(post(PATH).header("Authorization", bearer(ownerToken))).andExpect(status().isMethodNotAllowed());
     }
 
+    @Test
+    @DisplayName("Khoan Courtly no chu san (voucher vuot hoa hong): cong don dung, khong tinh vao cong no, bo qua khoan da bu tru / mien / tam hoan")
+    void courtlyOwed() throws Exception {
+        Instant due = Instant.now().plus(3, ChronoUnit.DAYS);
+        BookingCommission a = commission(court, "due", due);
+        owe(a, "40000", null);
+        BookingCommission b = commission(court, "settled", due);
+        owe(b, "5000", null);
+        BookingCommission cleared = commission(court, "due", due);
+        owe(cleared, "9000", Instant.now());
+        BookingCommission waived = commission(court, "waived", due);
+        owe(waived, "7000", null);
+        BookingCommission suspended = commission(court, "suspended", due);
+        owe(suspended, "3000", null);
+        commission(court, "due", due); // khong voucher
+
+        mockMvc.perform(get(PATH).header("Authorization", bearer(ownerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courtlyOwed.amount").value(45000))
+                .andExpect(jsonPath("$.courtlyOwed.count").value(2))
+                .andExpect(jsonPath("$.courtlyOwed.items", hasSize(2)))
+                .andExpect(jsonPath("$.courtlyOwed.items[?(@.owedAmount==40000)].venueName").value("San Cong No"))
+                .andExpect(jsonPath("$.courtlyOwed.items[?(@.owedAmount==40000)].voucherDiscount").value(58000))
+                .andExpect(jsonPath("$.totalOutstanding").value(54000));
+    }
+
+    @Test
+    @DisplayName("Khong co khoan Courtly no thi tra ve 0 va danh sach rong; chu san khac khong thay khoan cua nguoi khac")
+    void courtlyOwedEmptyAndIsolated() throws Exception {
+        owe(commission(court, "due", Instant.now().plus(1, ChronoUnit.DAYS)), "12000", null);
+        User other = persistOwner("owner-other");
+        String otherToken = loginAs(other);
+
+        mockMvc.perform(get(PATH).header("Authorization", bearer(otherToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courtlyOwed.amount").value(0))
+                .andExpect(jsonPath("$.courtlyOwed.count").value(0))
+                .andExpect(jsonPath("$.courtlyOwed.items", hasSize(0)));
+        mockMvc.perform(get(PATH).header("Authorization", bearer(ownerToken)))
+                .andExpect(jsonPath("$.courtlyOwed.amount").value(12000));
+    }
+
+    private void owe(BookingCommission commission, String owed, Instant clearedAt) {
+        commission.setVoucherDiscount(new BigDecimal("58000"));
+        commission.setCourtlyOwed(new BigDecimal(owed));
+        commission.setCourtlyOwedClearedAt(clearedAt);
+        commissionRepository.saveAndFlush(commission);
+    }
+
     /** Booking hoan thanh co hoa hong 10% = 18.000d o trang thai va han thanh toan cho truoc. */
-    private void commission(Court target, String status, Instant dueAt) throws Exception {
+    private BookingCommission commission(Court target, String status, Instant dueAt) throws Exception {
         String id = createBooking(playerToken, target, nextMonday(), LocalTime.of(6, 0).plusMinutes(100L * slot++));
         Booking booking = bookingRepository.findById(UUID.fromString(id)).orElseThrow();
         booking.setStatus(BookingStatus.COMPLETED);
@@ -168,6 +217,6 @@ class OwnerCommissionDebtTest extends OwnerApiTestBase {
         BookingCommission saved = commissionRepository.findByBookingId(booking.getId()).orElseThrow();
         saved.setStatus(status);
         saved.setDueAt(dueAt);
-        commissionRepository.saveAndFlush(saved);
+        return commissionRepository.saveAndFlush(saved);
     }
 }

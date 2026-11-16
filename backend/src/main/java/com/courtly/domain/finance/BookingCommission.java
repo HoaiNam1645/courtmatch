@@ -60,6 +60,10 @@ public class BookingCommission extends AuditedEntity {
     @Column(name = "courtly_owed", nullable = false, precision = 12, scale = 2)
     private BigDecimal courtlyOwed = BigDecimal.ZERO;
 
+    /** Thoi diem khoan Courtly no (courtlyOwed) duoc bu tru hoac tra cho chu san; null = chua. */
+    @Column(name = "courtly_owed_cleared_at")
+    private Instant courtlyOwedClearedAt;
+
     @Column(name = "status", nullable = false, length = 30)
     private String status = "pending";
 
