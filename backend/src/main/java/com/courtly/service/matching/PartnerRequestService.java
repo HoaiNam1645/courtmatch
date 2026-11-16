@@ -33,6 +33,7 @@ public class PartnerRequestService {
     private final UserRepository userRepository;
     private final PartnerRequestRepository requestRepository;
     private final PlayerConnectionRepository connectionRepository;
+    private final com.courtly.service.notification.PartnerNotifier partnerNotifier;
 
     @Transactional
     public PartnerRequestResponse create(UUID requesterId, CreatePartnerRequestRequest input) {
@@ -61,7 +62,9 @@ public class PartnerRequestService {
         request.setReceiver(receiver);
         request.setMessage(input.message().trim());
         try {
-            return toResponse(requestRepository.saveAndFlush(request));
+            PartnerRequest saved = requestRepository.saveAndFlush(request);
+            partnerNotifier.requestSent(saved);
+            return toResponse(saved);
         } catch (DataIntegrityViolationException exception) {
             throw duplicateRequest();
         }
@@ -114,7 +117,9 @@ public class PartnerRequestService {
 
         try {
             connectionRepository.saveAllAndFlush(List.of(forward, reverse));
-            return toResponse(requestRepository.saveAndFlush(request));
+            PartnerRequest saved = requestRepository.saveAndFlush(request);
+            partnerNotifier.accepted(saved);
+            return toResponse(saved);
         } catch (DataIntegrityViolationException exception) {
             throw ApiException.conflict(ErrorCode.PARTNER_ALREADY_CONNECTED,
                     "Hai ban da la doi tac cua nhau.", Map.of());
@@ -127,7 +132,9 @@ public class PartnerRequestService {
         PartnerRequest request = requirePendingRequestForReceiver(receiverId, requestId);
         request.setStatus(PartnerRequestStatus.REJECTED);
         request.setRespondedAt(Instant.now());
-        return toResponse(requestRepository.saveAndFlush(request));
+        PartnerRequest saved = requestRepository.saveAndFlush(request);
+        partnerNotifier.rejected(saved);
+        return toResponse(saved);
     }
 
     /** 2.2.35 - chi nguoi gui duoc huy yeu cau dang cho cua minh. */
