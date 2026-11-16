@@ -42,6 +42,16 @@ export async function fetchAdminPayments({ q = '', status = 'all', ownerId = '',
     totals: { count: Number(data.totals.count), amount: money(data.totals.amount) },
     statusCounts: data.statusCounts,
     owners: data.owners,
+    ownerSummary: data.ownerSummary ? {
+      ownerId: data.ownerSummary.ownerId,
+      ownerName: data.ownerSummary.ownerName,
+      confirmedAmount: money(data.ownerSummary.confirmedAmount),
+      pendingAmount: money(data.ownerSummary.pendingAmount),
+      outstanding: money(data.ownerSummary.outstanding),
+      credit: money(data.ownerSummary.credit),
+      owedByCourtly: money(data.ownerSummary.owedByCourtly),
+      restrictionLevel: Number(data.ownerSummary.restrictionLevel ?? 0),
+    } : null,
   }
 }
 

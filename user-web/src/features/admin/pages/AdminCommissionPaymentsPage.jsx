@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { CheckCircle2, Plus, Search, X } from 'lucide-react'
 import { fetchAdminPayments, PAYMENT_TABS } from '../../../api/adminCommissionPayments'
 import { commissionPaymentStatusMeta } from '../../../api/ownerCommissionPayments'
@@ -16,7 +17,10 @@ const EMPTY_FILTERS = { status: 'pending_review', ownerId: '', from: '', to: '',
 
 /** 2.3.47 — báo cáo thanh toán công nợ của chủ sân: đối chiếu và xác nhận; cũng là lịch sử thanh toán (2.3.50). */
 function AdminCommissionPaymentsPage() {
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  // Mở từ nơi khác với ?ownerId=... thì xem ngay lịch sử đầy đủ của chủ sân đó.
+  const [searchParams] = useSearchParams()
+  const initialOwner = searchParams.get('ownerId') ?? ''
+  const [filters, setFilters] = useState(initialOwner ? { ...EMPTY_FILTERS, ownerId: initialOwner, status: 'all' } : EMPTY_FILTERS)
   const [query, setQuery] = useState('')
   const q = useDebounced(query)
   const [reviewing, setReviewing] = useState(null)
@@ -32,7 +36,8 @@ function AdminCommissionPaymentsPage() {
   const lastRef = useRef({ owners: [], statusCounts: {} })
   if (data) lastRef.current = { owners: data.owners, statusCounts: data.statusCounts }
   const { owners, statusCounts } = lastRef.current
-  const filtered = filters.status !== 'pending_review' || filters.ownerId || filters.from || filters.to || q
+  const summary = data?.ownerSummary ?? null
+  const filtered = (filters.status !== 'pending_review' && !filters.ownerId) || filters.ownerId || filters.from || filters.to || q
 
   function setFilter(patch) {
     setFilters((current) => ({ ...current, page: 0, ...patch }))
@@ -42,7 +47,7 @@ function AdminCommissionPaymentsPage() {
 
   return (
     <AdminLayout
-      eyebrow="2.3.47 – 2.3.49 · Thanh toán công nợ"
+      eyebrow="2.3.47 – 2.3.50 · Thanh toán công nợ"
       actions={<button type="button" className={primaryButtonClass} data-testid="payment-record" onClick={() => setRecording(true)}><Plus className="size-4" />Ghi nhận thanh toán</button>}
       title="Thanh toán công nợ"
       description="Báo cáo chủ sân đã chuyển hoa hồng cho Courtly: đối chiếu số tiền, mã tham chiếu, bằng chứng rồi xác nhận, hoặc từ chối kèm lý do. Khoản chủ sân trả ngoài hệ thống thì ghi nhận trực tiếp."
@@ -68,7 +73,7 @@ function AdminCommissionPaymentsPage() {
             <input className="min-w-0 flex-1 text-sm outline-none placeholder:text-slate-400" aria-label="Tìm thanh toán" placeholder="Mã tham chiếu, tên hoặc email" value={query} maxLength={100} onChange={(event) => { setQuery(event.target.value); setFilters((current) => ({ ...current, page: 0 })) }} />
             {query && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setQuery('')}><X className="size-4 text-slate-400" /></button>}
           </label>
-          <select className={inputClass} aria-label="Lọc theo chủ sân" value={filters.ownerId} onChange={(event) => setFilter({ ownerId: event.target.value })}>
+          <select className={inputClass} aria-label="Lọc theo chủ sân" value={filters.ownerId} onChange={(event) => setFilter({ ownerId: event.target.value, status: event.target.value ? 'all' : 'pending_review' })}>
             <option value="">Tất cả chủ sân</option>
             {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
           </select>
@@ -76,6 +81,19 @@ function AdminCommissionPaymentsPage() {
           <label className="block text-xs font-semibold text-slate-600">Thanh toán đến ngày<input type="date" className={`${inputClass} mt-1`} aria-label="Thanh toán đến ngày" value={filters.to} onChange={(event) => setFilter({ to: event.target.value })} /></label>
           {filtered && <button type="button" className={`${secondaryButtonClass} self-end`} data-testid="payment-clear" onClick={() => { setFilters(EMPTY_FILTERS); setQuery('') }}>Xóa bộ lọc</button>}
         </div>
+        {summary && (
+          <section className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" data-testid="owner-summary" aria-label={`Tổng quan thanh toán của ${summary.ownerName}`}>
+            <p className="text-sm font-semibold text-slate-900" data-testid="owner-summary-name">{summary.ownerName}</p>
+            <dl className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <div><dt className="text-xs font-semibold text-slate-500">Đã thanh toán</dt><dd className="text-base font-semibold text-slate-900" data-testid="owner-summary-confirmed">{formatCurrency(summary.confirmedAmount)}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">Đang chờ xác nhận</dt><dd className="text-base font-semibold text-slate-900" data-testid="owner-summary-pending">{formatCurrency(summary.pendingAmount)}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">Công nợ còn lại</dt><dd className={classNames('text-base font-semibold', summary.outstanding > 0 ? 'text-red-700' : 'text-emerald-700')} data-testid="owner-summary-outstanding">{formatCurrency(summary.outstanding)}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">Số dư trả trước</dt><dd className="text-base font-semibold text-slate-900" data-testid="owner-summary-credit">{formatCurrency(summary.credit)}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">Courtly còn nợ</dt><dd className="text-base font-semibold text-slate-900" data-testid="owner-summary-owed">{formatCurrency(summary.owedByCourtly)}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">Hạn chế</dt><dd className={classNames('text-base font-semibold', summary.restrictionLevel > 0 ? 'text-red-700' : 'text-slate-900')} data-testid="owner-summary-restriction">{summary.restrictionLevel === 0 ? 'Không' : `Mức ${summary.restrictionLevel}`}</dd></div>
+            </dl>
+          </section>
+        )}
         {invalidRange && <p className="mt-2 text-sm font-medium text-red-600" role="alert" data-testid="payment-range-error">Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.</p>}
 
         <div className="mt-5">

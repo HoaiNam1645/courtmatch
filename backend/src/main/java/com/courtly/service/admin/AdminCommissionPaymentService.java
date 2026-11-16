@@ -2,6 +2,7 @@ package com.courtly.service.admin;
 
 import com.courtly.api.admin.dto.AdminPaymentResponses.ListResponse;
 import com.courtly.api.admin.dto.AdminPaymentResponses.OwnerOption;
+import com.courtly.api.admin.dto.AdminPaymentResponses.OwnerSummary;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Row;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Settlement;
 import com.courtly.api.admin.dto.AdminPaymentResponses.Totals;
@@ -136,7 +137,28 @@ public class AdminCommissionPaymentService {
                 (rs, index) -> row(rs), pageArgs.toArray());
 
         int totalPages = (int) Math.ceil(totals.count() / (double) size);
-        return new ListResponse(rows, page, size, totals.count(), totalPages, totals, statusCounts, ownerOptions(), null);
+        return new ListResponse(rows, page, size, totals.count(), totalPages, totals, statusCounts, ownerOptions(),
+                ownerId == null ? null : ownerSummary(ownerId));
+    }
+
+    /** 2.3.50 - tong quan cong no va thanh toan cua mot chu san, khong phu thuoc bo loc dang chon. */
+    private OwnerSummary ownerSummary(UUID ownerId) {
+        return jdbc.queryForObject("""
+                SELECT u.full_name,
+                       (SELECT coalesce(sum(amount), 0) FROM commission_payment_reports WHERE owner_id = u.id AND status = 'confirmed') AS confirmed,
+                       (SELECT coalesce(sum(amount), 0) FROM commission_payment_reports WHERE owner_id = u.id AND status = 'pending_review') AS pending,
+                       (SELECT coalesce(sum(commission_amount), 0) FROM booking_commissions
+                         WHERE owner_id = u.id AND status IN ('pending', 'due', 'adjusted')) AS outstanding,
+                       coalesce(p.commission_credit, 0) AS credit,
+                       (SELECT coalesce(sum(courtly_owed), 0) FROM booking_commissions
+                         WHERE owner_id = u.id AND courtly_owed > 0 AND courtly_owed_cleared_at IS NULL
+                           AND status NOT IN ('waived', 'suspended')) AS owed,
+                       coalesce(p.restriction_level, 0) AS restriction
+                FROM users u LEFT JOIN court_owner_profiles p ON p.user_id = u.id
+                WHERE u.id = ?
+                """, (rs, index) -> new OwnerSummary(ownerId, rs.getString("full_name"), rs.getBigDecimal("confirmed"),
+                rs.getBigDecimal("pending"), rs.getBigDecimal("outstanding"), rs.getBigDecimal("credit"), rs.getBigDecimal("owed"),
+                rs.getInt("restriction")), ownerId);
     }
 
     /** 2.3.47 - xac nhan chu san da thanh toan cong no. */
