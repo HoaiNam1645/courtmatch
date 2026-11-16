@@ -161,6 +161,15 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             """)
     List<Booking> findExpiredPending(@Param("now") Instant now);
 
+    /** Booking da xac nhan co gio choi som nhat nam trong (from, to]: dung de nhac lich choi (2.3.59). */
+    @Query("""
+            SELECT b FROM Booking b
+            WHERE b.status = com.courtly.common.enums.BookingStatus.CONFIRMED
+              AND (SELECT min(i.startTime) FROM BookingItem i WHERE i.booking = b) > :from
+              AND (SELECT min(i.startTime) FROM BookingItem i WHERE i.booking = b) <= :to
+            """)
+    List<Booking> findConfirmedStartingBetween(@Param("from") Instant from, @Param("to") Instant to);
+
     @Query("""
             SELECT b FROM Booking b
             WHERE b.status = com.courtly.common.enums.BookingStatus.CONFIRMED

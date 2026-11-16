@@ -18,6 +18,15 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
 
     boolean existsByBookingIdAndStatusNot(UUID bookingId, MatchStatus status);
 
+    /** Tran da co ket qua, dang cho xac nhan, tao trong (from, to]: dung de nhac xac nhan truoc khi tu xac nhan (2.3.60). */
+    @Query("""
+            SELECT DISTINCT m FROM Match m
+            WHERE m.status = com.courtly.common.enums.MatchStatus.SCHEDULED
+              AND m.result IS NOT NULL
+              AND m.createdAt > :from AND m.createdAt <= :to
+            """)
+    List<Match> findAwaitingConfirmationCreatedBetween(@Param("from") Instant from, @Param("to") Instant to);
+
     @Query("""
             SELECT DISTINCT m FROM Match m
             WHERE m.status = com.courtly.common.enums.MatchStatus.SCHEDULED

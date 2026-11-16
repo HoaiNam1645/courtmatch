@@ -97,6 +97,11 @@ courtly:
       enabled: ${OWNER_RESTRICTION_JOB_ENABLED:true}
       initial-delay-ms: 60000
       interval-ms: ${OWNER_RESTRICTION_JOB_INTERVAL_MS:300000}
+    reminders:
+      # Nhac lich choi (2.3.59) va nhac xac nhan ket qua tran dau (2.3.60).
+      enabled: ${REMINDER_JOB_ENABLED:true}
+      initial-delay-ms: 120000
+      interval-ms: ${REMINDER_JOB_INTERVAL_MS:300000}
     match-data:
       enabled: ${MATCH_DATA_JOB_ENABLED:true}
       confirmation-interval-ms: ${MATCH_CONFIRMATION_JOB_INTERVAL_MS:3600000}
