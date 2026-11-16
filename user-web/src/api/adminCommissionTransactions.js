@@ -1,4 +1,4 @@
-/** 2.3.43 — danh sách giao dịch đối soát (hoa hồng từng booking) cho quản trị viên. */
+/** 2.3.43 — danh sách giao dịch đối soát; 2.3.44 — chi tiết đối soát của một booking. */
 
 import { request } from './client'
 
@@ -35,5 +35,44 @@ export async function fetchCommissionTransactions({ q = '', status = 'all', venu
     totals: { count: Number(data.totals.count), grossAmount: money(data.totals.grossAmount), commissionAmount: money(data.totals.commissionAmount) },
     venues: data.venues,
     settlements: data.settlements.map((item) => ({ id: item.id, ownerName: item.ownerName, periodFrom: item.periodFrom, periodTo: item.periodTo, status: item.status })),
+  }
+}
+
+export const REFUND_STATUS_LABEL = {
+  requested: 'Đã yêu cầu', approved: 'Đã duyệt', awaiting_owner_refund: 'Chờ chủ sân hoàn', owner_reported_refunded: 'Chủ sân báo đã hoàn',
+  confirmed: 'Đã xác nhận', rejected: 'Từ chối', failed: 'Thất bại',
+}
+export const DISPUTE_STATUS_LABEL = {
+  open: 'Mới mở', awaiting_owner_response: 'Chờ chủ sân phản hồi', reviewing: 'Đang xem xét', resolved: 'Đã giải quyết', rejected: 'Bị từ chối', cancelled: 'Đã hủy',
+}
+export const HISTORY_ACTION_LABEL = {
+  'commission.adjust': 'Điều chỉnh hoa hồng',
+  'commission.waive': 'Miễn hoa hồng',
+  'commission.refund_adjust': 'Điều chỉnh theo hoàn tiền',
+  'commission.courtly_owed.clear': 'Bù trừ khoản Courtly nợ',
+}
+
+export async function fetchCommissionDetail(commissionId) {
+  const data = await request(`/api/v1/admin/finance/commission-transactions/${commissionId}`)
+  const c = data.commission
+  return {
+    commission: {
+      id: c.id, status: c.status, feeType: c.feeType, feeValue: money(c.feeValue), feePolicyName: c.feePolicyName ?? null,
+      grossAmount: money(c.grossAmount), baseCommission: money(c.baseCommission), voucherDiscount: money(c.voucherDiscount),
+      commissionAmount: money(c.commissionAmount), courtlyOwed: money(c.courtlyOwed), courtlyOwedClearedAt: c.courtlyOwedClearedAt ?? null,
+      calculatedAt: c.calculatedAt, dueAt: c.dueAt, overdue: Boolean(c.overdue), settledAt: c.settledAt ?? null,
+    },
+    booking: {
+      ...data.booking,
+      totalAmount: money(data.booking.totalAmount), discountAmount: money(data.booking.discountAmount), payableAmount: money(data.booking.payableAmount),
+      voucherCode: data.booking.voucherCode ?? null,
+    },
+    owner: { ...data.owner, phone: data.owner.phone ?? null },
+    payment: data.payment ? { ...data.payment, amount: money(data.payment.amount) } : null,
+    unconfirmedPayment: Boolean(data.unconfirmedPayment),
+    settlement: data.settlement ? { ...data.settlement, amountDue: money(data.settlement.amountDue), amountPaid: money(data.settlement.amountPaid) } : null,
+    refunds: data.refunds.map((item) => ({ ...item, amount: money(item.amount) })),
+    disputes: data.disputes,
+    history: data.history,
   }
 }

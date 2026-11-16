@@ -10,6 +10,7 @@ import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../../owner/com
 import { formatDateTime, formatIsoDate } from '../../owner/ownerDates'
 import { inputClass, secondaryButtonClass } from '../../owner/ownerStyles'
 import { AdminLayout } from '../components/AdminLayout'
+import { CommissionDetailDrawer } from '../components/CommissionDetailDrawer'
 
 const EMPTY_FILTERS = { status: 'all', venueId: '', settlementId: '', from: '', to: '', overdue: false, page: 0 }
 
@@ -17,6 +18,7 @@ const EMPTY_FILTERS = { status: 'all', venueId: '', settlementId: '', from: '', 
 function AdminCommissionTransactionsPage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [query, setQuery] = useState('')
+  const [openId, setOpenId] = useState(null)
   const q = useDebounced(query)
   const invalidRange = Boolean(filters.from && filters.to && filters.to < filters.from)
   const { status, data, error, reload } = useApiResource(
@@ -35,7 +37,7 @@ function AdminCommissionTransactionsPage() {
   }
 
   return (
-    <AdminLayout eyebrow="2.3.43 · Giao dịch đối soát" title="Giao dịch đối soát" description="Hoa hồng của từng booking: trạng thái, hạn thanh toán và kỳ đối soát đã gán.">
+    <AdminLayout eyebrow="2.3.43 – 2.3.44 · Giao dịch đối soát" title="Giao dịch đối soát" description="Hoa hồng của từng booking: trạng thái, hạn thanh toán và kỳ đối soát đã gán.">
       <OwnerCard>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 focus-within:border-slate-700 sm:col-span-2 lg:col-span-1">
@@ -85,7 +87,10 @@ function AdminCommissionTransactionsPage() {
                           {row.overdue && <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700" data-testid="tx-overdue">Quá hạn</span>}
                           <span className="text-xs font-bold text-slate-400">{row.bookingCode}</span>
                         </div>
-                        <p className="text-base font-semibold text-slate-900" data-testid="tx-commission">{formatCurrency(row.commissionAmount)}</p>
+                        <div className="flex items-center gap-3">
+                          <p className="text-base font-semibold text-slate-900" data-testid="tx-commission">{formatCurrency(row.commissionAmount)}</p>
+                          <button type="button" className="h-9 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50" aria-label={`Xem chi tiết ${row.bookingCode}`} data-testid="tx-detail" onClick={() => setOpenId(row.commissionId)}>Chi tiết</button>
+                        </div>
                       </div>
                       <p className="mt-2 text-sm font-semibold text-slate-900">{row.venueName}</p>
                       <p className="text-xs font-medium text-slate-500">Chủ sân {row.ownerName} · doanh thu gộp {formatCurrency(row.grossAmount)} · ghi nhận {formatDateTime(row.calculatedAt)}</p>
@@ -109,6 +114,7 @@ function AdminCommissionTransactionsPage() {
           )}
         </div>
       </OwnerCard>
+      {openId && <CommissionDetailDrawer commissionId={openId} onClose={() => setOpenId(null)} />}
     </AdminLayout>
   )
 }

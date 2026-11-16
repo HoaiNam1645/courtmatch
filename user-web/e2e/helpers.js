@@ -109,6 +109,7 @@ export function deleteE2eVenues() {
          OR entity_id IN (SELECT id FROM commission_payment_reports WHERE reference_code LIKE 'E2E%'));
     DELETE FROM commission_payment_reports WHERE reference_code LIKE 'E2E%';
     DELETE FROM commission_settlements WHERE note LIKE 'E2E%';
+    DELETE FROM booking_disputes WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM refunds WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE venue_id IN (${E2E_VENUES}));
     DELETE FROM bookings WHERE venue_id IN (${E2E_VENUES});
