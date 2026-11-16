@@ -247,6 +247,7 @@ public class BookingService {
         // Doi trang thai tung khung gio de giai phong cho cho nguoi khac dat.
         booking.getItems().forEach(item -> item.setStatus(BookingItemStatus.CANCELLED));
         addHistory(booking, previous, BookingStatus.CANCELLED, request.reason(), booking.getUser(), now);
+        bookingNotifier.cancelledByPlayer(booking);
 
         bookingRepository.save(booking);
         log.info("Huy don {}", booking.getBookingCode());
@@ -453,6 +454,7 @@ public class BookingService {
                     ? "Chu san khong phan hoi dung han"
                     : "Qua han thanh toan";
             addHistory(booking, previous, BookingStatus.EXPIRED, reason, null, now);
+            bookingNotifier.expired(booking, previous == BookingStatus.PENDING_OWNER_CONFIRMATION);
         }
 
         if (!overdue.isEmpty()) {

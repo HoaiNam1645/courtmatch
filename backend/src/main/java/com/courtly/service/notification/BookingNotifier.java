@@ -51,6 +51,30 @@ public class BookingNotifier {
                 "/bookings/" + booking.getId(), extra(booking));
     }
 
+    /** 2.3.54 - nguoi choi huy dat san: bao cho chu san de giai phong lich va khong cho doi vo ich. */
+    public void cancelledByPlayer(Booking booking) {
+        String reason = booking.getCancellationReason() == null || booking.getCancellationReason().isBlank()
+                ? "" : " Lý do: " + booking.getCancellationReason().trim() + ".";
+        notifications.send(booking.getVenue().getOwner().getId(), NotificationType.BOOKING_CANCELLED, "Người chơi đã hủy đặt sân",
+                "%s đã hủy booking %s tại %s lúc %s.%s".formatted(booking.getUser().getFullName(), booking.getBookingCode(),
+                        booking.getVenue().getName(), when(booking), reason),
+                "/owner/bookings", extra(booking));
+    }
+
+    /**
+     * 2.3.54 - booking het han: chu san khong phan hoi dung han hoac nguoi choi khong thanh toan kip.
+     *
+     * @param waitingOwner true neu dang cho chu san phan hoi, false neu dang cho thanh toan
+     */
+    public void expired(Booking booking, boolean waitingOwner) {
+        String title = waitingOwner ? "Yêu cầu đặt sân đã hết hạn" : "Đặt sân đã hết hạn thanh toán";
+        String why = waitingOwner ? "chủ sân không phản hồi đúng hạn" : "chưa thanh toán trong thời hạn";
+        notifications.send(booking.getUser().getId(), NotificationType.BOOKING_CANCELLED, title,
+                "Booking %s tại %s lúc %s đã bị hủy vì %s. Khung giờ đã được mở lại, bạn có thể đặt lại."
+                        .formatted(booking.getBookingCode(), booking.getVenue().getName(), when(booking), why),
+                "/bookings/" + booking.getId(), extra(booking));
+    }
+
     static Map<String, Object> extra(Booking booking) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("bookingId", booking.getId().toString());
