@@ -12,7 +12,7 @@ function cleanup() {
 
 async function openAccuracy(page, from = DAY, to = DAY) {
   await loginByApi(page, SEED_ADMIN_EMAIL)
-  await page.goto('/admin/matching')
+  await page.goto('/admin/matching?tab=accuracy')
   await page.getByTestId('mt-preset-custom').click()
   await page.getByLabel('Từ ngày').fill(from)
   await page.getByLabel('Đến ngày').fill(to)

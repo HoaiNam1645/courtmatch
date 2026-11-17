@@ -17,6 +17,7 @@ async function openAccuracy(page, from = DAY, to = DAY) {
   await page.getByRole('navigation', { name: 'Điều hướng quản trị' }).getByRole('link', { name: 'Ghép cặp' }).click()
   await expect(page).toHaveURL(/\/admin\/matching/)
   await expect(page.getByRole('heading', { name: 'Phân tích ghép cặp' })).toBeVisible()
+  await page.getByTestId('mt-tab-accuracy').click()
   await setRange(page, from, to)
 }
 

@@ -183,3 +183,45 @@ export async function fetchMatchingPerformance({ from, to } = {}) {
 
 export const MODEL_TYPE_LABEL = { baseline_ranker: 'Xếp hạng đối tác (baseline)', catboost_ranker: 'Xếp hạng đối tác (CatBoost)', double_team_ranker: 'Chia đội đôi' }
 export const MODEL_STATUS_LABEL = { active: 'Đang hoạt động', ready: 'Sẵn sàng', training: 'Đang huấn luyện', failed: 'Lỗi', archived: 'Lưu trữ' }
+
+export const STATS_METRICS = [
+  { id: 'searches', label: 'Lượt tìm đối tác' },
+  { id: 'suggestions', label: 'Gợi ý hiển thị' },
+  { id: 'requests', label: 'Yêu cầu ghép cặp' },
+  { id: 'accepted', label: 'Yêu cầu được chấp nhận' },
+  { id: 'rejected', label: 'Yêu cầu bị từ chối' },
+  { id: 'expired', label: 'Yêu cầu hết hạn' },
+  { id: 'connections', label: 'Kết nối mới' },
+  { id: 'teamRuns', label: 'Lượt chia đội' },
+  { id: 'teamOptions', label: 'Phương án chia đội' },
+]
+
+function statsPoint(item) {
+  return {
+    period: item.period ?? null,
+    searches: Number(item.searches),
+    suggestions: Number(item.suggestions),
+    requests: Number(item.requests),
+    accepted: Number(item.accepted),
+    rejected: Number(item.rejected),
+    expired: Number(item.expired),
+    cancelled: Number(item.cancelled),
+    connections: Number(item.connections),
+    teamRuns: Number(item.teamRuns),
+    teamOptions: Number(item.teamOptions),
+  }
+}
+
+/** 2.3.74: thống kê hiệu suất ghép cặp theo ngày / tuần / tháng. */
+export async function fetchMatchingStats({ from, to, granularity = 'day' } = {}) {
+  const data = await request(`/api/v1/admin/matching/stats${query({ from, to, granularity })}`)
+  return {
+    from: data.from,
+    to: data.to,
+    granularity: data.granularity,
+    totals: statsPoint(data.totals),
+    avgResponseMinutes: optionalNumber(data.avgResponseMinutes),
+    responseSamples: Number(data.responseSamples),
+    points: data.points.map(statsPoint),
+  }
+}
