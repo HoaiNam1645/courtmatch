@@ -1,6 +1,10 @@
 package com.courtly.service.matching;
 
+import com.courtly.api.doubleteam.dto.DoubleTeamHistoryItem;
 import com.courtly.api.doubleteam.dto.DoubleTeamRequest;
+import com.courtly.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import com.courtly.api.doubleteam.dto.DoubleTeamSuggestionResponse;
 import com.courtly.api.doubleteam.dto.DoubleTeamSuggestionResponse.Option;
 import com.courtly.api.doubleteam.dto.DoubleTeamSuggestionResponse.Pair;
@@ -139,6 +143,22 @@ public class DoubleTeamService {
         return new DoubleTeamSuggestionResponse(batchId, input.matchType(), "baseline",
                 model.getModelVersion(), rows.getFirst().getCreatedAt() != null ? rows.getFirst().getCreatedAt() : now,
                 players, pairs, options);
+    }
+
+    /** 2.3.76 - lich su chia doi cua chinh minh, moi nhat truoc. */
+    @Transactional(readOnly = true)
+    public PageResponse<DoubleTeamHistoryItem> history(UUID requesterId, int page, int size) {
+        Page<DoubleTeamSuggestion> rows = suggestionRepository.findRecommendedByUser(requesterId, PageRequest.of(page, size));
+        List<DoubleTeamHistoryItem> items = rows.getContent().stream().map(row -> {
+            Detail detail = objectMapper.convertValue(row.getDetailJson(), Detail.class);
+            List<DoubleTeamHistoryItem.Member> members = detail.players().stream()
+                    .map(player -> new DoubleTeamHistoryItem.Member(player.id(), player.fullName(), player.avatarUrl()))
+                    .toList();
+            return new DoubleTeamHistoryItem(row.getBatchId(), row.getCreatedAt(), row.getMatchType(), members,
+                    row.getBalanceScore(), detail.option().balanceLabel(), detail.option().team1WinProbability(),
+                    row.getScoringSource());
+        }).toList();
+        return PageResponse.from(rows, items);
     }
 
     /** 2.3.69 - xem lai mot de xuat cua chinh minh. */

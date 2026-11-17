@@ -284,3 +284,80 @@ export async function fetchPartnerHistoryDetail(id) {
     } : null,
   }
 }
+
+export const TEAM_TYPE_LABEL = { mens: 'Đôi nam', womens: 'Đôi nữ', mixed: 'Đôi nam nữ' }
+export const PLAYED_LABEL = { all: 'Mọi trạng thái đối chiếu', played: 'Đã có trận thật', unplayed: 'Chưa có trận' }
+
+function teamHistoryItem(item) {
+  const reconciliation = item.reconciliation
+  return {
+    batchId: item.batchId,
+    createdAt: item.createdAt,
+    requester: playerRef(item.requester),
+    matchType: item.matchType,
+    players: item.players.map((player) => ({ id: player.id, fullName: player.fullName })),
+    optionCount: Number(item.optionCount),
+    recommended: {
+      team1Strength: optionalNumber(item.recommended.team1Strength),
+      team2Strength: optionalNumber(item.recommended.team2Strength),
+      balanceScore: optionalNumber(item.recommended.balanceScore),
+      balanceLabel: item.recommended.balanceLabel ?? null,
+      team1WinProbability: optionalNumber(item.recommended.team1WinProbability),
+    },
+    scoringSource: item.scoringSource,
+    modelVersion: item.modelVersion ?? null,
+    reconciliation: {
+      status: reconciliation.status,
+      matchId: reconciliation.matchId ?? null,
+      playedAt: reconciliation.playedAt ?? null,
+      optionRank: optionalNumber(reconciliation.optionRank),
+      optionRecommended: reconciliation.optionRecommended ?? null,
+      predictedCorrect: reconciliation.predictedCorrect ?? null,
+    },
+  }
+}
+
+/** 2.3.76: lịch sử các lần chia đội của người chơi, phân trang. */
+export async function fetchTeamHistory({ from, to, source, q, type = 'all', played = 'all', page = 0, size = 20 } = {}) {
+  const data = await request(`/api/v1/admin/matching/team-history${query({ from, to, source, q, type, played, page, size })}`)
+  return {
+    items: data.content.map(teamHistoryItem),
+    page: Number(data.page),
+    totalPages: Number(data.totalPages),
+    totalElements: Number(data.totalElements),
+  }
+}
+
+export async function fetchTeamHistoryDetail(batchId) {
+  const data = await request(`/api/v1/admin/matching/team-history/${batchId}`)
+  const team = (item) => ({ playerIds: item.playerIds, strength: optionalNumber(item.strength), compatibility: optionalNumber(item.compatibility) })
+  return {
+    item: teamHistoryItem(data.item),
+    players: data.players.map((player) => ({
+      id: player.id,
+      fullName: player.fullName,
+      ratingScore: optionalNumber(player.ratingScore),
+      totalMatches: optionalNumber(player.totalMatches),
+      provisional: Boolean(player.provisional),
+      strength: optionalNumber(player.strength),
+    })),
+    pairs: data.pairs.map((pair) => ({
+      playerIds: pair.playerIds,
+      skillScore: optionalNumber(pair.skillScore),
+      styleScore: optionalNumber(pair.styleScore),
+      timeScore: optionalNumber(pair.timeScore),
+      locationScore: optionalNumber(pair.locationScore),
+      totalScore: optionalNumber(pair.totalScore),
+    })),
+    options: data.options.map((option) => ({
+      rank: Number(option.rank),
+      recommended: Boolean(option.recommended),
+      team1: team(option.team1),
+      team2: team(option.team2),
+      balanceScore: optionalNumber(option.balanceScore),
+      balanceLabel: option.balanceLabel,
+      team1WinProbability: optionalNumber(option.team1WinProbability),
+      reason: option.reason,
+    })),
+  }
+}

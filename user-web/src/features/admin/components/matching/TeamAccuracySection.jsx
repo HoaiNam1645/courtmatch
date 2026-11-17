@@ -3,7 +3,8 @@ import { useApiResource } from '../../../../hooks/useApiResource'
 import { classNames } from '../../../../shared/utils'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../../owner/components/OwnerUi'
 import { formatIsoDate } from '../../../owner/ownerDates'
-import { formatRate, Kpi, SampleBadge } from './matchingUi'
+import { formatRate } from './matchingFormat'
+import { Kpi, SampleBadge } from './matchingUi'
 
 const number = (value, digits = 1) => (value === null || value === undefined ? '—' : value.toLocaleString('vi-VN', { maximumFractionDigits: digits }))
 

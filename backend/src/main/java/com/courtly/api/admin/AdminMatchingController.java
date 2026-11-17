@@ -4,6 +4,7 @@ import com.courtly.api.admin.dto.AdminPartnerAccuracyResponse;
 import com.courtly.api.admin.dto.AdminMatchingPerformanceResponse;
 import com.courtly.api.admin.dto.AdminMatchingStatsResponse;
 import com.courtly.api.admin.dto.AdminPartnerHistoryResponse;
+import com.courtly.api.admin.dto.AdminTeamHistoryResponse;
 import com.courtly.common.PageResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -16,6 +17,7 @@ import com.courtly.api.admin.dto.AdminTeamAccuracyResponse;
 import com.courtly.service.admin.AdminMatchingPerformanceService;
 import com.courtly.service.admin.AdminMatchingStatsService;
 import com.courtly.service.admin.AdminPartnerHistoryService;
+import com.courtly.service.admin.AdminTeamHistoryService;
 import com.courtly.service.admin.AdminModelAnalysisService;
 import com.courtly.service.admin.AdminPartnerAccuracyService;
 import com.courtly.service.admin.AdminTeamAccuracyService;
@@ -43,6 +45,7 @@ public class AdminMatchingController {
     private final AdminMatchingPerformanceService performanceService;
     private final AdminMatchingStatsService statsService;
     private final AdminPartnerHistoryService partnerHistoryService;
+    private final AdminTeamHistoryService teamHistoryService;
 
     /** 2.3.70 - do chinh xac ghep cap nguoi choi. */
     @GetMapping("/partner-accuracy")
@@ -113,5 +116,28 @@ public class AdminMatchingController {
     public ResponseEntity<AdminPartnerHistoryResponse.Detail> partnerHistoryDetail(
             @AuthenticationPrincipal Jwt jwt, @PathVariable UUID suggestionId) {
         return ResponseEntity.ok(partnerHistoryService.get(AdminJwt.adminId(jwt), suggestionId));
+    }
+
+    /** 2.3.76 - lich su chia doi cua nguoi choi. */
+    @GetMapping("/team-history")
+    public ResponseEntity<PageResponse<AdminTeamHistoryResponse.Item>> teamHistory(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @Size(max = 100, message = "Tu khoa toi da 100 ky tu") String q,
+            @RequestParam(defaultValue = "all") String type,
+            @RequestParam(defaultValue = "all") String played,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "Kich thuoc trang tu 1 den 100")
+            @Max(value = 100, message = "Kich thuoc trang tu 1 den 100") int size) {
+        return ResponseEntity.ok(teamHistoryService.list(AdminJwt.adminId(jwt), q, type, played, source, from, to, page, size));
+    }
+
+    @GetMapping("/team-history/{batchId}")
+    public ResponseEntity<AdminTeamHistoryResponse.Detail> teamHistoryDetail(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID batchId) {
+        return ResponseEntity.ok(teamHistoryService.get(AdminJwt.adminId(jwt), batchId));
     }
 }

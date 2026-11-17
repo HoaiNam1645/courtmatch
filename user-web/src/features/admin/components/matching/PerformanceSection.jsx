@@ -4,7 +4,8 @@ import { useApiResource } from '../../../../hooks/useApiResource'
 import { classNames } from '../../../../shared/utils'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../../owner/components/OwnerUi'
 import { formatIsoDate } from '../../../owner/ownerDates'
-import { formatRate, Kpi } from './matchingUi'
+import { formatRate } from './matchingFormat'
+import { Kpi } from './matchingUi'
 
 const ms = (value) => (value === null || value === undefined ? '—' : `${value.toLocaleString('vi-VN')} ms`)
 

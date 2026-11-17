@@ -2,7 +2,8 @@ import { fetchPartnerAccuracy } from '../../../../api/adminMatching'
 import { useApiResource } from '../../../../hooks/useApiResource'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../../owner/components/OwnerUi'
 import { formatIsoDate } from '../../../owner/ownerDates'
-import { formatRate, Kpi, SampleBadge } from './matchingUi'
+import { formatRate } from './matchingFormat'
+import { Kpi, SampleBadge } from './matchingUi'
 
 function GroupTable({ title, groups, testId, minSample }) {
   return (

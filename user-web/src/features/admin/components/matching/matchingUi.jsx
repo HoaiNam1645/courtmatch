@@ -1,33 +1,6 @@
 import { classNames } from '../../../../shared/utils'
 import { inputClass } from '../../../owner/ownerStyles'
-import { rangeProblem, shiftIsoDate, todayInVietnam, firstOfMonth } from '../../../owner/ownerDates'
-
-export const PRESETS = [
-  { id: '7d', label: '7 ngày' },
-  { id: '30d', label: '30 ngày' },
-  { id: 'month', label: 'Tháng này' },
-  { id: '90d', label: '90 ngày' },
-  { id: 'custom', label: 'Tùy chọn' },
-]
-
-export function rangeOf(preset, custom) {
-  const today = todayInVietnam()
-  if (preset === '7d') return { from: shiftIsoDate(today, -6), to: today }
-  if (preset === 'month') return { from: firstOfMonth(today), to: today }
-  if (preset === '90d') return { from: shiftIsoDate(today, -89), to: today }
-  if (preset === 'custom') return custom
-  return { from: shiftIsoDate(today, -29), to: today }
-}
-
-export function customProblem(preset, range) {
-  if (preset !== 'custom') return ''
-  return !range.from || !range.to ? 'Chọn đủ ngày bắt đầu và ngày kết thúc.' : rangeProblem(range.from, range.to)
-}
-
-/** Phần trăm có thể vắng mặt: null (mẫu số bằng 0) hiện "—", không hiện 0% gây hiểu lầm. */
-export function formatRate(value) {
-  return value === null || value === undefined ? '—' : `${value.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`
-}
+import { PRESETS } from './matchingFormat'
 
 export function RangeBar({ preset, onPreset, custom, onCustom, problem, children }) {
   return (
@@ -66,6 +39,20 @@ export function SampleBadge({ count, min, testId }) {
   return (
     <span data-testid={testId} className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
       Chưa đủ dữ liệu ({count}/{min} mẫu)
+    </span>
+  )
+}
+
+/** Trạng thái đối chiếu với trận thật (2.3.71): chưa có trận, hoặc đã có và dự đoán đúng / sai. */
+export function ReconciliationBadge({ reconciliation }) {
+  if (reconciliation.status !== 'played') {
+    return <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600" data-state="none">Chưa có trận</span>
+  }
+  const verdict = reconciliation.predictedCorrect === null ? 'Không dự đoán' : reconciliation.predictedCorrect ? 'Dự đoán đúng' : 'Dự đoán sai'
+  const tone = reconciliation.predictedCorrect === null ? 'bg-slate-100 text-slate-700' : reconciliation.predictedCorrect ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+  return (
+    <span className={classNames('inline-flex rounded-full px-2.5 py-1 text-xs font-semibold', tone)} data-state="played">
+      Đã chơi phương án {reconciliation.optionRank}{reconciliation.optionRecommended ? ' (khuyến nghị)' : ''} · {verdict}
     </span>
   )
 }

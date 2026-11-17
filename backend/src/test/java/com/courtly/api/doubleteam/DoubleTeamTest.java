@@ -307,6 +307,60 @@ class DoubleTeamTest extends OwnerApiTestBase {
     }
 
     @Test
+    @DisplayName("2.3.76 Lich su chia doi cua chinh minh: moi nhat truoc, kem 4 nguoi va phuong an khuyen nghi; khong thay cua nguoi khac; phan trang")
+    void listsOwnHistory() throws Exception {
+        User a = player("dt-h1", Gender.MALE, "1300.00", 20);
+        User b = player("dt-h2", Gender.MALE, "1250.00", 20);
+        User c = player("dt-h3", Gender.MALE, "1100.00", 20);
+        User d = player("dt-h4", Gender.MALE, "1000.00", 20);
+        User e = player("dt-h5", Gender.FEMALE, "1000.00", 20);
+        User f = player("dt-h6", Gender.FEMALE, "1010.00", 20);
+        User g = player("dt-h7", Gender.FEMALE, "1020.00", 20);
+        String first = suggest(a, body("mens", b, c, d)).get("batchId").asText();
+        entityManager.flush();
+        jdbc.update("UPDATE double_team_suggestions SET created_at = created_at - interval '1 hour' WHERE batch_id = ?::uuid", first);
+        String second = suggest(a, body("mens", b, c, d)).get("batchId").asText();
+        User h = player("dt-h8", Gender.FEMALE, "990.00", 20);
+        suggest(e, body("womens", f, g, h));
+        entityManager.flush();
+        entityManager.clear();
+
+        String token = bearer(loginAs(a));
+        JsonNode history = objectMapper.readTree(mockMvc.perform(get(PATH).header("Authorization", token))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(history.get("totalElements").asLong()).isEqualTo(2);
+        assertThat(history.get("content").get(0).get("batchId").asText()).isEqualTo(second);
+        assertThat(history.get("content").get(1).get("batchId").asText()).isEqualTo(first);
+        JsonNode item = history.get("content").get(0);
+        assertThat(item.get("matchType").asText()).isEqualTo("mens");
+        assertThat(item.get("players")).hasSize(4);
+        assertThat(item.get("players").get(0).get("id").asText()).isEqualTo(a.getId().toString());
+        assertThat(item.get("balanceScore").asDouble()).isGreaterThanOrEqualTo(0);
+        assertThat(item.get("balanceLabel").asText()).isNotBlank();
+        assertThat(item.get("team1WinProbability").asDouble()).isBetween(0.0, 100.0);
+        assertThat(item.get("scoringSource").asText()).isEqualTo("baseline");
+
+        JsonNode paged = objectMapper.readTree(mockMvc.perform(get(PATH).header("Authorization", token).param("size", "1").param("page", "1"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(paged.get("content")).hasSize(1);
+        assertThat(paged.get("content").get(0).get("batchId").asText()).isEqualTo(first);
+        assertThat(paged.get("totalPages").asInt()).isEqualTo(2);
+
+        // Nguoi khac chi thay lan cua minh; chua tung chia thi danh sach rong.
+        JsonNode other = objectMapper.readTree(mockMvc.perform(get(PATH).header("Authorization", bearer(loginAs(e))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(other.get("totalElements").asLong()).isEqualTo(1);
+        JsonNode none = objectMapper.readTree(mockMvc.perform(get(PATH).header("Authorization", bearer(loginAs(b))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(none.get("totalElements").asLong()).isZero();
+        assertThat(none.get("content")).isEmpty();
+
+        mockMvc.perform(get(PATH).header("Authorization", token).param("size", "51")).andExpect(status().isBadRequest());
+        mockMvc.perform(get(PATH).header("Authorization", token).param("page", "-1")).andExpect(status().isBadRequest());
+        mockMvc.perform(get(PATH)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("Kiem tra nguoi choi: khac gioi tinh loai doi, thieu gioi tinh, bi khoa, khong ton tai, trung lap, tu chon chinh minh; moi loi bao theo tung nguoi")
     void validatesPlayers() throws Exception {
         User a = player("dt-v1", Gender.MALE, "1200.00", 10);

@@ -1,7 +1,8 @@
 import { fetchModelAnalysis, MODEL_STATUS_LABEL, MODEL_TYPE_LABEL } from '../../../../api/adminMatching'
 import { useApiResource } from '../../../../hooks/useApiResource'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../../../owner/components/OwnerUi'
-import { formatRate, SampleBadge } from './matchingUi'
+import { formatRate } from './matchingFormat'
+import { SampleBadge } from './matchingUi'
 
 const num = (value) => (value === null || value === undefined ? '—' : value.toLocaleString('vi-VN', { maximumFractionDigits: 1 }))
 

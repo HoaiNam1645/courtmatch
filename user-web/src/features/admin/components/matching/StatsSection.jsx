@@ -6,6 +6,7 @@ import { classNames } from '../../../../shared/utils'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../../owner/components/OwnerUi'
 import { formatIsoDate } from '../../../owner/ownerDates'
 import { inputClass } from '../../../owner/ownerStyles'
+import { formatMinutes } from './matchingFormat'
 import { Kpi } from './matchingUi'
 
 const GRANULARITIES = [['day', 'Theo ngày'], ['week', 'Theo tuần'], ['month', 'Theo tháng']]
@@ -14,15 +15,6 @@ function periodLabel(period, granularity) {
   if (granularity === 'month') return `${period.slice(5, 7)}/${period.slice(0, 4)}`
   if (granularity === 'week') return `Tuần ${formatIsoDate(period)}`
   return formatIsoDate(period)
-}
-
-/** Thời gian phản hồi dễ đọc: dưới 1 giờ tính theo phút, còn lại theo giờ và phút. */
-export function formatMinutes(minutes) {
-  if (minutes === null || minutes === undefined) return '—'
-  if (minutes < 60) return `${minutes.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} phút`
-  const hours = Math.floor(minutes / 60)
-  const rest = Math.round(minutes - hours * 60)
-  return rest === 0 ? `${hours} giờ` : `${hours} giờ ${rest} phút`
 }
 
 function Chart({ points, metric, granularity }) {

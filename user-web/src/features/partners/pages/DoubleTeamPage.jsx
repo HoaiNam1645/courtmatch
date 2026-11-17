@@ -1,4 +1,4 @@
-import { ArrowLeft, LoaderCircle, RefreshCw, Swords, Users } from 'lucide-react'
+import { ArrowLeft, History, LoaderCircle, RefreshCw, Swords, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
@@ -60,7 +60,10 @@ function DoubleTeamPage({ user, onLogout }) {
       <AppHeader user={user} onLogout={onLogout} />
       <section className="bg-emerald-950 px-4 pb-16 pt-9 text-white md:px-6">
         <div className="mx-auto max-w-[1080px]">
-          <a href="/partners/connections" className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-100/70"><ArrowLeft className="size-4" />Về đối tác của bạn</a>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <a href="/partners/connections" className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-100/70"><ArrowLeft className="size-4" />Về đối tác của bạn</a>
+            <a href="/partners/double-teams/history" data-testid="open-double-team-history" className="inline-flex items-center gap-2 rounded-lg border border-white/25 px-3 py-2 text-xs font-semibold text-white"><History className="size-4" />Lịch sử chia đội</a>
+          </div>
           <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-lime-300">2.3.63 · Ghép đội đôi thông minh</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Chia đội đôi cân bằng</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-100/70">Chọn loại đôi và ba người chơi cùng bạn. Hệ thống chia thành hai đội có sức mạnh gần nhau nhất.</p>

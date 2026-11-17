@@ -59,3 +59,23 @@ export async function createDoubleTeamSuggestion({ matchType, playerIds }) {
 export async function getDoubleTeamSuggestion(batchId) {
   return toSuggestion(await request(`/api/v1/double-teams/suggestions/${batchId}`))
 }
+
+/** 2.3.76: lịch sử các lần chia đội của chính mình, mới nhất trước. */
+export async function fetchDoubleTeamHistory({ page = 0, size = 20 } = {}) {
+  const data = await request(`/api/v1/double-teams/suggestions?page=${page}&size=${size}`)
+  return {
+    items: data.content.map((item) => ({
+      batchId: item.batchId,
+      createdAt: item.createdAt,
+      matchType: item.matchType,
+      players: item.players.map((player) => ({ id: player.id, fullName: player.fullName, avatarUrl: player.avatarUrl ?? null })),
+      balanceScore: num(item.balanceScore),
+      balanceLabel: item.balanceLabel,
+      team1WinProbability: num(item.team1WinProbability),
+      scoringSource: item.scoringSource,
+    })),
+    page: Number(data.page),
+    totalPages: Number(data.totalPages),
+    totalElements: Number(data.totalElements),
+  }
+}
