@@ -64,6 +64,7 @@ export async function getPartnerConnections({ page = 0, size = 20 } = {}) {
       playingStyle: item.playingStyle ?? null,
       preferredPlayType: item.preferredPlayType ?? null,
       connectedAt: item.connectedAt,
+      gender: item.gender ?? null,
     })),
   }
 }

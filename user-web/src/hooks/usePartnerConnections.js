@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getPartnerConnections } from '../api/partners'
 
-export function usePartnerConnections() {
+export function usePartnerConnections({ size = 20 } = {}) {
   const [state, setState] = useState({
     status: 'loading', data: [], page: 0, totalElements: 0, totalPages: 0, error: '',
   })
   const load = useCallback(async (page = 0) => {
     setState((current) => ({ ...current, status: 'loading', error: '' }))
     try {
-      const result = await getPartnerConnections({ page })
+      const result = await getPartnerConnections({ page, size })
       setState({
         status: result.content.length === 0 ? 'empty' : 'success',
         data: result.content,
@@ -20,7 +20,7 @@ export function usePartnerConnections() {
     } catch (error) {
       setState((current) => ({ ...current, status: 'error', error: error?.message ?? 'Không tải được danh sách đối tác.' }))
     }
-  }, [])
+  }, [size])
 
   useEffect(() => {
     // Effect dong bo man hinh voi danh sach ket noi tu backend.

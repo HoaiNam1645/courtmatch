@@ -53,6 +53,8 @@ public class PartnerConnectionService {
                         ? null : profile.getPlayingStyle().getValue(),
                 profile == null || profile.getPreferredPlayType() == null
                         ? null : profile.getPreferredPlayType().getValue(),
-                connection.getCreatedAt());
+                connection.getCreatedAt(),
+                profile == null || profile.getGender() == null
+                        ? null : profile.getGender().getValue());
     }
 }

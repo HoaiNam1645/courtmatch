@@ -1,6 +1,8 @@
 package com.courtly.domain.matching;
 
 import com.courtly.common.BaseEntity;
+import com.courtly.common.enums.DoubleTeamType;
+import com.courtly.domain.account.User;
 import com.courtly.domain.match.Match;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,4 +52,30 @@ public class DoubleTeamSuggestion extends BaseEntity {
     /** Cang gan 0 thi hai doi cang can bang (2.3.68). */
     @Column(name = "balance_score", precision = 8, scale = 2)
     private BigDecimal balanceScore;
+
+    /** Nguoi choi yeu cau de xuat; null voi du lieu mau cu. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_by")
+    private User requestedBy;
+
+    /** Cac phuong an cua cung mot lan chon 4 nguoi choi. */
+    @Column(name = "batch_id")
+    private UUID batchId;
+
+    @Column(name = "match_type", length = 20)
+    private DoubleTeamType matchType;
+
+    /** 1 = can bang nhat. */
+    @Column(name = "rank_no")
+    private Short rankNo;
+
+    @Column(name = "recommended", nullable = false)
+    private boolean recommended;
+
+    @Column(name = "scoring_source", nullable = false, length = 20)
+    private String scoringSource = "baseline";
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "detail_json")
+    private java.util.Map<String, Object> detailJson;
 }

@@ -214,6 +214,22 @@ public class PartnerSearchService {
                 .divide(BigDecimal.valueOf(requesterMinutes), 8, RoundingMode.HALF_UP));
     }
 
+    /** Ty le gio ranh trung nhau giua hai nguoi so voi tong gio ranh cua nguoi it gio hon; null neu mot ben chua khai bao lich. */
+    static BigDecimal weeklyOverlap(List<PlayerAvailabilitySlot> first, List<PlayerAvailabilitySlot> second) {
+        Map<Short, List<MinuteRange>> left = weeklySchedule(first);
+        Map<Short, List<MinuteRange>> right = weeklySchedule(second);
+        long leftMinutes = left.values().stream().flatMap(List::stream).mapToLong(MinuteRange::duration).sum();
+        long rightMinutes = right.values().stream().flatMap(List::stream).mapToLong(MinuteRange::duration).sum();
+        long smaller = Math.min(leftMinutes, rightMinutes);
+        if (smaller == 0) return null;
+        long overlap = 0;
+        for (Map.Entry<Short, List<MinuteRange>> entry : left.entrySet()) {
+            overlap += overlapMinutes(entry.getValue(), right.getOrDefault(entry.getKey(), List.of()));
+        }
+        return clampPercentage(BigDecimal.valueOf(overlap).multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(smaller), 8, RoundingMode.HALF_UP));
+    }
+
     /** Cung phong cach duoc uu tien; balanced van hop voi hai phong cach con lai. */
     static BigDecimal styleCompatibility(PlayingStyle requesterStyle, PlayingStyle candidateStyle) {
         if (requesterStyle == null || candidateStyle == null) {
@@ -228,7 +244,7 @@ public class PartnerSearchService {
         return new BigDecimal("65.00");
     }
 
-    private static Map<Short, List<MinuteRange>> weeklySchedule(List<PlayerAvailabilitySlot> slots) {
+    static Map<Short, List<MinuteRange>> weeklySchedule(List<PlayerAvailabilitySlot> slots) {
         Map<Short, List<MinuteRange>> schedule = new HashMap<>();
         for (PlayerAvailabilitySlot slot : slots) {
             schedule.computeIfAbsent(slot.getDayOfWeek(), ignored -> new ArrayList<>())
@@ -262,7 +278,7 @@ public class PartnerSearchService {
         return merged;
     }
 
-    private static long overlapMinutes(List<MinuteRange> left, List<MinuteRange> right) {
+    static long overlapMinutes(List<MinuteRange> left, List<MinuteRange> right) {
         long overlap = 0;
         int leftIndex = 0;
         int rightIndex = 0;
@@ -286,7 +302,7 @@ public class PartnerSearchService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    private record MinuteRange(int start, int end) {
+    record MinuteRange(int start, int end) {
         long duration() {
             return end - start;
         }

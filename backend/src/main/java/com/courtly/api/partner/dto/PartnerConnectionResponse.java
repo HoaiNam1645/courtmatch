@@ -11,5 +11,6 @@ public record PartnerConnectionResponse(
         String avatarUrl,
         String playingStyle,
         String preferredPlayType,
-        Instant connectedAt) {
+        Instant connectedAt,
+        String gender) {
 }

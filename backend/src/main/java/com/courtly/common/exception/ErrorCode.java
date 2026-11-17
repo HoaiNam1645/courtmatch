@@ -60,6 +60,7 @@ public final class ErrorCode {
     public static final String PARTNER_REQUEST_STATE_INVALID = "PARTNER_REQUEST_STATE_INVALID";
 
     // Danh gia doi tac sau tran dau Sprint 2
+    public static final String DOUBLE_TEAM_PLAYER_INVALID = "DOUBLE_TEAM_PLAYER_INVALID";
     public static final String PARTNER_REVIEW_DUPLICATE = "PARTNER_REVIEW_DUPLICATE";
     public static final String PARTNER_REVIEW_NOT_ALLOWED = "PARTNER_REVIEW_NOT_ALLOWED";
 
