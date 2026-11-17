@@ -26,7 +26,7 @@ export function completedBooking(venue, tag, code, daysAgo) {
 
 export function insertReview(venue, tag, bookingId, rating, comment, status = 'visible') {
   return runSql(`INSERT INTO venue_reviews (venue_id, user_id, booking_id, rating, comment, status)
-    SELECT '${venue.id}', u.id, '${bookingId}', ${rating}, ${comment ? `'${comment}'` : 'NULL'}, '${status}' FROM users u WHERE u.email = '${email(tag)}' RETURNING id`).split('\n')[0]
+    SELECT '${venue.id}', u.id, ${bookingId ? `'${bookingId}'` : 'NULL'}, ${rating}, ${comment ? `'${comment}'` : 'NULL'}, '${status}' FROM users u WHERE u.email = '${email(tag)}' RETURNING id`).split('\n')[0]
 }
 
 /** Dọn đơn, tài khoản E2E (kéo theo đánh giá) và khôi phục điểm trung bình của sân. */

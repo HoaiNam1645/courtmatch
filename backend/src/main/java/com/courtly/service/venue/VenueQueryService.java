@@ -1,5 +1,8 @@
 package com.courtly.service.venue;
 
+import java.util.Map;
+import com.courtly.common.exception.ErrorCode;
+import com.courtly.api.venue.dto.VenueReviewSummaryResponse;
 import com.courtly.api.venue.dto.DistrictResponse;
 import com.courtly.api.venue.dto.VenueDetailResponse;
 import com.courtly.api.venue.dto.VenueSearchQuery;
@@ -81,12 +84,16 @@ public class VenueQueryService {
 
     /** Danh gia cua san, hien o trang chi tiet (2.1.23). */
     @Transactional(readOnly = true)
-    public PageResponse<VenueReviewResponse> listReviews(String slugOrId, int page, int size) {
+    public PageResponse<VenueReviewResponse> listReviews(String slugOrId, int page, int size, Integer rating, UUID viewerId) {
+        if (rating != null && (rating < 1 || rating > 5)) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "So sao loc khong hop le.",
+                    Map.of("rating", "So sao tu 1 den 5"));
+        }
         Venue venue = findPublishedVenue(slugOrId)
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay san nay."));
 
-        Page<VenueReview> reviews = venueReviewRepository.findVisibleByVenue(
-                venue.getId(), ReviewStatus.VISIBLE, PageRequest.of(page, size));
+        Page<VenueReview> reviews = venueReviewRepository.findVisibleByVenueAndRating(
+                venue.getId(), ReviewStatus.VISIBLE, rating == null ? 0 : rating, PageRequest.of(page, size));
 
         return PageResponse.from(reviews, reviews.getContent().stream()
                 .map(review -> new VenueReviewResponse(
@@ -95,8 +102,32 @@ public class VenueQueryService {
                         review.getUser().getAvatarUrl(),
                         review.getRating(),
                         review.getComment(),
-                        review.getCreatedAt()))
+                        review.getCreatedAt(),
+                        // Bo qua chenh lech duoi 1 giay giua created_at va updated_at do cung mot lan ghi.
+                        review.getUpdatedAt() != null && review.getUpdatedAt().isAfter(review.getCreatedAt().plusSeconds(1)),
+                        viewerId != null && review.getUser().getId().equals(viewerId)))
                 .toList());
+    }
+
+    /** Tong hop diem va phan bo so sao cua cac danh gia dang hien thi (2.3.80). */
+    @Transactional(readOnly = true)
+    public VenueReviewSummaryResponse reviewSummary(String slugOrId) {
+        Venue venue = findPublishedVenue(slugOrId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay san nay."));
+        Map<String, Long> distribution = new java.util.LinkedHashMap<>();
+        for (int star = 1; star <= 5; star++) distribution.put(String.valueOf(star), 0L);
+        long total = 0;
+        long weighted = 0;
+        for (Object[] row : venueReviewRepository.countByRating(venue.getId(), ReviewStatus.VISIBLE)) {
+            int star = ((Number) row[0]).intValue();
+            long count = ((Number) row[1]).longValue();
+            distribution.put(String.valueOf(star), count);
+            total += count;
+            weighted += star * count;
+        }
+        java.math.BigDecimal average = total == 0 ? java.math.BigDecimal.ZERO.setScale(2)
+                : java.math.BigDecimal.valueOf(weighted).divide(java.math.BigDecimal.valueOf(total), 2, java.math.RoundingMode.HALF_UP);
+        return new VenueReviewSummaryResponse(average, total, distribution);
     }
 
     /** Danh sach khu vuc cho modal bo loc (2.1.19). */

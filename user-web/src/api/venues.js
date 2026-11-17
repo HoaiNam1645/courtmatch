@@ -74,12 +74,15 @@ export async function fetchDistricts() {
   return data.map((item) => ({ name: item.district, venueCount: item.venueCount }))
 }
 
-/** Đánh giá của sân, hiện ở trang chi tiết (2.1.23). */
-export async function fetchVenueReviews(slugOrId, { page = 0, size = 10 } = {}) {
-  const data = await request(
-    `/api/v1/venues/${encodeURIComponent(slugOrId)}/reviews?page=${page}&size=${size}`,
-    { auth: false },
-  )
+/**
+ * Đánh giá của sân, hiện ở trang chi tiết (2.1.23, 2.3.80).
+ *
+ * Gửi kèm token khi đã đăng nhập để server đánh dấu đánh giá của chính mình (`mine`).
+ */
+export async function fetchVenueReviews(slugOrId, { page = 0, size = 10, rating = null } = {}) {
+  const search = new URLSearchParams({ page: String(page), size: String(size) })
+  if (rating) search.set('rating', String(rating))
+  const data = await request(`/api/v1/venues/${encodeURIComponent(slugOrId)}/reviews?${search.toString()}`)
   return {
     reviews: data.content.map((review) => ({
       id: review.id,
@@ -88,8 +91,22 @@ export async function fetchVenueReviews(slugOrId, { page = 0, size = 10 } = {}) 
       rating: review.rating,
       text: review.comment ?? '',
       createdAt: review.createdAt,
+      edited: Boolean(review.edited),
+      mine: Boolean(review.mine),
     })),
+    page: data.page,
+    totalPages: data.totalPages,
     totalElements: data.totalElements,
+  }
+}
+
+/** Tổng hợp điểm trung bình và số đánh giá theo từng mức sao (2.3.80). */
+export async function fetchVenueReviewSummary(slugOrId) {
+  const data = await request(`/api/v1/venues/${encodeURIComponent(slugOrId)}/reviews/summary`, { auth: false })
+  return {
+    average: Number(data.average),
+    total: Number(data.total),
+    distribution: Object.fromEntries([1, 2, 3, 4, 5].map((star) => [star, Number(data.distribution?.[star] ?? 0)])),
   }
 }
 

@@ -1,5 +1,7 @@
 package com.courtly.api.venue;
 
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.courtly.api.venue.dto.DistrictResponse;
 import com.courtly.api.venue.dto.VenueDetailResponse;
 import com.courtly.api.venue.dto.VenueSearchQuery;
@@ -67,12 +69,21 @@ public class VenueController {
     /** Danh gia cua san, hien o trang chi tiet (2.1.23). */
     @GetMapping("/{slugOrId}/reviews")
     public ResponseEntity<PageResponse<VenueReviewResponse>> reviews(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String slugOrId,
+            @RequestParam(required = false) Integer rating,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
             @RequestParam(defaultValue = "10")
             @Min(value = 1, message = "Kich thuoc trang tu 1 den 50")
             @Max(value = 50, message = "Kich thuoc trang tu 1 den 50") int size) {
-        return ResponseEntity.ok(venueQueryService.listReviews(slugOrId, page, size));
+        return ResponseEntity.ok(venueQueryService.listReviews(slugOrId, page, size, rating,
+                jwt == null ? null : java.util.UUID.fromString(jwt.getSubject())));
+    }
+
+    /** Tong hop diem va phan bo so sao cua danh gia (2.3.80). */
+    @GetMapping("/{slugOrId}/reviews/summary")
+    public ResponseEntity<com.courtly.api.venue.dto.VenueReviewSummaryResponse> reviewSummary(@PathVariable String slugOrId) {
+        return ResponseEntity.ok(venueQueryService.reviewSummary(slugOrId));
     }
 
     /**

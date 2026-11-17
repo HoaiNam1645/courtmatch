@@ -25,6 +25,23 @@ public interface VenueReviewRepository extends JpaRepository<VenueReview, UUID> 
             countQuery = "SELECT count(r) FROM VenueReview r WHERE r.venue.id = :venueId AND r.status = :status")
     Page<VenueReview> findVisibleByVenue(UUID venueId, ReviewStatus status, Pageable pageable);
 
+    /** Nhu {@link #findVisibleByVenue} nhung loc theo so sao; {@code rating} = 0 la khong loc. */
+    @Query(value = """
+            SELECT r FROM VenueReview r
+            JOIN FETCH r.user
+            WHERE r.venue.id = :venueId AND r.status = :status AND (:rating = 0 OR r.rating = :rating)
+            ORDER BY r.createdAt DESC, r.id
+            """,
+            countQuery = """
+            SELECT count(r) FROM VenueReview r
+            WHERE r.venue.id = :venueId AND r.status = :status AND (:rating = 0 OR r.rating = :rating)
+            """)
+    Page<VenueReview> findVisibleByVenueAndRating(UUID venueId, ReviewStatus status, int rating, Pageable pageable);
+
+    /** Moi dong la {so sao, so danh gia}. */
+    @Query("SELECT r.rating, count(r) FROM VenueReview r WHERE r.venue.id = :venueId AND r.status = :status GROUP BY r.rating")
+    List<Object[]> countByRating(UUID venueId, ReviewStatus status);
+
     /** Danh gia cua nguoi choi cho mot don (moi don toi da mot danh gia, moi trang thai). */
     @Query("SELECT r FROM VenueReview r WHERE r.booking.id = :bookingId AND r.user.id = :userId")
     Optional<VenueReview> findByBookingAndUser(UUID bookingId, UUID userId);
