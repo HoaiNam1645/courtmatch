@@ -93,6 +93,7 @@ export async function fetchVenueReviews(slugOrId, { page = 0, size = 10, rating 
       createdAt: review.createdAt,
       edited: Boolean(review.edited),
       mine: Boolean(review.mine),
+      reply: review.reply ? { content: review.reply.content, repliedAt: review.reply.repliedAt, edited: Boolean(review.reply.edited) } : null,
     })),
     page: data.page,
     totalPages: data.totalPages,

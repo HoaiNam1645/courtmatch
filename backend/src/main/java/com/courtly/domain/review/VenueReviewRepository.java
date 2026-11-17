@@ -38,6 +38,40 @@ public interface VenueReviewRepository extends JpaRepository<VenueReview, UUID> 
             """)
     Page<VenueReview> findVisibleByVenueAndRating(UUID venueId, ReviewStatus status, int rating, Pageable pageable);
 
+    /**
+     * Danh gia hien thi cua cac san cua mot chu san, kem loc theo da/chua tra loi (2.3.81).
+     * {@code filter}: all, answered hoac unanswered; {@code rating} = 0 la khong loc.
+     */
+    @Query(value = """
+            SELECT r FROM VenueReview r
+            JOIN FETCH r.user
+            JOIN FETCH r.venue
+            WHERE r.venue.id IN :venueIds AND r.status = :status AND (:rating = 0 OR r.rating = :rating)
+              AND (:filter = 'all'
+                   OR (:filter = 'answered' AND EXISTS (SELECT 1 FROM VenueReviewReply x WHERE x.review = r))
+                   OR (:filter = 'unanswered' AND NOT EXISTS (SELECT 1 FROM VenueReviewReply x WHERE x.review = r)))
+            ORDER BY r.createdAt DESC, r.id
+            """,
+            countQuery = """
+            SELECT count(r) FROM VenueReview r
+            WHERE r.venue.id IN :venueIds AND r.status = :status AND (:rating = 0 OR r.rating = :rating)
+              AND (:filter = 'all'
+                   OR (:filter = 'answered' AND EXISTS (SELECT 1 FROM VenueReviewReply x WHERE x.review = r))
+                   OR (:filter = 'unanswered' AND NOT EXISTS (SELECT 1 FROM VenueReviewReply x WHERE x.review = r)))
+            """)
+    Page<VenueReview> findForOwner(Collection<UUID> venueIds, ReviewStatus status, int rating, String filter, Pageable pageable);
+
+    /** So danh gia hien thi chua duoc tra loi cua cac san (huy hieu o menu chu san). */
+    @Query("""
+            SELECT count(r) FROM VenueReview r
+            WHERE r.venue.id IN :venueIds AND r.status = :status
+              AND NOT EXISTS (SELECT 1 FROM VenueReviewReply x WHERE x.review = r)
+            """)
+    long countUnanswered(Collection<UUID> venueIds, ReviewStatus status);
+
+    @Query("SELECT r FROM VenueReview r JOIN FETCH r.venue JOIN FETCH r.user WHERE r.id = :id")
+    Optional<VenueReview> findWithVenueAndUser(UUID id);
+
     /** Moi dong la {so sao, so danh gia}. */
     @Query("SELECT r.rating, count(r) FROM VenueReview r WHERE r.venue.id = :venueId AND r.status = :status GROUP BY r.rating")
     List<Object[]> countByRating(UUID venueId, ReviewStatus status);

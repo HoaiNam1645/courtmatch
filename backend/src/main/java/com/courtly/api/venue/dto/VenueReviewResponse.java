@@ -17,5 +17,10 @@ public record VenueReviewResponse(UUID id,
                                   String comment,
                                   Instant createdAt,
                                   boolean edited,
-                                  boolean mine) {
+                                  boolean mine,
+                                  Reply reply) {
+
+    /** Cau tra loi cong khai cua chu san (2.3.81); null khi chua tra loi. */
+    public record Reply(String content, Instant repliedAt, boolean edited) {
+    }
 }

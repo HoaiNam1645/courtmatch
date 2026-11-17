@@ -29,3 +29,37 @@ export async function deleteVenueReview(reviewId) {
 export async function createVenueReview(bookingId, { rating, comment }) {
   return toMyReview(await request(`/api/v1/bookings/${bookingId}/venue-review`, { method: 'POST', body: { rating, comment: comment || null } }))
 }
+
+function toOwnerReview(item) {
+  return {
+    id: item.id,
+    venueId: item.venueId,
+    venueName: item.venueName,
+    rating: Number(item.rating),
+    comment: item.comment ?? '',
+    reviewerName: item.reviewerName,
+    createdAt: item.createdAt,
+    edited: Boolean(item.edited),
+    reply: item.reply ? { content: item.reply.content, repliedAt: item.reply.repliedAt, edited: Boolean(item.reply.edited) } : null,
+  }
+}
+
+/** 2.3.81: chủ sân xem đánh giá hiển thị của các sân mình, lọc theo đã/chưa trả lời, sân, số sao. */
+export async function fetchOwnerVenueReviews({ venueId = '', filter = 'all', rating = '', page = 0, size = 10 } = {}) {
+  const search = new URLSearchParams({ filter, page: String(page), size: String(size) })
+  if (venueId) search.set('venueId', venueId)
+  if (rating) search.set('rating', String(rating))
+  const data = await request(`/api/v1/owner/venue-reviews?${search.toString()}`)
+  return {
+    items: data.items.map(toOwnerReview),
+    page: Number(data.page),
+    totalPages: Number(data.totalPages),
+    totalElements: Number(data.totalElements),
+    unanswered: Number(data.unanswered),
+  }
+}
+
+/** 2.3.81: trả lời công khai một đánh giá. */
+export async function replyToVenueReview(reviewId, content) {
+  return toOwnerReview(await request(`/api/v1/owner/venue-reviews/${reviewId}/reply`, { method: 'POST', body: { content } }))
+}

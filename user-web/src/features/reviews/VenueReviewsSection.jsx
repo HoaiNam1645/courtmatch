@@ -1,4 +1,4 @@
-import { CheckCircle2, LoaderCircle, Pencil, PenLine, Star, Trash2 } from 'lucide-react'
+import { CheckCircle2, LoaderCircle, MessageSquareReply, Pencil, PenLine, Star, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { deleteVenueReview, createVenueReview, updateVenueReview } from '../../api/venueReviews'
 import { useReviewableBookings } from '../../hooks/useReviewableBookings'
@@ -91,6 +91,12 @@ export function VenueReviewsSection({ venue, user }) {
               </span>
             </div>
             {review.text && <p className="mt-2.5 text-xs font-medium leading-5 text-stone-600">{review.text}</p>}
+            {review.reply && (
+              <div className="mt-3 rounded-lg border-l-4 border-emerald-500 bg-emerald-50/70 p-3" data-testid={`review-reply-${review.id}`}>
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800"><MessageSquareReply className="size-3.5" />Phản hồi từ chủ sân · {formatReviewDate(review.reply.repliedAt)}{review.reply.edited && ' · Đã chỉnh sửa'}</p>
+                <p className="mt-1.5 whitespace-pre-line text-xs font-medium leading-5 text-stone-700">{review.reply.content}</p>
+              </div>
+            )}
             {review.mine && (
               <div className="mt-3 flex gap-2">
                 <button type="button" data-testid={`venue-review-edit-${review.id}`} onClick={() => { setNotice(''); setEditing(review) }} className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 text-xs font-semibold text-emerald-800"><Pencil className="size-3.5" />Sửa</button>

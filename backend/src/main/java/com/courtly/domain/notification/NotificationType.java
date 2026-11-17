@@ -15,6 +15,8 @@ public final class NotificationType {
     public static final String PARTNER_REQUEST = "partner_request";
     public static final String PARTNER_REQUEST_RESPONSE = "partner_request_response";
     public static final String PARTNER_REQUEST_EXPIRED = "partner_request_expired";
+    /** Chu san tra loi danh gia san cua nguoi choi (2.3.81). */
+    public static final String VENUE_REVIEW_REPLIED = "venue_review_replied";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
     /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
@@ -29,6 +31,7 @@ public final class NotificationType {
             PARTNER_REQUEST,
             PARTNER_REQUEST_RESPONSE,
             PARTNER_REQUEST_EXPIRED,
+            VENUE_REVIEW_REPLIED,
             MATCH_SCHEDULED,
             MATCH_REMINDER,
             DEBT_RESTRICTION

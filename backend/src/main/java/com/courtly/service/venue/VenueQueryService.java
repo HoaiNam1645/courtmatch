@@ -15,6 +15,8 @@ import com.courtly.common.enums.ReviewStatus;
 import com.courtly.common.enums.VenueStatus;
 import com.courtly.common.exception.ApiException;
 import com.courtly.domain.review.VenueReview;
+import com.courtly.domain.review.VenueReviewReply;
+import com.courtly.domain.review.VenueReviewReplyRepository;
 import com.courtly.domain.review.VenueReviewRepository;
 import com.courtly.domain.venue.Court;
 import com.courtly.domain.venue.CourtPriceRule;
@@ -52,6 +54,7 @@ public class VenueQueryService {
     private final VenueServiceRepository venueServiceRepository;
     private final VenueOperatingHoursRepository operatingHoursRepository;
     private final VenueReviewRepository venueReviewRepository;
+    private final VenueReviewReplyRepository venueReviewReplyRepository;
 
     /**
      * Tim kiem san kem loc va sap xep (2.1.13, 2.1.14, 2.1.19 - 2.1.21).
@@ -95,6 +98,10 @@ public class VenueQueryService {
         Page<VenueReview> reviews = venueReviewRepository.findVisibleByVenueAndRating(
                 venue.getId(), ReviewStatus.VISIBLE, rating == null ? 0 : rating, PageRequest.of(page, size));
 
+        Map<UUID, VenueReviewReply> replies = reviews.isEmpty() ? Map.of()
+                : venueReviewReplyRepository.findByReviewIds(reviews.getContent().stream().map(VenueReview::getId).toList())
+                .stream().collect(java.util.stream.Collectors.toMap(reply -> reply.getReview().getId(), reply -> reply));
+
         return PageResponse.from(reviews, reviews.getContent().stream()
                 .map(review -> new VenueReviewResponse(
                         review.getId(),
@@ -105,8 +112,15 @@ public class VenueQueryService {
                         review.getCreatedAt(),
                         // Bo qua chenh lech duoi 1 giay giua created_at va updated_at do cung mot lan ghi.
                         review.getUpdatedAt() != null && review.getUpdatedAt().isAfter(review.getCreatedAt().plusSeconds(1)),
-                        viewerId != null && review.getUser().getId().equals(viewerId)))
+                        viewerId != null && review.getUser().getId().equals(viewerId),
+                        toReply(replies.get(review.getId()))))
                 .toList());
+    }
+
+    private static VenueReviewResponse.Reply toReply(VenueReviewReply reply) {
+        if (reply == null) return null;
+        return new VenueReviewResponse.Reply(reply.getContent(), reply.getCreatedAt(),
+                reply.getUpdatedAt() != null && reply.getUpdatedAt().isAfter(reply.getCreatedAt().plusSeconds(1)));
     }
 
     /** Tong hop diem va phan bo so sao cua cac danh gia dang hien thi (2.3.80). */

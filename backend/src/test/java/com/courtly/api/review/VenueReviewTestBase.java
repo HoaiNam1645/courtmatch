@@ -25,6 +25,7 @@ abstract class VenueReviewTestBase extends OwnerApiTestBase {
 
     @Autowired protected BookingRepository bookingRepository;
     @Autowired protected JdbcTemplate jdbc;
+    @jakarta.persistence.PersistenceContext protected jakarta.persistence.EntityManager entityManager;
 
     protected User owner;
     protected String ownerToken;

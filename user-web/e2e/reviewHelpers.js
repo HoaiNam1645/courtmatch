@@ -4,9 +4,10 @@ export const email = (tag) => `e2e-${tag}@example.com`
 let counter = 0
 
 /** Một sân đã duyệt có sân con, dùng làm nơi diễn ra các đơn đánh giá; kèm điểm trung bình hiện tại để khôi phục. */
-export function pickVenue() {
+export function pickVenue({ ownerEmail = null } = {}) {
   const row = runSql(`SELECT v.id || '|' || v.slug || '|' || v.name || '|' || v.average_rating || '|' || v.review_count || '|' || (SELECT c.id FROM courts c WHERE c.venue_id = v.id LIMIT 1)
-    FROM venues v WHERE v.approval_status = 'approved' AND v.status = 'active' AND EXISTS (SELECT 1 FROM courts c WHERE c.venue_id = v.id) ORDER BY v.created_at LIMIT 1`)
+    FROM venues v WHERE v.approval_status = 'approved' AND v.status = 'active' AND EXISTS (SELECT 1 FROM courts c WHERE c.venue_id = v.id)
+      ${ownerEmail ? `AND v.owner_id = (SELECT id FROM users WHERE email = '${ownerEmail}')` : ''} ORDER BY v.created_at LIMIT 1`)
   const [id, slug, name, rating, count, court] = row.split('|')
   return { id, slug, name, court, snapshot: { rating, count } }
 }
