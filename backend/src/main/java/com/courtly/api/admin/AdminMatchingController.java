@@ -1,7 +1,9 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminPartnerAccuracyResponse;
+import com.courtly.api.admin.dto.AdminTeamAccuracyResponse;
 import com.courtly.service.admin.AdminPartnerAccuracyService;
+import com.courtly.service.admin.AdminTeamAccuracyService;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminMatchingController {
 
     private final AdminPartnerAccuracyService partnerAccuracyService;
+    private final AdminTeamAccuracyService teamAccuracyService;
 
     /** 2.3.70 - do chinh xac ghep cap nguoi choi. */
     @GetMapping("/partner-accuracy")
@@ -29,5 +32,15 @@ public class AdminMatchingController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String source) {
         return ResponseEntity.ok(partnerAccuracyService.get(AdminJwt.adminId(jwt), from, to, source));
+    }
+
+    /** 2.3.71 - do chinh xac ghep doi. */
+    @GetMapping("/team-accuracy")
+    public ResponseEntity<AdminTeamAccuracyResponse> teamAccuracy(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String source) {
+        return ResponseEntity.ok(teamAccuracyService.get(AdminJwt.adminId(jwt), from, to, source));
     }
 }

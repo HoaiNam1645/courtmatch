@@ -56,7 +56,7 @@ export function PartnerAccuracySection({ range, source }) {
         Chưa có phản hồi: {overall.pending} · Từ chối: {overall.rejected} · Hết hạn: {overall.expired} · Đã hủy: {overall.cancelled}.
         Một yêu cầu được tính cho gợi ý mới nhất của cùng cặp, trong {data.attributionDays} ngày sau gợi ý.
       </p>
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 2xl:grid-cols-2">
         <GroupTable title="Theo hạng gợi ý" groups={data.byRank} testId="pa-rank" minSample={data.minSample} />
         <GroupTable title="Theo khoảng điểm" groups={data.byScore} testId="pa-score" minSample={data.minSample} />
       </div>

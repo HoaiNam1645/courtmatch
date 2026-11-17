@@ -47,3 +47,48 @@ export async function fetchPartnerAccuracy({ from, to, source } = {}) {
     byScore: data.byScore.map(group),
   }
 }
+
+function teamMetrics(item) {
+  const optional = (value) => (value === undefined || value === null ? null : Number(value))
+  return {
+    reconciled: Number(item.reconciled),
+    evaluated: Number(item.evaluated),
+    correct: Number(item.correct),
+    accuracy: optional(item.accuracy),
+    brier: optional(item.brier),
+    avgBalanceGap: optional(item.avgBalanceGap),
+    avgPointMargin: optional(item.avgPointMargin),
+    sufficient: Boolean(item.sufficient),
+  }
+}
+
+/** 2.3.71: đối chiếu đề xuất chia đội với trận thật của đúng 4 người đó. */
+export async function fetchTeamAccuracy({ from, to, source } = {}) {
+  const data = await request(`/api/v1/admin/matching/team-accuracy${query({ from, to, source })}`)
+  return {
+    from: data.from,
+    to: data.to,
+    source: data.source ?? null,
+    minSample: Number(data.minSample),
+    reconcileDays: Number(data.reconcileDays),
+    batches: Number(data.batches),
+    options: Number(data.options),
+    overall: teamMetrics(data.overall),
+    recommended: teamMetrics(data.recommended),
+    others: teamMetrics(data.others),
+    recommendedChosenRate: data.recommendedChosenRate === undefined || data.recommendedChosenRate === null ? null : Number(data.recommendedChosenRate),
+    samples: data.samples.map((item) => ({
+      batchId: item.batchId,
+      matchId: item.matchId,
+      rank: Number(item.rank),
+      recommended: Boolean(item.recommended),
+      team1WinProbability: Number(item.team1WinProbability),
+      winningTeam: Number(item.winningTeam),
+      predictedWinningTeam: Number(item.predictedWinningTeam),
+      correct: Boolean(item.correct),
+      balanceScore: item.balanceScore === undefined || item.balanceScore === null ? null : Number(item.balanceScore),
+      suggestedAt: item.suggestedAt,
+      playedAt: item.playedAt,
+    })),
+  }
+}
