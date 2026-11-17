@@ -39,6 +39,14 @@ public class PartnerNotifier {
                 "/partners", data(request));
     }
 
+    /** Yeu cau qua han khong duoc phan hoi: bao cho nguoi gui de tim doi tac khac hoac gui lai. */
+    public void expired(PartnerRequest request) {
+        notifications.send(request.getRequester().getId(), NotificationType.PARTNER_REQUEST_EXPIRED, "Lời mời ghép cặp đã hết hạn",
+                "%s chưa phản hồi lời mời ghép cặp của bạn nên lời mời đã tự hủy. Bạn có thể gửi lại hoặc tìm đối tác khác."
+                        .formatted(request.getReceiver().getFullName()),
+                "/partners", data(request));
+    }
+
     private static Map<String, Object> data(PartnerRequest request) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("requestId", request.getId().toString());

@@ -14,6 +14,7 @@ public final class NotificationType {
     public static final String PAYMENT_STATUS = "payment_status";
     public static final String PARTNER_REQUEST = "partner_request";
     public static final String PARTNER_REQUEST_RESPONSE = "partner_request_response";
+    public static final String PARTNER_REQUEST_EXPIRED = "partner_request_expired";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
     /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
@@ -27,6 +28,7 @@ public final class NotificationType {
             PAYMENT_STATUS,
             PARTNER_REQUEST,
             PARTNER_REQUEST_RESPONSE,
+            PARTNER_REQUEST_EXPIRED,
             MATCH_SCHEDULED,
             MATCH_REMINDER,
             DEBT_RESTRICTION

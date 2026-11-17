@@ -78,4 +78,17 @@ public interface PartnerRequestRepository extends JpaRepository<PartnerRequest, 
             @Param("requesterId") UUID requesterId,
             @Param("status") PartnerRequestStatus status,
             Pageable pageable);
+
+    /** Yeu cau dang cho tao truoc moc cutoff (da qua han), co the gioi han theo mot nguoi choi. */
+    @Query("""
+            select request from PartnerRequest request
+            join fetch request.requester
+            join fetch request.receiver
+            where request.status = com.courtly.common.enums.PartnerRequestStatus.PENDING
+              and request.createdAt < :cutoff
+              and (:userId is null or request.requester.id = :userId or request.receiver.id = :userId)
+            order by request.createdAt
+            """)
+    java.util.List<PartnerRequest> findOverduePending(
+            @Param("cutoff") java.time.Instant cutoff, @Param("userId") UUID userId);
 }

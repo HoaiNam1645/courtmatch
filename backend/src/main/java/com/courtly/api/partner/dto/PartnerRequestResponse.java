@@ -12,7 +12,8 @@ public record PartnerRequestResponse(
         String message,
         PartnerRequestStatus status,
         Instant respondedAt,
-        Instant createdAt) {
+        Instant createdAt,
+        Instant expiresAt) {
 
     public record Player(UUID id, String fullName, String avatarUrl) {
     }

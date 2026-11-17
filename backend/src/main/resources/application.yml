@@ -84,6 +84,9 @@ management:
       show-details: when_authorized
 
 courtly:
+  partner-requests:
+    # Thoi gian cho nguoi nhan phan hoi, qua han thi yeu cau tu het han (phut).
+    expiry-minutes: ${PARTNER_REQUEST_EXPIRY_MINUTES:60}
   seed:
     # Bat seeder du lieu mau: SEED_ENABLED=true, hoac chay voi profile dev
     enabled: ${SEED_ENABLED:false}
@@ -97,6 +100,11 @@ courtly:
       enabled: ${OWNER_RESTRICTION_JOB_ENABLED:true}
       initial-delay-ms: 60000
       interval-ms: ${OWNER_RESTRICTION_JOB_INTERVAL_MS:300000}
+    partner-request-expiry:
+      # Tu huy yeu cau ghep cap qua han phan hoi.
+      enabled: ${PARTNER_REQUEST_EXPIRY_JOB_ENABLED:true}
+      initial-delay-ms: 30000
+      interval-ms: ${PARTNER_REQUEST_EXPIRY_JOB_INTERVAL_MS:60000}
     reminders:
       # Nhac lich choi (2.3.59) va nhac xac nhan ket qua tran dau (2.3.60).
       enabled: ${REMINDER_JOB_ENABLED:true}

@@ -35,7 +35,45 @@ public class PartnerRequestService {
     private final PlayerConnectionRepository connectionRepository;
     private final com.courtly.service.notification.PartnerNotifier partnerNotifier;
 
+    /** Thoi gian cho phan hoi truoc khi yeu cau tu het han (phut). */
+    @org.springframework.beans.factory.annotation.Value("${courtly.partner-requests.expiry-minutes:60}")
+    private long expiryMinutes;
+
+    /** Chuyen cac yeu cau dang cho da qua han sang expired va bao cho nguoi gui; tra ve so yeu cau da xu ly. */
     @Transactional
+    public int expireOverdue(Instant now) {
+        return expireOverdue(now, null);
+    }
+
+    private int expireOverdue(Instant now, UUID userId) {
+        List<PartnerRequest> overdue = requestRepository.findOverduePending(now.minusSeconds(expiryMinutes * 60), userId);
+        for (PartnerRequest request : overdue) {
+            expire(request, now);
+        }
+        if (!overdue.isEmpty()) requestRepository.flush();
+        return overdue.size();
+    }
+
+    private void expire(PartnerRequest request, Instant now) {
+        request.setStatus(PartnerRequestStatus.EXPIRED);
+        request.setRespondedAt(now);
+        partnerNotifier.expired(request);
+    }
+
+    private boolean isOverdue(PartnerRequest request, Instant now) {
+        return request.getCreatedAt().plusSeconds(expiryMinutes * 60).isBefore(now);
+    }
+
+    /** Yeu cau da qua han: danh dau het han roi bao loi (khong rollback de trang thai duoc luu). */
+    private ApiException expiredNow(PartnerRequest request) {
+        Instant now = Instant.now();
+        expire(request, now);
+        requestRepository.flush();
+        return ApiException.conflict(ErrorCode.PARTNER_REQUEST_STATE_INVALID,
+                "Yeu cau ghep cap nay da het han.", Map.of());
+    }
+
+    @Transactional(noRollbackFor = ApiException.class)
     public PartnerRequestResponse create(UUID requesterId, CreatePartnerRequestRequest input) {
         User requester = requireActivePlayer(requesterId, "Tai khoan cua ban khong the gui yeu cau ghep cap.");
         if (requesterId.equals(input.receiverId())) {
@@ -44,6 +82,7 @@ public class PartnerRequestService {
                     Map.of("receiverId", "Hay chon mot nguoi choi khac"));
         }
         User receiver = requireActivePlayer(input.receiverId(), "Nguoi choi nay hien khong the nhan loi moi.");
+        expireOverdue(Instant.now(), requesterId);
         if (receiver.getEmail() != null && receiver.getEmail().toLowerCase().endsWith("@bwf.example")) {
             throw ApiException.notFound("Khong tim thay nguoi choi.");
         }
@@ -71,33 +110,35 @@ public class PartnerRequestService {
     }
 
     /** 2.2.32 - danh sach yeu cau ma nguoi choi dang nhap da nhan. */
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResponse<PartnerRequestResponse> received(
             UUID receiverId, String statusValue, int page, int size) {
         requireActivePlayer(receiverId, "Tai khoan cua ban khong the xem yeu cau ghep cap.");
+        expireOverdue(Instant.now(), receiverId);
         PartnerRequestStatus status = parseOptionalStatus(statusValue);
         Page<PartnerRequest> requests = requestRepository.findReceived(
                 receiverId, status, PageRequest.of(page, size));
         return PageResponse.from(requests, requests.getContent().stream()
-                .map(PartnerRequestService::toResponse)
+                .map(this::toResponse)
                 .toList());
     }
 
     /** Danh sach yeu cau da gui, can de nguoi gui thao tac huy o 2.2.35. */
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResponse<PartnerRequestResponse> sent(
             UUID requesterId, String statusValue, int page, int size) {
         requireActivePlayer(requesterId, "Tai khoan cua ban khong the xem yeu cau ghep cap.");
+        expireOverdue(Instant.now(), requesterId);
         PartnerRequestStatus status = parseOptionalStatus(statusValue);
         Page<PartnerRequest> requests = requestRepository.findSent(
                 requesterId, status, PageRequest.of(page, size));
         return PageResponse.from(requests, requests.getContent().stream()
-                .map(PartnerRequestService::toResponse)
+                .map(this::toResponse)
                 .toList());
     }
 
     /** 2.2.33 - nguoi nhan chap nhan va tao ket noi hai chieu trong cung transaction. */
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public PartnerRequestResponse accept(UUID receiverId, UUID requestId) {
         PartnerRequest request = requirePendingRequestForReceiver(receiverId, requestId);
         request.setStatus(PartnerRequestStatus.ACCEPTED);
@@ -127,7 +168,7 @@ public class PartnerRequestService {
     }
 
     /** 2.2.34 - nguoi nhan tu choi mot yeu cau dang cho. */
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public PartnerRequestResponse reject(UUID receiverId, UUID requestId) {
         PartnerRequest request = requirePendingRequestForReceiver(receiverId, requestId);
         request.setStatus(PartnerRequestStatus.REJECTED);
@@ -138,7 +179,7 @@ public class PartnerRequestService {
     }
 
     /** 2.2.35 - chi nguoi gui duoc huy yeu cau dang cho cua minh. */
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public PartnerRequestResponse cancel(UUID requesterId, UUID requestId) {
         PartnerRequest request = requestRepository.findDetailByIdForUpdate(requestId)
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay yeu cau ghep cap."));
@@ -149,6 +190,9 @@ public class PartnerRequestService {
         if (request.getStatus() != PartnerRequestStatus.PENDING) {
             throw ApiException.conflict(ErrorCode.PARTNER_REQUEST_STATE_INVALID,
                     "Yeu cau nay khong con o trang thai cho huy.", Map.of());
+        }
+        if (isOverdue(request, Instant.now())) {
+            throw expiredNow(request);
         }
         request.setStatus(PartnerRequestStatus.CANCELLED);
         request.setRespondedAt(Instant.now());
@@ -175,6 +219,9 @@ public class PartnerRequestService {
             throw ApiException.conflict(ErrorCode.PARTNER_REQUEST_STATE_INVALID,
                     "Yeu cau nay khong con o trang thai cho xu ly.", Map.of());
         }
+        if (isOverdue(request, Instant.now())) {
+            throw expiredNow(request);
+        }
         return request;
     }
 
@@ -195,7 +242,7 @@ public class PartnerRequestService {
         }
     }
 
-    static PartnerRequestResponse toResponse(PartnerRequest request) {
+    PartnerRequestResponse toResponse(PartnerRequest request) {
         return new PartnerRequestResponse(
                 request.getId(),
                 toPlayer(request.getRequester()),
@@ -203,7 +250,8 @@ public class PartnerRequestService {
                 request.getMessage(),
                 request.getStatus(),
                 request.getRespondedAt(),
-                request.getCreatedAt());
+                request.getCreatedAt(),
+                request.getCreatedAt().plusSeconds(expiryMinutes * 60));
     }
 
     private static PartnerRequestResponse.Player toPlayer(User user) {

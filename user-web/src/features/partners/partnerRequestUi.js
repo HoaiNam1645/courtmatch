@@ -16,4 +16,14 @@ function formatPartnerRequestTime(value) {
   }).format(new Date(value))
 }
 
-export { formatPartnerRequestTime, statusUi }
+/** Yeu cau dang cho nhung da qua han (server se chuyen sang het han o lan quet ke tiep). */
+function isOverdue(request) {
+  return request.status === 'pending' && request.expiresAt != null && new Date(request.expiresAt) <= new Date()
+}
+
+function remainingText(expiresAt) {
+  const minutes = Math.max(0, Math.ceil((new Date(expiresAt) - new Date()) / 60000))
+  return minutes <= 1 ? 'còn dưới 1 phút' : `còn ${minutes} phút`
+}
+
+export { isOverdue, remainingText, formatPartnerRequestTime, statusUi }

@@ -9,6 +9,7 @@ function toPartnerRequest(item) {
     status: item.status,
     respondedAt: item.respondedAt ?? null,
     createdAt: item.createdAt,
+    expiresAt: item.expiresAt,
   }
 }
 
