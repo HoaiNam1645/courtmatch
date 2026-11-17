@@ -69,6 +69,41 @@ public class VenueReviewService {
         return toResponse(review);
     }
 
+    /** 2.3.78 - sua danh gia cua chinh minh; chi khi dang hien thi (khong sua danh gia dang bi bao cao hoac da bi an). */
+    @Transactional
+    public MyVenueReviewResponse update(UUID userId, UUID reviewId, VenueReviewRequest request) {
+        VenueReview review = requireEditable(userId, reviewId);
+        review.setRating(request.rating().shortValue());
+        review.setComment(cleanComment(request.comment()));
+        reviewRepository.saveAndFlush(review);
+        UUID venueId = review.getVenue().getId();
+        reviewRepository.recalculateVenueRating(venueId);
+        return toResponse(reviewRepository.findOwnedByUser(reviewId, userId).orElseThrow());
+    }
+
+    /** 2.3.79 - xoa danh gia cua chinh minh (cung dieu kien nhu sua); nguoi choi viet lai duoc cho cung don. */
+    @Transactional
+    public void delete(UUID userId, UUID reviewId) {
+        VenueReview review = requireEditable(userId, reviewId);
+        UUID venueId = review.getVenue().getId();
+        reviewRepository.delete(review);
+        reviewRepository.flush();
+        reviewRepository.recalculateVenueRating(venueId);
+    }
+
+    private VenueReview requireEditable(UUID userId, UUID reviewId) {
+        VenueReview review = reviewRepository.findOwnedByUser(reviewId, userId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay danh gia nay."));
+        if (review.getStatus() != ReviewStatus.VISIBLE) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_STATE_INVALID,
+                    review.getStatus() == ReviewStatus.REPORTED
+                            ? "Danh gia dang bi bao cao nen tam thoi khong the sua hoac xoa."
+                            : "Danh gia da bi quan tri vien an nen khong the sua hoac xoa.",
+                    java.util.Map.of());
+        }
+        return review;
+    }
+
     /** Han cuoi de viet danh gia cho don: moc hoan thanh + so ngay cho phep. */
     public Instant reviewDeadline(Booking booking) {
         return completedMoment(booking).plus(Duration.ofDays(windowDays));

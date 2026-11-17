@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle2, ChevronRight, Plus, Search, Star, X } from 'lucide-react'
-import { createVenueReview } from '../../../api/venueReviews'
+import { CheckCircle2, ChevronRight, Pencil, Plus, Search, Star, Trash2, X } from 'lucide-react'
+import { createVenueReview, deleteVenueReview, updateVenueReview } from '../../../api/venueReviews'
+import { ConfirmDeleteDialog } from '../../reviews/ConfirmDeleteDialog'
 import { VenueReviewDialog } from '../../reviews/VenueReviewDialog'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useBookings } from '../../../hooks/useBookings'
@@ -37,6 +38,8 @@ function BookingsPage({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('upcoming')
   const [query, setQuery] = useState('')
   const [reviewing, setReviewing] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [deleting, setDeleting] = useState(null)
   const [notice, setNotice] = useState('')
 
   // Lọc theo tab và tìm kiếm đều do server làm (2.1.32).
@@ -108,7 +111,19 @@ function BookingsPage({ user, onLogout }) {
                       {booking.reviewDeadline && <span className="text-[11px] font-medium text-stone-400">Đánh giá được đến {formatBookingDate(booking.reviewDeadline)}</span>}
                     </>
                   )}
-                  {booking.review && <span data-testid={`review-done-${booking.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"><Star className="size-4 fill-amber-400 text-amber-400" />Bạn đã đánh giá {booking.review.rating}/5</span>}
+                  {booking.review && (
+                    <>
+                      <span data-testid={`review-done-${booking.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"><Star className="size-4 fill-amber-400 text-amber-400" />Bạn đã đánh giá {booking.review.rating}/5</span>
+                      {booking.review.status === 'visible' ? (
+                        <div className="flex gap-2">
+                          <button type="button" data-testid={`review-edit-${booking.id}`} onClick={() => { setNotice(''); setEditing(booking) }} className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 text-xs font-semibold text-emerald-800"><Pencil className="size-3.5" />Sửa</button>
+                          <button type="button" data-testid={`review-delete-${booking.id}`} onClick={() => { setNotice(''); setDeleting(booking) }} className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-700"><Trash2 className="size-3.5" />Xóa</button>
+                        </div>
+                      ) : (
+                        <span data-testid={`review-locked-${booking.id}`} className="max-w-[160px] text-right text-[11px] font-medium text-stone-500">{booking.review.status === 'reported' ? 'Đánh giá đang bị báo cáo, tạm thời chưa sửa hoặc xóa được.' : 'Đánh giá đã bị quản trị viên ẩn.'}</span>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </article>
@@ -123,6 +138,31 @@ function BookingsPage({ user, onLogout }) {
             await createVenueReview(reviewing.id, payload)
             setReviewing(null)
             setNotice(`Cảm ơn bạn! Đánh giá cho ${reviewing.venueName} đã được đăng.`)
+            reload()
+          }}
+        />
+      )}
+      {editing && (
+        <VenueReviewDialog
+          venueName={editing.venueName}
+          initial={editing.review}
+          onClose={() => setEditing(null)}
+          onSubmit={async (payload) => {
+            await updateVenueReview(editing.review.id, payload)
+            setEditing(null)
+            setNotice(`Đã cập nhật đánh giá cho ${editing.venueName}.`)
+            reload()
+          }}
+        />
+      )}
+      {deleting && (
+        <ConfirmDeleteDialog
+          venueName={deleting.venueName}
+          onClose={() => setDeleting(null)}
+          onConfirm={async () => {
+            await deleteVenueReview(deleting.review.id)
+            setDeleting(null)
+            setNotice(`Đã xóa đánh giá cho ${deleting.venueName}.`)
             reload()
           }}
         />

@@ -1,50 +1,23 @@
 import { expect, test } from '@playwright/test'
 import { createE2eUser, deleteE2eUsers, loginByApi, runSql, shot, watchRuntimeErrors } from './helpers'
+import { cleanupReviews, completedBooking as insertCompletedBooking, email, pickVenue } from './reviewHelpers'
 
-const email = (tag) => `e2e-${tag}@example.com`
 let venue
-let court
-let snapshot
-let counter = 0
-
-/** Đơn đã hoàn thành cách đây `daysAgo` ngày, tạo bằng SQL (không đi qua luồng thanh toán). */
-function completedBooking(tag, code, daysAgo) {
-  const shift = (counter += 1) * 3 // mỗi đơn lệch 3 giờ để không đụng ràng buộc chống trùng giờ của sân
-  runSql(`
-    WITH b AS (
-      INSERT INTO bookings (booking_code, user_id, venue_id, status, total_amount, price_locked_at, completed_at)
-      SELECT '${code}', u.id, '${venue.id}', 'completed', 180000, now(), now() - interval '${daysAgo} days'
-      FROM users u WHERE u.email = '${email(tag)}' RETURNING id)
-    INSERT INTO booking_items (booking_id, court_id, start_time, end_time, price, status)
-    SELECT b.id, '${court}', now() - interval '${daysAgo} days ${shift + 2} hours', now() - interval '${daysAgo} days ${shift} hours 30 minutes', 180000, 'confirmed' FROM b;`)
-  return runSql(`SELECT id FROM bookings WHERE booking_code = '${code}'`)
-}
-
-function cleanup() {
-  runSql(`DELETE FROM bookings WHERE booking_code LIKE 'E2ERV%'`)
-  deleteE2eUsers()
-  if (snapshot) runSql(`UPDATE venues SET average_rating = ${snapshot.rating}, review_count = ${snapshot.count} WHERE id = '${venue.id}'`)
-}
 
 test.describe.serial('2.3.77 player writes a venue review after playing', () => {
   test.beforeAll(() => {
     deleteE2eUsers()
     runSql(`DELETE FROM bookings WHERE booking_code LIKE 'E2ERV%'`)
-    const row = runSql(`SELECT v.id || '|' || v.slug || '|' || v.name || '|' || v.average_rating || '|' || v.review_count || '|' || (SELECT c.id FROM courts c WHERE c.venue_id = v.id LIMIT 1)
-      FROM venues v WHERE v.approval_status = 'approved' AND v.status = 'active' AND EXISTS (SELECT 1 FROM courts c WHERE c.venue_id = v.id) ORDER BY v.created_at LIMIT 1`)
-    const [id, slug, name, rating, count, courtId] = row.split('|')
-    venue = { id, slug, name }
-    court = courtId
-    snapshot = { rating, count }
+    venue = pickVenue()
     createE2eUser({ tag: 'rv-a', name: 'E2E Người Đánh Giá' })
     createE2eUser({ tag: 'rv-b', name: 'E2E Không Có Đơn' })
   })
-  test.afterAll(cleanup)
+  test.afterAll(() => cleanupReviews(venue, 'E2ERV'))
 
   test('bookings page offers a review only for completed, un-reviewed, in-window bookings', async ({ page }) => {
-    const fresh = completedBooking('rv-a', 'E2ERV001', 1)
-    const old = completedBooking('rv-a', 'E2ERV002', 9)
-    const done = completedBooking('rv-a', 'E2ERV003', 2)
+    const fresh = insertCompletedBooking(venue, 'rv-a', 'E2ERV001', 1)
+    const old = insertCompletedBooking(venue, 'rv-a', 'E2ERV002', 9)
+    const done = insertCompletedBooking(venue, 'rv-a', 'E2ERV003', 2)
     runSql(`INSERT INTO venue_reviews (venue_id, user_id, booking_id, rating, comment)
       SELECT '${venue.id}', u.id, '${done}', 4, 'E2E đã đánh giá' FROM users u WHERE u.email = '${email('rv-a')}'`)
     const assertNoErrors = watchRuntimeErrors(page)
@@ -96,7 +69,7 @@ test.describe.serial('2.3.77 player writes a venue review after playing', () => 
   })
 
   test('a deadline that passes while the dialog is open is reported inside the dialog', async ({ page }) => {
-    const late = completedBooking('rv-a', 'E2ERV004', 6)
+    const late = insertCompletedBooking(venue, 'rv-a', 'E2ERV004', 6)
     await loginByApi(page, email('rv-a'))
     await page.goto('/bookings')
     await page.getByRole('button', { name: 'Đã hoàn thành' }).click()
@@ -112,7 +85,7 @@ test.describe.serial('2.3.77 player writes a venue review after playing', () => 
   })
 
   test('venue page shows the write button only to a player who can review there, and the new review appears', async ({ page, browser }) => {
-    const fresh = completedBooking('rv-a', 'E2ERV005', 1)
+    const fresh = insertCompletedBooking(venue, 'rv-a', 'E2ERV005', 1)
     const assertNoErrors = watchRuntimeErrors(page)
     // Người không có đơn nào tại sân: mở trong ngữ cảnh trình duyệt riêng để không lẫn phiên đăng nhập.
     const other = await (await browser.newContext()).newPage()
@@ -138,7 +111,7 @@ test.describe.serial('2.3.77 player writes a venue review after playing', () => 
   })
 
   test('fits a phone screen', async ({ page }) => {
-    completedBooking('rv-a', 'E2ERV006', 1)
+    insertCompletedBooking(venue, 'rv-a', 'E2ERV006', 1)
     await page.setViewportSize({ width: 375, height: 800 })
     await loginByApi(page, email('rv-a'))
     await page.goto('/bookings')

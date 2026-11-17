@@ -203,7 +203,7 @@ public class BookingService {
                     boolean completed = booking.getStatus() == BookingStatus.COMPLETED;
                     return toSummary(booking, covers.get(booking.getVenue().getId()),
                             review == null ? null : new BookingSummaryResponse.MyReview(review.getId(), review.getRating(),
-                                    review.getStatus().getValue()),
+                                    review.getComment(), review.getStatus().getValue()),
                             reviewService.canReview(booking, review != null, now),
                             completed ? reviewService.reviewDeadline(booking) : null);
                 })

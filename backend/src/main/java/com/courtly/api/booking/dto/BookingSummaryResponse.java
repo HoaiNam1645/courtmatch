@@ -25,6 +25,6 @@ public record BookingSummaryResponse(UUID id,
                                      Instant reviewDeadline) {
 
     /** Danh gia san cua chinh nguoi dat cho don nay (2.3.77); null khi chua danh gia. */
-    public record MyReview(UUID id, int rating, String status) {
+    public record MyReview(UUID id, int rating, String comment, String status) {
     }
 }

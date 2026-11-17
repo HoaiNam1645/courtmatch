@@ -103,7 +103,7 @@ function toUiSummary(booking) {
     expiresAt: booking.expiresAt ?? null,
     createdAt: booking.createdAt,
     // 2.3.77: đánh giá sân của chính người đặt; canReview do server quyết định (đã hoàn thành, chưa đánh giá, còn hạn).
-    review: booking.review ? { id: booking.review.id, rating: Number(booking.review.rating), status: booking.review.status } : null,
+    review: booking.review ? { id: booking.review.id, rating: Number(booking.review.rating), comment: booking.review.comment ?? '', status: booking.review.status } : null,
     canReview: Boolean(booking.canReview),
     reviewDeadline: booking.reviewDeadline ?? null,
   }

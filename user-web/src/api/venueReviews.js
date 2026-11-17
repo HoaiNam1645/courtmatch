@@ -15,6 +15,16 @@ function toMyReview(data) {
   }
 }
 
+/** 2.3.78: sửa đánh giá của chính mình. */
+export async function updateVenueReview(reviewId, { rating, comment }) {
+  return toMyReview(await request(`/api/v1/venue-reviews/${reviewId}`, { method: 'PUT', body: { rating, comment: comment || null } }))
+}
+
+/** 2.3.79: xóa đánh giá của chính mình. */
+export async function deleteVenueReview(reviewId) {
+  await request(`/api/v1/venue-reviews/${reviewId}`, { method: 'DELETE' })
+}
+
 /** 2.3.77: viết đánh giá cho một đơn đã hoàn thành. */
 export async function createVenueReview(bookingId, { rating, comment }) {
   return toMyReview(await request(`/api/v1/bookings/${bookingId}/venue-review`, { method: 'POST', body: { rating, comment: comment || null } }))
