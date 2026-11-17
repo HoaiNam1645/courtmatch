@@ -225,3 +225,62 @@ export async function fetchMatchingStats({ from, to, granularity = 'day' } = {})
     points: data.points.map(statsPoint),
   }
 }
+
+export const OUTCOME_LABEL = {
+  none: 'Chưa có tương tác',
+  pending: 'Đang chờ phản hồi',
+  accepted: 'Đã chấp nhận',
+  rejected: 'Bị từ chối',
+  expired: 'Hết hạn',
+  cancelled: 'Đã hủy',
+}
+
+const playerRef = (item) => ({ id: item.id, fullName: item.fullName, email: item.email })
+
+function historyItem(item) {
+  return {
+    id: item.id,
+    createdAt: item.createdAt,
+    viewer: playerRef(item.viewer),
+    suggested: playerRef(item.suggested),
+    rankNo: optionalNumber(item.rankNo),
+    totalScore: Number(item.totalScore),
+    scoringSource: item.scoringSource,
+    modelVersion: item.modelVersion ?? null,
+    outcome: item.outcome,
+    requestId: item.requestId ?? null,
+    requestedAt: item.requestedAt ?? null,
+    respondedAt: item.respondedAt ?? null,
+  }
+}
+
+/** 2.3.75: lịch sử gợi ý và kết quả yêu cầu ghép cặp, phân trang. */
+export async function fetchPartnerHistory({ from, to, source, q, outcome = 'all', page = 0, size = 20 } = {}) {
+  const data = await request(`/api/v1/admin/matching/partner-history${query({ from, to, source, q, outcome, page, size })}`)
+  return {
+    items: data.content.map(historyItem),
+    page: Number(data.page),
+    size: Number(data.size),
+    totalElements: Number(data.totalElements),
+    totalPages: Number(data.totalPages),
+  }
+}
+
+export async function fetchPartnerHistoryDetail(id) {
+  const data = await request(`/api/v1/admin/matching/partner-history/${id}`)
+  return {
+    item: historyItem(data.item),
+    skillScore: optionalNumber(data.skillScore),
+    locationScore: optionalNumber(data.locationScore),
+    timeScore: optionalNumber(data.timeScore),
+    styleScore: optionalNumber(data.styleScore),
+    confidenceScore: optionalNumber(data.confidenceScore),
+    reason: data.reason ?? null,
+    search: data.search ? {
+      id: data.search.id,
+      durationMs: optionalNumber(data.search.durationMs),
+      resultCount: optionalNumber(data.search.resultCount),
+      params: data.search.params ?? null,
+    } : null,
+  }
+}

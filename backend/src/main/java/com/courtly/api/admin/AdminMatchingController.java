@@ -3,10 +3,19 @@ package com.courtly.api.admin;
 import com.courtly.api.admin.dto.AdminPartnerAccuracyResponse;
 import com.courtly.api.admin.dto.AdminMatchingPerformanceResponse;
 import com.courtly.api.admin.dto.AdminMatchingStatsResponse;
+import com.courtly.api.admin.dto.AdminPartnerHistoryResponse;
+import com.courtly.common.PageResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import java.util.UUID;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
 import com.courtly.api.admin.dto.AdminModelAnalysisResponse;
 import com.courtly.api.admin.dto.AdminTeamAccuracyResponse;
 import com.courtly.service.admin.AdminMatchingPerformanceService;
 import com.courtly.service.admin.AdminMatchingStatsService;
+import com.courtly.service.admin.AdminPartnerHistoryService;
 import com.courtly.service.admin.AdminModelAnalysisService;
 import com.courtly.service.admin.AdminPartnerAccuracyService;
 import com.courtly.service.admin.AdminTeamAccuracyService;
@@ -22,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Phan tich va danh gia he thong ghep cap (2.3.70 - 2.3.76), chi doc. */
+@Validated
 @RestController
 @RequestMapping("/api/v1/admin/matching")
 @RequiredArgsConstructor
@@ -32,6 +42,7 @@ public class AdminMatchingController {
     private final AdminModelAnalysisService modelAnalysisService;
     private final AdminMatchingPerformanceService performanceService;
     private final AdminMatchingStatsService statsService;
+    private final AdminPartnerHistoryService partnerHistoryService;
 
     /** 2.3.70 - do chinh xac ghep cap nguoi choi. */
     @GetMapping("/partner-accuracy")
@@ -80,5 +91,27 @@ public class AdminMatchingController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "day") String granularity) {
         return ResponseEntity.ok(statsService.get(AdminJwt.adminId(jwt), from, to, granularity));
+    }
+
+    /** 2.3.75 - lich su ghep cap nguoi choi (goi y va ket qua yeu cau). */
+    @GetMapping("/partner-history")
+    public ResponseEntity<PageResponse<AdminPartnerHistoryResponse.Item>> partnerHistory(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @Size(max = 100, message = "Tu khoa toi da 100 ky tu") String q,
+            @RequestParam(defaultValue = "all") String outcome,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "Kich thuoc trang tu 1 den 100")
+            @Max(value = 100, message = "Kich thuoc trang tu 1 den 100") int size) {
+        return ResponseEntity.ok(partnerHistoryService.list(AdminJwt.adminId(jwt), q, outcome, source, from, to, page, size));
+    }
+
+    @GetMapping("/partner-history/{suggestionId}")
+    public ResponseEntity<AdminPartnerHistoryResponse.Detail> partnerHistoryDetail(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID suggestionId) {
+        return ResponseEntity.ok(partnerHistoryService.get(AdminJwt.adminId(jwt), suggestionId));
     }
 }
