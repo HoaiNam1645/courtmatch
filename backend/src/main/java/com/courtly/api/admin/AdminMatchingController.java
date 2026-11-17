@@ -1,7 +1,11 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminPartnerAccuracyResponse;
+import com.courtly.api.admin.dto.AdminMatchingPerformanceResponse;
+import com.courtly.api.admin.dto.AdminModelAnalysisResponse;
 import com.courtly.api.admin.dto.AdminTeamAccuracyResponse;
+import com.courtly.service.admin.AdminMatchingPerformanceService;
+import com.courtly.service.admin.AdminModelAnalysisService;
 import com.courtly.service.admin.AdminPartnerAccuracyService;
 import com.courtly.service.admin.AdminTeamAccuracyService;
 import java.time.LocalDate;
@@ -23,6 +27,8 @@ public class AdminMatchingController {
 
     private final AdminPartnerAccuracyService partnerAccuracyService;
     private final AdminTeamAccuracyService teamAccuracyService;
+    private final AdminModelAnalysisService modelAnalysisService;
+    private final AdminMatchingPerformanceService performanceService;
 
     /** 2.3.70 - do chinh xac ghep cap nguoi choi. */
     @GetMapping("/partner-accuracy")
@@ -42,5 +48,24 @@ public class AdminMatchingController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String source) {
         return ResponseEntity.ok(teamAccuracyService.get(AdminJwt.adminId(jwt), from, to, source));
+    }
+
+    /** 2.3.72 - phan tich ket qua cham diem cua tung model. */
+    @GetMapping("/model-analysis")
+    public ResponseEntity<AdminModelAnalysisResponse> modelAnalysis(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String source) {
+        return ResponseEntity.ok(modelAnalysisService.get(AdminJwt.adminId(jwt), from, to, source));
+    }
+
+    /** 2.3.73 - hieu suat xu ly va chat luong model. */
+    @GetMapping("/performance")
+    public ResponseEntity<AdminMatchingPerformanceResponse> performance(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(performanceService.get(AdminJwt.adminId(jwt), from, to));
     }
 }

@@ -4,7 +4,7 @@ import { classNames } from '../../../shared/utils'
 /** Khối nội dung chuẩn của khu quản lý chủ sân. */
 function OwnerCard({ title, description, actions, children, className }) {
   return (
-    <section className={classNames('rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_12px_34px_rgba(24,65,44,0.07)] md:p-6', className)}>
+    <section className={classNames('min-w-0 rounded-xl border border-emerald-100 bg-white p-5 shadow-[0_12px_34px_rgba(24,65,44,0.07)] md:p-6', className)}>
       {(title || actions) && (
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

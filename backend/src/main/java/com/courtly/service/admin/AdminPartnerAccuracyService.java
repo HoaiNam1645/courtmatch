@@ -34,7 +34,7 @@ public class AdminPartnerAccuracyService {
     private final JdbcTemplate jdbc;
 
     /** Mot goi y cung ket qua yeu cau gan voi no (neu co). */
-    record Outcome(int rank, boolean ranked, double score, String requestStatus, boolean played) {
+    record Outcome(UUID modelId, int rank, boolean ranked, double score, String requestStatus, boolean played) {
     }
 
     @Transactional(readOnly = true)
@@ -53,10 +53,11 @@ public class AdminPartnerAccuracyService {
                 metrics(outcomes), byRank, byScore);
     }
 
-    private List<Outcome> load(MatchingRange range, String source) {
+    /** Goi y cung ket qua yeu cau gan voi no; dung chung cho phan tich model (2.3.72, 2.3.73). */
+    List<Outcome> load(MatchingRange range, String source) {
         String sql = """
                 WITH s AS (
-                    SELECT ps.id, ps.user_id, ps.suggested_user_id, ps.total_score, ps.rank_no, ps.created_at
+                    SELECT ps.id, ps.user_id, ps.suggested_user_id, ps.model_id, ps.total_score, ps.rank_no, ps.created_at
                     FROM partner_suggestions ps
                     JOIN users u ON u.id = ps.user_id
                     JOIN users v ON v.id = ps.suggested_user_id
@@ -76,7 +77,7 @@ public class AdminPartnerAccuracyService {
                           AND later.created_at > s.created_at AND later.created_at <= r.created_at)
                     ORDER BY s.id, r.created_at
                 )
-                SELECT s.total_score, s.rank_no, attr.status,
+                SELECT s.model_id, s.total_score, s.rank_no, attr.status,
                        (attr.status = 'accepted' AND EXISTS (
                             SELECT 1 FROM match_players a
                             JOIN match_players b ON b.match_id = a.match_id
@@ -91,7 +92,7 @@ public class AdminPartnerAccuracyService {
         return jdbc.query(sql, (rs, row) -> {
             int rank = rs.getInt("rank_no");
             boolean ranked = !rs.wasNull();
-            return new Outcome(rank, ranked, rs.getBigDecimal("total_score").doubleValue(),
+            return new Outcome(rs.getObject("model_id", UUID.class), rank, ranked, rs.getBigDecimal("total_score").doubleValue(),
                     rs.getString("status"), rs.getBoolean("played"));
         }, start, end, source, source, ATTRIBUTION_DAYS);
     }

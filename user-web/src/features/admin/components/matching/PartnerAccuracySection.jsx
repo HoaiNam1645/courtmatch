@@ -40,7 +40,7 @@ export function PartnerAccuracySection({ range, source }) {
   if (status === 'error') return <OwnerError message={error?.message} onRetry={reload} />
   const { overall } = data
   return (
-    <section className="grid gap-5" aria-label="Độ chính xác ghép cặp người chơi" data-testid="partner-accuracy">
+    <section className="grid min-w-0 grid-cols-1 gap-5" aria-label="Độ chính xác ghép cặp người chơi" data-testid="partner-accuracy">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="w-full text-lg font-semibold text-slate-900 sm:w-auto">Ghép cặp người chơi</h2>
         <span className="text-sm font-medium text-slate-500">{formatIsoDate(data.from)} – {formatIsoDate(data.to)}</span>

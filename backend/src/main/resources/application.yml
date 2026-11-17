@@ -87,6 +87,13 @@ courtly:
   partner-requests:
     # Thoi gian cho nguoi nhan phan hoi, qua han thi yeu cau tu het han (phut).
     expiry-minutes: ${PARTNER_REQUEST_EXPIRY_MINUTES:60}
+  matching:
+    # Nguong canh bao chat luong ghep cap tren man hinh quan tri (2.3.73).
+    quality:
+      min-acceptance-rate: ${MATCHING_MIN_ACCEPTANCE_RATE:20.0}
+      max-failure-rate: ${MATCHING_MAX_FAILURE_RATE:5.0}
+      max-model-age-days: ${MATCHING_MAX_MODEL_AGE_DAYS:90}
+      max-p95-ms: ${MATCHING_MAX_P95_MS:1500}
   seed:
     # Bat seeder du lieu mau: SEED_ENABLED=true, hoac chay voi profile dev
     enabled: ${SEED_ENABLED:false}

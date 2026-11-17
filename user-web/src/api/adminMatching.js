@@ -92,3 +92,94 @@ export async function fetchTeamAccuracy({ from, to, source } = {}) {
     })),
   }
 }
+
+const optionalNumber = (value) => (value === undefined || value === null ? null : Number(value))
+
+/** 2.3.72: kết quả chấm điểm của từng model. Chỉ số vắng mặt (mẫu số 0) → null. */
+export async function fetchModelAnalysis({ from, to, source } = {}) {
+  const data = await request(`/api/v1/admin/matching/model-analysis${query({ from, to, source })}`)
+  return {
+    from: data.from,
+    to: data.to,
+    minSample: Number(data.minSample),
+    models: data.models.map((model) => ({
+      id: model.id,
+      type: model.type,
+      version: model.version,
+      status: model.status,
+      trainedAt: model.trainedAt ?? null,
+      activatedAt: model.activatedAt ?? null,
+      partner: model.partner ? {
+        scored: Number(model.partner.scored),
+        avgTotal: optionalNumber(model.partner.avgTotal),
+        avgSkill: optionalNumber(model.partner.avgSkill),
+        avgLocation: optionalNumber(model.partner.avgLocation),
+        avgTime: optionalNumber(model.partner.avgTime),
+        avgStyle: optionalNumber(model.partner.avgStyle),
+        missingTimeRate: optionalNumber(model.partner.missingTimeRate),
+        missingLocationRate: optionalNumber(model.partner.missingLocationRate),
+        distribution: model.partner.distribution.map((item) => ({ label: item.label, count: Number(item.count) })),
+        requested: Number(model.partner.requested),
+        answered: Number(model.partner.answered),
+        accepted: Number(model.partner.accepted),
+        acceptanceRate: optionalNumber(model.partner.acceptanceRate),
+        sufficient: Boolean(model.partner.sufficient),
+      } : null,
+      team: model.team ? {
+        batches: Number(model.team.batches),
+        avgBestGap: optionalNumber(model.team.avgBestGap),
+        pairs: Number(model.team.pairs),
+        missingTimeRate: optionalNumber(model.team.missingTimeRate),
+        missingLocationRate: optionalNumber(model.team.missingLocationRate),
+        sufficient: Boolean(model.team.sufficient),
+      } : null,
+    })),
+  }
+}
+
+function runSummary(item) {
+  return {
+    runs: Number(item.runs),
+    failed: Number(item.failed),
+    failureRate: optionalNumber(item.failureRate),
+    p50Ms: optionalNumber(item.p50Ms),
+    p95Ms: optionalNumber(item.p95Ms),
+    maxMs: optionalNumber(item.maxMs),
+    baselineRuns: Number(item.baselineRuns),
+    baselineRate: optionalNumber(item.baselineRate),
+    avgResults: optionalNumber(item.avgResults),
+  }
+}
+
+/** 2.3.73: hiệu suất xử lý và chất lượng model. */
+export async function fetchMatchingPerformance({ from, to } = {}) {
+  const data = await request(`/api/v1/admin/matching/performance${query({ from, to })}`)
+  return {
+    from: data.from,
+    to: data.to,
+    aiServiceActive: Boolean(data.aiServiceActive),
+    thresholds: data.thresholds,
+    partnerSearch: runSummary(data.partnerSearch),
+    doubleTeam: runSummary(data.doubleTeam),
+    daily: data.daily.map((item) => ({
+      day: item.day,
+      partnerSearches: Number(item.partnerSearches),
+      doubleTeams: Number(item.doubleTeams),
+      failed: Number(item.failed),
+    })),
+    models: data.models.map((item) => ({
+      id: item.id,
+      type: item.type,
+      version: item.version,
+      status: item.status,
+      trainedAt: item.trainedAt ?? null,
+      activatedAt: item.activatedAt ?? null,
+      ageDays: optionalNumber(item.ageDays),
+      metrics: item.metrics ?? null,
+    })),
+    alerts: data.alerts,
+  }
+}
+
+export const MODEL_TYPE_LABEL = { baseline_ranker: 'Xếp hạng đối tác (baseline)', catboost_ranker: 'Xếp hạng đối tác (CatBoost)', double_team_ranker: 'Chia đội đôi' }
+export const MODEL_STATUS_LABEL = { active: 'Đang hoạt động', ready: 'Sẵn sàng', training: 'Đang huấn luyện', failed: 'Lỗi', archived: 'Lưu trữ' }
