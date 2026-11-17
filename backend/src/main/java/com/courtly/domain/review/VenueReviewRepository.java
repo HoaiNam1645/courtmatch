@@ -1,10 +1,14 @@
 package com.courtly.domain.review;
 
 import com.courtly.common.enums.ReviewStatus;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -20,4 +24,29 @@ public interface VenueReviewRepository extends JpaRepository<VenueReview, UUID> 
             """,
             countQuery = "SELECT count(r) FROM VenueReview r WHERE r.venue.id = :venueId AND r.status = :status")
     Page<VenueReview> findVisibleByVenue(UUID venueId, ReviewStatus status, Pageable pageable);
+
+    /** Danh gia cua nguoi choi cho mot don (moi don toi da mot danh gia, moi trang thai). */
+    @Query("SELECT r FROM VenueReview r WHERE r.booking.id = :bookingId AND r.user.id = :userId")
+    Optional<VenueReview> findByBookingAndUser(UUID bookingId, UUID userId);
+
+    /** Danh gia cua nguoi choi cho nhieu don cung luc (lich su dat san). */
+    @Query("SELECT r FROM VenueReview r WHERE r.user.id = :userId AND r.booking.id IN :bookingIds")
+    List<VenueReview> findByUserAndBookings(UUID userId, Collection<UUID> bookingIds);
+
+    @Query("SELECT r FROM VenueReview r JOIN FETCH r.venue WHERE r.id = :id AND r.user.id = :userId")
+    Optional<VenueReview> findOwnedByUser(UUID id, UUID userId);
+
+    /**
+     * Tinh lai diem trung binh va so danh gia cua san tu cac danh gia dang hien thi.
+     * Luon tinh lai tu du lieu goc thay vi cong don de khong lech khi sua/xoa.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = """
+            UPDATE venues SET
+                average_rating = COALESCE((SELECT round(avg(rating), 2) FROM venue_reviews
+                                           WHERE venue_id = :venueId AND status = 'visible'), 0),
+                review_count = (SELECT count(*) FROM venue_reviews WHERE venue_id = :venueId AND status = 'visible')
+            WHERE id = :venueId
+            """, nativeQuery = true)
+    void recalculateVenueRating(UUID venueId);
 }

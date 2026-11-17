@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.courtly.domain.review.VenueReview;
+import com.courtly.domain.review.VenueReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -75,6 +77,8 @@ public class BookingService {
     private final CommissionService commissionService;
     private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final VoucherService voucherService;
+    private final VenueReviewRepository venueReviewRepository;
+    private final com.courtly.service.review.VenueReviewService reviewService;
 
     /**
      * Tao yeu cau dat san (2.1.28).
@@ -188,8 +192,21 @@ public class BookingService {
         // Mot cau truy van cho tat ca anh bia, thay vi moi don mot cau.
         Map<UUID, String> covers = coversFor(bookings.getContent());
 
+        // Mot cau truy van cho danh gia san cua nguoi dat, de nut "Danh gia san" hien dung trang thai (2.3.77).
+        Map<UUID, VenueReview> reviews = bookings.isEmpty() ? Map.of()
+                : venueReviewRepository.findByUserAndBookings(userId, bookings.getContent().stream().map(Booking::getId).toList())
+                .stream().collect(java.util.stream.Collectors.toMap(review -> review.getBooking().getId(), review -> review));
+        Instant now = Instant.now();
         return PageResponse.from(bookings, bookings.getContent().stream()
-                .map(booking -> toSummary(booking, covers.get(booking.getVenue().getId())))
+                .map(booking -> {
+                    VenueReview review = reviews.get(booking.getId());
+                    boolean completed = booking.getStatus() == BookingStatus.COMPLETED;
+                    return toSummary(booking, covers.get(booking.getVenue().getId()),
+                            review == null ? null : new BookingSummaryResponse.MyReview(review.getId(), review.getRating(),
+                                    review.getStatus().getValue()),
+                            reviewService.canReview(booking, review != null, now),
+                            completed ? reviewService.reviewDeadline(booking) : null);
+                })
                 .toList());
     }
 
@@ -211,7 +228,7 @@ public class BookingService {
                 ownerId, statuses, PageRequest.of(page, size));
         Map<UUID, String> covers = coversFor(bookings.getContent());
         return PageResponse.from(bookings, bookings.getContent().stream()
-                .map(booking -> toSummary(booking, covers.get(booking.getVenue().getId())))
+                .map(booking -> toSummary(booking, covers.get(booking.getVenue().getId()), null, false, null))
                 .toList());
     }
 
@@ -310,7 +327,8 @@ public class BookingService {
         booking.getStatusHistory().add(history);
     }
 
-    private static BookingSummaryResponse toSummary(Booking booking, String coverImageUrl) {
+    private static BookingSummaryResponse toSummary(Booking booking, String coverImageUrl,
+                                                    BookingSummaryResponse.MyReview review, boolean canReview, Instant reviewDeadline) {
         BookingItem first = booking.getItems().stream()
                 .min(Comparator.comparing(BookingItem::getStartTime))
                 .orElse(null);
@@ -329,7 +347,10 @@ public class BookingService {
                 first == null ? null : first.getStartTime(),
                 first == null ? null : first.getEndTime(),
                 activeDeadline(booking),
-                booking.getCreatedAt());
+                booking.getCreatedAt(),
+                review,
+                canReview,
+                reviewDeadline);
     }
 
     private Map<UUID, String> coversFor(List<Booking> bookings) {

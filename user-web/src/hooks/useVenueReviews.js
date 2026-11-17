@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchVenueReviews } from '../api/venues'
 
 /** Đánh giá của sân hiện ở trang chi tiết (2.1.23). */
@@ -6,6 +6,7 @@ export function useVenueReviews(slugOrId) {
   const [reviews, setReviews] = useState([])
   const [totalElements, setTotalElements] = useState(0)
   const [status, setStatus] = useState('loading')
+  const [tick, setTick] = useState(0)
 
   useEffect(() => {
     if (!slugOrId) return undefined
@@ -26,7 +27,9 @@ export function useVenueReviews(slugOrId) {
     return () => {
       ignore = true
     }
-  }, [slugOrId])
+  }, [slugOrId, tick])
 
-  return { reviews, totalElements, status }
+  const reload = useCallback(() => setTick((value) => value + 1), [])
+
+  return { reviews, totalElements, status, reload }
 }

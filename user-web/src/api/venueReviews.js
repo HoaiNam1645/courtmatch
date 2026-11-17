@@ -1,0 +1,21 @@
+/** 2.3.77 - 2.3.79: người chơi viết, sửa, xóa đánh giá sân của chính mình. */
+
+import { request } from './client'
+
+function toMyReview(data) {
+  return {
+    id: data.id,
+    venueId: data.venueId,
+    bookingId: data.bookingId ?? null,
+    rating: Number(data.rating),
+    comment: data.comment ?? '',
+    status: data.status,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  }
+}
+
+/** 2.3.77: viết đánh giá cho một đơn đã hoàn thành. */
+export async function createVenueReview(bookingId, { rating, comment }) {
+  return toMyReview(await request(`/api/v1/bookings/${bookingId}/venue-review`, { method: 'POST', body: { rating, comment: comment || null } }))
+}

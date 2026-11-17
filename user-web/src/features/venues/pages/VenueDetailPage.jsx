@@ -6,7 +6,7 @@ import { AppHeader, BottomNav, BrandMark } from '../../../app/AppLayout'
 import { VenueMap } from '../../../components/VenueMap'
 import { useAvailability } from '../../../hooks/useAvailability'
 import { useVenueDetail } from '../../../hooks/useVenueDetail'
-import { useVenueReviews } from '../../../hooks/useVenueReviews'
+import { VenueReviewsSection } from '../../reviews/VenueReviewsSection'
 import { BookingEmptyState } from '../../bookings/components/BookingEmptyState'
 import { PageBackLink, ProfileSectionTitle } from '../../profile/components/ProfileUi'
 import { weekDays } from '../../profile/profileOptions'
@@ -20,18 +20,6 @@ function formatCurrency(value) {
 }
 
 
-
-/** Hiển thị thời điểm đánh giá theo kiểu tương đối, dễ đọc hơn ngày đầy đủ. */
-function formatReviewDate(isoDate) {
-  if (!isoDate) return ''
-  const days = Math.floor((Date.now() - new Date(isoDate).getTime()) / 86400000)
-  if (days <= 0) return 'Hôm nay'
-  if (days === 1) return 'Hôm qua'
-  if (days < 7) return `${days} ngày trước`
-  if (days < 30) return `${Math.floor(days / 7)} tuần trước`
-  if (days < 365) return `${Math.floor(days / 30)} tháng trước`
-  return new Date(isoDate).toLocaleDateString('vi-VN')
-}
 
 function buildBookingDates() {
   const formatter = new Intl.DateTimeFormat('vi-VN', { weekday: 'short' })
@@ -133,9 +121,6 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
   // 2.1.26 - lịch trống thật, đổi ngày hoặc thời lượng là tải lại.
   const availabilityState = useAvailability(venue?.id, selectedDate, durationMinutes)
   const availability = availabilityState.data
-  // 2.1.23 - đánh giá thật.
-  const reviewState = useVenueReviews(venue?.slug ?? venue?.id)
-  const reviews = reviewState.reviews
 
   /** Đổi ngày, sân con hoặc thời lượng thì lựa chọn và tạm tính cũ không còn đúng. */
   function resetSelection() {
@@ -190,7 +175,6 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
   const selectedPrice = quote?.totalAmount ?? selectedSlotData?.totalPrice ?? null
   const selectedEndTime = selectedSlotData?.endTime ?? ''
   const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`
-  // 2.1.23 - đánh giá lấy từ API venue_reviews.
 
   return (
     <main className="home-density min-h-screen bg-[#f4f7f1] pb-36 text-[14px] text-emerald-950 lg:pb-36">
@@ -380,37 +364,7 @@ function VenueDetailPage({ venue, db = {}, user, onLogout }) {
               </section>
             </div>
 
-            <section className="mt-4 border border-emerald-100 bg-white p-4 shadow-[0_10px_28px_rgba(34,52,40,0.06)]">
-              <SectionTitle
-                eyebrow="Đánh giá"
-                title={reviewState.totalElements > 0
-                  ? `${venue.rating}/5 từ ${reviewState.totalElements} người chơi`
-                  : 'Chưa có đánh giá'}
-                icon={Star}
-              />
-              <div className="mt-4 grid gap-2.5 md:grid-cols-2">
-                {reviewState.status === 'empty' && (
-                  <p className="text-sm font-medium text-stone-500 md:col-span-2">
-                    Sân này chưa có đánh giá nào.
-                  </p>
-                )}
-                {reviews.map((review) => (
-                  <article key={review.id} className="bg-[#fbfdf8] p-3.5 ring-1 ring-emerald-100">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-emerald-950">{review.name}</p>
-                        <p className="mt-1 text-sm font-medium text-emerald-700/75">{formatReviewDate(review.createdAt)}</p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-600">
-                        <Star className="size-4 fill-amber-400 text-amber-400" />
-                        {review.rating}
-                      </span>
-                    </div>
-                    <p className="mt-2.5 text-xs font-medium leading-5 text-stone-600">{review.text}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
+            <VenueReviewsSection venue={venue} user={user} />
           </section>
 
           <aside id="booking" className="h-fit scroll-mt-24 rounded-md border border-emerald-100 bg-white p-5 shadow-[0_14px_34px_rgba(34,52,40,0.10)] xl:sticky xl:top-20">

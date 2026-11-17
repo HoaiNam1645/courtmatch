@@ -87,6 +87,9 @@ courtly:
   partner-requests:
     # Thoi gian cho nguoi nhan phan hoi, qua han thi yeu cau tu het han (phut).
     expiry-minutes: ${PARTNER_REQUEST_EXPIRY_MINUTES:60}
+  reviews:
+    # So ngay sau khi don hoan thanh nguoi choi con duoc viet danh gia san (2.3.77).
+    window-days: ${VENUE_REVIEW_WINDOW_DAYS:7}
   matching:
     # Nguong canh bao chat luong ghep cap tren man hinh quan tri (2.3.73).
     quality:
