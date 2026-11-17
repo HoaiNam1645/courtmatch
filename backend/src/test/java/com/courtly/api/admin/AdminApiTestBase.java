@@ -17,7 +17,7 @@ public abstract class AdminApiTestBase extends OwnerApiTestBase {
 
     protected static final List<String> ADMIN_PERMISSIONS = List.of(
             "user.manage", "user.role.assign", "owner.verify", "venue.approve", "venue.reject", "report.handle",
-            "stats.system.view", "finance.fee.config", "finance.commission.view", "finance.commission.manage", "voucher.manage");
+            "stats.system.view", "finance.fee.config", "finance.commission.view", "finance.commission.manage", "voucher.manage", "matching.view");
 
     @Autowired protected PermissionRepository permissionRepository;
     @Autowired protected UserRoleRepository userRoleRepository;

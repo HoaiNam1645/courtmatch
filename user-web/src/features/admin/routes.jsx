@@ -15,6 +15,7 @@ const AdminCommissionTransactionsPage = lazy(() => import('./pages/AdminCommissi
 const AdminSettlementsPage = lazy(() => import('./pages/AdminSettlementsPage'))
 const AdminCommissionPaymentsPage = lazy(() => import('./pages/AdminCommissionPaymentsPage'))
 const AdminVouchersPage = lazy(() => import('./pages/AdminVouchersPage'))
+const AdminMatchingPage = lazy(() => import('./pages/AdminMatchingPage'))
 const AdminPermissionsPage = lazy(() => import('./pages/AdminPermissionsPage'))
 
 /** Khu quản trị (Sprint 3, 2.3.28 - 2.3.52). */
@@ -33,6 +34,7 @@ const adminRoutes = [
   { path: '/admin/settlements', element: <AdminSettlementsPage /> },
   { path: '/admin/commission-payments', element: <AdminCommissionPaymentsPage /> },
   { path: '/admin/vouchers', element: <AdminVouchersPage /> },
+  { path: '/admin/matching', element: <AdminMatchingPage /> },
   { path: '/admin/permissions', element: <AdminPermissionsPage /> },
 ]
 

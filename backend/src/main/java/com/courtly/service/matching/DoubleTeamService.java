@@ -69,10 +69,25 @@ public class DoubleTeamService {
     private final AiModelRepository modelRepository;
     private final DoubleTeamSuggestionRepository suggestionRepository;
     private final ObjectMapper objectMapper;
+    private final MatchingRunRecorder runRecorder;
 
     /** 2.3.63 - 2.3.69: kiem tra 4 nguoi, tinh va luu cac phuong an chia doi. */
     @Transactional
     public DoubleTeamSuggestionResponse suggest(UUID requesterId, DoubleTeamRequest input) {
+        long startedAt = System.nanoTime();
+        try {
+            return computeAndSave(requesterId, input, startedAt);
+        } catch (ApiException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            runRecorder.recordFailure(MatchingRunRecorder.DOUBLE_TEAM, requesterId,
+                    (System.nanoTime() - startedAt) / 1_000_000, e,
+                    Map.of("matchType", String.valueOf(input.matchType().getValue())));
+            throw e;
+        }
+    }
+
+    private DoubleTeamSuggestionResponse computeAndSave(UUID requesterId, DoubleTeamRequest input, long startedAt) {
         List<UUID> ids = new ArrayList<>();
         ids.add(requesterId);
         ids.addAll(input.playerIds());
@@ -118,6 +133,9 @@ public class DoubleTeamService {
             rows.add(row);
         }
         suggestionRepository.saveAllAndFlush(rows);
+        runRecorder.recordSuccess(batchId, MatchingRunRecorder.DOUBLE_TEAM, requesterId, model, "baseline",
+                rows.size(), (System.nanoTime() - startedAt) / 1_000_000,
+                Map.of("matchType", input.matchType().getValue()));
         return new DoubleTeamSuggestionResponse(batchId, input.matchType(), "baseline",
                 model.getModelVersion(), rows.getFirst().getCreatedAt() != null ? rows.getFirst().getCreatedAt() : now,
                 players, pairs, options);

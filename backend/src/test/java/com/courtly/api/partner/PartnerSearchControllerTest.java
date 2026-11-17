@@ -1,5 +1,6 @@
 package com.courtly.api.partner;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,6 +64,7 @@ class PartnerSearchControllerTest {
     @Autowired private PartnerRequestRepository partnerRequestRepository;
     @Autowired private PlayerConnectionRepository connectionRepository;
     @Autowired private EntityManager entityManager;
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private User requester;
     private String token;
@@ -138,6 +140,53 @@ class PartnerSearchControllerTest {
                 .andExpect(jsonPath("$.content[0].styleCompatibility").value(100.00))
                 .andExpect(jsonPath("$.content[0].availableFrom").value("17:00:00"))
                 .andExpect(jsonPath("$.content[0].availableUntil").value("21:00:00"));
+    }
+
+    @Test
+    @DisplayName("2.3.70-76 moi lan tim ghi nhat ky va luu goi y kem hang, diem tong; trang sau tiep tuc hang")
+    void recordsSearchRunAndSuggestions() throws Exception {
+        User first = persistPlayer("log-first", "1210.00", 8);
+        persistLocation(first, 16.0650, 108.2250, 10);
+        persistAvailability(first, requestedTime.getDayOfWeek().getValue(), 17, 21);
+        User second = persistPlayer("log-second", "1290.00", 8);
+        persistLocation(second, 16.0650, 108.2250, 10);
+        persistAvailability(second, requestedTime.getDayOfWeek().getValue(), 17, 21);
+        entityManager.clear();
+
+        for (int page = 0; page < 2; page++) {
+            mockMvc.perform(get("/api/v1/partners/search")
+                            .header("Authorization", bearer(token))
+                            .param("preferredLocationId", requesterLocation.getId().toString())
+                            .param("scheduledAt", requestedTime.toInstant().toString())
+                            .param("durationMinutes", "90")
+                            .param("maxRatingDifference", "200")
+                            .param("page", String.valueOf(page))
+                            .param("size", "1"))
+                    .andExpect(status().isOk());
+        }
+        entityManager.flush();
+
+        assertThat(jdbc.queryForList("SELECT result_count FROM matching_runs WHERE user_id = ? AND run_type = 'partner_search' AND status = 'success' AND model_id IS NOT NULL AND duration_ms >= 0 ORDER BY created_at",
+                Integer.class, requester.getId())).containsExactly(1, 1);
+        assertThat(jdbc.queryForList("SELECT rank_no FROM partner_suggestions WHERE user_id = ? AND search_id IS NOT NULL ORDER BY rank_no",
+                Integer.class, requester.getId())).containsExactly(1, 2);
+        // Diem tong = trung binh co trong so (0.4 ky nang, 0.2 phong cach, 0.2 thoi gian, 0.2 vi tri).
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM partner_suggestions
+                WHERE user_id = ? AND scoring_source = 'baseline' AND total_score > 0 AND total_score <= 100
+                  AND abs(total_score - (0.4 * skill_score + 0.2 * style_score + 0.2 * time_score + 0.2 * location_score)) < 0.02
+                """, Integer.class, requester.getId())).isEqualTo(2);
+
+        // Tim kiem bi tu choi (khu vuc la) khong ghi nhat ky.
+        long before = jdbc.queryForObject("SELECT count(*) FROM matching_runs WHERE user_id = ?", Long.class, requester.getId());
+        mockMvc.perform(get("/api/v1/partners/search")
+                        .header("Authorization", bearer(token))
+                        .param("preferredLocationId", UUID.randomUUID().toString())
+                        .param("scheduledAt", requestedTime.toInstant().toString())
+                        .param("durationMinutes", "90"))
+                .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM matching_runs WHERE user_id = ?", Long.class, requester.getId()))
+                .isEqualTo(before);
     }
 
     @Test

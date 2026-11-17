@@ -1,4 +1,4 @@
-import { BarChart3, Building2, Coins, HandCoins, ReceiptText, Scale, Wallet, Ticket, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
+import { BarChart3, Handshake, Building2, Coins, HandCoins, ReceiptText, Scale, Wallet, Ticket, ClipboardCheck, Flag, KeyRound, LayoutDashboard, MessageSquareWarning, UserRound, Users } from 'lucide-react'
 
 /**
  * Mục điều hướng của khu quản trị, chia nhóm để thanh bên không rối khi thêm chức năng.
@@ -10,6 +10,7 @@ export const adminNavigationGroups = [
     items: [
       { label: 'Tổng quan', to: '/admin', icon: LayoutDashboard, end: true },
       { label: 'Thống kê', to: '/admin/stats', icon: BarChart3 },
+      { label: 'Ghép cặp', to: '/admin/matching', icon: Handshake },
     ],
   },
   {

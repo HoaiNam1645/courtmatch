@@ -15,7 +15,12 @@ import com.courtly.domain.account.User;
 import com.courtly.domain.account.UserRepository;
 import com.courtly.domain.match.PlayerStatistics;
 import com.courtly.domain.match.PlayerStatisticsRepository;
+import com.courtly.domain.matching.AiModel;
 import com.courtly.domain.matching.PartnerSearchRepository;
+import com.courtly.domain.matching.PartnerSuggestion;
+import com.courtly.domain.matching.PartnerSuggestionRepository;
+import com.courtly.common.enums.SuggestionSource;
+import java.util.LinkedHashMap;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -49,9 +54,70 @@ public class PartnerSearchService {
     private final PlayerAvailabilitySlotRepository availabilitySlotRepository;
     private final PlayerStatisticsRepository statisticsRepository;
     private final PartnerSearchRepository partnerSearchRepository;
+    private final PartnerSuggestionRepository suggestionRepository;
+    private final MatchingRunRecorder runRecorder;
 
-    @Transactional(readOnly = true)
+    /** Tim doi tac va ghi nhat ky lan tim (2.3.70 - 2.3.76); loi he thong cung duoc ghi lai. */
+    @Transactional
     public PageResponse<PartnerSearchResponse> search(UUID requesterId, PartnerSearchQuery query) {
+        long startedAt = System.nanoTime();
+        try {
+            PageResponse<PartnerSearchResponse> page = findPartners(requesterId, query);
+            recordSearch(requesterId, query, page, (System.nanoTime() - startedAt) / 1_000_000);
+            return page;
+        } catch (ApiException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            runRecorder.recordFailure(MatchingRunRecorder.PARTNER_SEARCH, requesterId,
+                    (System.nanoTime() - startedAt) / 1_000_000, e, searchParams(query));
+            throw e;
+        }
+    }
+
+    private void recordSearch(UUID requesterId, PartnerSearchQuery query,
+                              PageResponse<PartnerSearchResponse> page, long durationMs) {
+        AiModel model = runRecorder.partnerBaselineModel();
+        UUID searchId = runRecorder.recordSuccess(null, MatchingRunRecorder.PARTNER_SEARCH, requesterId,
+                model, "baseline", page.content().size(), durationMs, searchParams(query));
+        User requester = userRepository.getReferenceById(requesterId);
+        List<PartnerSuggestion> rows = new ArrayList<>();
+        int offset = query.pageNumber() * query.pageSize();
+        for (int index = 0; index < page.content().size(); index++) {
+            PartnerSearchResponse item = page.content().get(index);
+            PartnerSuggestion row = new PartnerSuggestion();
+            row.setModel(model);
+            row.setUser(requester);
+            row.setSuggestedUser(userRepository.getReferenceById(item.userId()));
+            row.setSkillScore(item.skillSimilarity());
+            row.setLocationScore(item.locationCompatibility());
+            row.setTimeScore(item.timeCompatibility());
+            row.setStyleScore(item.styleCompatibility());
+            row.setTotalScore(PartnerScoring.total(item.skillSimilarity(), item.styleCompatibility(),
+                    item.timeCompatibility(), item.locationCompatibility()));
+            row.setScoringSource(SuggestionSource.BASELINE);
+            row.setSearchId(searchId);
+            row.setRankNo((short) Math.min(offset + index + 1, Short.MAX_VALUE));
+            Map<String, Object> reason = new LinkedHashMap<>();
+            reason.put("ratingGap", item.ratingGap());
+            reason.put("distanceKm", item.distanceKm());
+            reason.put("provisional", item.provisional());
+            row.setReasonJson(reason);
+            rows.add(row);
+        }
+        suggestionRepository.saveAll(rows);
+    }
+
+    private static Map<String, Object> searchParams(PartnerSearchQuery query) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("scheduledAt", String.valueOf(query.scheduledAt()));
+        params.put("durationMinutes", query.durationMinutes());
+        params.put("ratingDifference", query.ratingDifference());
+        params.put("page", query.pageNumber());
+        params.put("size", query.pageSize());
+        return params;
+    }
+
+    private PageResponse<PartnerSearchResponse> findPartners(UUID requesterId, PartnerSearchQuery query) {
         User requester = requireActivePlayer(requesterId);
         PlayerPreferredLocation location = preferredLocationRepository
                 .findByIdAndUserId(query.preferredLocationId(), requesterId)

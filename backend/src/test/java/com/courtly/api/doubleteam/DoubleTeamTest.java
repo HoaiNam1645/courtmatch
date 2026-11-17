@@ -286,6 +286,9 @@ class DoubleTeamTest extends OwnerApiTestBase {
         assertThat(jdbc.queryForList("SELECT rank_no FROM double_team_suggestions WHERE batch_id = ?::uuid AND recommended", Integer.class, batchId)).containsExactly(1);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM double_team_suggestions WHERE batch_id = ?::uuid AND balance_score IS NOT NULL AND team1_strength IS NOT NULL AND team2_strength IS NOT NULL AND detail_json IS NOT NULL",
                 Integer.class, batchId)).isEqualTo(3);
+        // 2.3.70-76: moi lan chia doi ghi 1 dong nhat ky co id trung batch_id.
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM matching_runs WHERE id = ?::uuid AND run_type = 'double_team' AND user_id = ? AND result_count = 3 AND status = 'success' AND scoring_source = 'baseline' AND model_id IS NOT NULL AND duration_ms >= 0",
+                Integer.class, batchId, a.getId())).isEqualTo(1);
         entityManager.clear();
 
         String reloaded = mockMvc.perform(get(PATH + "/" + batchId).header("Authorization", bearer(loginAs(a))))

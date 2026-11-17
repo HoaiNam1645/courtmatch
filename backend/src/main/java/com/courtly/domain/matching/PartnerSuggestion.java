@@ -70,6 +70,14 @@ public class PartnerSuggestion extends BaseEntity {
     @Column(name = "reason_json")
     private Map<String, Object> reasonJson;
 
+    /** Lan tim doi tac sinh ra goi y nay (matching_runs); null voi du lieu mau cu. */
+    @Column(name = "search_id")
+    private java.util.UUID searchId;
+
+    /** Hang cua goi y trong ket qua tim kiem, 1 = dau tien. */
+    @Column(name = "rank_no")
+    private Short rankNo;
+
     @Column(name = "status", nullable = false, length = 30)
     private SuggestionStatus status = SuggestionStatus.ACTIVE;
 }
