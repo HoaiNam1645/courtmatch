@@ -237,13 +237,24 @@ Quy ước công nghệ:
 Ghép cặp Đối tác chơi thông minh
 
 2.2.20. Tìm kiếm đối tác chơi
+  - Người chơi nhập khu vực, thời gian dự kiến và phạm vi kỹ năng để tìm đối tác.
+  - Hệ thống trả về danh sách ứng viên hợp lệ theo điều kiện đã chọn.
 2.2.21. Lọc ứng viên ghép cặp theo vị trí
+  - Chỉ giữ ứng viên nằm trong bán kính chơi phù hợp của cả hai người chơi.
+  - Khoảng cách được tính từ các vị trí đã ghim, không công khai địa chỉ cụ thể.
 2.2.22. Lọc ứng viên ghép cặp theo thời gian rảnh
+  - Chỉ giữ ứng viên có lịch rảnh bao phủ toàn bộ khung giờ và thời lượng được chọn.
 2.2.23. Lọc ứng viên ghép cặp theo trình độ kỹ năng
+  - Loại ứng viên có độ chênh Elo vượt quá phạm vi người chơi cho phép.
+  - Sử dụng Elo hệ thống đo từ kết quả thi đấu, không dùng trình độ tự khai.
 2.2.24. Tính đặc trưng tương đồng về kỹ năng
+  - Tính điểm tương đồng từ độ chênh Elo; trình độ càng gần nhau thì điểm càng cao.
 2.2.25. Tính đặc trưng tương thích về vị trí
+  - Tính điểm vị trí dựa trên khoảng cách thực tế so với bán kính ưu tiên của người tìm.
 2.2.26. Tính đặc trưng tương thích về thời gian
+  - Tính tỷ lệ lịch rảnh của người tìm được ứng viên đáp ứng trong tuần.
 2.2.27. Tính đặc trưng tương thích về phong cách chơi
+  - Chấm điểm theo mức độ phù hợp giữa phong cách tấn công, cân bằng và phòng thủ của hai người.
 2.2.28. Dùng CatBoostRanker tính điểm phù hợp tổng thể
   - Chỉ chấm điểm các ứng viên đã vượt qua bộ lọc bắt buộc ở 2.2.21–2.2.23.
   - Nếu AI service không khả dụng thì dùng baseline, đồng thời ghi rõ nguồn tính điểm.
@@ -323,17 +334,54 @@ Quy ước nghiệp vụ:
 - Người chơi trả tiền trực tiếp cho owner; Courtly chỉ tính và thu hoa hồng định kỳ.
 
 2.3.1. Đăng nhập bằng tài khoản chủ sân do quản trị viên cấp
+  - Chủ sân đăng nhập bằng email và mật khẩu do quản trị viên tạo; không có đăng ký công khai.
+  - Chỉ tài khoản có vai trò owner và đang hoạt động mới vào được giao diện chủ sân; tài khoản bị khóa nhận thông báo rõ ràng.
+  - Lần đăng nhập đầu tiên với mật khẩu tạm thì yêu cầu đổi mật khẩu.
 2.3.2. Xem và cập nhật hồ sơ chủ sân duy nhất
+  - Hiển thị và cập nhật tên doanh nghiệp/đơn vị, người liên hệ, số điện thoại và email liên hệ.
+  - Chủ sân quản lý thông tin nhận thanh toán (ngân hàng, số tài khoản, chủ tài khoản); thông tin này được snapshot vào payment khi tạo thanh toán.
+  - Trạng thái xác minh do quản trị viên quyết định, chủ sân không tự sửa.
 2.3.3. Thêm sân cầu lông mới
+  - Nhập tên, mô tả, địa chỉ, quận/huyện, tọa độ, số điện thoại và tiện ích; thêm các sân con kèm trạng thái ban đầu.
+  - Địa chỉ và tọa độ phải nằm trong thành phố Đà Nẵng.
+  - Sân mới ở trạng thái chờ phê duyệt (pending) và chưa hiển thị cho người chơi cho đến khi quản trị viên duyệt.
 2.3.4. Cập nhật thông tin sân
+  - Chỉnh sửa tên, mô tả, địa chỉ, tọa độ, liên hệ, tiện ích và sân con (thêm, đổi tên, đặt trạng thái hoạt động/bảo trì/ngừng).
+  - Chỉ chỉnh sửa sân thuộc chủ sân; ngừng sân con đang có booking tương lai phải bị chặn hoặc có cảnh báo.
+  - Thay đổi các trường quan trọng (tên, địa chỉ, vị trí) của sân đã duyệt có thể cần quản trị viên duyệt lại.
 2.3.5. Cập nhật giá sân
+  - Thiết lập bảng giá theo sân con, ngày trong tuần, khung giờ và thời gian hiệu lực (court_price_rules).
+  - Các quy tắc giá cùng sân con không được chồng lấn khung giờ; giá không âm, giờ kết thúc phải sau giờ bắt đầu.
+  - Giá mới chỉ áp dụng cho booking tạo sau đó; booking cũ giữ nguyên giá đã chốt.
 2.3.6. Tải lên hình ảnh sân
+  - Tải nhiều ảnh, chọn ảnh đại diện, sắp xếp thứ tự hiển thị và xóa ảnh (venue_images).
+  - Giới hạn định dạng (JPEG, PNG, WebP), dung lượng mỗi ảnh và số lượng ảnh; kiểm tra loại file ở phía server.
+  - Thứ tự ảnh được người chơi thấy trong thư viện ảnh ở trang chi tiết sân.
 2.3.7. Quản lý giờ hoạt động của sân
+  - Thiết lập giờ mở/đóng cửa cho từng ngày trong tuần, hoặc đánh dấu ngày nghỉ (venue_operating_hours).
+  - Giờ đóng cửa phải sau giờ mở cửa; khung giờ đặt sân chỉ được tạo trong giờ hoạt động.
+  - Thay đổi không làm hủy booking đã xác nhận; nếu xung đột với booking tương lai thì hiển thị cảnh báo.
 2.3.8. Quản lý lịch sân
+  - Xem lịch theo ngày/tuần của từng sân con với các trạng thái: trống, chờ duyệt, đã xác nhận, đã khóa.
+  - Lịch được tính từ giờ hoạt động, bảng giá, khung giờ khóa và booking_items đang pending/confirmed.
+  - Chọn một ô lịch để xem booking liên quan hoặc thực hiện khóa/mở khóa.
 2.3.9. Tạo các khung giờ sân
+  - Chủ sân thiết lập độ dài một khung giờ (ví dụ 60 phút) và áp dụng cho các sân con theo giờ hoạt động.
+  - Khung giờ được sinh dựa trên giờ hoạt động và bảng giá, không tạo ngoài giờ mở cửa hoặc khi chưa có giá.
+  - Khung giờ đã có booking không bị thay đổi hoặc xóa.
 2.3.10. Khóa khung giờ sân
+  - Khóa một hoặc nhiều khung giờ của sân con trong một khoảng thời gian kèm lý do (bảo trì, sự kiện, giữ chỗ nội bộ) vào court_blocks.
+  - Khung giờ đang có booking pending/confirmed không được khóa; hệ thống báo rõ booking gây xung đột.
+  - Khung giờ bị khóa hiển thị là blocked ở trang chi tiết sân và không thể đặt.
 2.3.11. Mở khóa khung giờ sân
+  - Chủ sân hủy khóa (chuyển court_blocks sang cancelled) để khung giờ trở lại trạng thái có thể đặt.
+  - Chỉ mở khóa các khung giờ thuộc sân của mình; ghi lại người thực hiện và thời điểm.
+  - Khung giờ mở khóa hiển thị lại là available cho người chơi.
 2.3.12. Xem các yêu cầu đặt sân
+  - Hiển thị danh sách booking ở trạng thái pending_owner_confirmation của sân, mới nhất hoặc sắp hết hạn lên đầu.
+  - Mỗi yêu cầu có mã booking, người đặt, sân con, ngày giờ, giá đã chốt, ghi chú và hạn phản hồi (owner_response_expires_at).
+  - Có phân trang và lọc theo sân, ngày, trạng thái; làm nổi bật yêu cầu sắp quá hạn.
+  - Chức năng chỉ xem; xác nhận và từ chối thuộc 2.3.13 và 2.3.14.
 2.3.13. Xác nhận yêu cầu đặt sân
   - Chuyển booking từ pending_owner_confirmation sang awaiting_payment.
   - Ghi người xác nhận, thời điểm xác nhận và thời hạn người chơi phải thanh toán.
@@ -346,7 +394,7 @@ Quy ước nghiệp vụ:
 2.3.17. Xem thống kê doanh thu của sân
   - Doanh thu gộp là số tiền owner đã trực tiếp thu từ các booking được xác nhận.
 2.3.18. Xem phí nền tảng của booking
-  - Phí được snapshot theo chính sách có hiệu lực tại thời điểm booking được xác nhận.
+  - Phí được snapshot theo chính sách có hiệu lực tại thời điểm booking hoàn thành (theo Vấn đề.docx mục 5.2, không phải lúc xác nhận).
 2.3.19. Xem số tiền thực nhận của booking
   - Số thực nhận = doanh thu gộp - hoa hồng Courtly - khoản owner đã hoàn cho người chơi.
 2.3.20. Xem tổng công nợ hoa hồng với Courtly
@@ -364,81 +412,277 @@ Quy ước nghiệp vụ:
 Quản trị viên
 
 2.3.28. Quản lý tài khoản người dùng
+  - Danh sách mọi tài khoản (users) có phân trang, tìm theo tên, email, số điện thoại và lọc theo vai trò, trạng thái (active, inactive, banned, pending).
+  - Xem chi tiết một tài khoản: thông tin cơ bản, vai trò hiện có, trạng thái xác minh email/số điện thoại và lần đăng nhập gần nhất.
+  - Quản trị viên khóa (banned), ngừng (inactive) hoặc kích hoạt lại (active) tài khoản; không được tự khóa hay tự ngừng chính mình.
+  - Mọi thay đổi trạng thái ghi audit_logs gồm người thực hiện, thời điểm và lý do; tài khoản bị khóa không đăng nhập được.
 2.3.29. Phân quyền vai trò người dùng
+  - Gán hoặc gỡ vai trò (roles: player, owner, admin) cho tài khoản qua user_roles; một tài khoản có thể có nhiều vai trò.
+  - Vai trò owner chỉ gán cho tài khoản chủ sân duy nhất; hệ thống từ chối gán thêm owner khi đã có một chủ sân.
+  - Không được gỡ vai trò admin cuối cùng và không được tự gỡ vai trò admin của chính mình.
+  - Thay đổi vai trò có hiệu lực từ lần đăng nhập hoặc làm mới token kế tiếp; ghi audit_logs.
 2.3.30. Quản lý quyền của người dùng
+  - Quản lý danh mục quyền (permissions) và gán quyền cho từng vai trò qua role_permissions; người dùng nhận quyền thông qua vai trò của mình.
+  - Xem ma trận vai trò - quyền; bật hoặc tắt từng quyền cho một vai trò kèm xác nhận trước khi lưu.
+  - Quyền hệ thống cốt lõi của admin không được gỡ khỏi vai trò admin để tránh tự khóa quản trị.
+  - Kiểm tra quyền được thực hiện ở service phía server, không chỉ ẩn nút ở giao diện; ghi audit_logs mọi thay đổi.
 2.3.31. Quản lý tài khoản người chơi
+  - Danh sách người chơi có phân trang, tìm kiếm và lọc theo trạng thái, trình độ, ngày đăng ký.
+  - Xem hồ sơ người chơi (player_profiles), lịch sử booking, số lần bị báo cáo và các trận đã chơi.
+  - Khóa hoặc mở khóa người chơi kèm lý do; người chơi bị khóa không đăng nhập hay đặt sân mới được, booking đã xác nhận không bị tự động hủy.
+  - Quản trị viên không xem hay sửa mật khẩu của người chơi; chỉ hỗ trợ buộc đặt lại mật khẩu qua luồng quên mật khẩu.
 2.3.32. Quản lý tài khoản chủ sân duy nhất
+  - Hiển thị đúng một tài khoản chủ sân hiện có: thông tin, trạng thái, hồ sơ doanh nghiệp (court_owner_profiles), thông tin nhận thanh toán và trạng thái xác minh.
+  - Quản trị viên quyết định trạng thái xác minh hồ sơ chủ sân (chưa xác minh, đã xác minh, bị từ chối) kèm lý do; chủ sân không tự sửa.
+  - Tổng quan nhanh: số sân theo trạng thái phê duyệt, công nợ hoa hồng và số booking đang xử lý của chủ sân.
+  - Không có chức năng tạo thêm hay xóa chủ sân trong màn hình này; việc cấp tài khoản thuộc 2.3.33.
 2.3.33. Tạo, kích hoạt, khóa hoặc đặt lại thông tin đăng nhập chủ sân
+  - Tạo tài khoản OWNER khi hệ thống chưa có chủ sân: nhập tên, email, số điện thoại; hệ thống sinh mật khẩu tạm và bắt buộc đổi ở lần đăng nhập đầu (password_change_required).
+  - Nếu đã có chủ sân thì từ chối tạo thêm và báo rõ lý do; email, số điện thoại không được trùng tài khoản khác.
+  - Kích hoạt, khóa (banned) hoặc ngừng tài khoản chủ sân kèm lý do; khóa chủ sân không hủy booking đã xác nhận nhưng chặn chủ sân đăng nhập.
+  - Đặt lại thông tin đăng nhập: sinh mật khẩu tạm mới, hiển thị một lần cho quản trị viên, vô hiệu hóa phiên đăng nhập cũ và yêu cầu đổi mật khẩu; mật khẩu không bao giờ được lưu hay ghi log ở dạng rõ.
+  - Ghi audit_logs mọi thao tác tạo, đổi trạng thái và đặt lại.
 2.3.34. Phê duyệt sân cầu lông
+  - Danh sách sân có approval_status = pending (sân mới thêm hoặc sân đã duyệt bị đổi thông tin quan trọng), mới nhất lên đầu, có phân trang và lọc theo quận.
+  - Xem đầy đủ thông tin sân để duyệt: địa chỉ, tọa độ, ảnh, sân con, giờ hoạt động và bảng giá; kiểm tra sân nằm trong Đà Nẵng.
+  - Chỉ duyệt khi sân đủ điều kiện hiển thị (có ít nhất một sân con, giờ hoạt động và giá); sân chuyển sang approved và hiển thị cho người chơi.
+  - Ghi người duyệt, thời điểm duyệt và audit_logs; chủ sân thấy trạng thái đã được duyệt.
 2.3.35. Từ chối sân cầu lông
+  - Từ chối sân đang pending bằng cách chọn lý do trong danh mục và có thể thêm ghi chú; sân chuyển sang rejected và không hiển thị cho người chơi.
+  - Chủ sân thấy lý do từ chối, chỉnh sửa theo yêu cầu và gửi duyệt lại; sân được duyệt lại quay về pending.
+  - Không từ chối được sân đã có booking đang xử lý; khi đó phải xử lý booking trước hoặc chỉ ẩn sân.
+  - Ghi người từ chối, thời điểm, lý do và audit_logs.
 2.3.36. Quản lý người dùng bị báo cáo
+  - Danh sách báo cáo có target_type = user trong bảng reports, có phân trang, lọc theo trạng thái (pending, reviewing, resolved, rejected) và lý do, báo cáo mới nhất hoặc chưa xử lý lên đầu.
+  - Xem chi tiết một báo cáo: người báo cáo, người bị báo cáo, lý do, mô tả, thời điểm; kèm tình trạng tài khoản người bị báo cáo và tổng số báo cáo đã nhận.
+  - Quản trị viên nhận xử lý (pending sang reviewing), rồi kết luận resolved kèm ghi chú và hướng xử lý, hoặc rejected khi báo cáo không có cơ sở; ghi handled_by, handled_at và audit_logs.
+  - Với báo cáo được chấp nhận, có thể khóa hoặc ngừng tài khoản người bị báo cáo ngay từ màn hình này theo đúng quy tắc của 2.3.28 (có lý do, không tự khóa chính mình).
+  - Báo cáo đã kết luận không được sửa lại trạng thái; booking tranh chấp và thanh toán không thuộc bảng reports (dùng booking_disputes).
 2.3.37. Quản lý báo cáo về đánh giá đối tác
+  - Danh sách báo cáo có target_type = partner_review, hiển thị cùng nội dung đánh giá bị báo cáo (điểm, nhận xét, người đánh giá, người được đánh giá, trận đấu liên quan) và trạng thái hiện tại của đánh giá (visible, hidden, reported).
+  - Quản trị viên kết luận: gỡ đánh giá (partner_reviews.status chuyển sang hidden) hoặc giữ nguyên đánh giá và từ chối báo cáo; ghi handled_by, handled_at, ghi chú và audit_logs.
+  - Đánh giá bị ẩn không còn hiển thị ở hồ sơ người được đánh giá và không tính vào điểm đánh giá trung bình; có thể khôi phục (hidden về visible) khi quản trị viên đổi quyết định.
+  - Người đánh giá và người được đánh giá không bị lộ thông tin cá nhân ngoài những gì đã hiển thị công khai trong đánh giá.
 2.3.38. Xem thống kê hệ thống
+  - Cần quyền stats.system.view; chỉ đọc, không có thao tác ghi.
+  - Số liệu tổng quan: số tài khoản theo vai trò và trạng thái, tài khoản mới theo ngày/tuần/tháng, số sân theo trạng thái duyệt, số booking theo trạng thái, số trận đấu, số báo cáo đang chờ xử lý.
+  - Chọn khoảng thời gian (tối đa 366 ngày) để xem xu hướng theo ngày hoặc tháng; ngày tính theo giờ Việt Nam.
+  - Tính trực tiếp từ dữ liệu gốc, không lưu bảng thống kê riêng; khoảng không có dữ liệu hiển thị bằng 0 chứ không báo lỗi.
 2.3.39. Thiết lập phí nền tảng
+  - Tạo chính sách phí mới trong platform_fee_configs gồm tên, loại phí (percentage từ 0 đến 100, hoặc fixed là số tiền VND trên mỗi booking), giá trị và thời điểm bắt đầu hiệu lực; ghi người tạo (created_by).
+  - Tại một thời điểm chỉ có một chính sách active (ràng buộc pfc_single_active): khi kích hoạt chính sách mới, chính sách cũ chuyển inactive và được đóng hiệu lực (effective_to).
+  - Cùng màn cấu hình còn có ngưỡng hạn chế công nợ quá hạn (số tiền và số ngày, 2 mức) - xem mục "Bổ sung theo Vấn đề.docx".
+  - Chính sách mới chỉ áp dụng cho hoa hồng được ghi nhận sau đó; hoa hồng đã ghi nhận trong booking_commissions giữ nguyên loại phí và giá trị đã chốt.
+  - Kiểm tra giá trị: không âm, phần trăm không vượt 100, tên bắt buộc; cần quyền finance.fee.config; ghi audit_logs.
 2.3.40. Cập nhật phí nền tảng
+  - Sửa tên, giá trị hoặc thời điểm hiệu lực của chính sách phí, và dừng (inactive) hoặc kích hoạt lại một chính sách, theo cùng quy tắc kiểm tra của 2.3.39.
+  - Không làm thay đổi hoa hồng của booking đã ghi nhận; thay đổi chỉ có hiệu lực cho các hoa hồng ghi nhận sau thời điểm cập nhật.
+  - Không được để hệ thống không còn chính sách active nào, vì khi đó không ghi nhận được hoa hồng cho booking hoàn thành.
+  - Ghi lại giá trị trước và sau trong audit_logs để tra cứu lịch sử thay đổi.
 2.3.41. Xem cấu hình phí nền tảng
+  - Hiển thị chính sách đang active (tên, loại phí, giá trị, hiệu lực từ, người tạo) và danh sách các chính sách cũ theo thứ tự thời gian.
+  - Với mỗi chính sách cho biết số hoa hồng đã ghi nhận theo chính sách đó, để biết thay đổi ảnh hưởng tới bao nhiêu booking.
+  - Chỉ đọc; thao tác thay đổi nằm ở 2.3.39 và 2.3.40.
+  - Hiển thị thêm ngưỡng hạn chế công nợ quá hạn đang áp dụng (xem mục "Bổ sung theo Vấn đề.docx" bên dưới).
 2.3.42. Xem tổng doanh thu phí nền tảng
+  - Doanh thu phí là tổng hoa hồng trong booking_commissions, chia theo trạng thái: đã ghi nhận (pending, due, adjusted, settled), đã thu (settled), còn phải thu (pending, due, adjusted); hoa hồng được miễn (waived) không tính vào doanh thu, hoa hồng tạm hoãn do tranh chấp (suspended) hiển thị riêng.
+  - Lọc theo khoảng thời gian ghi nhận (giờ Việt Nam), xem tổng theo ngày hoặc tháng và theo sân; hiển thị số booking và doanh thu gộp tương ứng để thấy tỉ lệ phí thực tế.
+  - Courtly không giữ tiền sân của người chơi nên đây chỉ là phí nền tảng thu từ chủ sân, không phải tổng doanh thu đặt sân.
+  - Tính trực tiếp từ hoa hồng từng booking, không duy trì sổ cái riêng; cần quyền finance.commission.view.
 2.3.43. Xem danh sách giao dịch đối soát
+  - Danh sách đối soát từng booking: mỗi dòng là hoa hồng của một booking kèm booking, sân, chủ sân, doanh thu gộp, hoa hồng, trạng thái hoa hồng, hạn thanh toán, kỳ đối soát đã gán (nếu có) và thời điểm đối soát xong.
+  - Có phân trang, tìm theo mã booking, lọc theo trạng thái hoa hồng, sân, kỳ đối soát và khoảng thời gian ghi nhận; làm nổi bật khoản quá hạn.
+  - Hiển thị tổng hoa hồng của tập đang lọc (không phụ thuộc trang).
+  - Chỉ đọc; xem một booking chi tiết ở 2.3.44 và xử lý kỳ đối soát ở 2.3.45 trở đi.
+
+Bổ sung theo Vấn đề.docx (quyết định ngày 14/11/2026; chưa đánh số, làm sau 2.3.43 theo thứ tự đã chốt)
+B1. Tự hoàn thành booking sau giờ chơi
+  - Booking đã được chấp nhận mà qua giờ kết thúc chưa xác nhận thu tiền: hệ thống tự chuyển hoàn thành, đánh dấu "chưa xác nhận thu tiền" và vẫn ghi nhận hoa hồng, để chủ sân không né hoa hồng.
+  - Chủ sân thấy nhãn này ở lịch sử đặt sân (2.3.15) và chi tiết công nợ (2.3.21). Booking đã hủy hoặc hết hạn chưa chấp nhận không sinh hoa hồng.
+B2. Hạn chế chủ sân có công nợ quá hạn
+  - Admin cấu hình (cùng màn 2.3.39-2.3.41): mức 1 chặn nhận booking mới, mức 2 tạm ẩn sân khỏi danh sách công khai; mỗi mức có ngưỡng số tiền quá hạn và số ngày quá hạn (đạt một trong hai là áp dụng).
+  - Màn công nợ của chủ sân (2.3.20) hiển thị mức hạn chế hiện tại và lý do; booking đã nhận trước đó vẫn được xử lý bình thường.
+  - Khi chủ sân thanh toán và admin xác nhận (2.3.47) thì công nợ quá hạn giảm, hệ thống tự gỡ hạn chế nếu dưới ngưỡng. Ghi audit_logs mỗi lần đổi mức.
+B3. Trận nhập thủ công không tính Elo và thành tích (làm ngay sau 2.3.43)
+  - Trận không gắn booking (data_source manual) chỉ để tham khảo: không cộng Elo, không tính thống kê thành tích và dữ liệu AI ghép cặp, không đủ điều kiện voucher; cập nhật lại E2E 2.2.39.
+B4. Voucher cho người chơi (Courtly chịu phần giảm giá)
+  - Voucher theo điều kiện hoạt động hợp lệ (Elo, số trận có booking, chuỗi hoạt động); người chơi xem và chọn voucher khi báo giá và đặt sân.
+  - Courtly chịu tiền giảm: chủ sân vẫn nhận đủ giá gốc, hoa hồng tính trên giá gốc; người chơi chỉ thanh toán phần sau giảm. Lưu lịch sử dùng voucher, hoàn lại khi booking bị hủy theo chính sách.
+  - Admin tạo, sửa, khóa voucher và xem chi phí voucher Courtly đã chịu.
+B5. Từ ghép cặp sang đặt sân
+  - Kết quả ghép cặp có nút chuyển sang chọn sân và tạo booking, gắn booking với trận (matches.booking_id).
+Ngoài phạm vi đợt này: đặt cọc theo thành viên, phạt hủy sát giờ, tìm người thay, điểm uy tín (nhóm riêng).
 2.3.44. Xem chi tiết đối soát booking
+  - Từ dòng ở 2.3.43 mở chi tiết một booking: thông tin booking, sân, chủ sân, người chơi, giá gốc, tiền giảm voucher (nếu có), thanh toán trực tiếp và các khoản hoàn.
+  - Hoa hồng đã chốt khi booking hoàn thành: loại phí và giá trị lúc snapshot, hoa hồng tính trên giá gốc, phần Courtly bù voucher (voucher_discount), số chủ sân phải trả, khoản Courtly còn nợ chủ sân (courtly_owed) và đã bù trừ chưa, trạng thái, hạn thanh toán, kỳ đối soát đã gán.
+  - Hiển thị nhãn "chưa xác nhận thu tiền" nếu booking tự hoàn thành (B1), tranh chấp liên quan (booking_disputes) và lịch sử điều chỉnh từ audit_logs (kèm lý do).
+  - Chỉ đọc; cần quyền finance.commission.view. Thao tác điều chỉnh và ghi nhận hoàn tiền nằm ở 2.3.51 và 2.3.52.
 2.3.45. Xem danh sách kỳ công nợ hoa hồng
+  - Danh sách commission_settlements của mọi chủ sân: chủ sân, kỳ (period_from - period_to), hoa hồng kỳ, điều chỉnh, phải thu, đã thu, còn lại, trạng thái (open, pending_review, partial, paid, overdue, disputed), số booking, số báo cáo thanh toán đang chờ xác nhận.
+  - Có phân trang, tìm theo tên hoặc email chủ sân, lọc theo trạng thái, chủ sân, khoảng kỳ và chỉ kỳ quá hạn; kỳ chờ xác nhận lên đầu; hiển thị số kỳ theo từng trạng thái và tổng phải thu, đã thu, còn lại của tập đang lọc (không phụ thuộc trang).
+  - Admin tự chốt kỳ (nút "Chốt kỳ", cần quyền finance.commission.manage): chọn chủ sân và khoảng ngày (giờ Việt Nam, không quá hôm nay), hệ thống gom hoa hồng chưa đối soát (pending, due, adjusted) chưa thuộc kỳ nào thành một kỳ mới, gán settlement_id và tính amount_due; hoa hồng tạm hoãn, được miễn hoặc đã đối soát không được gom; mỗi chủ sân chỉ một kỳ cho cùng khoảng ngày; ghi audit_logs.
 2.3.46. Xem chi tiết công nợ và các booking cấu thành
-  - Các booking liên kết trực tiếp với kỳ đối soát, không qua bảng chi tiết trung gian.
+  - Chi tiết một kỳ: các số tiền của kỳ, chủ sân, mức hạn chế công nợ hiện tại (B2), khoản Courtly còn nợ chủ sân, các báo cáo thanh toán đã gửi (commission_payment_reports) kèm bằng chứng và mã tham chiếu, lịch sử thao tác.
+  - Booking cấu thành lấy trực tiếp từ booking_commissions có settlement_id của kỳ, không qua bảng trung gian; có phân trang; mỗi dòng có mã booking, sân, doanh thu gộp, hoa hồng, trạng thái, hạn và nhãn "chưa xác nhận thu tiền"; mở được chi tiết đối soát từng booking (2.3.44).
+  - Chỉ đọc; cần quyền finance.commission.view.
 2.3.47. Xác nhận chủ sân đã thanh toán công nợ
+  - Trang "Thanh toán công nợ": báo cáo đang chờ xác nhận lên đầu; admin đối chiếu số tiền, ngày, mã tham chiếu và bằng chứng rồi xác nhận (confirmed); ghi reviewed_by, reviewed_at, ghi chú và audit_logs. Cũng xác nhận được ngay trong chi tiết kỳ.
+  - Báo cáo gắn kỳ: cộng vào amount_paid của kỳ; hoa hồng của kỳ được đối soát (settled) dần theo hạn thanh toán khi số đã thu đủ phủ; đủ phải thu thì kỳ chuyển paid (ghi paid_at), chưa đủ thì partial.
+  - Báo cáo không gắn kỳ (trả chung): đóng dần hoa hồng cũ nhất chưa thuộc kỳ nào; phần chưa đủ đóng trọn một hoa hồng được giữ làm số dư trả trước (commission_credit) và trừ vào lần xác nhận sau. Chủ sân chỉ gửi trả chung tối đa bằng hoa hồng chưa thuộc kỳ trừ số dư; hoa hồng thuộc kỳ phải trả theo kỳ.
+  - Không xác nhận quá số còn nợ, không xác nhận lại báo cáo đã xử lý, không xác nhận kỳ đã paid hoặc đang tranh chấp; thao tác khóa dữ liệu để hai admin không xác nhận trùng.
+  - Tự bù trừ khoản Courtly còn nợ chủ sân (courtly_owed) vào phần công nợ còn lại sau khi trừ tiền thanh toán, theo hoa hồng cũ nhất, chỉ bù trừ khoản vừa trong hạn mức; đánh dấu đã bù trừ (courtly_owed_cleared_at).
+  - Sau khi xác nhận gọi OwnerRestrictionService.recompute để tự gỡ hạn chế nếu công nợ quá hạn xuống dưới ngưỡng (B2). Cần quyền finance.commission.manage.
 2.3.48. Từ chối hoặc yêu cầu bổ sung bằng chứng thanh toán công nợ
+  - Admin từ chối báo cáo thanh toán (rejected) và bắt buộc nhập lý do từ 5 đến 500 ký tự (có gợi ý nhanh) như bằng chứng mờ, sai số tiền hoặc không thấy giao dịch.
+  - Yêu cầu bổ sung cũng là từ chối kèm lý do nêu rõ cần gì thêm; chủ sân thấy lý do ở màn trạng thái và lịch sử thanh toán (2.3.25, 2.3.26) và gửi lại báo cáo mới (mã tham chiếu của báo cáo bị từ chối được dùng lại).
+  - Công nợ không đổi; kỳ trở về trạng thái trước khi gửi (open, partial hoặc overdue) nếu không còn báo cáo nào khác đang chờ xác nhận; ghi audit_logs. Thông báo đến chủ sân sẽ làm cùng nhóm thông báo (2.3.53 trở đi).
 2.3.49. Ghi nhận giao dịch đối soát hoa hồng
-  - Cập nhật số tiền đã thanh toán, mã tham chiếu, bằng chứng và trạng thái ngay trên kỳ đối soát.
+  - Dùng khi chủ sân thanh toán ngoài hệ thống (tiền mặt, chuyển khoản trực tiếp) mà không gửi báo cáo: admin chọn chủ sân, kỳ (hoặc công nợ chung), nhập số tiền, ngày thanh toán (không ở tương lai, trong 365 ngày), mã tham chiếu (mỗi chủ sân dùng một lần), bằng chứng và ghi chú.
+  - Tạo bản ghi đã xác nhận (đánh dấu do admin ghi nhận, recorded_by) và áp dụng đúng quy tắc của 2.3.47: cập nhật amount_paid, payment_reference, proof_url và trạng thái của kỳ, đối soát hoa hồng, bù trừ khoản Courtly nợ, tính lại hạn chế; kiểm tra số còn nợ trước khi ghi nên thất bại không để lại dữ liệu.
+  - Ghi audit_logs; cần quyền finance.commission.manage.
 2.3.50. Xem lịch sử thanh toán hoa hồng của chủ sân
+  - Chọn một chủ sân để xem toàn bộ báo cáo thanh toán và giao dịch đã ghi nhận theo thời gian: số tiền, ngày, mã tham chiếu, kỳ liên quan, trạng thái, người xử lý, lý do từ chối, khoản đã bù trừ, nhãn "Admin ghi nhận".
+  - Lọc theo trạng thái, khoảng ngày thanh toán và từ khóa, có phân trang; kèm tổng quan của chủ sân: đã thanh toán, đang chờ xác nhận, công nợ còn lại, số dư trả trước, Courtly còn nợ, mức hạn chế.
+  - Chỉ đọc; cần quyền finance.commission.view.
 2.3.51. Điều chỉnh công nợ có lý do và lưu audit log
+  - Công nợ luôn tổng hợp trực tiếp từ hoa hồng từng booking nên admin điều chỉnh công nợ bằng cách điều chỉnh hoa hồng của một booking chưa thu (pending, due, adjusted): nhập số tiền mới (nguyên đồng, không âm, khác số hiện tại) và lý do từ 5 đến 500 ký tự; hoa hồng chuyển sang adjusted.
+  - Hoa hồng thuộc kỳ thì số phải thu và tổng điều chỉnh của kỳ đổi theo; không để số phải thu thấp hơn số đã thu; số đã thu đủ phủ thì hoa hồng được đối soát, bằng số đã thu thì kỳ paid. Hoa hồng ngoài kỳ thì số dư trả trước (nếu có) đóng dần hoa hồng cũ nhất.
+  - Ghi audit_logs gồm người thực hiện, số trước và sau, lý do (hiển thị ở lịch sử của booking và của kỳ); tính lại hạn chế công nợ; cần quyền finance.commission.manage. Phần voucher Courtly đã bù của booking không đổi.
 2.3.52. Xử lý hoàn tiền trực tiếp làm giảm/hoàn lại hoa hồng của booking
+  - Hệ thống chưa có luồng yêu cầu hoàn tiền, nên admin ghi nhận chủ sân đã tự hoàn tiền trực tiếp cho người chơi (số tiền, lý do) trên booking đã thu tiền: tạo refunds đã xác nhận, thanh toán chuyển partially_refunded hoặc refunded; không hoàn quá số đã thu.
+  - Hoa hồng, phần Courtly bù voucher và khoản Courtly nợ chủ sân cùng giảm theo tỉ lệ phần còn lại của khoản đã thu (tính trên hoa hồng hiện tại, kể cả đã điều chỉnh); hoàn hết thì hoa hồng chưa thu thành waived bằng 0.
+  - Hoa hồng đã đối soát hoặc kỳ đã thu vượt số phải thu mới thì phần thừa thành số dư trả trước của chủ sân, trừ vào hoa hồng cũ nhất ở lần sau; không hoàn tiền mặt từ Courtly.
+  - Ghi audit_logs (refund.record, commission.refund_adjust) kèm lý do, tính lại hạn chế công nợ; cần quyền finance.commission.manage. Hoàn tiền chưa xác nhận hoặc bị từ chối không ảnh hưởng hoa hồng.
 
 Quản lý Thông báo
 
+Nền tảng chung (làm trước 2.3.53): dịch vụ gửi thông báo ghi vào notifications (type, title, content, data_json có route điều hướng), tôn trọng notification_preferences của người nhận (in_app_enabled, email_enabled; push chưa hỗ trợ nên chưa dùng). Thông báo trong ứng dụng ghi cùng transaction với nghiệp vụ; email gửi bất đồng bộ, lỗi gửi (kể cả SMTP bị chặn) không làm hỏng nghiệp vụ. Không gửi thông báo cho chính người thực hiện hành động.
 2.3.53. Thông báo xác nhận đặt sân
   - Thông báo cho player khi owner chấp nhận/từ chối và khi owner xác nhận đã thu tiền.
+  - Loại booking_confirmed; nội dung nêu mã booking, sân, giờ chơi và lý do nếu bị từ chối; bấm vào mở chi tiết booking.
 2.3.54. Thông báo hủy đặt sân
+  - Thông báo cho owner khi player hủy; thông báo cho player khi booking bị hủy, hết hạn chờ owner hoặc hết hạn thanh toán.
+  - Loại booking_cancelled; nêu mã booking, giờ chơi và lý do hủy.
 2.3.55. Thông báo trạng thái thanh toán
   - Thông báo cho owner khi player báo đã thanh toán; thông báo cho player khi owner xác nhận/từ chối.
+  - Thông báo cho owner khi admin xác nhận hoặc từ chối báo cáo thanh toán công nợ hoa hồng (bổ sung cho 2.3.47, 2.3.48; kèm lý do từ chối) và khi bị đặt hạn chế do công nợ quá hạn hoặc được gỡ hạn chế (B2).
+  - Loại payment_status; bấm vào mở chi tiết thanh toán hoặc màn công nợ tương ứng.
 2.3.56. Thông báo yêu cầu ghép cặp
+  - Thông báo cho player được mời khi có người gửi yêu cầu ghép cặp; nêu tên người gửi, lời nhắn và thời gian đề xuất; loại partner_request; bấm vào mở danh sách lời mời.
 2.3.57. Thông báo phản hồi yêu cầu ghép cặp
+  - Thông báo cho người gửi khi lời mời được chấp nhận (kèm gợi ý đặt sân cùng, mở danh sách đối tác) hoặc bị từ chối (mở trang tìm đối tác); loại partner_request_response. Lời mời ghép cặp chưa có cơ chế hết hạn nên không có thông báo hết hạn; người gửi tự hủy lời mời không gửi thông báo.
 2.3.58. Thông báo lịch thi đấu
+  - Trận đấu trong hệ thống chỉ được tạo cho trận đã diễn ra (để ghi kết quả), nên thông báo gửi cho các người chơi còn lại (không gửi cho người thực hiện) khi: được ghi vào một trận (từ booking hoặc nhập thủ công), kết quả được nhập và cần xác nhận hoặc báo sai, và trận bị hủy; loại match_scheduled; bấm vào mở trận đấu.
 2.3.59. Thông báo nhắc nhở đặt sân
+  - Job định kỳ (mặc định 5 phút/lần, tắt được bằng REMINDER_JOB_ENABLED) nhắc người chơi và chủ sân trước giờ chơi của booking đã xác nhận ở hai mốc: còn tối đa 24 giờ và còn tối đa 2 giờ; loại booking_reminder, nêu sân, giờ chơi và thời gian còn lại.
+  - Mỗi mốc chỉ gửi một lần cho một booking và một người nhận (bảng notification_reminders, không gửi trùng khi job chạy lại); không nhắc booking chưa xác nhận thu tiền, đã hủy, đã qua giờ hoặc đã hoàn thành.
 2.3.60. Thông báo nhắc nhở trận đấu
+  - Cùng job nhắc người chơi chưa xác nhận kết quả trận (và chưa báo sai) trước khi trận tự xác nhận sau 72 giờ kể từ lúc tạo, ở hai mốc: còn tối đa 48 giờ và còn tối đa 12 giờ; loại match_reminder; chống gửi trùng như 2.3.59.
+  - Không nhắc trận chưa có kết quả, đã xác nhận, đang bị báo sai, đã hủy, và người đã xác nhận.
 2.3.61. Xem lịch sử thông báo
+  - Mọi vai trò (player, owner, staff, admin) xem thông báo của chính mình: danh sách có phân trang, mới nhất trước, lọc theo loại và chưa đọc; hiển thị số chưa đọc.
+  - Đánh dấu đã đọc từng thông báo hoặc tất cả; chỉ thao tác trên thông báo của mình; bấm vào thông báo mở đúng màn hình theo route trong data_json.
+  - Giao diện: chuông thông báo kèm số chưa đọc ở đầu trang (khu người chơi, chủ sân, quản trị) và trang lịch sử thông báo.
 2.3.62. Quản lý tùy chọn nhận thông báo
+  - Xem và bật/tắt từng loại thông báo theo kênh trong ứng dụng và email (notification_preferences); tạo bản ghi mặc định cho loại còn thiếu; chỉ sửa tùy chọn của chính mình.
+  - Một số thông báo bắt buộc theo vai trò (như hạn chế do công nợ quá hạn) không cho tắt kênh trong ứng dụng; kênh push hiển thị là chưa hỗ trợ.
 
 Ghép đội Đôi Nam/Nữ thông minh
 
 Đây là phần nên giữ vì giúp đề tài có chiều sâu hơn so với việc chỉ tìm một đối tác chơi.
 
+[Đã triển khai]
+Nền sẵn có: Elo đo từ trận (rating_score), tỷ lệ thắng, đặc trưng tương thích kỹ năng/vị trí/thời gian/phong cách (2.2.24-27), bảng double_team_suggestions và algorithm_runs. Chưa có AI service/CatBoost (2.2.28-30) nên nhóm này dùng công thức baseline và ghi rõ nguồn tính điểm.
 2.3.63. Chọn người chơi để thành lập đội đôi
+  - Người chơi chọn đúng 4 người (gồm chính mình) từ danh sách đối tác đã kết nối hoặc kết quả tìm đối tác; chọn loại đôi nam, đôi nữ hoặc đôi nam nữ, hệ thống kiểm tra giới tính 4 người khớp loại đã chọn.
+  - Không cho chọn trùng người, người bị khóa/chưa kích hoạt hoặc người chưa đủ dữ liệu hồ sơ; báo rõ lý do từng người không hợp lệ.
 2.3.64. Tính toán sức mạnh đội của từng người chơi
+  - Sức mạnh từng người lấy từ Elo hệ thống đo; người dưới 5 trận được đánh dấu "Tạm tính" và kéo về mức khởi điểm theo số trận để không bị thổi phồng.
+  - Hiển thị kèm tỷ lệ thắng (có mẫu số) và độ tin cậy của con số.
 2.3.65. Tính toán mức độ tương thích giữa các cặp người chơi
+  - Với 4 người có 6 cặp; mỗi cặp chấm điểm từ độ chênh Elo, phong cách chơi bổ trợ, trùng lịch rảnh và khoảng cách vị trí (dùng lại 2.2.24-27).
+  - Chỉ dùng cho việc chia đội, không lộ địa chỉ cụ thể của người chơi.
 2.3.66. Tạo các đội đôi cân bằng
+  - 4 người có đúng 3 cách chia thành 2 đội (đôi nam nữ chỉ còn 2 cách vì mỗi đội phải có một nam một nữ); hệ thống tạo đủ các phương án hợp lệ, mỗi phương án lưu vào double_team_suggestions kèm lần chạy (algorithm_runs, loại double_team_matching).
 2.3.67. Tính điểm sức mạnh của đội
+  - Sức mạnh đội = trung bình Elo hai người (đúng công thức 2.2.6) điều chỉnh nhẹ theo độ tương thích của cặp; lưu team1_strength, team2_strength.
 2.3.68. So sánh mức độ cân bằng kỹ năng giữa các đội
+  - balance_score là độ chênh sức mạnh hai đội (càng gần 0 càng cân bằng); gắn nhãn Rất cân bằng / Cân bằng / Chênh lệch theo ngưỡng cấu hình.
+  - Hiển thị so sánh hai đội cạnh nhau và xác suất thắng dự kiến theo công thức Elo.
 2.3.69. Đề xuất đội đôi tối ưu
+  - Chọn phương án có balance_score tốt nhất, nêu lý do dễ hiểu (vì sao hai đội ngang nhau), các phương án còn lại xếp theo thứ tự.
+  - Người chơi xem lại được đề xuất của mình; chưa tự tạo trận (trận chỉ ghi cho trận đã diễn ra).
+
+[Bổ sung cho 2.2.31-2.2.35 - đã triển khai]
+  - Yêu cầu ghép cặp ở trạng thái chờ quá 1 giờ không được phản hồi thì tự chuyển expired (trạng thái đã có sẵn trong DB), cho phép gửi lại yêu cầu mới; gửi thông báo cho người gửi (loại partner_request_expired) bằng job định kỳ.
 
 Phân tích & Đánh giá Hệ thống Ghép cặp
 
-2.3.70. Đánh giá độ chính xác của ghép cặp người chơi
-2.3.71. Đánh giá độ chính xác của ghép đội
-2.3.72. Phân tích kết quả model AI xếp hạng đối tác
-2.3.73. Phân tích hiệu suất AI service và chất lượng model
-2.3.74. Xem thống kê hiệu suất ghép cặp
-2.3.75. Xem lịch sử ghép cặp người chơi
-2.3.76. Xem lịch sử ghép đội
+2.3.70. Đánh giá độ chính xác của ghép cặp người chơi [Đã triển khai]
+  - Nền tảng: hiện kết quả tìm đối tác (2.2.x) chưa được lưu lại nên không có gì để đo. Mỗi lần người chơi tìm/xem gợi ý, hệ thống ghi nhật ký vào partner_suggestions (người xem, người được gợi ý, điểm thành phần, tổng điểm, hạng, nguồn chấm ai/baseline, model). Đây là thay đổi bắt buộc để làm 2.3.70, 2.3.72, 2.3.75.
+  - Độ chính xác đo bằng kết quả thật của gợi ý: tỷ lệ gửi yêu cầu (gợi ý nào được gửi yêu cầu ghép), tỷ lệ chấp nhận (yêu cầu được accepted / đã trả lời), tỷ lệ hết hạn/từ chối, và tỷ lệ chơi thật (hai người có trận chung sau khi kết nối). Có mẫu số rõ ràng; mẫu dưới 30 gợi ý thì gắn nhãn "Chưa đủ dữ liệu".
+  - So sánh theo hạng gợi ý (top 1, top 3, top 10) và theo khoảng điểm (0-40, 40-70, 70-100) để thấy điểm cao có thật sự dễ được chấp nhận hơn không.
+  - Chỉ admin xem (admin web /admin/matching), lọc theo khoảng ngày và nguồn chấm; cần quyền matching.view.
+  - Đã triển khai: yêu cầu được gắn cho gợi ý mới nhất của cùng cặp trong 7 ngày; dữ liệu mẫu @bwf.example không tính; migration V43 thêm matching_runs và quyền matching.view.
+2.3.71. Đánh giá độ chính xác của ghép đội [Đã triển khai]
+  - Đề xuất chia đội (2.3.63-69) chưa tạo trận, nên không có kết quả để đối chiếu trực tiếp. Hệ thống tự đối chiếu khi bốn người đó về sau có một trận đã ghi và xác nhận với đúng cách chia đội của một phương án đã đề xuất (trong vòng 30 ngày kể từ lúc đề xuất).
+  - Chỉ số: số đề xuất đã có kết quả đối chiếu; tỷ lệ đội được dự đoán thắng (xác suất > 50%) thật sự thắng; sai số Brier/log-loss của xác suất thắng; độ chênh điểm trung bình giữa hai đội ở các trận đối chiếu được; so sánh phương án khuyến nghị với các phương án còn lại.
+  - Khi chưa đủ mẫu hiển thị rõ "Chưa đủ dữ liệu" kèm số mẫu hiện có, không bịa số. Cần quyền matching.view.
+  - Đã triển khai: chỉ tính trận đã xác nhận kết quả, cùng đúng 4 người và cùng cách chia đội, trong 30 ngày sau đề xuất; có thêm tỷ lệ người chơi chọn phương án khuyến nghị.
+2.3.72. Phân tích kết quả model AI xếp hạng đối tác [Đã triển khai]
+  - Theo từng model trong ai_models (baseline-v1, double-team baseline, catboost khi có): số lần chấm, phân bố tổng điểm, điểm trung bình theo thành phần (trình độ, vị trí, thời gian, phong cách), tỷ lệ chấp nhận theo model (dùng nhật ký của 2.3.70), tỷ lệ trường hợp thiếu dữ liệu (thiếu lịch/vị trí).
+  - So sánh hai model/phiên bản cạnh nhau trên cùng khoảng thời gian. Hiện chỉ có baseline nên giao diện phải hoạt động tốt khi chỉ có một model.
+2.3.73. Phân tích hiệu suất AI service và chất lượng model [Đã triển khai]
+  - Hệ thống chưa có AI service/CatBoost riêng (2.2.28-30), nên phần này đo thứ có thật: thời gian xử lý mỗi lần chấm điểm gợi ý và chia đội (p50/p95/tối đa), số lần lỗi, tỷ lệ phải lùi về baseline, số yêu cầu mỗi ngày. Để có số này, nhật ký ghép cặp lưu thêm duration_ms và trạng thái.
+  - Chất lượng model: hiển thị metrics_json của ai_models (nếu đã huấn luyện có chỉ số), phiên bản đang active, ngày huấn luyện/kích hoạt, cảnh báo khi chất lượng thực tế (2.3.70) thấp hơn ngưỡng cấu hình hoặc model quá cũ.
+  - Chỉ đọc; cần quyền matching.view.
+  - Đã triển khai: ngưỡng cảnh báo cấu hình được (MATCHING_MIN_ACCEPTANCE_RATE=20, MATCHING_MAX_FAILURE_RATE=5, MATCHING_MAX_MODEL_AGE_DAYS=90, MATCHING_MAX_P95_MS=1500); chỉ cảnh báo tỷ lệ khi có từ 20 lượt chạy.
+2.3.74. Xem thống kê hiệu suất ghép cặp [Đã triển khai]
+  - Bảng tổng quan cho admin theo ngày/tuần/tháng: số lượt tìm đối tác, số gợi ý hiển thị, số yêu cầu gửi / chấp nhận / từ chối / hết hạn, số kết nối mới, số lượt chia đội và số đề xuất, thời gian từ lúc gửi đến lúc phản hồi trung bình; biểu đồ theo thời gian và bộ lọc khoảng ngày.
+  - Tổng hợp trực tiếp từ partner_requests, player_connections, partner_suggestions, double_team_suggestions (không tạo bảng thống kê riêng). Cần quyền matching.view.
+2.3.75. Xem lịch sử ghép cặp người chơi [Đã triển khai]
+  - Admin: danh sách các lần gợi ý và yêu cầu ghép cặp theo thời gian (người xem, người được gợi ý, điểm, hạng, kết quả: đã gửi/chấp nhận/từ chối/hết hạn/chưa có tương tác), lọc theo người chơi, trạng thái, khoảng ngày, có phân trang; xem chi tiết điểm thành phần và lý do của một gợi ý.
+  - Người chơi: xem lại lịch sử yêu cầu ghép cặp của chính mình đã có ở màn Ghép cặp (không lộ nhật ký chấm điểm của người khác).
+  - Đã triển khai: admin xem theo từng gợi ý (kèm kết quả yêu cầu), người chơi dùng màn yêu cầu đã gửi/nhận có sẵn (đủ trạng thái, đã lọc).
+2.3.76. Xem lịch sử ghép đội [Đã triển khai]
+  - Admin: danh sách các lượt chia đội (batch) theo thời gian: người yêu cầu, loại đôi nam/nữ/nam nữ, bốn người, phương án khuyến nghị, độ chênh, nhãn cân bằng, nguồn chấm, trạng thái đối chiếu kết quả (2.3.71); lọc theo người yêu cầu, loại đôi, khoảng ngày; xem chi tiết đủ 3 phương án.
+  - Người chơi xem lại các lượt chia đội của mình (đã có theo batch ở 2.3.69, bổ sung danh sách lịch sử).
+  - Đã triển khai: người chơi vào /partners/double-teams/history (GET /api/v1/double-teams/suggestions), admin ở tab "Lịch sử chia đội".
+
+Ghi chú chung cho nhóm 2.3.70-76: đây là phần quản trị nên đặt trong admin web với quyền matching.view (thêm vào bảng quyền); dữ liệu thiếu thì hiển thị "Chưa đủ dữ liệu", không dựng số giả; dữ liệu seed @bwf.example không tính vào thống kê thật.
 
 Đánh giá Sân cầu lông
 
-2.3.77. Viết đánh giá sân sau khi chơi (router dự kiến: /san/:venueId#danh-gia)
+2.3.77. Viết đánh giá sân sau khi chơi (router dự kiến: /san/:venueId#danh-gia) [Đã triển khai]
   - Chỉ người có đơn đặt sân đã hoàn thành ở sân đó mới viết được.
   - Mỗi đơn chỉ đánh giá một lần, theo ràng buộc unique(venue_id, user_id, booking_id).
-2.3.78. Chỉnh sửa đánh giá sân của mình
-2.3.79. Xoá đánh giá sân của mình
-2.3.80. Xem danh sách đánh giá của một sân (router: /san/:venueId)
-  - Có phân trang, chỉ hiện đánh giá đang ở trạng thái visible.
-2.3.81. Chủ sân trả lời công khai một đánh giá
+  - Nhập số sao nguyên từ 1 đến 5 (bắt buộc) và nhận xét tùy chọn tối đa 1000 ký tự (cắt khoảng trắng đầu cuối); đánh giá mới có trạng thái visible. Thời hạn viết: 7 ngày kể từ lúc đơn hoàn thành (cấu hình được).
+  - API: POST /api/v1/bookings/{bookingId}/venue-review; booking phải của chính người gọi, trạng thái completed, tài khoản đang hoạt động; lỗi rõ ràng cho từng trường hợp (không phải đơn của mình, đơn chưa hoàn thành, đã đánh giá, quá hạn).
+  - Ngay trong cùng giao dịch cập nhật venues.average_rating và venues.review_count, tính lại từ các đánh giá visible (không cộng dồn để khỏi lệch).
+  - Đã triển khai: thời hạn 7 ngày (VENUE_REVIEW_WINDOW_DAYS); lịch sử đặt sân trả thêm review/canReview/reviewDeadline.
+  - Giao diện: thẻ đơn đã hoàn thành trong lịch sử đặt sân có nút "Đánh giá sân" (đổi thành "Sửa đánh giá" khi đã có); biểu mẫu chọn sao + nhận xét mở ngay trên trang chi tiết sân ở mục đánh giá (#danh-gia).
+2.3.78. Chỉnh sửa đánh giá sân của mình [Đã triển khai]
+  - API: PUT /api/v1/venue-reviews/{reviewId}; chỉ người viết mới sửa được, sửa số sao và nhận xét.
+  - Chỉ sửa khi đánh giá còn ở trạng thái visible; đánh giá đang bị báo cáo (reported) hoặc đã bị admin ẩn (hidden) thì không cho sửa để khỏi né kiểm duyệt (trả 409 kèm lý do).
+  - Tính lại điểm trung bình của sân; hiển thị nhãn "Đã chỉnh sửa" khi updated_at khác created_at.
+  - Đã triển khai: sửa/xóa ở lịch sử đặt sân và ngay trên đánh giá của mình ở trang sân.
+2.3.79. Xoá đánh giá sân của mình [Đã triển khai]
+  - API: DELETE /api/v1/venue-reviews/{reviewId}; chỉ người viết, có hộp xác nhận trước khi xóa.
+  - Xóa hẳn bản ghi (bảng chỉ có trạng thái visible/hidden/reported) nên người chơi viết lại được cho cùng đơn; không cho xóa khi đánh giá đang bị báo cáo hoặc đã bị ẩn, đợi admin xử lý xong (409).
+  - Câu trả lời của chủ sân (2.3.81) xóa theo; tính lại điểm trung bình của sân.
+2.3.80. Xem danh sách đánh giá của một sân (router: /san/:venueId) [Đã triển khai]
+  - Đã có API công khai GET /api/v1/venues/{slugOrId}/reviews (2.1.23) có phân trang, chỉ hiện đánh giá visible; bổ sung cho nhóm này:
+  - mỗi đánh giá có id, cờ "của tôi" khi người xem đã đăng nhập (để hiện nút sửa/xóa), nhãn đã chỉnh sửa và câu trả lời của chủ sân;
+  - phần tổng hợp: điểm trung bình, tổng số và số đánh giá theo từng mức 1-5 sao (biểu đồ thanh); sắp xếp mới nhất trước, lọc theo số sao.
+  - Không lộ email/số điện thoại của người đánh giá, chỉ tên hiển thị như hiện nay.
+  - Đã triển khai: GET /api/v1/venues/{slug}/reviews (rating, page, size) và /reviews/summary; "Xem thêm" tải từng trang 6 đánh giá.
+2.3.81. Chủ sân trả lời công khai một đánh giá [Đã triển khai]
   - Mỗi đánh giá chỉ có một câu trả lời, hiện ngay bên dưới.
+  - Bảng mới venue_review_replies (review_id duy nhất, owner_id, content tối đa 1000 ký tự, created_at, updated_at); migration mới, không sửa file cũ.
+  - API: POST /api/v1/owner/venue-reviews/{reviewId}/reply; chỉ chủ sân sở hữu sân đó, chỉ trả lời đánh giá visible; trả lời lần hai trả 409 (dùng 2.3.82 để sửa).
+  - Thông báo cho người đánh giá "Chủ sân đã trả lời đánh giá của bạn" (loại venue_review_replied, tôn trọng tùy chọn thông báo, dẫn tới /san/:venueId#danh-gia).
+  - Giao diện chủ sân: mục "Đánh giá của khách" (/owner/reviews) trong khu quản lý sân, lọc chưa/đã trả lời, theo sân và số sao, ô trả lời dưới từng đánh giá.
+  - Đã triển khai: migration V44; thông báo venue_review_replied (thêm vào danh sách tùy chọn thông báo, 11 loại).
 2.3.82. Chủ sân chỉnh sửa câu trả lời
 2.3.83. Báo cáo đánh giá có nội dung không phù hợp
   - Dùng khi đánh giá có lời lẽ xúc phạm hoặc vu khống, không dùng cho tranh chấp tiền.
