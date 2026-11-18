@@ -181,7 +181,7 @@ class AdminCommissionDetailTest extends AdminApiTestBase {
         jdbc.update("INSERT INTO refunds (id, payment_id, booking_id, amount, status, reason) VALUES (gen_random_uuid(), ?, ?, 50000, 'confirmed', 'San ngung hoat dong')",
                 paymentId, booking.getId());
         jdbc.update("INSERT INTO booking_disputes (id, booking_id, payment_id, reporter_id, category, description, status) "
-                + "VALUES (gen_random_uuid(), ?, ?, ?, 'payment', 'Chua nhan san', 'reviewing')", booking.getId(), paymentId, playerUser.getId());
+                + "VALUES (gen_random_uuid(), ?, ?, ?, 'venue_closed', 'Chua nhan san', 'reviewing')", booking.getId(), paymentId, playerUser.getId());
         BookingCommission commission = commission(booking, "adjusted", "12000", null);
         jdbc.update("INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, old_data, new_data, created_at) "
                 + "VALUES (gen_random_uuid(), ?, 'commission.adjust', 'booking_commission', ?, '{\"commissionAmount\":18000}'::jsonb, "
