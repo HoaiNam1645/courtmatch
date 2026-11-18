@@ -10,6 +10,8 @@ const OwnerVenueDetailPage = lazy(() => import('./pages/OwnerVenueDetailPage'))
 const OwnerBookingRequestsPage = lazy(() => import('./pages/OwnerBookingRequestsPage'))
 const OwnerBookingHistoryPage = lazy(() => import('./pages/OwnerBookingHistoryPage'))
 const OwnerReviewsPage = lazy(() => import('./pages/OwnerReviewsPage'))
+const OwnerDisputesPage = lazy(() => import('./disputes/OwnerDisputesPage'))
+const OwnerDisputeDetailPage = lazy(() => import('./disputes/OwnerDisputeDetailPage'))
 const OwnerPaymentsPage = lazy(() => import('./pages/OwnerPaymentsPage'))
 const OwnerFinancePage = lazy(() => import('./pages/OwnerFinancePage'))
 
@@ -24,6 +26,8 @@ const ownerRoutes = [
   { path: '/owner/booking-requests', element: <OwnerBookingRequestsPage /> },
   { path: '/owner/bookings', element: <OwnerBookingHistoryPage /> },
   { path: '/owner/reviews', element: <OwnerReviewsPage /> },
+  { path: '/owner/disputes', element: <OwnerDisputesPage /> },
+  { path: '/owner/disputes/:disputeId', element: <OwnerDisputeDetailPage /> },
   { path: '/owner/payments', element: <OwnerPaymentsPage /> },
   { path: '/owner/finance', element: <OwnerFinancePage /> },
 ]

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { LogOut, ShieldAlert } from 'lucide-react'
 import { Navigate, NavLink, useLocation } from 'react-router-dom'
 import { BrandMark } from '../../../app/AppLayout'
@@ -5,6 +6,7 @@ import { useApp } from '../../../app/useApp'
 import { isOwner } from '../../../shared/roles'
 import { classNames } from '../../../shared/utils'
 import { NotificationBell } from '../../notifications/NotificationBell'
+import { fetchOwnerDisputes } from '../../../api/ownerDisputes'
 import { ownerNavigation } from '../ownerNavigation'
 
 const CHANGE_PASSWORD_PATH = '/owner/change-password'
@@ -32,6 +34,17 @@ function OwnerLayout({ eyebrow, title, description, actions, children }) {
   const { user, logout } = useApp()
   const location = useLocation()
   const onPasswordPage = location.pathname === CHANGE_PASSWORD_PATH
+  const [disputeCount, setDisputeCount] = useState(0)
+  const isOwnerUser = Boolean(user) && isOwner(user)
+
+  useEffect(() => {
+    if (!isOwnerUser || onPasswordPage) return undefined
+    let active = true
+    fetchOwnerDisputes({ status: 'awaiting', size: 1 })
+      .then((result) => { if (active) setDisputeCount(result.counts.awaiting) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [isOwnerUser, onPasswordPage, location.pathname])
 
   if (!user) {
     return (
@@ -104,6 +117,7 @@ function OwnerLayout({ eyebrow, title, description, actions, children }) {
                   >
                     <Icon className="size-4" />
                     {item.label}
+                    {item.badge === 'disputes' && disputeCount > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white" data-testid="nav-disputes-badge">{disputeCount}</span>}
                   </NavLink>
                 )
               })}

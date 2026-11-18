@@ -59,21 +59,28 @@ public class DisputeQueryService {
     }
 
     static DisputeDetailResponse toDetail(BookingDispute dispute) {
+        return toDetail(dispute, false);
+    }
+
+    /**
+     * {@code ownerView}: dong thoi gian nhin tu chu san (nguoi choi la "player", chu san la "you"); mac dinh nhin tu nguoi choi.
+     */
+    static DisputeDetailResponse toDetail(BookingDispute dispute, boolean ownerView) {
         UUID id = dispute.getId();
         List<Map<String, Object>> evidences = dispute.getReporterEvidences() == null ? List.of() : dispute.getReporterEvidences();
         List<Map<String, Object>> updates = dispute.getReporterUpdates() == null ? List.of() : dispute.getReporterUpdates();
 
         List<TimelineEntry> timeline = new ArrayList<>();
-        timeline.add(new TimelineEntry("created", "you", dispute.getCreatedAt(), dispute.getDescription(), null,
+        timeline.add(new TimelineEntry("created", ownerView ? "player" : "you", dispute.getCreatedAt(), dispute.getDescription(), null,
                 DisputeEvidenceService.toResponses(id, evidences.stream().filter(item -> item.get("supplementId") == null).toList())));
         for (Map<String, Object> update : updates) {
             String updateId = (String) update.get("id");
-            timeline.add(new TimelineEntry("supplement", "you", Instant.parse((String) update.get("createdAt")),
+            timeline.add(new TimelineEntry("supplement", ownerView ? "player" : "you", Instant.parse((String) update.get("createdAt")),
                     (String) update.get("content"), null,
                     DisputeEvidenceService.toResponses(id, evidences.stream().filter(item -> updateId.equals(item.get("supplementId"))).toList())));
         }
         if (dispute.getOwnerResponse() != null && dispute.getOwnerRespondedAt() != null) {
-            timeline.add(new TimelineEntry("owner_response", "owner", dispute.getOwnerRespondedAt(), dispute.getOwnerResponse(), null,
+            timeline.add(new TimelineEntry("owner_response", ownerView ? "you" : "owner", dispute.getOwnerRespondedAt(), dispute.getOwnerResponse(), null,
                     DisputeEvidenceService.toResponses(id, dispute.getOwnerEvidences())));
         }
         if (dispute.getResolution() != null && dispute.getHandledAt() != null) {
