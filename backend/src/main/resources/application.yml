@@ -90,6 +90,11 @@ courtly:
   reviews:
     # So ngay sau khi don hoan thanh nguoi choi con duoc viet danh gia san (2.3.77).
     window-days: ${VENUE_REVIEW_WINDOW_DAYS:7}
+  disputes:
+    # Nguoi choi chi bao cao duoc don trong so ngay nay ke tu gio ket thuc (2.3.85).
+    report-window-days: ${BOOKING_DISPUTE_WINDOW_DAYS:7}
+    # Han chu san giai trinh ke tu luc tao bao cao.
+    owner-response-hours: ${BOOKING_DISPUTE_OWNER_RESPONSE_HOURS:48}
   matching:
     # Nguong canh bao chat luong ghep cap tren man hinh quan tri (2.3.73).
     quality:

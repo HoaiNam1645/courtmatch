@@ -6,6 +6,7 @@ const BookingCheckoutPage = lazy(() => import('./pages/BookingCheckoutPage'))
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'))
 const PaymentPage = lazy(() => import('./pages/PaymentPage'))
 const BookingsPage = lazy(() => import('./pages/BookingsPage'))
+const BookingDisputePage = lazy(() => import('./pages/BookingDisputePage'))
 const BookingDetailPage = lazy(() => import('./pages/BookingDetailPage'))
 
 const bookingRoutes = [
@@ -13,6 +14,7 @@ const bookingRoutes = [
   { path: '/booking/success/:bookingId', element: <ParamPage component={BookingSuccessPage} paramName="bookingId" propName="bookingId" /> },
   { path: '/payments/:paymentId', element: <ParamPage component={PaymentPage} paramName="paymentId" propName="paymentId" /> },
   { path: '/bookings', element: <AppPage component={BookingsPage} /> },
+  { path: '/bookings/:bookingId/bao-cao', element: <ParamPage component={BookingDisputePage} paramName="bookingId" propName="bookingId" /> },
   { path: '/bookings/:bookingId', element: <ParamPage component={BookingDetailPage} paramName="bookingId" propName="bookingId" /> },
 ]
 

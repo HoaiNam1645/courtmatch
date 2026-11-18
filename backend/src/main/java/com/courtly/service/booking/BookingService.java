@@ -38,6 +38,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.courtly.domain.review.VenueReview;
 import com.courtly.domain.review.VenueReviewRepository;
+import com.courtly.domain.payment.BookingDispute;
+import com.courtly.service.dispute.BookingDisputeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -78,6 +80,7 @@ public class BookingService {
     private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final VoucherService voucherService;
     private final VenueReviewRepository venueReviewRepository;
+    private final BookingDisputeService disputeService;
     private final com.courtly.domain.review.ReportRepository reportRepository;
     private final com.courtly.service.review.VenueReviewService reviewService;
 
@@ -241,7 +244,7 @@ public class BookingService {
     /** Chi tiet don (2.1.29, 2.1.30). Chi chu don moi xem duoc. */
     @Transactional(readOnly = true)
     public BookingDetailResponse getDetail(UUID userId, UUID bookingId) {
-        return toDetail(requireOwnBooking(userId, bookingId), Instant.now());
+        return toDetail(requireOwnBooking(userId, bookingId), Instant.now(), true);
     }
 
     /**
@@ -274,7 +277,7 @@ public class BookingService {
 
         bookingRepository.save(booking);
         log.info("Huy don {}", booking.getBookingCode());
-        return toDetail(booking, now);
+        return toDetail(booking, now, true);
     }
 
     /** Chi don chua toi gio choi va dang o trang thai con huy duoc. */
@@ -373,7 +376,13 @@ public class BookingService {
     }
 
     private BookingDetailResponse toDetail(Booking booking, Instant now) {
+        return toDetail(booking, now, false);
+    }
+
+    /** {@code forBooker}: chi nguoi dat moi thay bao cao dang xu ly va nut "Bao cao van de" (2.3.85). */
+    private BookingDetailResponse toDetail(Booking booking, Instant now, boolean forBooker) {
         Venue venue = booking.getVenue();
+        BookingDispute activeDispute = forBooker ? disputeService.findActive(booking.getId()).orElse(null) : null;
         String coverImageUrl = coversFor(List.of(booking)).get(venue.getId());
 
         return new BookingDetailResponse(
@@ -408,7 +417,11 @@ public class BookingService {
                                 history.getChangedBy() == null, history.getCreatedAt()))
                         .toList(),
                 booking.getPartner() == null ? null
-                        : new BookingDetailResponse.Partner(booking.getPartner().getId(), booking.getPartner().getFullName()));
+                        : new BookingDetailResponse.Partner(booking.getPartner().getId(), booking.getPartner().getFullName()),
+                forBooker && disputeService.canReport(booking, activeDispute != null, now),
+                forBooker && BookingDisputeService.REPORTABLE.contains(booking.getStatus()) ? disputeService.reportDeadline(booking) : null,
+                activeDispute == null ? null : new BookingDetailResponse.Dispute(activeDispute.getId(), activeDispute.getStatus(),
+                        activeDispute.getCategory(), activeDispute.getCreatedAt(), activeDispute.getOwnerResponseDeadline()));
     }
 
     /** Owner accepts the request and opens the direct-payment step. */

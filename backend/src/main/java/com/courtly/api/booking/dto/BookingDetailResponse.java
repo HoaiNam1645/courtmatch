@@ -29,7 +29,14 @@ public record BookingDetailResponse(UUID id,
                                     VenueInfo venue,
                                     List<Item> items,
                                     List<StatusChange> statusHistory,
-                                    Partner partner) {
+                                    Partner partner,
+                                    boolean canReportIssue,
+                                    Instant reportDeadline,
+                                    Dispute dispute) {
+
+    /** Bao cao dang xu ly cua don nay (2.3.85); null khi khong co. */
+    public record Dispute(UUID id, String status, String category, Instant createdAt, Instant ownerResponseDeadline) {
+    }
 
     /** Nguoi choi cung do nguoi dat chon khi dat san tu ket qua ghep cap (B5). */
     public record Partner(UUID id, String fullName) {

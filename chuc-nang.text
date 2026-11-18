@@ -683,16 +683,37 @@ Ghi chú chung cho nhóm 2.3.70-76: đây là phần quản trị nên đặt tr
   - Thông báo cho người đánh giá "Chủ sân đã trả lời đánh giá của bạn" (loại venue_review_replied, tôn trọng tùy chọn thông báo, dẫn tới /san/:venueId#danh-gia).
   - Giao diện chủ sân: mục "Đánh giá của khách" (/owner/reviews) trong khu quản lý sân, lọc chưa/đã trả lời, theo sân và số sao, ô trả lời dưới từng đánh giá.
   - Đã triển khai: migration V44; thông báo venue_review_replied (thêm vào danh sách tùy chọn thông báo, 11 loại).
-2.3.82. Chủ sân chỉnh sửa câu trả lời
-2.3.83. Báo cáo đánh giá có nội dung không phù hợp
+2.3.82. Chủ sân chỉnh sửa câu trả lời [Đã triển khai]
+  - API: PUT /api/v1/owner/venue-reviews/{reviewId}/reply; chỉ chủ sân sở hữu sân đó, chỉ khi đánh giá còn visible và đã có câu trả lời (chưa có thì dùng 2.3.81).
+  - Nội dung 1-1000 ký tự như lúc trả lời; sửa xong hiện nhãn "Đã chỉnh sửa" ở trang công khai và trang chủ sân (đã có sẵn cờ edited trong dữ liệu trả lời). Không gửi lại thông báo để tránh làm phiền người viết đánh giá.
+  - Giao diện chủ sân: nút "Sửa câu trả lời" dưới câu trả lời, mở lại ô nhập với nội dung hiện tại.
+  - Đã triển khai: PUT /api/v1/owner/venue-reviews/{id}/reply.
+2.3.83. Báo cáo đánh giá có nội dung không phù hợp [Đã triển khai]
   - Dùng khi đánh giá có lời lẽ xúc phạm hoặc vu khống, không dùng cho tranh chấp tiền.
-2.3.84. Quản trị viên ẩn hoặc khôi phục đánh giá bị báo cáo
+  - Người báo cáo là chủ sân của sân được đánh giá (nút "Báo cáo" dưới mỗi đánh giá trong trang Đánh giá của khách). API: POST /api/v1/owner/venue-reviews/{reviewId}/report.
+  - Lý do chọn trong danh mục: xúc phạm / lăng mạ, vu khống / sai sự thật, quảng cáo / spam, lộ thông tin cá nhân, lý do khác (bắt buộc mô tả từ 10 ký tự); mô tả thêm tối đa 1000 ký tự. Mỗi chủ sân chỉ có một báo cáo đang chờ xử lý cho mỗi đánh giá.
+  - Lưu vào reports (target_type = venue_review, status pending). Đánh giá vẫn hiển thị công khai cho tới khi quản trị viên kết luận, để không ai bịt được đánh giá xấu chỉ bằng cách báo cáo; trong thời gian đó người viết không sửa/xóa được đánh giá (khóa theo báo cáo đang chờ, thay cho trạng thái reported hiện tại).
+  - Chủ sân thấy trạng thái báo cáo của mình (đang chờ / đã ẩn đánh giá / đã giữ nguyên đánh giá).
+  - Đã triển khai: bộ lọc "Đã báo cáo" ở trang Đánh giá của khách (gồm cả đánh giá đã bị ẩn để xem kết quả).
+2.3.84. Quản trị viên ẩn hoặc khôi phục đánh giá bị báo cáo [Đã triển khai]
+  - Mở rộng màn "Báo cáo đánh giá" của admin (hiện chỉ có đánh giá đối tác) để có thêm loại "Đánh giá sân": xem báo cáo, nội dung đánh giá, câu trả lời của chủ sân, các báo cáo khác về cùng đánh giá.
+  - Ẩn đánh giá (review hidden, báo cáo resolved), giữ nguyên đánh giá (review_kept, báo cáo rejected), khôi phục đánh giá đã ẩn (hidden -> visible); bắt buộc ghi chú, ghi audit_logs, cần quyền report.handle.
+  - Đã triển khai: màn Báo cáo đánh giá có nút chuyển Đánh giá đối tác / Đánh giá sân; API /api/v1/admin/venue-review-reports.
+  - Ẩn hoặc khôi phục đều tính lại điểm trung bình và số đánh giá của sân (đánh giá ẩn không được tính); thông báo cho người viết khi đánh giá bị ẩn (loại venue_review_hidden); chủ sân tự xem kết quả báo cáo ở trang Đánh giá của khách, không gửi thông báo.
 
 Báo cáo & Tranh chấp Hoàn tiền — Người chơi
 
-2.3.85. Tạo báo cáo về một đơn đặt sân (router dự kiến: /bookings/:bookingId/bao-cao)
-2.3.86. Chọn loại báo cáo theo danh mục có sẵn
-  - Năm loại: sân đóng cửa, sân khác mô tả, chủ sân tự huỷ, bị thu thêm tiền, lý do khác.
+2.3.85. Tạo báo cáo về một đơn đặt sân (router dự kiến: /bookings/:bookingId/bao-cao) [Đã triển khai]
+  - Dùng bảng booking_disputes có sẵn (báo cáo về đơn, khác với reports dùng cho người dùng/đánh giá). API: POST /api/v1/bookings/{bookingId}/disputes.
+  - Chỉ người đặt, đơn ở trạng thái confirmed hoặc completed, trong 7 ngày kể từ giờ kết thúc (cấu hình được, trùng thời hạn đánh dấu hoàn tiền ở 2.3.87); mỗi đơn chỉ có một báo cáo đang xử lý (open / awaiting_owner_response / reviewing), báo cáo cũ đã đóng thì được báo cáo lại.
+  - Mô tả 10-2000 ký tự. Tạo xong ở trạng thái awaiting_owner_response, owner_response_deadline = lúc tạo + 48 giờ, gắn payment_id của đơn nếu có; gửi thông báo cho chủ sân (loại booking_dispute_opened) kèm hạn giải trình.
+  - Phạm vi nhóm này chỉ tạo báo cáo: chưa đổi trạng thái booking và chưa tạm hoãn hoa hồng (thuộc 2.3.105-106), chưa có hoàn tiền (2.3.87).
+  - Giao diện: nút "Báo cáo vấn đề" ở chi tiết đơn đã xác nhận/hoàn thành, trang biểu mẫu /bookings/:bookingId/bao-cao.
+  - Đã triển khai: migration V45 (CHECK loại báo cáo + mỗi đơn một báo cáo đang xử lý); chi tiết đơn trả canReportIssue/reportDeadline/dispute; cấu hình BOOKING_DISPUTE_WINDOW_DAYS, BOOKING_DISPUTE_OWNER_RESPONSE_HOURS.
+2.3.86. Chọn loại báo cáo theo danh mục có sẵn [Đã triển khai]
+  - Năm loại: sân đóng cửa (venue_closed), sân khác mô tả (venue_mismatch), chủ sân tự huỷ (owner_cancelled), bị thu thêm tiền (extra_charge), lý do khác (other).
+  - API GET /api/v1/booking-disputes/categories trả mã, tên và gợi ý nhập cho từng loại; loại "lý do khác" bắt buộc mô tả rõ. Loại ngoài danh mục bị từ chối ở backend và có CHECK ở database (migration mới).
+  - Giao diện: chọn loại bằng nhóm nút kèm gợi ý nội dung cần mô tả; đổi loại không làm mất nội dung đã gõ.
 2.3.87. Đánh dấu yêu cầu hoàn tiền khi tạo báo cáo
   - Không tick thì chỉ là phản ánh, không điều chỉnh công nợ hoa hồng của booking.
   - Chỉ tick được trong vòng 7 ngày kể từ giờ chơi.

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, CircleAlert, CreditCard, History, FileText, MapPin, Navigation, Phone } from 'lucide-react'
 import { cancelBooking as cancelBookingApi } from '../../../api/bookings'
+import { DISPUTE_STATUS_LABEL } from '../../../api/bookingDisputes'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useBookingDetail } from '../../../hooks/useBookingDetail'
 import { useBookingPayment } from '../../../hooks/useBookingPayment'
@@ -154,6 +155,19 @@ function BookingDetailPage({ bookingId, user, onLogout }) {
                 )}
               </div>
             )}</section>
+            {booking.dispute && (
+              <section className="rounded-xl border border-amber-200 bg-amber-50 p-5" data-testid="detail-dispute">
+                <p className="text-sm font-semibold text-amber-900">Báo cáo của bạn đang được xử lý</p>
+                <p className="mt-2 text-xs font-medium leading-5 text-amber-800" data-testid="detail-dispute-status">{DISPUTE_STATUS_LABEL[booking.dispute.status] ?? booking.dispute.status}{booking.dispute.status === 'awaiting_owner_response' && booking.dispute.ownerResponseDeadline ? ` · chủ sân giải trình trước ${new Date(booking.dispute.ownerResponseDeadline).toLocaleString('vi-VN')}` : ''}</p>
+              </section>
+            )}
+            {booking.canReportIssue && (
+              <section className="rounded-xl border border-stone-200 bg-white p-5" data-testid="detail-report">
+                <p className="text-sm font-semibold text-emerald-950">Gặp vấn đề với đơn này?</p>
+                <p className="mt-2 text-xs font-medium leading-5 text-stone-500">Báo cáo sân đóng cửa, sân khác mô tả, chủ sân tự huỷ hoặc bị thu thêm tiền. Bạn báo cáo được đến {booking.reportDeadline ? new Date(booking.reportDeadline).toLocaleDateString('vi-VN') : 'hết hạn'}.</p>
+                <a className="mt-4 flex h-11 w-full items-center justify-center rounded-lg border border-amber-300 bg-amber-50 text-sm font-semibold text-amber-900" href={`/bookings/${booking.id}/bao-cao`} data-testid="detail-report-open">Báo cáo vấn đề</a>
+              </section>
+            )}
             {canCancel && <section className="rounded-xl border border-red-100 bg-white p-5"><p className="text-sm font-semibold text-red-700">Bạn cần thay đổi kế hoạch?</p><p className="mt-2 text-xs font-medium leading-5 text-stone-500">Việc hoàn tiền phụ thuộc thời điểm hủy và chính sách của sân.</p><button className="mt-4 h-11 w-full rounded-lg border border-red-200 text-sm font-semibold text-red-600" onClick={() => setShowCancelModal(true)}>Hủy đặt sân</button></section>}
             {booking.status === 'cancelled' && <section className="rounded-xl border border-red-100 bg-red-50 p-5"><p className="text-sm font-semibold text-red-700">Booking đã hủy</p><p className="mt-2 text-xs font-medium leading-5 text-red-600">Lý do: {booking.cancellationReason}</p></section>}
           </aside>

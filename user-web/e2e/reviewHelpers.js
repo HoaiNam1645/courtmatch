@@ -38,3 +38,23 @@ export function cleanupReviews(venue, codePrefix) {
   deleteE2eUsers()
   if (venue) runSql(`UPDATE venues SET average_rating = ${venue.snapshot.rating}, review_count = ${venue.snapshot.count} WHERE id = '${venue.id}'`)
 }
+
+/** Đơn của `tag` ở trạng thái bất kỳ, giờ chơi kết thúc `endedDaysAgo` ngày trước (âm = tương lai); trả về bookingId. */
+export function bookingWithStatus(venue, tag, code, status, endedDaysAgo) {
+  const shift = (counter += 1) * 3
+  runSql(`
+    WITH b AS (
+      INSERT INTO bookings (booking_code, user_id, venue_id, status, total_amount, price_locked_at)
+      SELECT '${code}', u.id, '${venue.id}', '${status}', 180000, now() FROM users u WHERE u.email = '${email(tag)}' RETURNING id)
+    INSERT INTO booking_items (booking_id, court_id, start_time, end_time, price, status)
+    SELECT b.id, '${venue.court}', now() - interval '${endedDaysAgo} days ${shift + 2} hours', now() - interval '${endedDaysAgo} days ${shift} hours', 180000, 'confirmed' FROM b;`)
+  return runSql(`SELECT id FROM bookings WHERE booking_code = '${code}'`)
+}
+
+/** Dọn báo cáo đơn của các đơn E2E (khóa ngoại RESTRICT nên phải xóa trước đơn và tài khoản) cùng thông báo cho chủ sân. */
+export function cleanupDisputes(codePrefix) {
+  runSql(`
+    DELETE FROM notifications WHERE type = 'booking_dispute_opened'
+      AND data_json ->> 'disputeId' IN (SELECT d.id::text FROM booking_disputes d JOIN bookings b ON b.id = d.booking_id WHERE b.booking_code LIKE '${codePrefix}%');
+    DELETE FROM booking_disputes WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE '${codePrefix}%');`)
+}

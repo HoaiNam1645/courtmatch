@@ -40,6 +40,10 @@ function toUiBooking(booking) {
     createdAt: booking.createdAt,
     // Server quyết định có huỷ được không; giao diện không tự suy từ trạng thái.
     cancellable: Boolean(booking.cancellable),
+    // 2.3.85: báo cáo vấn đề về đơn; server quyết định có báo cáo được không (đúng trạng thái, còn hạn, chưa có báo cáo đang xử lý).
+    canReportIssue: Boolean(booking.canReportIssue),
+    reportDeadline: booking.reportDeadline ?? null,
+    dispute: booking.dispute ? { id: booking.dispute.id, status: booking.dispute.status, category: booking.dispute.category, createdAt: booking.dispute.createdAt, ownerResponseDeadline: booking.dispute.ownerResponseDeadline ?? null } : null,
     // Các trường dẫn xuất để phần hiển thị không phải tự tính.
     startTime: first?.startTime ?? null,
     endTime: first?.endTime ?? null,
