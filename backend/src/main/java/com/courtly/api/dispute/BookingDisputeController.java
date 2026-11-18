@@ -76,6 +76,12 @@ public class BookingDisputeController {
         return ResponseEntity.ok(disputeService.categories());
     }
 
+    /** 2.3.92 - huy bao cao khi chu san chua giai trinh. */
+    @PostMapping("/booking-disputes/{disputeId}/cancel")
+    public ResponseEntity<DisputeDetailResponse> cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId) {
+        return ResponseEntity.ok(disputeService.cancel(UUID.fromString(jwt.getSubject()), disputeId));
+    }
+
     /** 2.3.91 - bo sung thong tin cho bao cao dang xu ly (toi da 10 lan). */
     @PostMapping("/booking-disputes/{disputeId}/supplements")
     public ResponseEntity<SupplementResponse> supplement(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,

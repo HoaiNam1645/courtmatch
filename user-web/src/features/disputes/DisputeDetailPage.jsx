@@ -1,12 +1,13 @@
 import { CircleUserRound, FileText, ShieldCheck, Store, X } from 'lucide-react'
 import { useState } from 'react'
-import { DISPUTE_ACTOR_LABEL, fetchMyDispute, RESOLUTION_LABEL } from '../../api/bookingDisputes'
+import { cancelMyDispute, DISPUTE_ACTOR_LABEL, fetchMyDispute, RESOLUTION_LABEL } from '../../api/bookingDisputes'
 import { AppHeader, BottomNav } from '../../app/AppLayout'
 import { useApiResource } from '../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../shared/utils'
 import { BookingEmptyState } from '../bookings/components/BookingEmptyState'
 import { PageBackLink, ProfileEmptyState } from '../profile/components/ProfileUi'
 import { disputeStatusMeta, formatDateTime, remainingText } from './disputeUi'
+import { ConfirmDialog } from './ConfirmDialog'
 import { EvidenceImage } from './EvidenceImage'
 import { EvidenceManager } from './EvidenceManager'
 import { SupplementForm } from './SupplementForm'
@@ -18,6 +19,8 @@ const TYPE_TITLE = { created: 'Bạn gửi báo cáo', supplement: 'Bạn bổ s
 function DisputeDetailPage({ reportId, user, onLogout }) {
   const { status, data, error, reload } = useApiResource(() => fetchMyDispute(reportId), [reportId])
   const [lightbox, setLightbox] = useState(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [notice, setNotice] = useState('')
   if (!user) return <ProfileEmptyState />
 
   const shell = (children) => (
@@ -58,6 +61,9 @@ function DisputeDetailPage({ reportId, user, onLogout }) {
         </div>
       </div>
 
+      {notice && <p role="status" data-testid="dd-notice" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{notice}</p>}
+      {data.canCancel && <button type="button" data-testid="dd-cancel" onClick={() => { setNotice(''); setCancelling(true) }} className="mt-4 h-11 rounded-lg border border-red-200 bg-white px-5 text-sm font-semibold text-red-700">Huỷ báo cáo</button>}
+
       <h2 className="mt-8 text-lg font-semibold">Nội dung trao đổi</h2>
       <ol className="mt-4 grid gap-4" data-testid="dd-timeline">
         {data.timeline.map((entry, index) => {
@@ -86,6 +92,13 @@ function DisputeDetailPage({ reportId, user, onLogout }) {
       {!data.canSupplement && !data.closed && <p className="mt-4 text-xs font-medium text-stone-500" data-testid="dd-no-supplement">Báo cáo đã dùng hết số lần bổ sung.</p>}
       {waiting && <p className="mt-4 text-xs font-medium text-stone-500">Chủ sân chưa giải trình. Khi có phản hồi hoặc quyết định, nội dung sẽ hiện thêm ở đây.</p>}
 
+      {cancelling && (
+        <ConfirmDialog title="Huỷ báo cáo này?" confirmLabel="Huỷ báo cáo" cancelLabel="Giữ báo cáo" danger testId="dd-cancel-dialog" onClose={() => setCancelling(false)}
+          onConfirm={async () => { await cancelMyDispute(data.id); setCancelling(false); setNotice('Đã huỷ báo cáo. Chủ sân không cần giải trình nữa.'); reload() }}>
+          <p>Báo cáo sẽ đóng lại, <strong>kể cả yêu cầu hoàn tiền</strong>{data.refundRequested ? ` (${formatCurrency(data.refundAmount)})` : ''}. Nội dung và ảnh bạn đã gửi vẫn được lưu làm lịch sử.</p>
+          <p className="mt-2">Nếu đơn còn trong thời hạn báo cáo, bạn có thể gửi báo cáo mới.</p>
+        </ConfirmDialog>
+      )}
       {lightbox && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={lightbox.name} data-testid="dd-lightbox" onClick={() => setLightbox(null)}>
           <button type="button" className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/90" aria-label="Đóng" onClick={() => setLightbox(null)}><X className="size-5" /></button>

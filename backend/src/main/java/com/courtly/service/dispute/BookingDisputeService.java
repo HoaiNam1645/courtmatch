@@ -2,6 +2,7 @@ package com.courtly.service.dispute;
 
 import com.courtly.api.dispute.dto.CreateDisputeRequest;
 import com.courtly.api.dispute.dto.DisputeCategoryResponse;
+import com.courtly.api.dispute.dto.DisputeDetailResponse;
 import com.courtly.api.dispute.dto.DisputeResponse;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.common.exception.ApiException;
@@ -48,6 +49,7 @@ public class BookingDisputeService {
     private final BookingDisputeRepository disputeRepository;
     private final PaymentRepository paymentRepository;
     private final DisputeNotifier disputeNotifier;
+    private final com.courtly.service.audit.AuditService auditService;
     @Value("${courtly.disputes.report-window-days:7}")
     private int windowDays;
     @Value("${courtly.disputes.owner-response-hours:48}")
@@ -136,6 +138,29 @@ public class BookingDisputeService {
                             + paid.stripTrailingZeros().toPlainString() + "d (so tien da tra)"));
         }
         return amount;
+    }
+
+    /**
+     * 2.3.92 - nguoi bao cao huy bao cao khi chu san chua giai trinh. Giu nguyen noi dung, anh va cac lan bo sung lam lich su;
+     * chi doi trang thai sang cancelled, ghi audit va bao chu san.
+     */
+    @Transactional
+    public DisputeDetailResponse cancel(UUID userId, UUID disputeId) {
+        BookingDispute dispute = disputeRepository.findByIdForUpdate(disputeId)
+                .filter(item -> item.getReporter().getId().equals(userId))
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay bao cao."));
+        if (!"awaiting_owner_response".equals(dispute.getStatus()) || dispute.getOwnerResponse() != null) {
+            throw ApiException.conflict(ErrorCode.BOOKING_DISPUTE_INVALID,
+                    "Chi huy duoc bao cao khi chu san chua giai trinh.", Map.of());
+        }
+        dispute.setStatus("cancelled");
+        disputeRepository.saveAndFlush(dispute);
+        auditService.record(dispute.getReporter(), "dispute.cancel", "booking_disputes", dispute.getId(),
+                Map.of("status", "awaiting_owner_response"),
+                Map.of("status", "cancelled", "bookingId", dispute.getBooking().getId().toString(),
+                        "refundRequested", dispute.isRefundRequested()));
+        disputeNotifier.cancelled(dispute);
+        return DisputeQueryService.toDetail(dispute);
     }
 
     /** Han cuoi de bao cao don: gio ket thuc cuoi cung cong so ngay cho phep. */

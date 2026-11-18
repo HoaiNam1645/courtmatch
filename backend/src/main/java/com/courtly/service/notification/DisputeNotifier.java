@@ -19,6 +19,18 @@ public class DisputeNotifier {
 
     private final NotificationService notifications;
 
+    /** Nguoi choi huy bao cao khi chu san chua giai trinh: bao cho chu san. */
+    public void cancelled(BookingDispute dispute) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("disputeId", dispute.getId().toString());
+        data.put("bookingId", dispute.getBooking().getId().toString());
+        notifications.send(dispute.getBooking().getVenue().getOwner().getId(), NotificationType.BOOKING_DISPUTE_CANCELLED,
+                "Người chơi đã huỷ báo cáo",
+                "Người chơi đã huỷ báo cáo về đơn %s, bạn không cần giải trình nữa."
+                        .formatted(dispute.getBooking().getBookingCode()),
+                "/owner/bookings", data);
+    }
+
     /** Nguoi choi bo sung thong tin khi bao cao con cho chu san giai trinh: bao cho chu san. */
     public void updated(BookingDispute dispute) {
         Map<String, Object> data = new LinkedHashMap<>();

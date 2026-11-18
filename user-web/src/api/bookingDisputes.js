@@ -170,3 +170,8 @@ export async function addDisputeSupplement(disputeId, content) {
     evidenceRemaining: Number(data.evidenceRemaining),
   }
 }
+
+/** 2.3.92: huỷ báo cáo khi chủ sân chưa giải trình; trả về chi tiết đã cập nhật. */
+export async function cancelMyDispute(disputeId) {
+  await request(`/api/v1/booking-disputes/${disputeId}/cancel`, { method: 'POST' })
+}
