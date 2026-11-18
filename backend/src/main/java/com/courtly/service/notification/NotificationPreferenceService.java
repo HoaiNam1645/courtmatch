@@ -43,6 +43,7 @@ public class NotificationPreferenceService {
         META.put(NotificationType.VENUE_REVIEW_REPLIED, new Meta("Chủ sân trả lời đánh giá", "Chủ sân trả lời đánh giá sân bạn đã viết."));
         META.put(NotificationType.VENUE_REVIEW_HIDDEN, new Meta("Đánh giá sân bị ẩn", "Quản trị viên ẩn đánh giá sân bạn đã viết vì nội dung không phù hợp."));
         META.put(NotificationType.BOOKING_DISPUTE_OPENED, new Meta("Báo cáo về đơn đặt sân", "Người chơi báo cáo vấn đề về đơn đặt sân của sân bạn, kèm hạn giải trình."));
+        META.put(NotificationType.BOOKING_DISPUTE_UPDATED, new Meta("Bổ sung báo cáo đơn đặt sân", "Người chơi bổ sung thông tin cho báo cáo đang chờ bạn giải trình."));
         META.put(NotificationType.MATCH_SCHEDULED, new Meta("Lịch thi đấu", "Bạn được ghi vào một trận đấu, kết quả cần bạn xác nhận hoặc trận bị hủy."));
         META.put(NotificationType.MATCH_REMINDER, new Meta("Nhắc nhở trận đấu", "Nhắc xác nhận kết quả trận đấu sắp tự xác nhận."));
         META.put(NotificationType.DEBT_RESTRICTION, new Meta("Hạn chế do công nợ", "Chủ sân bị hạn chế hoặc được gỡ hạn chế vì công nợ hoa hồng quá hạn (bắt buộc)."));

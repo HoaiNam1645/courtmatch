@@ -148,7 +148,7 @@ test.describe.serial('2.3.89 - 2.3.90 player lists and opens own booking reports
     await uploadImage(page, ids.d5)
     await page.goto(`/bao-cao/${ids.d5}`)
     await expect(page.getByTestId('evidence-manager-list').locator('li')).toHaveCount(1)
-    await page.getByTestId('evidence-input').setInputFiles([{ name: 'them.png', mimeType: 'image/png', buffer: PNG }])
+    await page.getByTestId('evidence-manager').getByTestId('evidence-input').setInputFiles([{ name: 'them.png', mimeType: 'image/png', buffer: PNG }])
     await page.getByTestId('evidence-upload').click()
     await expect(page.getByTestId('evidence-manager-list').locator('li')).toHaveCount(2)
     expect(runSql(`SELECT jsonb_array_length(reporter_evidences_json) FROM booking_disputes WHERE id = '${ids.d5}'`)).toBe('2')

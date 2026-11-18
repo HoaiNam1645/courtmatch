@@ -9,6 +9,7 @@ import { PageBackLink, ProfileEmptyState } from '../profile/components/ProfileUi
 import { disputeStatusMeta, formatDateTime, remainingText } from './disputeUi'
 import { EvidenceImage } from './EvidenceImage'
 import { EvidenceManager } from './EvidenceManager'
+import { SupplementForm } from './SupplementForm'
 
 const ACTOR_ICON = { you: CircleUserRound, owner: Store, admin: ShieldCheck }
 const TYPE_TITLE = { created: 'Bạn gửi báo cáo', supplement: 'Bạn bổ sung thông tin', owner_response: 'Chủ sân giải trình', resolution: 'Quản trị viên kết luận' }
@@ -81,6 +82,8 @@ function DisputeDetailPage({ reportId, user, onLogout }) {
         })}
       </ol>
       {data.canCancel && <EvidenceManager disputeId={data.id} initial={data.timeline[0]?.evidences ?? []} evidenceRemaining={data.evidenceRemaining} onChanged={reload} onOpen={(url, evidence) => setLightbox({ url, name: evidence.originalName })} />}
+      {data.canSupplement && <SupplementForm disputeId={data.id} supplementsRemaining={data.supplementsRemaining} evidenceRemaining={data.evidenceRemaining} onDone={reload} />}
+      {!data.canSupplement && !data.closed && <p className="mt-4 text-xs font-medium text-stone-500" data-testid="dd-no-supplement">Báo cáo đã dùng hết số lần bổ sung.</p>}
       {waiting && <p className="mt-4 text-xs font-medium text-stone-500">Chủ sân chưa giải trình. Khi có phản hồi hoặc quyết định, nội dung sẽ hiện thêm ở đây.</p>}
 
       {lightbox && (

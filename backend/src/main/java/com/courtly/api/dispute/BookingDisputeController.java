@@ -5,6 +5,9 @@ import com.courtly.api.dispute.dto.DisputeCategoryResponse;
 import com.courtly.api.dispute.dto.DisputeDetailResponse;
 import com.courtly.api.dispute.dto.DisputeEvidenceResponse;
 import com.courtly.api.dispute.dto.DisputeSummaryResponse;
+import com.courtly.api.dispute.dto.SupplementRequest;
+import com.courtly.api.dispute.dto.SupplementResponse;
+import com.courtly.service.dispute.DisputeSupplementService;
 import com.courtly.common.PageResponse;
 import com.courtly.service.dispute.DisputeQueryService;
 import jakarta.validation.constraints.Max;
@@ -47,6 +50,7 @@ public class BookingDisputeController {
     private final BookingDisputeService disputeService;
     private final DisputeEvidenceService evidenceService;
     private final DisputeQueryService queryService;
+    private final DisputeSupplementService supplementService;
 
     /** 2.3.89 - danh sach bao cao da gui cua chinh minh (all, active, closed). */
     @GetMapping("/booking-disputes")
@@ -72,12 +76,21 @@ public class BookingDisputeController {
         return ResponseEntity.ok(disputeService.categories());
     }
 
+    /** 2.3.91 - bo sung thong tin cho bao cao dang xu ly (toi da 10 lan). */
+    @PostMapping("/booking-disputes/{disputeId}/supplements")
+    public ResponseEntity<SupplementResponse> supplement(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,
+                                                         @Valid @RequestBody SupplementRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(supplementService.add(UUID.fromString(jwt.getSubject()), disputeId, request.content()));
+    }
+
     /** 2.3.88 - tai len mot anh bang chung (moi lan mot anh, toi da 5MB). */
     @PostMapping(value = "/booking-disputes/{disputeId}/evidences", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DisputeEvidenceResponse> uploadEvidence(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,
-                                                                  @RequestPart("file") MultipartFile file) {
+                                                                  @RequestPart("file") MultipartFile file,
+                                                                  @RequestParam(required = false) UUID supplementId) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(evidenceService.upload(UUID.fromString(jwt.getSubject()), disputeId, file));
+                .body(evidenceService.upload(UUID.fromString(jwt.getSubject()), disputeId, file, supplementId));
     }
 
     /** 2.3.88 - xoa anh bang chung khi chu san chua giai trinh. */

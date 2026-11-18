@@ -21,6 +21,8 @@ public final class NotificationType {
     public static final String VENUE_REVIEW_HIDDEN = "venue_review_hidden";
     /** Nguoi choi tao bao cao ve don dat san: bao chu san va han giai trinh (2.3.85). */
     public static final String BOOKING_DISPUTE_OPENED = "booking_dispute_opened";
+    /** Nguoi choi bo sung thong tin cho bao cao khi chu san chua giai trinh (2.3.91). */
+    public static final String BOOKING_DISPUTE_UPDATED = "booking_dispute_updated";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
     /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
@@ -38,6 +40,7 @@ public final class NotificationType {
             VENUE_REVIEW_REPLIED,
             VENUE_REVIEW_HIDDEN,
             BOOKING_DISPUTE_OPENED,
+            BOOKING_DISPUTE_UPDATED,
             MATCH_SCHEDULED,
             MATCH_REMINDER,
             DEBT_RESTRICTION

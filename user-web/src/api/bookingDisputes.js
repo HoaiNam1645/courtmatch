@@ -63,10 +63,11 @@ function toEvidence(item) {
 }
 
 /** 2.3.88: tải lên một ảnh bằng chứng (mỗi lần một ảnh). */
-export async function uploadDisputeEvidence(disputeId, file) {
+export async function uploadDisputeEvidence(disputeId, file, supplementId = null) {
   const body = new FormData()
   body.append('file', file)
-  return toEvidence(await request(`/api/v1/booking-disputes/${disputeId}/evidences`, { method: 'POST', body, timeoutMs: 60000 }))
+  const query = supplementId ? `?supplementId=${supplementId}` : ''
+  return toEvidence(await request(`/api/v1/booking-disputes/${disputeId}/evidences${query}`, { method: 'POST', body, timeoutMs: 60000 }))
 }
 
 /** 2.3.88: xóa ảnh bằng chứng khi chủ sân chưa giải trình. */
@@ -155,5 +156,17 @@ export async function fetchMyDispute(disputeId) {
     canCancel: Boolean(data.canCancel),
     supplementsRemaining: Number(data.supplementsRemaining ?? 0),
     evidenceRemaining: Number(data.evidenceRemaining ?? 0),
+  }
+}
+
+/** 2.3.91: bổ sung thông tin cho báo cáo đang xử lý (tối đa 10 lần); ảnh đính kèm tải lên sau với supplementId. */
+export async function addDisputeSupplement(disputeId, content) {
+  const data = await request(`/api/v1/booking-disputes/${disputeId}/supplements`, { method: 'POST', body: { content } })
+  return {
+    id: data.id,
+    content: data.content,
+    createdAt: data.createdAt,
+    supplementsRemaining: Number(data.supplementsRemaining),
+    evidenceRemaining: Number(data.evidenceRemaining),
   }
 }

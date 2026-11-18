@@ -714,13 +714,33 @@ Báo cáo & Tranh chấp Hoàn tiền — Người chơi
   - Năm loại: sân đóng cửa (venue_closed), sân khác mô tả (venue_mismatch), chủ sân tự huỷ (owner_cancelled), bị thu thêm tiền (extra_charge), lý do khác (other).
   - API GET /api/v1/booking-disputes/categories trả mã, tên và gợi ý nhập cho từng loại; loại "lý do khác" bắt buộc mô tả rõ. Loại ngoài danh mục bị từ chối ở backend và có CHECK ở database (migration mới).
   - Giao diện: chọn loại bằng nhóm nút kèm gợi ý nội dung cần mô tả; đổi loại không làm mất nội dung đã gõ.
-2.3.87. Đánh dấu yêu cầu hoàn tiền khi tạo báo cáo
+2.3.87. Đánh dấu yêu cầu hoàn tiền khi tạo báo cáo [Đã triển khai]
   - Không tick thì chỉ là phản ánh, không điều chỉnh công nợ hoa hồng của booking.
   - Chỉ tick được trong vòng 7 ngày kể từ giờ chơi.
-2.3.88. Đính kèm ảnh bằng chứng vào báo cáo
-2.3.89. Xem danh sách báo cáo đã gửi (router dự kiến: /bao-cao)
-2.3.90. Xem chi tiết báo cáo và toàn bộ nội dung trao đổi (router dự kiến: /bao-cao/:reportId)
-2.3.91. Bổ sung thông tin cho báo cáo đang xử lý
+  - Cụ thể: mở rộng POST /api/v1/bookings/{bookingId}/disputes với refundRequested (true/false) và refundAmount. Chỉ tick được khi đơn đã được chủ sân xác nhận thu tiền (có payment confirmed); mốc 7 ngày tính từ giờ kết thúc, đúng bằng thời hạn báo cáo nên ở thời điểm tạo báo cáo hợp lệ thì tick được.
+  - refundAmount từ 1.000đ tới số tiền người chơi đã trả (payableAmount của đơn, sau voucher), mặc định điền sẵn toàn bộ; lưu vào refund_requested và requested_refund_amount của booking_disputes. Không đổi được sau khi gửi (cần thay đổi thì huỷ báo cáo ở 2.3.92 và tạo lại).
+  - Tick chỉ ghi nhận yêu cầu: chưa tạo bản ghi refunds, chưa động tới hoa hồng. Việc hoàn tiền do quản trị viên quyết định ở 2.3.100-102, tạm hoãn hoa hồng ở 2.3.105-106.
+  - Giao diện: ô "Tôi muốn yêu cầu hoàn tiền" trong biểu mẫu báo cáo, hiện ô nhập số tiền kèm giải thích Courtly không giữ tiền sân, hoàn tiền do chủ sân thực hiện trực tiếp theo quyết định của quản trị viên.
+2.3.88. Đính kèm ảnh bằng chứng vào báo cáo [Đã triển khai]
+  - Tối đa 5 ảnh khi tạo báo cáo và tổng cộng 10 ảnh cho một báo cáo (kể cả phần bổ sung ở 2.3.91); JPEG, PNG hoặc WebP, mỗi ảnh tối đa 5 MB, kiểm tra định dạng bằng nội dung thật của file (không tin đuôi file), tên file do server sinh.
+  - API: POST /api/v1/booking-disputes/{disputeId}/evidences (multipart, mỗi lần một ảnh vì giới hạn dung lượng yêu cầu; giao diện tải lần lượt), DELETE /api/v1/booking-disputes/{disputeId}/evidences/{evidenceId} khi báo cáo còn chờ chủ sân giải trình. Biểu mẫu tạo báo cáo gửi báo cáo trước rồi tải ảnh lên; nếu tải ảnh lỗi thì báo cáo vẫn có và người chơi tải lại ở trang chi tiết.
+  - Lưu danh sách trực tiếp trong booking_disputes.reporter_evidences_json (id, tên gốc, kích thước, loại, thời điểm tải), không tạo bảng riêng. Ảnh nằm ở thư mục riêng của máy chủ, KHÔNG công khai như ảnh sân: chỉ người báo cáo, chủ sân của sân đó và quản trị viên xem được qua GET /api/v1/booking-disputes/{disputeId}/evidences/{evidenceId}/file (cần đăng nhập).
+  - Đã triển khai: ảnh của lần bổ sung tải kèm ?supplementId=; ảnh thuộc bổ sung không xóa được; V46 thêm reporter_updates_json.
+  - Giao diện: chọn nhiều ảnh, xem trước, xóa ảnh trước khi gửi, thanh tiến trình; báo lỗi rõ từng ảnh (sai định dạng, quá lớn, vượt số lượng).
+2.3.89. Xem danh sách báo cáo đã gửi (router dự kiến: /bao-cao) [Đã triển khai]
+  - API: GET /api/v1/booking-disputes?status=all|active|closed&page&size, chỉ báo cáo của chính người đăng nhập, mới nhất trước.
+  - Mỗi dòng: mã đơn, tên sân, loại báo cáo, trạng thái (tiếng Việt), có yêu cầu hoàn tiền và số tiền, số ảnh, ngày gửi, hạn giải trình còn lại khi đang chờ chủ sân, kết luận khi đã đóng. Đang xử lý = open / awaiting_owner_response / reviewing; đã đóng = resolved / rejected / cancelled.
+  - Giao diện: trang /bao-cao với 3 tab, phân trang, trạng thái trống; có lối vào từ menu tài khoản và từ chi tiết đơn.
+2.3.90. Xem chi tiết báo cáo và toàn bộ nội dung trao đổi (router dự kiến: /bao-cao/:reportId) [Đã triển khai]
+  - API: GET /api/v1/booking-disputes/{disputeId}; chỉ người báo cáo (người khác nhận 404). Trả về đơn liên quan, nội dung và ảnh bằng chứng ban đầu, các lần bổ sung, giải trình và ảnh của chủ sân (khi đã có, 2.3.95-96), quyết định của quản trị viên (khi đã có), yêu cầu hoàn tiền.
+  - Thiết kế dữ liệu không có bảng tin nhắn riêng nên "trao đổi" được ghép thành dòng thời gian từ các cột sẵn có và cột mới reporter_updates_json (các lần bổ sung): tạo báo cáo, bổ sung, giải trình của chủ sân, kết luận; mỗi mục có người gửi (Bạn / Chủ sân / Quản trị viên), thời điểm, nội dung và ảnh.
+  - Hiển thị hạn giải trình đếm ngược và những việc người chơi còn làm được (bổ sung, huỷ báo cáo).
+  - Giao diện: trang /bao-cao/:reportId với dòng thời gian, thư viện ảnh (bấm xem lớn).
+2.3.91. Bổ sung thông tin cho báo cáo đang xử lý [Đã triển khai]
+  - API: POST /api/v1/booking-disputes/{disputeId}/supplements (nội dung 5-2000 ký tự, kèm ảnh theo 2.3.88). Chỉ người báo cáo, chỉ khi báo cáo còn xử lý (awaiting_owner_response hoặc reviewing); đã đóng thì từ chối.
+  - Mỗi bổ sung lưu thêm một phần tử vào reporter_updates_json (thời điểm, nội dung, ảnh), tối đa 10 lần bổ sung; không sửa hay xóa được nội dung đã gửi để chủ sân và quản trị viên xem lại đúng lịch sử.
+  - Gửi thông báo cho chủ sân (loại booking_dispute_updated) khi báo cáo còn chờ giải trình.
+  - Giao diện: ô "Bổ sung thông tin" ở trang chi tiết báo cáo, kèm chọn ảnh.
 2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình
 
 Báo cáo & Tranh chấp Hoàn tiền — Chủ sân

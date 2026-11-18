@@ -42,11 +42,25 @@ public class DisputeEvidenceService {
     private final DisputeEvidenceStorage storage;
     private final AdminAccessService adminAccessService;
 
-    /** Tai len mot anh cho bao cao cua minh khi chu san chua giai trinh. */
+    /**
+     * Tai len mot anh cho bao cao cua minh. Khong co {@code supplementId}: anh cua bao cao ban dau, chi khi chu san chua giai trinh.
+     * Co {@code supplementId} (2.3.91): anh cua mot lan bo sung, khi bao cao con xu ly.
+     */
     @Transactional
-    public DisputeEvidenceResponse upload(UUID userId, UUID disputeId, MultipartFile file) {
+    public DisputeEvidenceResponse upload(UUID userId, UUID disputeId, MultipartFile file, UUID supplementId) {
         BookingDispute dispute = requireOwn(userId, disputeId, true);
-        requireAwaitingOwner(dispute, "Chi tai them anh khi bao cao dang cho chu san giai trinh. Hay bo sung thong tin de gui them anh.");
+        if (supplementId == null) {
+            requireAwaitingOwner(dispute, "Chi tai them anh khi bao cao dang cho chu san giai trinh. Hay bo sung thong tin de gui them anh.");
+        } else {
+            if (!DisputeSupplementService.OPEN_FOR_SUPPLEMENT.contains(dispute.getStatus())) {
+                throw ApiException.conflict(ErrorCode.BOOKING_DISPUTE_INVALID, "Bao cao da dong nen khong the them anh.", Map.of());
+            }
+            boolean known = dispute.getReporterUpdates() != null
+                    && dispute.getReporterUpdates().stream().anyMatch(item -> supplementId.toString().equals(item.get("id")));
+            if (!known) {
+                throw ApiException.notFound("Khong tim thay lan bo sung nay.");
+            }
+        }
         if (file == null || file.isEmpty()) {
             throw invalidImage("File anh rong.");
         }
@@ -55,7 +69,7 @@ public class DisputeEvidenceService {
         }
         List<Map<String, Object>> list = mutableEvidences(dispute);
         long initial = list.stream().filter(item -> item.get("supplementId") == null).count();
-        if (initial >= MAX_INITIAL || list.size() >= MAX_TOTAL) {
+        if ((supplementId == null && initial >= MAX_INITIAL) || list.size() >= MAX_TOTAL) {
             throw ApiException.conflict(ErrorCode.IMAGE_LIMIT_REACHED,
                     "Bao cao ban dau co toi da " + MAX_INITIAL + " anh (tong " + MAX_TOTAL + " anh cho ca bao cao). Hay xoa bot anh cu truoc.", Map.of());
         }
@@ -72,7 +86,7 @@ public class DisputeEvidenceService {
         item.put("size", bytes.length);
         item.put("contentType", VenueImageStorage.CONTENT_TYPES.get(extension));
         item.put("uploadedAt", Instant.now().toString());
-        item.put("supplementId", null);
+        item.put("supplementId", supplementId == null ? null : supplementId.toString());
         list.add(item);
         dispute.setReporterEvidences(list);
         disputeRepository.saveAndFlush(dispute);
