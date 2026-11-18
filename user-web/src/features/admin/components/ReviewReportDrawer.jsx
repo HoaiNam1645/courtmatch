@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Star, X } from 'lucide-react'
 import { ApiError } from '../../../api/client'
-import { concludeReviewReport, fetchReviewReport, HANDLING_LABEL, reportStatusMeta, reviewStatusMeta, startReviewReport } from '../../../api/adminReviewReports'
+import { concludeReviewReport, fetchReviewReport, HANDLING_LABEL, REVIEW_KINDS, reportStatusMeta, reviewStatusMeta, startReviewReport } from '../../../api/adminReviewReports'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
@@ -24,8 +24,18 @@ function Stars({ rating }) {
   )
 }
 
-function NoteForm({ reportId, action, onDone, onCancel }) {
-  const form = FORMS[action]
+/** Nội dung biểu mẫu theo loại đánh giá: đánh giá sân dùng chữ "ẩn" và báo cho người viết, tính lại điểm của sân. */
+function formsFor(kind) {
+  if (kind !== 'venue') return FORMS
+  return {
+    hide: { title: 'Ẩn đánh giá', submit: 'Ẩn đánh giá', done: 'Đã ẩn đánh giá khỏi trang sân.', danger: true, hint: 'Đánh giá sẽ không còn hiển thị ở trang sân và không tính vào điểm trung bình của sân. Người viết được thông báo.' },
+    keep: { title: 'Giữ nguyên đánh giá', submit: 'Giữ nguyên và bác bỏ báo cáo', done: 'Đã giữ nguyên đánh giá và bác bỏ báo cáo.', danger: false, hint: 'Đánh giá được giữ như hiện tại, báo cáo của chủ sân bị bác bỏ.' },
+    restore: { title: 'Khôi phục đánh giá', submit: 'Khôi phục đánh giá', done: 'Đã khôi phục đánh giá, đánh giá hiển thị lại ở trang sân.', danger: false, hint: 'Đánh giá hiển thị lại ở trang sân và tính lại vào điểm trung bình của sân.' },
+  }
+}
+
+function NoteForm({ reportId, action, kind, onDone, onCancel }) {
+  const form = formsFor(kind)[action]
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
@@ -40,7 +50,7 @@ function NoteForm({ reportId, action, onDone, onCancel }) {
     if (problem) return
     setBusy(true)
     try {
-      onDone(await concludeReviewReport(reportId, action, note), form.done)
+      onDone(await concludeReviewReport(reportId, action, note, kind), form.done)
     } catch (failure) {
       if (failure instanceof ApiError) {
         setError(failure.fieldErrors?.note ?? '')
@@ -71,8 +81,8 @@ function NoteForm({ reportId, action, onDone, onCancel }) {
 }
 
 /** Chi tiết báo cáo về đánh giá đối tác (2.3.37). */
-function ReviewReportDrawer({ reportId, onClose, onChanged }) {
-  const { status, data, error, reload } = useApiResource(() => fetchReviewReport(reportId), [reportId])
+function ReviewReportDrawer({ reportId, kind = 'partner', onClose, onChanged }) {
+  const { status, data, error, reload } = useApiResource(() => fetchReviewReport(reportId, kind), [reportId, kind])
   const [action, setAction] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
@@ -90,7 +100,7 @@ function ReviewReportDrawer({ reportId, onClose, onChanged }) {
     setBusy(true)
     setFormError('')
     try {
-      await startReviewReport(reportId)
+      await startReviewReport(reportId, kind)
       reload()
       onChanged('Đã nhận xử lý báo cáo.')
     } catch (failure) {
@@ -118,7 +128,7 @@ function ReviewReportDrawer({ reportId, onClose, onChanged }) {
             <section>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={classNames('rounded-full px-2.5 py-1 text-xs font-bold', meta.className)} data-testid="review-drawer-status">{meta.label}</span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700" data-testid="review-drawer-reason">{data.reason}</span>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700" data-testid="review-drawer-reason">{data.reasonLabel}</span>
               </div>
               <p className="mt-3 whitespace-pre-line text-sm font-medium text-slate-700" data-testid="review-drawer-description">{data.description || 'Người báo cáo không nhập mô tả.'}</p>
               <p className="mt-2 text-xs font-medium text-slate-500">{data.reporterName} báo cáo lúc {formatDateTime(data.createdAt)} · tổng {data.totalReports} báo cáo về đánh giá này</p>
@@ -134,6 +144,7 @@ function ReviewReportDrawer({ reportId, onClose, onChanged }) {
                   </div>
                   <p className="mt-2 whitespace-pre-line text-sm font-medium text-slate-800" data-testid="review-comment">{review.comment || 'Không có nhận xét bằng chữ.'}</p>
                   <p className="mt-2 text-xs font-medium text-slate-500">{review.reviewerName} đánh giá {review.reviewedName}{review.createdAt ? ` · ${formatDateTime(review.createdAt)}` : ''}</p>
+                  {review.reply && <div className="mt-3 rounded-lg border-l-4 border-emerald-500 bg-white p-3" data-testid="review-drawer-reply"><p className="text-xs font-semibold text-emerald-800">Chủ sân đã trả lời · {formatDateTime(review.reply.repliedAt)}</p><p className="mt-1 whitespace-pre-line text-sm font-medium text-slate-700">{review.reply.content}</p></div>}
                 </>
               ) : <p className="mt-2 text-sm font-medium text-slate-500" data-testid="review-missing">Đánh giá không còn tồn tại.</p>}
             </section>
@@ -144,7 +155,7 @@ function ReviewReportDrawer({ reportId, onClose, onChanged }) {
                 <ul className="mt-2 grid gap-2" data-testid="review-related">
                   {data.related.map((item) => (
                     <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3 text-sm">
-                      <span className="font-semibold text-slate-800">{item.reason} <span className="font-medium text-slate-500">· {item.reporterName}</span></span>
+                      <span className="font-semibold text-slate-800">{item.reasonLabel} <span className="font-medium text-slate-500">· {item.reporterName}</span></span>
                       <span className={classNames('rounded-full px-2 py-0.5 text-xs font-bold', reportStatusMeta(item.status).className)}>{reportStatusMeta(item.status).label}</span>
                     </li>
                   ))}
@@ -167,12 +178,12 @@ function ReviewReportDrawer({ reportId, onClose, onChanged }) {
               {data.canStart && <button type="button" className={`${primaryButtonClass} mt-2`} data-testid="review-start" disabled={busy} onClick={start}>{busy ? 'Đang nhận...' : 'Nhận xử lý'}</button>}
               {data.canConclude && !action && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {data.canHide && <button type="button" className={dangerButtonClass} data-testid="review-hide-open" onClick={() => { setAction('hide'); setFormError('') }}>Gỡ đánh giá</button>}
+                  {data.canHide && <button type="button" className={dangerButtonClass} data-testid="review-hide-open" onClick={() => { setAction('hide'); setFormError('') }}>{REVIEW_KINDS[kind].hideLabel}</button>}
                   <button type="button" className={secondaryButtonClass} data-testid="review-keep-open" onClick={() => { setAction('keep'); setFormError('') }}>Giữ nguyên đánh giá</button>
                 </div>
               )}
               {data.canRestore && !action && <button type="button" className={`${secondaryButtonClass} mt-2`} data-testid="review-restore-open" onClick={() => { setAction('restore'); setFormError('') }}>Khôi phục đánh giá</button>}
-              {action && <NoteForm reportId={reportId} action={action} onCancel={() => setAction(null)} onDone={(updated, message) => { setAction(null); reload(); onChanged(message) }} />}
+              {action && <NoteForm reportId={reportId} action={action} kind={kind} onCancel={() => setAction(null)} onDone={(updated, message) => { setAction(null); reload(); onChanged(message) }} />}
             </section>
           </div>
         )}

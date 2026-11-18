@@ -2,7 +2,7 @@ package com.courtly.api.review;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-import com.courtly.api.owner.OwnerApiTestBase;
+import com.courtly.api.admin.AdminApiTestBase;
 import com.courtly.common.enums.BookingStatus;
 import com.courtly.domain.account.Role;
 import com.courtly.domain.account.User;
@@ -21,7 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** Nen chung cho test danh gia san (2.3.77 - 2.3.84): chu san, san, nguoi choi va ham tao don da hoan thanh. */
-abstract class VenueReviewTestBase extends OwnerApiTestBase {
+abstract class VenueReviewTestBase extends AdminApiTestBase {
 
     @Autowired protected BookingRepository bookingRepository;
     @Autowired protected JdbcTemplate jdbc;

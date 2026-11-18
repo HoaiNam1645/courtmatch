@@ -89,6 +89,13 @@ public interface VenueReviewRepository extends JpaRepository<VenueReview, UUID> 
     @Query("SELECT r FROM VenueReview r JOIN FETCH r.venue JOIN FETCH r.user WHERE r.id = :id")
     Optional<VenueReview> findWithVenueAndUser(UUID id);
 
+    /** Danh gia kem nguoi viet, san va chu san (man hinh admin xu ly bao cao, 2.3.84). */
+    @Query("SELECT r FROM VenueReview r JOIN FETCH r.venue v JOIN FETCH v.owner JOIN FETCH r.user WHERE r.id IN :ids")
+    List<VenueReview> findAllWithPeople(Collection<UUID> ids);
+
+    @Query("SELECT r FROM VenueReview r JOIN FETCH r.venue v JOIN FETCH v.owner JOIN FETCH r.user WHERE r.id = :id")
+    Optional<VenueReview> findWithPeopleById(UUID id);
+
     /** Moi dong la {so sao, so danh gia}. */
     @Query("SELECT r.rating, count(r) FROM VenueReview r WHERE r.venue.id = :venueId AND r.status = :status GROUP BY r.rating")
     List<Object[]> countByRating(UUID venueId, ReviewStatus status);

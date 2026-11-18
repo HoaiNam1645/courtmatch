@@ -12,13 +12,14 @@ export const NOTIFICATION_TYPE_META = {
   partner_request_response: { label: 'Phản hồi ghép cặp', className: 'bg-violet-100 text-violet-700' },
   partner_request_expired: { label: 'Ghép cặp hết hạn', className: 'bg-stone-200 text-stone-600' },
   venue_review_replied: { label: 'Trả lời đánh giá', className: 'bg-amber-100 text-amber-800' },
+  venue_review_hidden: { label: 'Đánh giá bị ẩn', className: 'bg-red-100 text-red-700' },
   match_scheduled: { label: 'Trận đấu', className: 'bg-lime-100 text-lime-800' },
   match_reminder: { label: 'Nhắc trận đấu', className: 'bg-amber-100 text-amber-800' },
   debt_restriction: { label: 'Công nợ', className: 'bg-red-100 text-red-700' },
 }
 
 export const NOTIFICATION_FILTERS = ['all', 'booking_confirmed', 'booking_cancelled', 'payment_status', 'booking_reminder',
-  'partner_request', 'partner_request_response', 'partner_request_expired', 'venue_review_replied', 'match_scheduled', 'match_reminder', 'debt_restriction']
+  'partner_request', 'partner_request_response', 'partner_request_expired', 'venue_review_replied', 'venue_review_hidden', 'match_scheduled', 'match_reminder', 'debt_restriction']
 
 export function notificationTypeMeta(type) {
   return NOTIFICATION_TYPE_META[type] ?? { label: type ?? 'Thông báo', className: 'bg-stone-200 text-stone-600' }

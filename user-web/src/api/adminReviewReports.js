@@ -1,4 +1,4 @@
-/** 2.3.37 — quản trị viên xử lý báo cáo về đánh giá đối tác. */
+/** 2.3.37 — xử lý báo cáo về đánh giá đối tác; 2.3.84 — về đánh giá sân (cùng quy trình, khác endpoint). */
 
 import { request } from './client'
 
@@ -18,6 +18,12 @@ export const REVIEW_STATUS_FILTERS = ['all', 'visible', 'reported', 'hidden']
 
 export const HANDLING_LABEL = { review_hidden: 'Đã gỡ đánh giá', review_kept: 'Giữ nguyên đánh giá' }
 
+/** Hai loại đánh giá bị báo cáo; khác nhau ở endpoint và nhãn. */
+export const REVIEW_KINDS = {
+  partner: { id: 'partner', label: 'Đánh giá đối tác', base: '/api/v1/admin/review-reports', hideLabel: 'Gỡ đánh giá' },
+  venue: { id: 'venue', label: 'Đánh giá sân', base: '/api/v1/admin/venue-review-reports', hideLabel: 'Ẩn đánh giá' },
+}
+
 function mapReview(review) {
   return {
     id: review.id,
@@ -25,22 +31,25 @@ function mapReview(review) {
     rating: review.rating == null ? null : Number(review.rating),
     comment: review.comment ?? '',
     reviewerName: review.reviewerName ?? '',
-    reviewedName: review.reviewedName ?? '',
+    reviewedName: review.reviewedName ?? review.venueName ?? '',
+    venueName: review.venueName ?? '',
+    reply: review.reply ? { content: review.reply.content, repliedAt: review.reply.repliedAt } : null,
     matchId: review.matchId ?? null,
     status: review.status ?? null,
     createdAt: review.createdAt ?? null,
   }
 }
 
-export async function fetchReviewReports({ status = 'all', reason = 'all', reviewStatus = 'all', q = '', page = 0, size = 20 } = {}) {
+export async function fetchReviewReports({ kind = 'partner', status = 'all', reason = 'all', reviewStatus = 'all', q = '', page = 0, size = 20 } = {}) {
   const search = new URLSearchParams({ status, reason, reviewStatus, page: String(page), size: String(size) })
   if (q.trim()) search.set('q', q.trim())
-  const data = await request(`/api/v1/admin/review-reports?${search.toString()}`)
+  const data = await request(`${REVIEW_KINDS[kind].base}?${search.toString()}`)
   return {
     reports: data.content.map((item) => ({
       id: item.id,
       status: item.status,
       reason: item.reason,
+      reasonLabel: item.reasonLabel ?? item.reason,
       reporterName: item.reporterName,
       review: mapReview(item.review),
       createdAt: item.createdAt,
@@ -51,7 +60,8 @@ export async function fetchReviewReports({ status = 'all', reason = 'all', revie
     totalPages: data.totalPages,
     totalElements: data.totalElements,
     statusCounts: data.statusCounts ?? {},
-    reasons: data.reasons ?? [],
+    // Đối tác: danh sách chuỗi lý do; sân: danh mục {code, label}. Chuẩn hóa về {code, label}.
+    reasons: (data.reasons ?? []).map((item) => (typeof item === 'string' ? { code: item, label: item } : { code: item.code, label: item.label })),
   }
 }
 
@@ -60,10 +70,11 @@ function mapDetail(data) {
     id: data.id,
     status: data.status,
     reason: data.reason,
+    reasonLabel: data.reasonLabel ?? data.reason,
     description: data.description ?? '',
     reporterName: data.reporterName,
     review: mapReview(data.review),
-    related: data.related ?? [],
+    related: (data.related ?? []).map((item) => ({ ...item, reasonLabel: item.reasonLabel ?? item.reason })),
     totalReports: Number(data.totalReports ?? 0),
     createdAt: data.createdAt,
     handling: data.handling ?? null,
@@ -75,17 +86,17 @@ function mapDetail(data) {
   }
 }
 
-const base = (id) => `/api/v1/admin/review-reports/${encodeURIComponent(id)}`
+const base = (kind, id) => `${REVIEW_KINDS[kind].base}/${encodeURIComponent(id)}`
 
-export async function fetchReviewReport(reportId) {
-  return mapDetail(await request(base(reportId)))
+export async function fetchReviewReport(reportId, kind = 'partner') {
+  return mapDetail(await request(base(kind, reportId)))
 }
 
-export async function startReviewReport(reportId) {
-  return mapDetail(await request(`${base(reportId)}/start`, { method: 'POST' }))
+export async function startReviewReport(reportId, kind = 'partner') {
+  return mapDetail(await request(`${base(kind, reportId)}/start`, { method: 'POST' }))
 }
 
 /** action: hide (gỡ đánh giá), keep (giữ nguyên), restore (khôi phục đánh giá đã gỡ). */
-export async function concludeReviewReport(reportId, action, note) {
-  return mapDetail(await request(`${base(reportId)}/${action}`, { method: 'POST', body: { note: note.trim() } }))
+export async function concludeReviewReport(reportId, action, note, kind = 'partner') {
+  return mapDetail(await request(`${base(kind, reportId)}/${action}`, { method: 'POST', body: { note: note.trim() } }))
 }

@@ -89,6 +89,46 @@ public interface AdminReportQueries extends Repository<Report, UUID> {
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
 
+    /**
+     * Bao cao ve danh gia san (2.3.84): doi chieu voi nguoi bao cao (chu san), nguoi viet, ten san va noi dung danh gia.
+     */
+    @Query(value = """
+            SELECT r FROM Report r JOIN FETCH r.reporter rep
+            LEFT JOIN VenueReview vr ON vr.id = r.targetId
+            LEFT JOIN vr.user rv
+            LEFT JOIN vr.venue vn
+            WHERE r.targetType = com.courtly.common.enums.ReportTargetType.VENUE_REVIEW AND r.status IN :statuses
+              AND (:anyReason = true OR r.reason = :reason)
+              AND (:anyReviewStatus = true OR vr.status = :reviewStatus)
+              AND (lower(function('courtly_unaccent', rep.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(function('courtly_unaccent', coalesce(rv.fullName, ''))) LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(function('courtly_unaccent', coalesce(vn.name, ''))) LIKE lower(function('courtly_unaccent', :keyword))
+                   OR lower(function('courtly_unaccent', coalesce(vr.comment, ''))) LIKE lower(function('courtly_unaccent', :keyword)))
+            ORDER BY CASE WHEN r.status = com.courtly.common.enums.ReportStatus.PENDING THEN 0
+                          WHEN r.status = com.courtly.common.enums.ReportStatus.REVIEWING THEN 1 ELSE 2 END,
+                     r.createdAt DESC, r.id DESC
+            """,
+            countQuery = """
+                    SELECT count(r) FROM Report r JOIN r.reporter rep
+                    LEFT JOIN VenueReview vr ON vr.id = r.targetId
+                    LEFT JOIN vr.user rv
+                    LEFT JOIN vr.venue vn
+                    WHERE r.targetType = com.courtly.common.enums.ReportTargetType.VENUE_REVIEW AND r.status IN :statuses
+                      AND (:anyReason = true OR r.reason = :reason)
+                      AND (:anyReviewStatus = true OR vr.status = :reviewStatus)
+                      AND (lower(function('courtly_unaccent', rep.fullName)) LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(function('courtly_unaccent', coalesce(rv.fullName, ''))) LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(function('courtly_unaccent', coalesce(vn.name, ''))) LIKE lower(function('courtly_unaccent', :keyword))
+                           OR lower(function('courtly_unaccent', coalesce(vr.comment, ''))) LIKE lower(function('courtly_unaccent', :keyword)))
+                    """)
+    Page<Report> searchVenueReviewReports(@Param("statuses") Collection<ReportStatus> statuses,
+                                          @Param("anyReason") boolean anyReason,
+                                          @Param("reason") String reason,
+                                          @Param("anyReviewStatus") boolean anyReviewStatus,
+                                          @Param("reviewStatus") com.courtly.common.enums.ReviewStatus reviewStatus,
+                                          @Param("keyword") String keyword,
+                                          Pageable pageable);
+
     @Query("SELECT r.status AS status, count(r) AS total FROM Report r WHERE r.targetType = :targetType GROUP BY r.status")
     List<StatusCount> countByStatus(@Param("targetType") ReportTargetType targetType);
 
