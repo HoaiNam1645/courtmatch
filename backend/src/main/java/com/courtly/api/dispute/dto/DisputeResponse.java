@@ -2,6 +2,7 @@ package com.courtly.api.dispute.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,5 +15,5 @@ import java.util.UUID;
  */
 public record DisputeResponse(UUID id, UUID bookingId, String bookingCode, String category, String categoryLabel,
                               String description, String status, boolean refundRequested, BigDecimal refundAmount,
-                              Instant ownerResponseDeadline, Instant createdAt) {
+                              Instant ownerResponseDeadline, Instant createdAt, List<DisputeEvidenceResponse> evidences) {
 }

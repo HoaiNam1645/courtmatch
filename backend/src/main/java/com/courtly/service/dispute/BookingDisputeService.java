@@ -169,6 +169,7 @@ public class BookingDisputeService {
         return new DisputeResponse(dispute.getId(), dispute.getBooking().getId(), dispute.getBooking().getBookingCode(),
                 dispute.getCategory(), categoryLabel, dispute.getDescription(), dispute.getStatus(),
                 dispute.isRefundRequested(), dispute.getRequestedRefundAmount(),
-                dispute.getOwnerResponseDeadline(), dispute.getCreatedAt());
+                dispute.getOwnerResponseDeadline(), dispute.getCreatedAt(),
+                DisputeEvidenceService.evidencesOf(dispute));
     }
 }

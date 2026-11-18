@@ -1,7 +1,8 @@
 import { CheckCircle2, LoaderCircle } from 'lucide-react'
 import { useState } from 'react'
 import { ApiError } from '../../../api/client'
-import { createBookingDispute, fetchDisputeCategories } from '../../../api/bookingDisputes'
+import { createBookingDispute, fetchDisputeCategories, uploadDisputeEvidence } from '../../../api/bookingDisputes'
+import { EvidencePicker } from '../../disputes/EvidencePicker'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { useBookingDetail } from '../../../hooks/useBookingDetail'
@@ -24,6 +25,8 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
   const [refundAmount, setRefundAmount] = useState('')
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState(null)
+  const [files, setFiles] = useState([])
+  const [uploadState, setUploadState] = useState({ uploading: 0, total: 0, failed: [] })
 
   if (!user) return <ProfileEmptyState />
 
@@ -46,7 +49,9 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
     setFormError('')
     setBusy(true)
     try {
-      setCreated(await createBookingDispute(bookingId, { category, description: text, refundRequested: refund, refundAmount: amount }))
+      const dispute = await createBookingDispute(bookingId, { category, description: text, refundRequested: refund, refundAmount: amount })
+      setCreated(dispute)
+      await uploadAll(dispute.id, files)
     } catch (failure) {
       if (failure instanceof ApiError) {
         setErrors(failure.fieldErrors ?? {})
@@ -56,6 +61,21 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
       }
       setBusy(false)
     }
+  }
+
+  /** Tải từng ảnh lên báo cáo vừa tạo (mỗi lần một ảnh); ảnh lỗi được giữ lại để thử tải lại ngay. */
+  async function uploadAll(disputeId, list) {
+    const failed = []
+    setUploadState({ uploading: list.length ? 1 : 0, total: list.length, failed: [] })
+    for (let index = 0; index < list.length; index += 1) {
+      setUploadState((current) => ({ ...current, uploading: index + 1 }))
+      try {
+        await uploadDisputeEvidence(disputeId, list[index])
+      } catch (failure) {
+        failed.push({ file: list[index], message: failure instanceof ApiError ? failure.message : 'Không tải được ảnh' })
+      }
+    }
+    setUploadState({ uploading: 0, total: list.length, failed })
   }
 
   const shell = (children) => (
@@ -75,6 +95,15 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
       <div className="rounded-xl border border-emerald-200 bg-white p-6 text-center shadow-[0_12px_34px_rgba(24,65,44,0.08)]" data-testid="dispute-done">
         <CheckCircle2 className="mx-auto size-12 text-emerald-600" />
         <h1 className="mt-4 text-2xl font-semibold">Đã gửi báo cáo</h1>
+        {uploadState.uploading > 0 && <p className="mt-2 text-sm font-semibold text-stone-600" data-testid="dispute-uploading">Đang tải ảnh {uploadState.uploading}/{uploadState.total}...</p>}
+        {uploadState.total > 0 && uploadState.uploading === 0 && uploadState.failed.length === 0 && <p className="mt-2 text-sm font-semibold text-emerald-800" data-testid="dispute-uploaded">Đã đính kèm {uploadState.total} ảnh bằng chứng.</p>}
+        {uploadState.failed.length > 0 && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-left text-sm" role="alert" data-testid="dispute-upload-failed">
+            <p className="font-semibold text-amber-900">Báo cáo đã gửi nhưng {uploadState.failed.length} ảnh chưa tải được:</p>
+            <ul className="mt-1 list-disc pl-5 text-xs font-medium text-amber-800">{uploadState.failed.map((item) => <li key={item.file.name}>{item.file.name}: {item.message}</li>)}</ul>
+            <button type="button" className="mt-3 h-9 rounded-lg border border-amber-400 bg-white px-4 text-xs font-semibold text-amber-900" data-testid="dispute-upload-retry" onClick={() => uploadAll(created.id, uploadState.failed.map((item) => item.file))}>Thử tải lại</button>
+          </div>
+        )}
         <p className="mt-2 text-sm font-medium leading-6 text-stone-600">Báo cáo “{created.categoryLabel}” về đơn {created.bookingCode} đã được gửi tới chủ sân.</p>
         {created.refundRequested && <p className="mt-1 text-sm font-semibold text-emerald-800" data-testid="dispute-refund-done">Yêu cầu hoàn {formatCurrency(created.refundAmount)} đã được ghi nhận, quản trị viên sẽ quyết định.</p>}
         <p className="mt-1 text-sm font-semibold text-amber-800" data-testid="dispute-deadline">Chủ sân cần giải trình trước {new Date(created.ownerResponseDeadline).toLocaleString('vi-VN')}.</p>
@@ -127,6 +156,8 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
           <FieldError message={errors.description} />
         </label>
 
+        <EvidencePicker files={files} onChange={setFiles} disabled={busy} />
+
         {booking.canRequestRefund && (
           <div className="rounded-lg border border-stone-200 p-3" data-testid="dispute-refund">
             <label className="flex cursor-pointer items-start gap-3">
@@ -147,7 +178,7 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
         <FormAlert message={formError} />
         <p className="text-xs font-medium leading-5 text-stone-500">Chủ sân có 48 giờ để giải trình. Báo cáo chưa thay đổi trạng thái đơn.</p>
         <button type="submit" disabled={busy || !categories.data} data-testid="dispute-submit" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-700 text-sm font-semibold text-white disabled:opacity-60">
-          {busy && <LoaderCircle className="size-4 animate-spin" />}{busy ? 'Đang gửi...' : 'Gửi báo cáo'}
+          {busy && <LoaderCircle className="size-4 animate-spin" />}{busy ? (files.length > 0 ? 'Đang gửi báo cáo và ảnh...' : 'Đang gửi...') : 'Gửi báo cáo'}
         </button>
       </form>
     </>,

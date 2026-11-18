@@ -114,3 +114,32 @@ export async function request(path, { method = 'GET', body, auth = true, timeout
   if (response.status === 204) return null
   return response.json()
 }
+
+/**
+ * Tải một tệp nhị phân cần đăng nhập (ví dụ ảnh bằng chứng, 2.3.88) và trả về Blob.
+ * Thẻ <img> không gửi được header Authorization nên ảnh riêng tư phải đi qua đây rồi tạo URL tạm.
+ */
+export async function requestBlob(path, { timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+  const token = readToken()
+  let response
+  try {
+    response = await fetch(`${BASE_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: controller.signal })
+  } catch (error) {
+    throw new ApiError({
+      status: 0,
+      code: error?.name === 'AbortError' ? 'REQUEST_TIMEOUT' : 'NETWORK_ERROR',
+      message: 'Không kết nối được tới máy chủ. Kiểm tra mạng rồi thử lại.',
+    })
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
+  if (response.status === 401) {
+    clearToken()
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    throw await parseError(response)
+  }
+  if (!response.ok) throw await parseError(response)
+  return response.blob()
+}
