@@ -67,10 +67,23 @@ abstract class BookingDisputeTestBase extends OwnerApiTestBase {
     }
 
     protected JsonNode dispute(String token, UUID bookingId, int expectedStatus, String category, String description) throws Exception {
+        return dispute(token, bookingId, expectedStatus, category, description, null);
+    }
+
+    /** {@code extraJson}: them truong vao JSON, vi du {@code "refundRequested":true,"refundAmount":50000}. */
+    protected JsonNode dispute(String token, UUID bookingId, int expectedStatus, String category, String description, String extraJson) throws Exception {
         String body = "{\"category\":" + (category == null ? "null" : "\"" + category + "\"")
-                + ",\"description\":" + (description == null ? "null" : "\"" + description + "\"") + "}";
+                + ",\"description\":" + (description == null ? "null" : "\"" + description + "\"")
+                + (extraJson == null ? "" : "," + extraJson) + "}";
         return objectMapper.readTree(mockMvc.perform(post("/api/v1/bookings/" + bookingId + "/disputes")
                         .header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().is(expectedStatus)).andReturn().getResponse().getContentAsString());
+    }
+
+    /** Khoan thanh toan cua don (tra tien cho chu san), o trang thai cho truoc. */
+    protected void payment(UUID bookingId, String status) {
+        jdbc.update("INSERT INTO payments (booking_id, amount, status, recipient_owner_id, method) VALUES (?, 180000, ?, ?, 'cash')",
+                bookingId, status, owner.getId());
+        entityManager.clear();
     }
 }

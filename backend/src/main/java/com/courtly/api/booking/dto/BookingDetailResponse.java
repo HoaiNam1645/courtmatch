@@ -32,6 +32,7 @@ public record BookingDetailResponse(UUID id,
                                     Partner partner,
                                     boolean canReportIssue,
                                     Instant reportDeadline,
+                                    boolean canRequestRefund,
                                     Dispute dispute) {
 
     /** Bao cao dang xu ly cua don nay (2.3.85); null khi khong co. */

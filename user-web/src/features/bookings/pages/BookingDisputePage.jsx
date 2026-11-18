@@ -6,7 +6,7 @@ import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { useBookingDetail } from '../../../hooks/useBookingDetail'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
-import { classNames } from '../../../shared/utils'
+import { classNames, formatCurrency } from '../../../shared/utils'
 import { PageBackLink, ProfileEmptyState } from '../../profile/components/ProfileUi'
 import { BookingEmptyState } from '../components/BookingEmptyState'
 
@@ -20,6 +20,8 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
+  const [refund, setRefund] = useState(false)
+  const [refundAmount, setRefundAmount] = useState('')
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState(null)
 
@@ -35,11 +37,16 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
     if (!selected) return setErrors({ category: 'Vui lòng chọn loại báo cáo' })
     if (text.length < selected.minDescriptionLength) return setErrors({ description: `Vui lòng mô tả rõ hơn (ít nhất ${selected.minDescriptionLength} ký tự)` })
     if (text.length > MAX_DESCRIPTION) return setErrors({ description: `Mô tả tối đa ${MAX_DESCRIPTION} ký tự` })
+    let amount = null
+    if (refund) {
+      amount = refundAmount === '' ? booking.payableAmount : Number(refundAmount)
+      if (!Number.isFinite(amount) || amount < 1000 || amount > booking.payableAmount) return setErrors({ refundAmount: `Số tiền từ ${formatCurrency(1000)} tới ${formatCurrency(booking.payableAmount)} (số tiền bạn đã trả)` })
+    }
     setErrors({})
     setFormError('')
     setBusy(true)
     try {
-      setCreated(await createBookingDispute(bookingId, { category, description: text }))
+      setCreated(await createBookingDispute(bookingId, { category, description: text, refundRequested: refund, refundAmount: amount }))
     } catch (failure) {
       if (failure instanceof ApiError) {
         setErrors(failure.fieldErrors ?? {})
@@ -69,6 +76,7 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
         <CheckCircle2 className="mx-auto size-12 text-emerald-600" />
         <h1 className="mt-4 text-2xl font-semibold">Đã gửi báo cáo</h1>
         <p className="mt-2 text-sm font-medium leading-6 text-stone-600">Báo cáo “{created.categoryLabel}” về đơn {created.bookingCode} đã được gửi tới chủ sân.</p>
+        {created.refundRequested && <p className="mt-1 text-sm font-semibold text-emerald-800" data-testid="dispute-refund-done">Yêu cầu hoàn {formatCurrency(created.refundAmount)} đã được ghi nhận, quản trị viên sẽ quyết định.</p>}
         <p className="mt-1 text-sm font-semibold text-amber-800" data-testid="dispute-deadline">Chủ sân cần giải trình trước {new Date(created.ownerResponseDeadline).toLocaleString('vi-VN')}.</p>
         <a className="mt-6 inline-flex h-11 items-center rounded-lg bg-emerald-700 px-6 text-sm font-semibold text-white" href={`/bookings/${bookingId}`} data-testid="dispute-back">Về chi tiết đơn</a>
       </div>,
@@ -119,8 +127,25 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
           <FieldError message={errors.description} />
         </label>
 
+        {booking.canRequestRefund && (
+          <div className="rounded-lg border border-stone-200 p-3" data-testid="dispute-refund">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" className="mt-1" checked={refund} disabled={busy} data-testid="dispute-refund-check" onChange={(event) => { setRefund(event.target.checked); setErrors((current) => ({ ...current, refundAmount: undefined })) }} />
+              <span><span className="block text-sm font-semibold">Tôi muốn yêu cầu hoàn tiền</span><span className="block text-xs font-medium text-stone-500">Courtly không giữ tiền sân; nếu quản trị viên quyết định hoàn tiền, chủ sân sẽ hoàn trực tiếp cho bạn. Không tick thì báo cáo chỉ là phản ánh.</span></span>
+            </label>
+            {refund && (
+              <label className="mt-3 block">
+                <span className="text-sm font-semibold">Số tiền yêu cầu hoàn (đ)</span>
+                <input type="number" inputMode="numeric" min="1000" max={booking.payableAmount} step="1000" className="mt-2 h-11 w-full rounded-lg border border-stone-300 px-3 text-sm outline-none focus:border-emerald-700" aria-label="Số tiền yêu cầu hoàn" data-testid="dispute-refund-amount" value={refundAmount} disabled={busy} placeholder={String(booking.payableAmount)} onChange={(event) => { setRefundAmount(event.target.value); setErrors((current) => ({ ...current, refundAmount: undefined })) }} />
+                <span className="mt-1 block text-xs font-medium text-stone-500">Bạn đã trả {formatCurrency(booking.payableAmount)}. Để trống để yêu cầu hoàn toàn bộ.</span>
+                <FieldError message={errors.refundAmount} />
+              </label>
+            )}
+            <FieldError message={errors.refundRequested} />
+          </div>
+        )}
         <FormAlert message={formError} />
-        <p className="text-xs font-medium leading-5 text-stone-500">Chủ sân có 48 giờ để giải trình. Báo cáo này chưa yêu cầu hoàn tiền và chưa thay đổi trạng thái đơn.</p>
+        <p className="text-xs font-medium leading-5 text-stone-500">Chủ sân có 48 giờ để giải trình. Báo cáo chưa thay đổi trạng thái đơn.</p>
         <button type="submit" disabled={busy || !categories.data} data-testid="dispute-submit" className="flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-700 text-sm font-semibold text-white disabled:opacity-60">
           {busy && <LoaderCircle className="size-4 animate-spin" />}{busy ? 'Đang gửi...' : 'Gửi báo cáo'}
         </button>

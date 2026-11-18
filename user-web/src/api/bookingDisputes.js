@@ -19,8 +19,10 @@ export async function fetchDisputeCategories() {
 }
 
 /** 2.3.85: tạo báo cáo về một đơn đã xác nhận hoặc hoàn thành. */
-export async function createBookingDispute(bookingId, { category, description }) {
-  const data = await request(`/api/v1/bookings/${bookingId}/disputes`, { method: 'POST', body: { category, description } })
+export async function createBookingDispute(bookingId, { category, description, refundRequested = false, refundAmount = null }) {
+  const body = { category, description, refundRequested }
+  if (refundRequested && refundAmount !== null && refundAmount !== '') body.refundAmount = Number(refundAmount)
+  const data = await request(`/api/v1/bookings/${bookingId}/disputes`, { method: 'POST', body })
   return {
     id: data.id,
     bookingId: data.bookingId,
@@ -29,6 +31,8 @@ export async function createBookingDispute(bookingId, { category, description })
     categoryLabel: data.categoryLabel,
     description: data.description,
     status: data.status,
+    refundRequested: Boolean(data.refundRequested),
+    refundAmount: data.refundAmount == null ? null : Number(data.refundAmount),
     ownerResponseDeadline: data.ownerResponseDeadline,
     createdAt: data.createdAt,
   }

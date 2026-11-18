@@ -56,5 +56,12 @@ export function cleanupDisputes(codePrefix) {
   runSql(`
     DELETE FROM notifications WHERE type = 'booking_dispute_opened'
       AND data_json ->> 'disputeId' IN (SELECT d.id::text FROM booking_disputes d JOIN bookings b ON b.id = d.booking_id WHERE b.booking_code LIKE '${codePrefix}%');
-    DELETE FROM booking_disputes WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE '${codePrefix}%');`)
+    DELETE FROM booking_disputes WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE '${codePrefix}%');
+    DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE '${codePrefix}%');`)
+}
+
+/** Khoản thanh toán của đơn do chủ sân của sân nhận (trạng thái tùy chọn); cần cho điều kiện yêu cầu hoàn tiền (2.3.87). */
+export function addPayment(bookingId, status = 'confirmed') {
+  runSql(`INSERT INTO payments (booking_id, amount, status, recipient_owner_id, method)
+    SELECT b.id, 180000, '${status}', v.owner_id, 'cash' FROM bookings b JOIN venues v ON v.id = b.venue_id WHERE b.id = '${bookingId}'`)
 }

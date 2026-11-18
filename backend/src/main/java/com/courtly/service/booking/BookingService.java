@@ -420,6 +420,7 @@ public class BookingService {
                         : new BookingDetailResponse.Partner(booking.getPartner().getId(), booking.getPartner().getFullName()),
                 forBooker && disputeService.canReport(booking, activeDispute != null, now),
                 forBooker && BookingDisputeService.REPORTABLE.contains(booking.getStatus()) ? disputeService.reportDeadline(booking) : null,
+                forBooker && disputeService.hasConfirmedPayment(booking.getId()),
                 activeDispute == null ? null : new BookingDetailResponse.Dispute(activeDispute.getId(), activeDispute.getStatus(),
                         activeDispute.getCategory(), activeDispute.getCreatedAt(), activeDispute.getOwnerResponseDeadline()));
     }
