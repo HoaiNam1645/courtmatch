@@ -741,24 +741,60 @@ Báo cáo & Tranh chấp Hoàn tiền — Người chơi
   - Mỗi bổ sung lưu thêm một phần tử vào reporter_updates_json (thời điểm, nội dung, ảnh), tối đa 10 lần bổ sung; không sửa hay xóa được nội dung đã gửi để chủ sân và quản trị viên xem lại đúng lịch sử.
   - Gửi thông báo cho chủ sân (loại booking_dispute_updated) khi báo cáo còn chờ giải trình.
   - Giao diện: ô "Bổ sung thông tin" ở trang chi tiết báo cáo, kèm chọn ảnh.
-2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình
+2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình [Mô tả chờ duyệt]
+  - API: POST /api/v1/booking-disputes/{disputeId}/cancel; chỉ người báo cáo, chỉ khi báo cáo đang awaiting_owner_response và chủ sân chưa gửi giải trình. Đã có giải trình, đang được quản trị viên xem xét hoặc đã đóng thì từ chối (409).
+  - Báo cáo chuyển sang cancelled, giữ nguyên nội dung, ảnh và các lần bổ sung để làm bằng chứng lịch sử (không xóa); đơn có thể được báo cáo lại nếu còn trong thời hạn 7 ngày.
+  - Có hộp xác nhận kèm cảnh báo "huỷ cả yêu cầu hoàn tiền"; ghi audit_logs; gửi thông báo cho chủ sân (loại booking_dispute_cancelled) để họ khỏi phải giải trình.
+  - Giao diện: nút "Huỷ báo cáo" ở trang chi tiết /bao-cao/:reportId (đã có cờ canCancel từ 2.3.90).
 
 Báo cáo & Tranh chấp Hoàn tiền — Chủ sân
 
-2.3.93. Xem danh sách báo cáo liên quan tới sân của mình
-2.3.94. Xem chi tiết báo cáo kèm bằng chứng của người chơi
-2.3.95. Gửi giải trình cho báo cáo
+2.3.93. Xem danh sách báo cáo liên quan tới sân của mình [Mô tả chờ duyệt]
+  - API: GET /api/v1/owner/booking-disputes?venueId&status=all|awaiting|answered|closed&page&size, chỉ báo cáo về đơn thuộc sân của chủ sân đang đăng nhập (sân khác 404). awaiting = chờ giải trình (awaiting_owner_response); answered = đã giải trình, chờ quản trị viên (reviewing); closed = resolved / rejected / cancelled.
+  - Mỗi dòng: mã đơn, sân, tên người chơi, loại báo cáo, trạng thái, yêu cầu hoàn tiền và số tiền, số ảnh, thời điểm gửi, hạn giải trình đếm ngược (sắp hết hạn khi còn dưới 6 giờ, đã quá hạn thì ghi rõ), kết luận khi đã đóng. Báo cáo chờ giải trình xếp lên đầu theo hạn gần nhất.
+  - Kèm bộ đếm: số báo cáo chờ giải trình và số sắp hết hạn để hiện huy hiệu ở menu chủ sân.
+  - Giao diện: trang /owner/disputes trong khu quản lý sân (mục "Báo cáo của khách"), lọc theo sân và trạng thái, phân trang.
+2.3.94. Xem chi tiết báo cáo kèm bằng chứng của người chơi [Mô tả chờ duyệt]
+  - API: GET /api/v1/owner/booking-disputes/{disputeId}. Trả về đơn (mã, sân con, giờ chơi, số tiền đã trả), người chơi (họ tên và số điện thoại đã đăng ký đơn, như màn yêu cầu đặt sân), nội dung báo cáo, yêu cầu hoàn tiền, ảnh bằng chứng và các lần bổ sung theo dòng thời gian, giải trình của chính chủ sân (nếu có) và kết luận của quản trị viên (nếu có).
+  - Ảnh xem qua API riêng tư đã có ở 2.3.88 (chủ sân của sân được phép); không lộ email hay địa chỉ của người chơi.
+  - Hiển thị hạn giải trình và những việc chủ sân còn làm được (giải trình, tải ảnh).
+  - Giao diện: trang /owner/disputes/:disputeId với dòng thời gian giống bên người chơi, thư viện ảnh bấm xem lớn.
+2.3.95. Gửi giải trình cho báo cáo [Mô tả chờ duyệt]
   - Hạn 48 giờ kể từ khi báo cáo được tạo.
-2.3.96. Đính kèm ảnh bằng chứng vào giải trình
+  - API: POST /api/v1/owner/booking-disputes/{disputeId}/response (nội dung 10-2000 ký tự). Chỉ chủ sân của sân, chỉ khi báo cáo awaiting_owner_response và chưa quá owner_response_deadline; quá hạn thì từ chối (hệ thống sẽ tự xử ở 2.3.107).
+  - Mỗi báo cáo chỉ giải trình một lần, không sửa được sau khi gửi (để quản trị viên xem đúng nội dung chủ sân đã nêu); lưu owner_response, owner_responded_by, owner_responded_at và chuyển báo cáo sang reviewing để chờ quản trị viên.
+  - Gửi thông báo cho người chơi (loại booking_dispute_responded). Người chơi vẫn bổ sung thông tin được (2.3.91).
+  - Giao diện: ô "Giải trình" ở trang chi tiết với bộ đếm ký tự, xác nhận trước khi gửi vì không sửa được.
+2.3.96. Đính kèm ảnh bằng chứng vào giải trình [Mô tả chờ duyệt]
   - Nội dung giải trình và danh sách bằng chứng được lưu trực tiếp trong hồ sơ tranh chấp.
-2.3.97. Xem khoản hoa hồng đang tạm hoãn đối soát do tranh chấp
+  - Cụ thể: tối đa 5 ảnh JPEG/PNG/WebP, mỗi ảnh tối đa 5 MB (nhận dạng bằng nội dung thật, mỗi lần một ảnh), lưu riêng tư cùng cơ chế 2.3.88 vào owner_evidences_json. API: POST /api/v1/owner/booking-disputes/{disputeId}/evidences, DELETE .../evidences/{evidenceId}.
+  - Tải hoặc xóa ảnh được khi báo cáo còn awaiting_owner_response và chưa quá hạn; sau khi đã gửi giải trình thì khóa. Người chơi và quản trị viên xem được ảnh này, người ngoài thì 404.
+  - Giao diện: chọn ảnh, xem trước, xóa trước khi gửi, báo lỗi từng ảnh; ảnh nên được tải lên trước khi bấm gửi giải trình.
+2.3.97. Xem khoản hoa hồng đang tạm hoãn đối soát do tranh chấp [Mô tả chờ duyệt]
+  - API: GET /api/v1/owner/commissions/suspended: danh sách hoa hồng của chủ sân ở trạng thái suspended (tạm hoãn do tranh chấp), mỗi dòng gồm mã đơn, sân, số hoa hồng đang hoãn, phần voucher Courtly bù, báo cáo liên quan, thời điểm bắt đầu hoãn; kèm tổng số tiền đang hoãn. Chỉ đọc.
+  - Cho biết rõ: khoản này chưa bị tính vào công nợ đến hạn và chưa bị miễn, sẽ được tính lại hoặc điều chỉnh khi báo cáo có kết luận.
+  - Lưu ý phạm vi: việc chuyển hoa hồng sang suspended thuộc 2.3.105; trước khi 2.3.105 được làm, danh sách luôn rỗng và màn hình hiển thị trạng thái trống đúng nghĩa.
+  - Giao diện: thẻ "Hoa hồng đang tạm hoãn" ở trang Tài chính và ở chi tiết báo cáo của chủ sân.
 
 Báo cáo & Tranh chấp Hoàn tiền — Quản trị viên
 
-2.3.98. Xem danh sách báo cáo chờ xử lý
-2.3.99. Xem chi tiết báo cáo kèm bằng chứng của cả hai phía
-2.3.100. Quyết định hoàn tiền toàn phần cho người chơi
-2.3.101. Quyết định hoàn tiền một nửa cho người chơi
+2.3.98. Xem danh sách báo cáo chờ xử lý [Mô tả chờ duyệt]
+  - API: GET /api/v1/admin/booking-disputes?status=pending|awaiting|resolved|rejected|cancelled|all&q&category&refund&from&to&page&size; cần quyền refund.process. "Chờ xử lý" (mặc định) = reviewing: chủ sân đã giải trình, đang chờ quyết định, xếp cũ nhất lên đầu; awaiting = còn chờ chủ sân giải trình.
+  - Mỗi dòng: mã đơn, sân và chủ sân, người chơi, loại, yêu cầu hoàn tiền, số ảnh hai bên, thời gian chờ, số báo cáo trước đây của cùng sân. Tìm theo mã đơn, tên người chơi, tên sân; lọc theo loại, có/không yêu cầu hoàn tiền, khoảng ngày; kèm bộ đếm theo từng trạng thái.
+  - Giao diện: trang /admin/disputes trong nhóm Kiểm duyệt của khu quản trị.
+2.3.99. Xem chi tiết báo cáo kèm bằng chứng của cả hai phía [Mô tả chờ duyệt]
+  - API: GET /api/v1/admin/booking-disputes/{disputeId}. Hai bên đặt cạnh nhau: nội dung và ảnh của người chơi (cả các lần bổ sung), giải trình và ảnh của chủ sân; đơn, khoản thanh toán (phương thức, số tiền chủ sân xác nhận đã thu, các lần hoàn trước đó), hoa hồng của đơn, yêu cầu hoàn tiền.
+  - Kèm lịch sử để quyết định: số báo cáo trước đây của sân và kết quả (xử thua / bác bỏ), số báo cáo của người chơi.
+  - Ảnh xem qua API riêng tư (quản trị viên được phép). Chỉ đọc; các nút quyết định hiện ở 2.3.100-102 khi báo cáo đang reviewing.
+2.3.100. Quyết định hoàn tiền toàn phần cho người chơi [Mô tả chờ duyệt]
+  - API: POST /api/v1/admin/booking-disputes/{disputeId}/refund-full {note}; cần quyền refund.process, ghi chú bắt buộc 5-1000 ký tự; chỉ khi báo cáo reviewing và có yêu cầu hoàn tiền, đơn có khoản thanh toán đã xác nhận.
+  - Quyết định: báo cáo chuyển resolved, resolution = refund_full, ghi handled_by/handled_at và ghi chú; tạo bản ghi refunds trạng thái awaiting_owner_refund (số tiền theo quy tắc ở dưới, gắn dispute_id, approved_by) để chủ sân hoàn trực tiếp cho người chơi. Courtly không giữ tiền nên không chuyển tiền; việc chủ sân hoàn và xác nhận đã nhận là 2.3.108.
+  - Chưa điều chỉnh hoa hồng ở bước này (thuộc 2.3.105, 2.3.109, 2.3.110). Gửi thông báo cho chủ sân (phải hoàn bao nhiêu, hạn hoàn) và người chơi; ghi audit_logs.
+  - Số tiền "toàn phần" = toàn bộ số tiền người chơi đã yêu cầu hoàn (không vượt số đã thu còn lại sau các lần hoàn trước).
+2.3.101. Quyết định hoàn tiền một nửa cho người chơi [Mô tả chờ duyệt]
+  - API: POST /api/v1/admin/booking-disputes/{disputeId}/refund-half {note}; cùng điều kiện và hiệu ứng như 2.3.100 với resolution = refund_half.
+  - Số tiền "một nửa" = 50% số tiền người chơi yêu cầu hoàn, làm tròn xuống bội số 1.000đ và tối thiểu 1.000đ; hiển thị rõ cách tính trước khi xác nhận.
+  - Giao diện chung của 2.3.100-102: ba nút quyết định ở chi tiết báo cáo, hộp xác nhận hiện số tiền hoàn và bắt nhập ghi chú, kết quả hiện ngay ở dòng thời gian của cả ba bên.
 2.3.102. Bác bỏ yêu cầu hoàn tiền
 2.3.103. Xem thống kê báo cáo theo từng sân
 2.3.104. Tạm ngưng hoạt động sân bị xử thua nhiều lần
