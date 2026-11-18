@@ -5,6 +5,7 @@ import { useApp } from '../useApp'
 import { adminRoutes } from '../../features/admin/routes'
 import { authRoutes } from '../../features/auth/routes'
 import { bookingRoutes } from '../../features/bookings/routes'
+import { disputeRoutes } from '../../features/disputes/routes'
 import { homeRoutes } from '../../features/home/routes'
 import { matchRoutes } from '../../features/matches/routes'
 import { notificationRoutes } from '../../features/notifications/routes'
@@ -17,6 +18,7 @@ const routes = [
   ...homeRoutes,
   ...authRoutes,
   ...bookingRoutes,
+  ...disputeRoutes,
   ...profileRoutes,
   ...matchRoutes,
   ...partnerRoutes,

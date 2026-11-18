@@ -2,7 +2,15 @@ package com.courtly.api.dispute;
 
 import com.courtly.api.dispute.dto.CreateDisputeRequest;
 import com.courtly.api.dispute.dto.DisputeCategoryResponse;
+import com.courtly.api.dispute.dto.DisputeDetailResponse;
 import com.courtly.api.dispute.dto.DisputeEvidenceResponse;
+import com.courtly.api.dispute.dto.DisputeSummaryResponse;
+import com.courtly.common.PageResponse;
+import com.courtly.service.dispute.DisputeQueryService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.courtly.api.dispute.dto.DisputeResponse;
 import com.courtly.service.dispute.DisputeEvidenceService;
 import java.time.Duration;
@@ -30,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Nguoi choi bao cao van de ve don dat san (2.3.85, 2.3.86). */
+@Validated
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -37,6 +46,25 @@ public class BookingDisputeController {
 
     private final BookingDisputeService disputeService;
     private final DisputeEvidenceService evidenceService;
+    private final DisputeQueryService queryService;
+
+    /** 2.3.89 - danh sach bao cao da gui cua chinh minh (all, active, closed). */
+    @GetMapping("/booking-disputes")
+    public ResponseEntity<PageResponse<DisputeSummaryResponse>> list(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "Kich thuoc trang tu 1 den 50")
+            @Max(value = 50, message = "Kich thuoc trang tu 1 den 50") int size) {
+        return ResponseEntity.ok(queryService.list(UUID.fromString(jwt.getSubject()), status, page, size));
+    }
+
+    /** 2.3.90 - chi tiet bao cao kem dong thoi gian trao doi. */
+    @GetMapping("/booking-disputes/{disputeId}")
+    public ResponseEntity<DisputeDetailResponse> detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId) {
+        return ResponseEntity.ok(queryService.get(UUID.fromString(jwt.getSubject()), disputeId));
+    }
 
     /** 2.3.86 - danh muc loai bao cao. */
     @GetMapping("/booking-disputes/categories")

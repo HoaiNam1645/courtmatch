@@ -107,7 +107,7 @@ public class DisputeEvidenceService {
         if (!party && !isActiveAdmin(userId)) {
             throw ApiException.notFound("Khong tim thay anh bang chung.");
         }
-        Map<String, Object> item = evidencesOf(dispute, true).stream()
+        Map<String, Object> item = allEvidences(dispute).stream()
                 .filter(entry -> evidenceId.toString().equals(entry.get("id"))).findFirst()
                 .orElseThrow(() -> ApiException.notFound("Khong tim thay anh bang chung."));
         String fileName = (String) item.get("fileName");
@@ -124,6 +124,19 @@ public class DisputeEvidenceService {
         } catch (ApiException exception) {
             return false;
         }
+    }
+
+    /** Anh cua ca ba ben (nguoi bao cao, chu san, quan tri vien): cung thu muc luu tru, cung co che xem co kiem tra quyen. */
+    private static List<Map<String, Object>> allEvidences(BookingDispute dispute) {
+        List<Map<String, Object>> all = new ArrayList<>(evidencesOf(dispute, true));
+        if (dispute.getOwnerEvidences() != null) all.addAll(dispute.getOwnerEvidences());
+        if (dispute.getResolutionEvidences() != null) all.addAll(dispute.getResolutionEvidences());
+        return all;
+    }
+
+    /** Anh trong mot danh sach bat ky (chu san, quan tri vien) o dang tra ve API. */
+    public static List<DisputeEvidenceResponse> toResponses(UUID disputeId, List<Map<String, Object>> items) {
+        return items == null ? List.of() : items.stream().map(item -> toResponse(disputeId, item)).toList();
     }
 
     /** Danh sach anh de tra ve API (khong lo ten file tren dia). */

@@ -159,6 +159,7 @@ function BookingDetailPage({ bookingId, user, onLogout }) {
               <section className="rounded-xl border border-amber-200 bg-amber-50 p-5" data-testid="detail-dispute">
                 <p className="text-sm font-semibold text-amber-900">Báo cáo của bạn đang được xử lý</p>
                 <p className="mt-2 text-xs font-medium leading-5 text-amber-800" data-testid="detail-dispute-status">{DISPUTE_STATUS_LABEL[booking.dispute.status] ?? booking.dispute.status}{booking.dispute.status === 'awaiting_owner_response' && booking.dispute.ownerResponseDeadline ? ` · chủ sân giải trình trước ${new Date(booking.dispute.ownerResponseDeadline).toLocaleString('vi-VN')}` : ''}</p>
+                <a className="mt-3 inline-flex h-10 items-center rounded-lg border border-amber-400 bg-white px-4 text-xs font-semibold text-amber-900" href={`/bao-cao/${booking.dispute.id}`} data-testid="detail-dispute-open">Xem báo cáo</a>
               </section>
             )}
             {booking.canReportIssue && (

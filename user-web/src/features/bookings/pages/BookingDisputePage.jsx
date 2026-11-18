@@ -107,7 +107,10 @@ function BookingDisputePage({ bookingId, user, onLogout }) {
         <p className="mt-2 text-sm font-medium leading-6 text-stone-600">Báo cáo “{created.categoryLabel}” về đơn {created.bookingCode} đã được gửi tới chủ sân.</p>
         {created.refundRequested && <p className="mt-1 text-sm font-semibold text-emerald-800" data-testid="dispute-refund-done">Yêu cầu hoàn {formatCurrency(created.refundAmount)} đã được ghi nhận, quản trị viên sẽ quyết định.</p>}
         <p className="mt-1 text-sm font-semibold text-amber-800" data-testid="dispute-deadline">Chủ sân cần giải trình trước {new Date(created.ownerResponseDeadline).toLocaleString('vi-VN')}.</p>
-        <a className="mt-6 inline-flex h-11 items-center rounded-lg bg-emerald-700 px-6 text-sm font-semibold text-white" href={`/bookings/${bookingId}`} data-testid="dispute-back">Về chi tiết đơn</a>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a className="inline-flex h-11 items-center rounded-lg bg-emerald-700 px-6 text-sm font-semibold text-white" href={`/bao-cao/${created.id}`} data-testid="dispute-view">Xem báo cáo</a>
+          <a className="inline-flex h-11 items-center rounded-lg border border-emerald-200 bg-white px-6 text-sm font-semibold text-emerald-800" href={`/bookings/${bookingId}`} data-testid="dispute-back">Về chi tiết đơn</a>
+        </div>
       </div>,
     )
   }

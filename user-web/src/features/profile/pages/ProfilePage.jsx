@@ -1,4 +1,4 @@
-import { Activity, Award, BarChart3, CalendarDays, Check, Edit3, Heart, History, MapPinned, SlidersHorizontal, Star, Swords, Target, Users, UserRound } from 'lucide-react'
+import { Activity, Award, BarChart3, CalendarDays, Check, ClipboardList, Edit3, Heart, History, MapPinned, SlidersHorizontal, Star, Swords, Target, Users, UserRound } from 'lucide-react'
 import { AppHeader, BottomNav } from '../../../app/AppLayout'
 import { useProfile } from '../../../hooks/useProfile'
 import { classNames } from '../../../shared/utils'
@@ -79,6 +79,9 @@ function ProfilePage({ user, onLogout }) {
           <div className="flex flex-wrap gap-3">
             <a className="flex h-11 items-center gap-2 rounded-lg border border-white/20 bg-white/8 px-5 text-sm font-semibold text-white backdrop-blur" href="/bookings">
               <History className="size-4" /> Lịch đặt sân
+            </a>
+            <a className="flex h-11 items-center gap-2 rounded-lg border border-white/20 bg-white/8 px-5 text-sm font-semibold text-white backdrop-blur" href="/bao-cao" data-testid="profile-disputes">
+              <ClipboardList className="size-4" /> Báo cáo của tôi
             </a>
             <a className="flex h-11 items-center gap-2 rounded-lg border border-white/20 bg-white/8 px-5 text-sm font-semibold text-white backdrop-blur" href="/profile/preferences">
               <SlidersHorizontal className="size-4" /> Thiết lập chơi

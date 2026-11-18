@@ -78,3 +78,82 @@ export async function deleteDisputeEvidence(disputeId, evidenceId) {
 export function fetchDisputeEvidenceBlob(url) {
   return requestBlob(url)
 }
+
+/** Kết luận của quản trị viên (2.3.100 - 2.3.102) hiển thị cho người chơi. */
+export const RESOLUTION_LABEL = {
+  refund_full: 'Hoàn tiền toàn phần',
+  refund_half: 'Hoàn tiền một nửa',
+  rejected: 'Bác bỏ yêu cầu hoàn tiền',
+  dismissed: 'Bác bỏ báo cáo',
+}
+
+export const DISPUTE_ACTOR_LABEL = { you: 'Bạn', owner: 'Chủ sân', admin: 'Quản trị viên' }
+export const DISPUTE_TAB_FILTERS = [['all', 'Tất cả'], ['active', 'Đang xử lý'], ['closed', 'Đã đóng']]
+
+function toSummary(item) {
+  return {
+    id: item.id,
+    bookingId: item.bookingId,
+    bookingCode: item.bookingCode,
+    venueName: item.venueName,
+    category: item.category,
+    categoryLabel: item.categoryLabel,
+    status: item.status,
+    closed: Boolean(item.closed),
+    refundRequested: Boolean(item.refundRequested),
+    refundAmount: item.refundAmount == null ? null : Number(item.refundAmount),
+    evidenceCount: Number(item.evidenceCount ?? 0),
+    createdAt: item.createdAt,
+    ownerResponseDeadline: item.ownerResponseDeadline ?? null,
+    resolution: item.resolution ?? null,
+  }
+}
+
+/** 2.3.89: danh sách báo cáo đã gửi của chính mình (all / active / closed). */
+export async function fetchMyDisputes({ status = 'all', page = 0, size = 20 } = {}) {
+  const data = await request(`/api/v1/booking-disputes?status=${status}&page=${page}&size=${size}`)
+  return {
+    items: data.content.map(toSummary),
+    page: Number(data.page),
+    totalPages: Number(data.totalPages),
+    totalElements: Number(data.totalElements),
+  }
+}
+
+/** 2.3.90: chi tiết một báo cáo kèm dòng thời gian trao đổi. */
+export async function fetchMyDispute(disputeId) {
+  const data = await request(`/api/v1/booking-disputes/${disputeId}`)
+  return {
+    id: data.id,
+    category: data.category,
+    categoryLabel: data.categoryLabel,
+    status: data.status,
+    closed: Boolean(data.closed),
+    refundRequested: Boolean(data.refundRequested),
+    refundAmount: data.refundAmount == null ? null : Number(data.refundAmount),
+    createdAt: data.createdAt,
+    ownerResponseDeadline: data.ownerResponseDeadline ?? null,
+    booking: {
+      id: data.booking.id,
+      bookingCode: data.booking.bookingCode,
+      venueName: data.booking.venueName,
+      venueSlug: data.booking.venueSlug,
+      courtName: data.booking.courtName ?? '',
+      startTime: data.booking.startTime ?? null,
+      endTime: data.booking.endTime ?? null,
+      payableAmount: Number(data.booking.payableAmount ?? 0),
+    },
+    timeline: data.timeline.map((entry) => ({
+      type: entry.type,
+      actor: entry.actor,
+      at: entry.at,
+      text: entry.text ?? '',
+      label: entry.label ?? null,
+      evidences: (entry.evidences ?? []).map(toEvidence),
+    })),
+    canSupplement: Boolean(data.canSupplement),
+    canCancel: Boolean(data.canCancel),
+    supplementsRemaining: Number(data.supplementsRemaining ?? 0),
+    evidenceRemaining: Number(data.evidenceRemaining ?? 0),
+  }
+}

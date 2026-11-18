@@ -49,6 +49,11 @@ public class BookingDispute extends AuditedEntity {
     @Column(name = "reporter_evidences_json", columnDefinition = "jsonb")
     private List<Map<String, Object>> reporterEvidences;
 
+    /** Cac lan bo sung thong tin cua nguoi bao cao (2.3.91): [{id, content, createdAt}]. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "reporter_updates_json", columnDefinition = "jsonb")
+    private List<Map<String, Object>> reporterUpdates;
+
     @Column(name = "refund_requested", nullable = false)
     private boolean refundRequested;
 
