@@ -109,6 +109,43 @@ test.describe.serial('2.3.81 owner reads venue reviews and replies publicly', ()
     expect(runSql(`SELECT count(*) FROM venue_review_replies WHERE review_id = '${otherId}'`)).toBe('1')
   })
 
+  test('2.3.82 the owner edits a posted reply: form pre-filled, validation, cancel keeps it, save shows the edited label publicly', async ({ page, browser }) => {
+    const assertNoErrors = watchRuntimeErrors(page)
+    await openOwnerReviews(page)
+    await page.getByTestId(`reply-edit-${answeredId}`).click()
+    await expect(page.getByTestId(`reply-text-${answeredId}`)).toHaveValue('E2E cảm ơn bạn')
+    await page.getByTestId(`reply-text-${answeredId}`).fill('x'.repeat(1001))
+    await page.getByTestId(`reply-submit-${answeredId}`).click()
+    await expect(page.getByTestId(`reply-form-${answeredId}`)).toContainText('tối đa 1000 ký tự')
+    await page.getByTestId(`reply-text-${answeredId}`).fill('   ')
+    await page.getByTestId(`reply-submit-${answeredId}`).click()
+    await expect(page.getByTestId(`reply-form-${answeredId}`)).toContainText('Vui lòng nhập nội dung trả lời')
+    await page.getByTestId(`reply-cancel-${answeredId}`).click()
+    await expect(page.getByTestId(`owner-reply-${answeredId}`)).toContainText('E2E cảm ơn bạn')
+    expect(runSql(`SELECT content FROM venue_review_replies WHERE review_id = '${answeredId}'`)).toBe('E2E cảm ơn bạn')
+
+    runSql(`UPDATE venue_review_replies SET created_at = created_at - interval '1 hour' WHERE review_id = '${answeredId}'`)
+    await page.getByTestId(`reply-edit-${answeredId}`).click()
+    await page.getByTestId(`reply-text-${answeredId}`).fill('E2E cảm ơn bạn rất nhiều')
+    await shot(page, '2382-edit-reply')
+    await page.getByTestId(`reply-submit-${answeredId}`).click()
+    await expect(page.getByTestId('or-notice')).toContainText('Đã cập nhật câu trả lời')
+    await expect(page.getByTestId(`owner-reply-${answeredId}`)).toContainText('E2E cảm ơn bạn rất nhiều')
+    await expect(page.getByTestId(`owner-reply-edited-${answeredId}`)).toBeVisible()
+    expect(runSql(`SELECT content FROM venue_review_replies WHERE review_id = '${answeredId}'`)).toBe('E2E cảm ơn bạn rất nhiều')
+
+    const visitor = await (await browser.newContext()).newPage()
+    await visitor.goto(`/san/${venue.slug}`)
+    for (let i = 0; i < 4 && (await visitor.getByTestId(`review-reply-${answeredId}`).count()) === 0; i += 1) {
+      if (await visitor.getByTestId('review-more').count()) await visitor.getByTestId('review-more').click()
+      await visitor.waitForTimeout(400)
+    }
+    await expect(visitor.getByTestId(`review-reply-${answeredId}`)).toContainText('E2E cảm ơn bạn rất nhiều')
+    await expect(visitor.getByTestId(`review-reply-${answeredId}`)).toContainText('Đã chỉnh sửa')
+    await visitor.context().close()
+    assertNoErrors()
+  })
+
   test('a player cannot use the owner page and the layout fits a phone', async ({ page }) => {
     await loginByApi(page, email('rp-a'))
     await page.goto('/owner/reviews')

@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +41,14 @@ public class OwnerVenueReviewController {
             @Min(value = 1, message = "Kich thuoc trang tu 1 den 50")
             @Max(value = 50, message = "Kich thuoc trang tu 1 den 50") int size) {
         return ResponseEntity.ok(reviewService.list(OwnerVenueController.ownerId(jwt), venueId, filter, rating, page, size));
+    }
+
+    /** 2.3.82 - sua cau tra loi da dang. */
+    @PutMapping("/{reviewId}/reply")
+    public ResponseEntity<OwnerVenueReviewResponses.Item> updateReply(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID reviewId,
+            @Valid @RequestBody OwnerVenueReviewResponses.ReplyRequest request) {
+        return ResponseEntity.ok(reviewService.updateReply(OwnerVenueController.ownerId(jwt), reviewId, request.content()));
     }
 
     @PostMapping("/{reviewId}/reply")

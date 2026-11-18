@@ -59,6 +59,11 @@ export async function fetchOwnerVenueReviews({ venueId = '', filter = 'all', rat
   }
 }
 
+/** 2.3.82: sửa câu trả lời đã đăng. */
+export async function updateVenueReviewReply(reviewId, content) {
+  return toOwnerReview(await request(`/api/v1/owner/venue-reviews/${reviewId}/reply`, { method: 'PUT', body: { content } }))
+}
+
 /** 2.3.81: trả lời công khai một đánh giá. */
 export async function replyToVenueReview(reviewId, content) {
   return toOwnerReview(await request(`/api/v1/owner/venue-reviews/${reviewId}/reply`, { method: 'POST', body: { content } }))

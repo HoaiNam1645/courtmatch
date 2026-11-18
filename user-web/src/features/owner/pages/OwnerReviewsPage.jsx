@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { CheckCircle2, LoaderCircle, MessageSquareReply } from 'lucide-react'
+import { CheckCircle2, LoaderCircle, MessageSquareReply, Pencil } from 'lucide-react'
 import { ApiError } from '../../../api/client'
 import { fetchOwnerVenues } from '../../../api/ownerVenues'
-import { fetchOwnerVenueReviews, replyToVenueReview } from '../../../api/venueReviews'
+import { fetchOwnerVenueReviews, replyToVenueReview, updateVenueReviewReply } from '../../../api/venueReviews'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
@@ -20,8 +20,8 @@ const FILTERS = [
 const MAX_REPLY = 1000
 
 /** Ô trả lời công khai dưới một đánh giá chưa có câu trả lời (2.3.81). */
-function ReplyForm({ review, onReplied }) {
-  const [content, setContent] = useState('')
+function ReplyForm({ review, onReplied, editing = false, onCancel }) {
+  const [content, setContent] = useState(editing ? review.reply.content : '')
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -36,8 +36,8 @@ function ReplyForm({ review, onReplied }) {
     setFormError('')
     setBusy(true)
     try {
-      await replyToVenueReview(review.id, text)
-      onReplied()
+      await (editing ? updateVenueReviewReply : replyToVenueReview)(review.id, text)
+      onReplied(editing ? 'Đã cập nhật câu trả lời.' : undefined)
     } catch (failure) {
       if (failure instanceof ApiError) {
         setError(failure.fieldErrors?.content ?? '')
@@ -54,16 +54,17 @@ function ReplyForm({ review, onReplied }) {
   return (
     <form noValidate onSubmit={submit} className="mt-3 grid gap-2" data-testid={`reply-form-${review.id}`}>
       <label className="block">
-        <span className="text-sm font-semibold text-emerald-950">Trả lời công khai</span>
+        <span className="text-sm font-semibold text-emerald-950">{editing ? 'Sửa câu trả lời' : 'Trả lời công khai'}</span>
         <textarea className={`${textareaClass} mt-1 h-24`} aria-label="Nội dung trả lời" data-testid={`reply-text-${review.id}`} value={content} disabled={busy}
           placeholder="Cảm ơn khách và phản hồi nhận xét. Câu trả lời hiển thị công khai dưới đánh giá." onChange={(event) => { setContent(event.target.value); setError('') }} aria-invalid={Boolean(error)} />
         <span className={classNames('mt-1 block text-right text-xs font-medium', content.length > MAX_REPLY ? 'text-red-600' : 'text-stone-400')}>{content.length}/{MAX_REPLY}</span>
         <FieldError message={error} />
       </label>
       <FormAlert message={formError} />
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {editing && <button type="button" className={secondaryButtonClass} data-testid={`reply-cancel-${review.id}`} onClick={onCancel} disabled={busy}>Hủy</button>}
         <button type="submit" className={primaryButtonClass} data-testid={`reply-submit-${review.id}`} disabled={busy}>
-          {busy ? <LoaderCircle className="size-4 animate-spin" /> : <MessageSquareReply className="size-4" />}{busy ? 'Đang gửi...' : 'Gửi trả lời'}
+          {busy ? <LoaderCircle className="size-4 animate-spin" /> : <MessageSquareReply className="size-4" />}{busy ? 'Đang gửi...' : editing ? 'Lưu thay đổi' : 'Gửi trả lời'}
         </button>
       </div>
     </form>
@@ -71,6 +72,7 @@ function ReplyForm({ review, onReplied }) {
 }
 
 function ReviewCard({ review, onReplied }) {
+  const [editing, setEditing] = useState(false)
   return (
     <article className="rounded-xl border border-emerald-100 bg-white p-4 shadow-[0_10px_28px_rgba(24,65,44,0.06)]" data-testid={`owner-review-${review.id}`} data-answered={review.reply ? 'true' : 'false'} data-rating={review.rating}>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -81,12 +83,17 @@ function ReviewCard({ review, onReplied }) {
         <StarRow value={review.rating} />
       </div>
       {review.comment ? <p className="mt-2 whitespace-pre-line text-sm font-medium leading-6 text-stone-700">{review.comment}</p> : <p className="mt-2 text-sm font-medium text-stone-400">Khách chỉ chấm sao, không viết nhận xét.</p>}
-      {review.reply ? (
+      {review.reply && !editing && (
         <div className="mt-3 rounded-lg border-l-4 border-emerald-500 bg-emerald-50/70 p-3" data-testid={`owner-reply-${review.id}`}>
-          <p className="text-xs font-semibold text-emerald-800">Bạn đã trả lời · {formatDateTime(review.reply.repliedAt)}</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-emerald-800">Bạn đã trả lời · {formatDateTime(review.reply.repliedAt)}{review.reply.edited && <span data-testid={`owner-reply-edited-${review.id}`}> · Đã chỉnh sửa</span>}</p>
+            <button type="button" data-testid={`reply-edit-${review.id}`} onClick={() => setEditing(true)} className="inline-flex h-8 items-center gap-1 rounded-md border border-emerald-200 bg-white px-2.5 text-xs font-semibold text-emerald-800"><Pencil className="size-3.5" />Sửa câu trả lời</button>
+          </div>
           <p className="mt-1 whitespace-pre-line text-sm font-medium leading-6 text-stone-700">{review.reply.content}</p>
         </div>
-      ) : <ReplyForm review={review} onReplied={onReplied} />}
+      )}
+      {review.reply && editing && <ReplyForm review={review} editing onCancel={() => setEditing(false)} onReplied={(message) => { setEditing(false); onReplied(message) }} />}
+      {!review.reply && <ReplyForm review={review} onReplied={onReplied} />}
     </article>
   )
 }

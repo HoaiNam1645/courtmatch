@@ -90,11 +90,7 @@ public class OwnerVenueReviewService {
             throw ApiException.conflict(ErrorCode.VENUE_REVIEW_STATE_INVALID,
                     "Danh gia nay da co cau tra loi. Hay sua cau tra loi thay vi tra loi lai.", Map.of());
         }
-        String text = content == null ? "" : content.trim();
-        if (text.isEmpty() || text.length() > 1000) {
-            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Noi dung tra loi khong hop le.",
-                    Map.of("content", "Cau tra loi tu 1 den 1000 ky tu"));
-        }
+        String text = requireContent(content);
         VenueReviewReply reply = new VenueReviewReply();
         reply.setId(UUID.randomUUID());
         reply.setReview(review);
@@ -103,6 +99,33 @@ public class OwnerVenueReviewService {
         replyRepository.saveAndFlush(reply);
         reviewNotifier.replied(review);
         return toItem(review, reply);
+    }
+
+    /** 2.3.82 - sua cau tra loi da dang; chi khi danh gia con hien thi va da co cau tra loi. */
+    @Transactional
+    public Item updateReply(UUID ownerId, UUID reviewId, String content) {
+        VenueReview review = reviewRepository.findWithVenueAndUser(reviewId)
+                .filter(item -> item.getVenue().getOwner().getId().equals(ownerId))
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay danh gia nay."));
+        if (review.getStatus() != ReviewStatus.VISIBLE) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_STATE_INVALID,
+                    "Chi sua duoc cau tra loi cua danh gia dang hien thi.", Map.of());
+        }
+        VenueReviewReply reply = replyRepository.findByReviewId(reviewId)
+                .orElseThrow(() -> ApiException.conflict(ErrorCode.VENUE_REVIEW_STATE_INVALID,
+                        "Danh gia nay chua co cau tra loi de sua.", Map.of()));
+        reply.setContent(requireContent(content));
+        replyRepository.saveAndFlush(reply);
+        return toItem(review, reply);
+    }
+
+    private static String requireContent(String content) {
+        String text = content == null ? "" : content.trim();
+        if (text.isEmpty() || text.length() > 1000) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Noi dung tra loi khong hop le.",
+                    Map.of("content", "Cau tra loi tu 1 den 1000 ky tu"));
+        }
+        return text;
     }
 
     private static Item toItem(VenueReview review, VenueReviewReply reply) {

@@ -172,6 +172,64 @@ class VenueReviewReplyTest extends VenueReviewTestBase {
         mockMvc.perform(get(OWNER_REVIEWS).header("Authorization", bearer(playerToken))).andExpect(status().isForbidden());
     }
 
+    private JsonNode editReply(String token, String reviewId, int expected, String content) throws Exception {
+        String body = content == null ? "{}" : "{\"content\":\"" + content + "\"}";
+        return objectMapper.readTree(mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put(OWNER_REVIEWS + "/" + reviewId + "/reply")
+                        .header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().is(expected)).andReturn().getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("2.3.82 Sua cau tra loi: luu noi dung moi, hien nhan da chinh sua o trang cong khai va trang chu san, khong gui lai thong bao")
+    void ownerEditsTheReply() throws Exception {
+        String id = write(playerToken, 4, "Kha tot");
+        reply(ownerToken, id, 201, "Cau goc");
+        entityManager.flush();
+        jdbc.update("UPDATE venue_review_replies SET created_at = created_at - interval '1 hour' WHERE review_id = ?::uuid", id);
+        entityManager.clear();
+
+        JsonNode edited = editReply(ownerToken, id, 200, "  Cau da sua  ");
+        assertThat(edited.get("reply").get("content").asText()).isEqualTo("Cau da sua");
+        assertThat(edited.get("reply").get("edited").asBoolean()).isTrue();
+        entityManager.flush();
+        assertThat(jdbc.queryForList("SELECT content FROM venue_review_replies WHERE review_id = ?::uuid", String.class, id))
+                .containsExactly("Cau da sua");
+        entityManager.clear();
+
+        JsonNode shown = publicList().get("content").get(0);
+        assertThat(shown.get("reply").get("content").asText()).isEqualTo("Cau da sua");
+        assertThat(shown.get("reply").get("edited").asBoolean()).isTrue();
+        assertThat(ownerList(ownerToken, "").get("items").get(0).get("reply").get("edited").asBoolean()).isTrue();
+        // Chi co dung mot thong bao (luc tra loi lan dau), sua khong gui them.
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notifications WHERE user_id = ? AND type = 'venue_review_replied'",
+                Integer.class, player.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("2.3.82 Khong sua duoc khi chua co cau tra loi, danh gia khong hien thi, sai chu san, noi dung sai")
+    void editReplyGuards() throws Exception {
+        String id = write(playerToken, 4, "Kha tot");
+        assertThat(editReply(ownerToken, id, 409, "Chua co cau nao").get("code").asText()).isEqualTo("VENUE_REVIEW_STATE_INVALID");
+        reply(ownerToken, id, 201, "Cau goc");
+
+        assertThat(editReply(ownerToken, id, 400, null).get("fieldErrors").has("content")).isTrue();
+        assertThat(editReply(ownerToken, id, 400, "   ").get("fieldErrors").has("content")).isTrue();
+        assertThat(editReply(ownerToken, id, 400, "x".repeat(1001)).get("fieldErrors").has("content")).isTrue();
+        editReply(loginAs(persistOwner("other-edit-owner")), id, 404, "Khong phai san cua toi");
+        editReply(ownerToken, UUID.randomUUID().toString(), 404, "Khong co");
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(OWNER_REVIEWS + "/" + id + "/reply")
+                .header("Authorization", bearer(playerToken)).contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"x\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(OWNER_REVIEWS + "/" + id + "/reply")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"x\"}")).andExpect(status().isUnauthorized());
+
+        jdbc.update("UPDATE venue_reviews SET status = 'hidden' WHERE id = ?::uuid", id);
+        entityManager.clear();
+        assertThat(editReply(ownerToken, id, 409, "Sau khi an").get("code").asText()).isEqualTo("VENUE_REVIEW_STATE_INVALID");
+        assertThat(jdbc.queryForObject("SELECT content FROM venue_review_replies WHERE review_id = ?::uuid", String.class, id)).isEqualTo("Cau goc");
+    }
+
     @Test
     @DisplayName("Xoa danh gia thi cau tra loi xoa theo")
     void replyDisappearsWithTheReview() throws Exception {
