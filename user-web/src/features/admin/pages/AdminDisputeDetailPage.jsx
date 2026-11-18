@@ -1,10 +1,11 @@
 import { CircleUserRound, ShieldCheck, Store, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ADMIN_ACTOR_LABEL, ADMIN_DISPUTE_STATUS, fetchAdminDispute } from '../../../api/adminDisputes'
+import { ADMIN_ACTOR_LABEL, ADMIN_DISPUTE_STATUS, decideRefund, fetchAdminDispute, NOTE_LIMITS } from '../../../api/adminDisputes'
 import { RESOLUTION_LABEL } from '../../../api/bookingDisputes'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
+import { ConfirmDialog } from '../../disputes/ConfirmDialog'
 import { EvidenceImage } from '../../disputes/EvidenceImage'
 import { formatDateTime } from '../../disputes/disputeUi'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
@@ -43,9 +44,22 @@ function AdminDisputeDetailPage() {
   const { disputeId } = useParams()
   const { status, data, error, reload } = useApiResource(() => fetchAdminDispute(disputeId), [disputeId])
   const [lightbox, setLightbox] = useState(null)
+  const [deciding, setDeciding] = useState(null)
+  const [note, setNote] = useState('')
+  const [notice, setNotice] = useState('')
   const meta = ADMIN_DISPUTE_STATUS[data?.status] ?? { label: data?.status, className: 'bg-slate-100 text-slate-600' }
   const playerEntries = data?.timeline.filter((entry) => entry.actor === 'player') ?? []
   const ownerEntries = data?.timeline.filter((entry) => entry.actor === 'owner') ?? []
+  async function confirmDecision() {
+    const clean = note.trim()
+    if (clean.length < NOTE_LIMITS.min || clean.length > NOTE_LIMITS.max) throw new Error(`Ghi chú quyết định từ ${NOTE_LIMITS.min} đến ${NOTE_LIMITS.max} ký tự.`)
+    await decideRefund(disputeId, deciding, clean)
+    setNotice(deciding === 'full' ? 'Đã quyết định hoàn tiền toàn phần. Chủ sân và người chơi đã được thông báo.' : 'Đã quyết định hoàn tiền một nửa. Chủ sân và người chơi đã được thông báo.')
+    setDeciding(null)
+    setNote('')
+    reload()
+  }
+
   const adminEntries = data?.timeline.filter((entry) => entry.actor === 'admin') ?? []
 
   return (
@@ -70,6 +84,37 @@ function AdminDisputeDetailPage() {
               <div><dt className="text-xs font-semibold text-slate-500">Gửi lúc</dt><dd className="mt-1 text-sm font-semibold">{formatDateTime(data.createdAt)}</dd></div>
             </dl>
           </OwnerCard>
+
+          {notice && <p role="status" data-testid="add-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
+          {data.canDecide && (
+            <OwnerCard title="Quyết định" description="Quyết định không sửa được sau khi gửi. Chủ sân sẽ hoàn tiền trực tiếp cho người chơi.">
+              {data.canRefund ? (
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" data-testid="add-refund-full" onClick={() => { setNote(''); setDeciding('full') }} className="inline-flex h-11 items-center rounded-lg bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800">Hoàn tiền toàn phần · {formatCurrency(data.fullAmount)}</button>
+                  <button type="button" data-testid="add-refund-half" onClick={() => { setNote(''); setDeciding('half') }} className="inline-flex h-11 items-center rounded-lg bg-slate-800 px-5 text-sm font-semibold text-white hover:bg-slate-900">Hoàn tiền một nửa · {formatCurrency(data.halfAmount)}</button>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-slate-600" data-testid="add-no-refund">
+                  {data.refundRequested ? 'Không hoàn tiền được: đơn chưa có khoản thanh toán được chủ sân xác nhận hoặc số đã thu đã được hoàn hết.' : 'Người chơi không yêu cầu hoàn tiền nên không có quyết định hoàn tiền.'}
+                </p>
+              )}
+            </OwnerCard>
+          )}
+          {deciding && (
+            <ConfirmDialog title={deciding === 'full' ? 'Hoàn tiền toàn phần?' : 'Hoàn tiền một nửa?'} confirmLabel={`Quyết định hoàn ${formatCurrency(deciding === 'full' ? data.fullAmount : data.halfAmount)}`}
+              onConfirm={confirmDecision} onClose={() => setDeciding(null)} testId="add-confirm">
+              <p data-testid="add-confirm-amount" className="font-semibold text-slate-900">
+                Chủ sân phải hoàn {formatCurrency(deciding === 'full' ? data.fullAmount : data.halfAmount)} cho người chơi.
+              </p>
+              <p className="mt-1 text-xs">
+                {deciding === 'full'
+                  ? `Toàn bộ số người chơi yêu cầu (${formatCurrency(data.refundAmount)}), không vượt số đã thu còn hoàn được (${formatCurrency(data.money.refundable)}).`
+                  : `50% của ${formatCurrency(data.refundAmount)} = ${formatCurrency(data.refundAmount / 2)}, làm tròn xuống bội số 1.000đ (tối thiểu 1.000đ).`}
+              </p>
+              <label htmlFor="add-note" className="mt-3 block text-xs font-semibold text-slate-700">Ghi chú quyết định (bắt buộc, gửi cho cả hai bên)</label>
+              <textarea id="add-note" data-testid="add-note" className="mt-1 h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-700" maxLength={NOTE_LIMITS.max} value={note} onChange={(event) => setNote(event.target.value)} />
+            </ConfirmDialog>
+          )}
 
           <div className="grid gap-5 lg:grid-cols-2">
             <section aria-label="Người chơi">

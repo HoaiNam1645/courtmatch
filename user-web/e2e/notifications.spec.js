@@ -134,7 +134,7 @@ test.describe.serial('2.3.61 - 2.3.62 notifications history, bell and preference
     await loginByApi(page, PLAYER)
     await page.goto('/notifications?tab=settings')
     await expect(page.getByTestId('notif-tab-settings')).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByTestId('pref-list').getByRole('listitem')).toHaveCount(16)
+    await expect(page.getByTestId('pref-list').getByRole('listitem')).toHaveCount(17)
     const restriction = page.getByTestId('pref-debt_restriction')
     await expect(restriction.getByTestId('pref-mandatory')).toBeVisible()
     await expect(restriction.getByTestId('pref-in-app')).toBeDisabled()

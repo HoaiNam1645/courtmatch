@@ -1,7 +1,12 @@
 package com.courtly.api.admin;
 
 import com.courtly.api.admin.dto.AdminDisputeResponses;
+import com.courtly.service.admin.AdminDisputeDecisionService;
 import com.courtly.service.admin.AdminDisputeService;
+import com.courtly.api.admin.dto.ReviewReportNoteRequest;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminDisputeController {
 
     private final AdminDisputeService service;
+    private final AdminDisputeDecisionService decisionService;
 
     @GetMapping
     public ResponseEntity<AdminDisputeResponses.ListResponse> list(
@@ -47,5 +53,19 @@ public class AdminDisputeController {
     @GetMapping("/{disputeId}")
     public ResponseEntity<AdminDisputeResponses.Detail> detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId) {
         return ResponseEntity.ok(service.get(AdminJwt.adminId(jwt), disputeId));
+    }
+
+    /** 2.3.100 - hoan tien toan phan (dung so nguoi choi yeu cau). */
+    @PostMapping("/{disputeId}/refund-full")
+    public ResponseEntity<AdminDisputeResponses.Detail> refundFull(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,
+                                                                   @Valid @RequestBody ReviewReportNoteRequest request) {
+        return ResponseEntity.ok(decisionService.refundFull(AdminJwt.adminId(jwt), disputeId, request.note()));
+    }
+
+    /** 2.3.101 - hoan tien mot nua (50% so yeu cau, lam tron xuong 1.000d, toi thieu 1.000d). */
+    @PostMapping("/{disputeId}/refund-half")
+    public ResponseEntity<AdminDisputeResponses.Detail> refundHalf(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,
+                                                                   @Valid @RequestBody ReviewReportNoteRequest request) {
+        return ResponseEntity.ok(decisionService.refundHalf(AdminJwt.adminId(jwt), disputeId, request.note()));
     }
 }

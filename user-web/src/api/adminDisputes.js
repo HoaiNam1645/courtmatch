@@ -71,3 +71,10 @@ function mapDetail(data) {
 export async function fetchAdminDispute(disputeId) {
   return mapDetail(await request(`/api/v1/admin/booking-disputes/${disputeId}`))
 }
+
+/** 2.3.100 - 2.3.101: quyết định hoàn tiền (toàn phần / một nửa) kèm ghi chú bắt buộc. */
+export async function decideRefund(disputeId, kind, note) {
+  return mapDetail(await request(`/api/v1/admin/booking-disputes/${disputeId}/refund-${kind}`, { method: 'POST', body: { note: note.trim() } }))
+}
+
+export const NOTE_LIMITS = { min: 5, max: 1000 }
