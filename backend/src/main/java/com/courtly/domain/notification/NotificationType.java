@@ -29,6 +29,14 @@ public final class NotificationType {
     public static final String BOOKING_DISPUTE_RESPONDED = "booking_dispute_responded";
     /** Quan tri vien co ket luan ve bao cao don dat san: bao nguoi choi va chu san (2.3.100-102). */
     public static final String BOOKING_DISPUTE_RESOLVED = "booking_dispute_resolved";
+    /** Nhac chu san giai trinh o gio thu 24 (2.3.107). */
+    public static final String BOOKING_DISPUTE_REMINDER = "booking_dispute_reminder";
+    /** Theo doi khoan hoan tien truc tiep: chu san bao da hoan, nguoi choi xac nhan / khieu nai, tu xac nhan (2.3.108). */
+    public static final String BOOKING_REFUND_UPDATED = "booking_refund_updated";
+    /** Hoa hong tam hoan duoc khoi phuc vao cong no (2.3.110). */
+    public static final String COMMISSION_RESTORED = "commission_restored";
+    /** San bi tam ngung do bi xu thua nhieu lan (2.3.104). */
+    public static final String VENUE_SUSPENDED = "venue_suspended";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
     /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
@@ -50,13 +58,17 @@ public final class NotificationType {
             BOOKING_DISPUTE_CANCELLED,
             BOOKING_DISPUTE_RESPONDED,
             BOOKING_DISPUTE_RESOLVED,
+            BOOKING_DISPUTE_REMINDER,
+            BOOKING_REFUND_UPDATED,
+            COMMISSION_RESTORED,
+            VENUE_SUSPENDED,
             MATCH_SCHEDULED,
             MATCH_REMINDER,
             DEBT_RESTRICTION
     };
 
     /** Loai bat buoc: luon co thong bao trong ung dung du nguoi dung tat tuy chon. */
-    public static final java.util.Set<String> MANDATORY = java.util.Set.of(DEBT_RESTRICTION);
+    public static final java.util.Set<String> MANDATORY = java.util.Set.of(DEBT_RESTRICTION, BOOKING_DISPUTE_RESOLVED, BOOKING_REFUND_UPDATED, COMMISSION_RESTORED, VENUE_SUSPENDED);
 
     private NotificationType() {
     }

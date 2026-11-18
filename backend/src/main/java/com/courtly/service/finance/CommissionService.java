@@ -21,6 +21,8 @@ public class CommissionService {
 
     private final PlatformFeeConfigRepository configRepository;
     private final BookingCommissionRepository commissionRepository;
+    private final com.courtly.domain.payment.BookingDisputeRepository disputeRepository;
+    private final com.courtly.service.dispute.DisputeCommissionService disputeCommissionService;
 
     /** Cong thuc hoa hong duy nhat: dung cho ca ghi nhan that va uoc tinh hien o man hinh chu san (2.3.18). */
     public static BigDecimal commissionFor(PlatformFeeConfig config, BigDecimal grossAmount) {
@@ -57,6 +59,9 @@ public class CommissionService {
         commission.setStatus("due");
         commission.setCalculatedAt(now);
         commission.setDueAt(now.plus(7, ChronoUnit.DAYS));
-        commissionRepository.save(commission);
+        commissionRepository.saveAndFlush(commission);
+        // Don dang co bao cao (nguoi choi bao cao khi don con o confirmed): hoa hong sinh ra o trang thai tam hoan (2.3.105).
+        disputeRepository.findActiveByBooking(booking.getId())
+                .ifPresent(dispute -> disputeCommissionService.hold(booking.getId(), dispute.getId()));
     }
 }

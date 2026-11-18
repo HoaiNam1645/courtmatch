@@ -61,6 +61,36 @@ public class DisputeNotifier {
                 "/bao-cao/" + dispute.getId(), data);
     }
 
+    /** Quan tri vien bac bo / ket luan chi phan anh (2.3.102): bao ca hai ben. */
+    public void rejected(BookingDispute dispute, boolean refundWasRequested, String note) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("disputeId", dispute.getId().toString());
+        data.put("bookingId", dispute.getBooking().getId().toString());
+        data.put("resolution", dispute.getResolution());
+        String code = dispute.getBooking().getBookingCode();
+        String what = refundWasRequested ? "bác bỏ yêu cầu hoàn tiền" : "đã xem xét báo cáo, không có khoản hoàn tiền";
+        notifications.send(dispute.getBooking().getVenue().getOwner().getId(), NotificationType.BOOKING_DISPUTE_RESOLVED,
+                "Báo cáo về đơn đã được kết luận",
+                "Quản trị viên %s cho đơn %s, bạn không phải hoàn tiền. Ghi chú: %s".formatted(what, code, note),
+                "/owner/disputes/" + dispute.getId(), data);
+        notifications.send(dispute.getReporter().getId(), NotificationType.BOOKING_DISPUTE_RESOLVED,
+                "Báo cáo của bạn đã có kết luận",
+                "Quản trị viên %s cho đơn %s. Ghi chú: %s".formatted(what, code, note),
+                "/bao-cao/" + dispute.getId(), data);
+    }
+
+    /** Hoa hong tam hoan quay lai cong no (2.3.110). */
+    public void commissionRestored(java.util.UUID ownerId, java.util.UUID disputeId, java.util.UUID bookingId, BigDecimal amount, java.time.Instant dueAt) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("disputeId", disputeId.toString());
+        data.put("bookingId", bookingId.toString());
+        data.put("amount", amount);
+        notifications.send(ownerId, NotificationType.COMMISSION_RESTORED, "Hoa hồng quay lại công nợ",
+                "Báo cáo về một đơn của bạn đã kết thúc không phải hoàn tiền nên khoản hoa hồng %sđ được tính lại vào công nợ, hạn %s."
+                        .formatted(MONEY.format(amount), DEADLINE.format(dueAt)),
+                "/owner/disputes/" + disputeId, data);
+    }
+
     /** Nguoi choi huy bao cao khi chu san chua giai trinh: bao cho chu san. */
     public void cancelled(BookingDispute dispute) {
         Map<String, Object> data = new LinkedHashMap<>();

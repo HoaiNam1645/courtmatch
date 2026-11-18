@@ -18,13 +18,17 @@ export const NOTIFICATION_TYPE_META = {
   booking_dispute_cancelled: { label: 'Huỷ báo cáo', className: 'bg-stone-200 text-stone-600' },
   booking_dispute_responded: { label: 'Chủ sân giải trình', className: 'bg-violet-100 text-violet-700' },
   booking_dispute_resolved: { label: 'Kết luận báo cáo', className: 'bg-emerald-100 text-emerald-700' },
+  booking_dispute_reminder: { label: 'Nhắc giải trình', className: 'bg-amber-100 text-amber-800' },
+  booking_refund_updated: { label: 'Hoàn tiền trực tiếp', className: 'bg-emerald-100 text-emerald-700' },
+  commission_restored: { label: 'Hoa hồng quay lại', className: 'bg-amber-100 text-amber-800' },
+  venue_suspended: { label: 'Sân tạm ngưng', className: 'bg-red-100 text-red-700' },
   match_scheduled: { label: 'Trận đấu', className: 'bg-lime-100 text-lime-800' },
   match_reminder: { label: 'Nhắc trận đấu', className: 'bg-amber-100 text-amber-800' },
   debt_restriction: { label: 'Công nợ', className: 'bg-red-100 text-red-700' },
 }
 
 export const NOTIFICATION_FILTERS = ['all', 'booking_confirmed', 'booking_cancelled', 'payment_status', 'booking_reminder',
-  'partner_request', 'partner_request_response', 'partner_request_expired', 'venue_review_replied', 'venue_review_hidden', 'booking_dispute_opened', 'booking_dispute_updated', 'booking_dispute_cancelled', 'booking_dispute_responded', 'booking_dispute_resolved', 'match_scheduled', 'match_reminder', 'debt_restriction']
+  'partner_request', 'partner_request_response', 'partner_request_expired', 'venue_review_replied', 'venue_review_hidden', 'booking_dispute_opened', 'booking_dispute_updated', 'booking_dispute_cancelled', 'booking_dispute_responded', 'booking_dispute_resolved', 'booking_dispute_reminder', 'booking_refund_updated', 'commission_restored', 'venue_suspended', 'match_scheduled', 'match_reminder', 'debt_restriction']
 
 export function notificationTypeMeta(type) {
   return NOTIFICATION_TYPE_META[type] ?? { label: type ?? 'Thông báo', className: 'bg-stone-200 text-stone-600' }

@@ -68,4 +68,11 @@ public class AdminDisputeController {
                                                                    @Valid @RequestBody ReviewReportNoteRequest request) {
         return ResponseEntity.ok(decisionService.refundHalf(AdminJwt.adminId(jwt), disputeId, request.note()));
     }
+
+    /** 2.3.102 - bac bo yeu cau hoan tien. */
+    @PostMapping("/{disputeId}/reject")
+    public ResponseEntity<AdminDisputeResponses.Detail> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID disputeId,
+                                                               @Valid @RequestBody ReviewReportNoteRequest request) {
+        return ResponseEntity.ok(decisionService.reject(AdminJwt.adminId(jwt), disputeId, request.note()));
+    }
 }

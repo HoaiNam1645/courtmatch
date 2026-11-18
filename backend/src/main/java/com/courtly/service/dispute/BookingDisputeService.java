@@ -50,6 +50,7 @@ public class BookingDisputeService {
     private final PaymentRepository paymentRepository;
     private final DisputeNotifier disputeNotifier;
     private final com.courtly.service.audit.AuditService auditService;
+    private final DisputeCommissionService commissionService;
     @Value("${courtly.disputes.report-window-days:7}")
     private int windowDays;
     @Value("${courtly.disputes.owner-response-hours:48}")
@@ -117,6 +118,7 @@ public class BookingDisputeService {
         dispute.setStatus("awaiting_owner_response");
         dispute.setOwnerResponseDeadline(now.plus(Duration.ofHours(ownerResponseHours)));
         disputeRepository.saveAndFlush(dispute);
+        commissionService.hold(booking.getId(), dispute.getId());
         disputeNotifier.opened(dispute, category.label());
         return toResponse(dispute, category.label());
     }
@@ -159,6 +161,7 @@ public class BookingDisputeService {
                 Map.of("status", "awaiting_owner_response"),
                 Map.of("status", "cancelled", "bookingId", dispute.getBooking().getId().toString(),
                         "refundRequested", dispute.isRefundRequested()));
+        commissionService.restore(dispute.getBooking().getId(), dispute.getId(), "Nguoi choi huy bao cao");
         disputeNotifier.cancelled(dispute);
         return DisputeQueryService.toDetail(dispute);
     }

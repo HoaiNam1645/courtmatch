@@ -8,8 +8,9 @@ const NOTE = 'Camera cho thấy sân đóng cửa đúng như người chơi bá
 const ids = {}
 
 function cleanup() {
+  runSql(`DELETE FROM booking_commissions WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE 'E2EDC%')`)
   runSql(`DELETE FROM refunds WHERE booking_id IN (SELECT id FROM bookings WHERE booking_code LIKE 'E2EDC%')`)
-  runSql(`DELETE FROM notifications WHERE type = 'booking_dispute_resolved' AND data_json ->> 'disputeId' IN (SELECT d.id::text FROM booking_disputes d JOIN bookings b ON b.id = d.booking_id WHERE b.booking_code LIKE 'E2EDC%')`)
+  runSql(`DELETE FROM notifications WHERE type IN ('booking_dispute_resolved', 'commission_restored') AND data_json ->> 'disputeId' IN (SELECT d.id::text FROM booking_disputes d JOIN bookings b ON b.id = d.booking_id WHERE b.booking_code LIKE 'E2EDC%')`)
   runSql(`DELETE FROM audit_logs WHERE entity_type = 'booking_disputes' AND entity_id IN (SELECT d.id FROM booking_disputes d JOIN bookings b ON b.id = d.booking_id WHERE b.booking_code LIKE 'E2EDC%')`)
   cleanupDisputes('E2EDC')
   runSql(`DELETE FROM bookings WHERE booking_code LIKE 'E2EDC%'`)
@@ -33,7 +34,7 @@ test.describe.serial('2.3.100-2.3.101 admin decides a refund', () => {
     cleanup()
     const venue = pickVenue({ ownerEmail: SEED_OWNER_EMAIL })
     createE2eUser({ tag: 'dc-a', name: 'E2E Người Chơi Quyết Định' })
-    ;['full', 'half', 'none', 'phone'].forEach((key, index) => {
+    ;['full', 'half', 'none', 'phone', 'reject'].forEach((key, index) => {
       ids[key] = bookingWithStatus(venue, 'dc-a', `E2EDC00${index + 1}`, 'completed', index + 1)
       if (key !== 'none') addPayment(ids[key], 'confirmed')
     })
@@ -93,11 +94,32 @@ test.describe.serial('2.3.100-2.3.101 admin decides a refund', () => {
     expect(runSql(`SELECT amount FROM refunds WHERE dispute_id = '${ids.dHalf}'`)).toBe('62000.00')
   })
 
+  test('reject: the commission held for the dispute returns to the debt and both sides are told', async ({ page }) => {
+    ids.dReject = await reviewingDispute(page, playerToken, ids.reject, { refundRequested: true, refundAmount: 70000 })
+    runSql(`INSERT INTO booking_commissions (booking_id, owner_id, gross_amount, fee_type, fee_value, commission_amount, status, status_before, suspended_at, suspended_dispute_id, due_at)
+      SELECT b.id, v.owner_id, 180000, 'fixed', 20000, 20000, 'suspended', 'due', now(), '${ids.dReject}', now() + interval '7 days' FROM bookings b JOIN venues v ON v.id = b.venue_id WHERE b.id = '${ids.reject}'`)
+    await loginByApi(page, ADMIN)
+    await page.goto(`/admin/disputes/${ids.dReject}`)
+    await page.getByTestId('add-reject').click()
+    await page.getByTestId('add-confirm-confirm').click()
+    await expect(page.getByTestId('add-confirm')).toContainText('Ghi chú quyết định từ 5 đến 1000 ký tự')
+    await page.getByTestId('add-note').fill('Không đủ bằng chứng cho thấy bị thu thêm tiền')
+    await page.getByTestId('add-confirm-confirm').click()
+    await expect(page.getByTestId('add-notice')).toContainText('Đã bác bỏ báo cáo')
+    await expect(page.getByTestId('add-status')).toHaveText('Đã bác bỏ')
+    await expect(page.getByTestId('add-admin-entry')).toContainText('Không đủ bằng chứng')
+    expect(runSql(`SELECT status FROM booking_commissions WHERE booking_id = '${ids.reject}'`)).toBe('due')
+    expect(runSql(`SELECT count(*) FROM refunds WHERE dispute_id = '${ids.dReject}'`)).toBe('0')
+    expect(runSql(`SELECT count(*) FROM notifications WHERE type = 'booking_dispute_resolved' AND data_json ->> 'disputeId' = '${ids.dReject}'`)).toBe('2')
+    await shot(page, '2302-admin-reject-done')
+  })
+
   test('a report without a refund request has no refund decision; phone layout fits', async ({ page }) => {
     ids.dNone = await reviewingDispute(page, playerToken, ids.none, {})
     await loginByApi(page, ADMIN)
     await page.goto(`/admin/disputes/${ids.dNone}`)
     await expect(page.getByTestId('add-no-refund')).toContainText('không yêu cầu hoàn tiền')
+    await expect(page.getByTestId('add-reject')).toContainText('Kết luận không hoàn tiền')
     await expect(page.getByTestId('add-refund-full')).toHaveCount(0)
 
     ids.dPhone = await reviewingDispute(page, playerToken, ids.phone, { refundRequested: true, refundAmount: 90000 })

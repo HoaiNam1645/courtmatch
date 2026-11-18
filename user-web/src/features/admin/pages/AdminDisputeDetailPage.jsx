@@ -54,7 +54,7 @@ function AdminDisputeDetailPage() {
     const clean = note.trim()
     if (clean.length < NOTE_LIMITS.min || clean.length > NOTE_LIMITS.max) throw new Error(`Ghi chú quyết định từ ${NOTE_LIMITS.min} đến ${NOTE_LIMITS.max} ký tự.`)
     await decideRefund(disputeId, deciding, clean)
-    setNotice(deciding === 'full' ? 'Đã quyết định hoàn tiền toàn phần. Chủ sân và người chơi đã được thông báo.' : 'Đã quyết định hoàn tiền một nửa. Chủ sân và người chơi đã được thông báo.')
+    setNotice({ full: 'Đã quyết định hoàn tiền toàn phần.', half: 'Đã quyết định hoàn tiền một nửa.', reject: 'Đã bác bỏ báo cáo.' }[deciding] + ' Chủ sân và người chơi đã được thông báo.')
     setDeciding(null)
     setNote('')
     reload()
@@ -88,8 +88,11 @@ function AdminDisputeDetailPage() {
           {notice && <p role="status" data-testid="add-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
           {data.canDecide && (
             <OwnerCard title="Quyết định" description="Quyết định không sửa được sau khi gửi. Chủ sân sẽ hoàn tiền trực tiếp cho người chơi.">
+              <div className="flex flex-wrap gap-3">
+                <button type="button" data-testid="add-reject" onClick={() => { setNote(''); setDeciding('reject') }} className="inline-flex h-11 items-center rounded-lg border border-red-200 bg-white px-5 text-sm font-semibold text-red-700 hover:bg-red-50">{data.refundRequested ? 'Bác bỏ yêu cầu hoàn tiền' : 'Kết luận không hoàn tiền'}</button>
+              </div>
               {data.canRefund ? (
-                <div className="flex flex-wrap gap-3">
+                <div className="mt-3 flex flex-wrap gap-3">
                   <button type="button" data-testid="add-refund-full" onClick={() => { setNote(''); setDeciding('full') }} className="inline-flex h-11 items-center rounded-lg bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800">Hoàn tiền toàn phần · {formatCurrency(data.fullAmount)}</button>
                   <button type="button" data-testid="add-refund-half" onClick={() => { setNote(''); setDeciding('half') }} className="inline-flex h-11 items-center rounded-lg bg-slate-800 px-5 text-sm font-semibold text-white hover:bg-slate-900">Hoàn tiền một nửa · {formatCurrency(data.halfAmount)}</button>
                 </div>
@@ -100,7 +103,15 @@ function AdminDisputeDetailPage() {
               )}
             </OwnerCard>
           )}
-          {deciding && (
+          {deciding === 'reject' && (
+            <ConfirmDialog title={data.refundRequested ? 'Bác bỏ yêu cầu hoàn tiền?' : 'Kết luận không hoàn tiền?'} confirmLabel="Bác bỏ báo cáo" danger
+              onConfirm={confirmDecision} onClose={() => setDeciding(null)} testId="add-confirm">
+              <p data-testid="add-confirm-amount" className="font-semibold text-slate-900">Chủ sân không phải hoàn tiền; hoa hồng của đơn quay lại công nợ.</p>
+              <label htmlFor="add-note" className="mt-3 block text-xs font-semibold text-slate-700">Ghi chú quyết định (bắt buộc, gửi cho cả hai bên)</label>
+              <textarea id="add-note" data-testid="add-note" className="mt-1 h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-700" maxLength={NOTE_LIMITS.max} value={note} onChange={(event) => setNote(event.target.value)} />
+            </ConfirmDialog>
+          )}
+          {(deciding === 'full' || deciding === 'half') && (
             <ConfirmDialog title={deciding === 'full' ? 'Hoàn tiền toàn phần?' : 'Hoàn tiền một nửa?'} confirmLabel={`Quyết định hoàn ${formatCurrency(deciding === 'full' ? data.fullAmount : data.halfAmount)}`}
               onConfirm={confirmDecision} onClose={() => setDeciding(null)} testId="add-confirm">
               <p data-testid="add-confirm-amount" className="font-semibold text-slate-900">

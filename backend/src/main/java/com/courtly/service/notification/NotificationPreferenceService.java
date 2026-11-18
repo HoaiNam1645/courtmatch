@@ -47,6 +47,10 @@ public class NotificationPreferenceService {
         META.put(NotificationType.BOOKING_DISPUTE_CANCELLED, new Meta("Báo cáo đơn bị huỷ", "Người chơi huỷ báo cáo về đơn đặt sân, bạn không cần giải trình nữa."));
         META.put(NotificationType.BOOKING_DISPUTE_RESPONDED, new Meta("Chủ sân giải trình báo cáo", "Chủ sân đã giải trình về báo cáo đơn đặt sân của bạn, quản trị viên sẽ xem xét."));
         META.put(NotificationType.BOOKING_DISPUTE_RESOLVED, new Meta("Kết luận báo cáo đơn đặt sân", "Quản trị viên có kết luận về báo cáo đơn đặt sân của bạn hoặc của sân bạn, kèm số tiền phải hoàn nếu có."));
+        META.put(NotificationType.BOOKING_DISPUTE_REMINDER, new Meta("Nhắc giải trình báo cáo", "Nhắc chủ sân giải trình báo cáo trước khi hết hạn 48 giờ."));
+        META.put(NotificationType.BOOKING_REFUND_UPDATED, new Meta("Hoàn tiền trực tiếp", "Chủ sân báo đã hoàn tiền, người chơi xác nhận hoặc khiếu nại, hệ thống tự xác nhận."));
+        META.put(NotificationType.COMMISSION_RESTORED, new Meta("Hoa hồng quay lại công nợ", "Khoản hoa hồng bị tạm hoãn do báo cáo được khôi phục vào công nợ."));
+        META.put(NotificationType.VENUE_SUSPENDED, new Meta("Sân bị tạm ngưng", "Sân bị tạm ngưng hoạt động do bị xử thua nhiều lần trong báo cáo đơn đặt sân."));
         META.put(NotificationType.MATCH_SCHEDULED, new Meta("Lịch thi đấu", "Bạn được ghi vào một trận đấu, kết quả cần bạn xác nhận hoặc trận bị hủy."));
         META.put(NotificationType.MATCH_REMINDER, new Meta("Nhắc nhở trận đấu", "Nhắc xác nhận kết quả trận đấu sắp tự xác nhận."));
         META.put(NotificationType.DEBT_RESTRICTION, new Meta("Hạn chế do công nợ", "Chủ sân bị hạn chế hoặc được gỡ hạn chế vì công nợ hoa hồng quá hạn (bắt buộc)."));

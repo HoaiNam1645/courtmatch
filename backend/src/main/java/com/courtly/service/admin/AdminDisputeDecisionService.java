@@ -39,6 +39,7 @@ public class AdminDisputeDecisionService {
     private final JdbcTemplate jdbc;
     private final AuditService auditService;
     private final DisputeNotifier disputeNotifier;
+    private final com.courtly.service.dispute.DisputeCommissionService commissionService;
 
     @Transactional
     public Detail refundFull(UUID adminId, UUID disputeId, String note) {
@@ -48,6 +49,41 @@ public class AdminDisputeDecisionService {
     @Transactional
     public Detail refundHalf(UUID adminId, UUID disputeId, String note) {
         return refund(adminId, disputeId, note, false);
+    }
+
+    /** 2.3.102 - bac bo yeu cau hoan tien (hoac ket luan bao cao chi phan anh khong co khoan hoan). */
+    @Transactional
+    public Detail reject(UUID adminId, UUID disputeId, String note) {
+        User admin = accessService.requirePermission(adminId, AdminDisputeService.PERMISSION);
+        BookingDispute dispute = disputeRepository.findByIdForUpdate(disputeId)
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay bao cao."));
+        String cleanNote = requireNote(note);
+        if (!"reviewing".equals(dispute.getStatus())) {
+            throw invalid("Chi quyet dinh duoc bao cao dang cho quan tri vien xu ly.");
+        }
+        boolean refundRequested = dispute.isRefundRequested();
+        dispute.setStatus("rejected");
+        dispute.setResolution(refundRequested ? "rejected" : "dismissed");
+        dispute.setResolutionNote(cleanNote);
+        dispute.setHandledBy(admin);
+        dispute.setHandledAt(Instant.now());
+        disputeRepository.saveAndFlush(dispute);
+        commissionService.restore(dispute.getBooking().getId(), disputeId, "Bao cao bi bac bo");
+        auditService.record(admin, "dispute.reject", "booking_disputes", disputeId,
+                Map.of("status", "reviewing"),
+                Map.of("status", "rejected", "resolution", dispute.getResolution(), "note", cleanNote,
+                        "bookingId", dispute.getBooking().getId().toString()));
+        disputeNotifier.rejected(dispute, refundRequested, cleanNote);
+        return viewService.toDetail(dispute);
+    }
+
+    private static String requireNote(String note) {
+        String clean = note == null ? "" : note.trim();
+        if (clean.length() < 5 || clean.length() > 1000) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ghi chu quyet dinh khong hop le.",
+                    Map.of("note", "Ghi chu tu 5 den 1000 ky tu"));
+        }
+        return clean;
     }
 
     private Detail refund(UUID adminId, UUID disputeId, String note, boolean full) {

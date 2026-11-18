@@ -9,7 +9,7 @@ import java.util.List;
 
 /** 2.3.62 - cap nhat tuy chon nhan thong bao theo tung loai. */
 public record UpdatePreferencesRequest(
-        @NotEmpty(message = "Can it nhat mot tuy chon") @Size(max = 20, message = "Toi da 20 tuy chon") List<@Valid Item> preferences) {
+        @NotEmpty(message = "Can it nhat mot tuy chon") @Size(max = 40, message = "Toi da 40 tuy chon") List<@Valid Item> preferences) {
 
     public record Item(
             @NotBlank(message = "Loai thong bao la bat buoc") String type,
