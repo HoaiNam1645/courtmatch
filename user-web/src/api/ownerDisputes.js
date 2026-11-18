@@ -1,6 +1,7 @@
 /** 2.3.93 - 2.3.96: chủ sân xem báo cáo về đơn thuộc sân của mình và giải trình. */
 
 import { request } from './client'
+import { toEvidence } from './bookingDisputes'
 
 export const OWNER_DISPUTE_TABS = [['all', 'Tất cả'], ['awaiting', 'Chờ giải trình'], ['answered', 'Đã giải trình'], ['closed', 'Đã đóng']]
 
@@ -15,10 +16,6 @@ export const OWNER_STATUS_LABEL = {
 }
 
 export const OWNER_ACTOR_LABEL = { player: 'Người chơi', you: 'Bạn', admin: 'Quản trị viên' }
-
-function toEvidence(item) {
-  return { id: item.id, originalName: item.originalName, size: Number(item.size), contentType: item.contentType, uploadedAt: item.uploadedAt, supplementId: item.supplementId ?? null, url: item.url }
-}
 
 function toItem(item) {
   return {
@@ -83,5 +80,24 @@ export async function fetchOwnerDispute(disputeId) {
     },
     timeline: data.timeline.map((entry) => ({ type: entry.type, actor: entry.actor, at: entry.at, text: entry.text ?? '', label: entry.label ?? null, evidences: (entry.evidences ?? []).map(toEvidence) })),
     canRespond: Boolean(data.canRespond),
+    draftEvidences: (data.draftEvidences ?? []).map(toEvidence),
   }
+}
+
+export const OWNER_RESPONSE_LIMITS = { min: 10, max: 2000, maxImages: 5 }
+
+/** 2.3.95: gửi giải trình (một lần, không sửa). */
+export async function respondToDispute(disputeId, content) {
+  await request(`/api/v1/owner/booking-disputes/${disputeId}/response`, { method: 'POST', body: { content: content.trim() } })
+}
+
+/** 2.3.96: tải lên / xóa một ảnh giải trình trước khi gửi. */
+export async function uploadOwnerEvidence(disputeId, file) {
+  const body = new FormData()
+  body.append('file', file)
+  return toEvidence(await request(`/api/v1/owner/booking-disputes/${disputeId}/evidences`, { method: 'POST', body, timeoutMs: 60000 }))
+}
+
+export async function deleteOwnerEvidence(disputeId, evidenceId) {
+  await request(`/api/v1/owner/booking-disputes/${disputeId}/evidences/${evidenceId}`, { method: 'DELETE' })
 }

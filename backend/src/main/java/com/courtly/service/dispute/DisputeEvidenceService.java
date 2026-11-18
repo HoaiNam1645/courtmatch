@@ -111,6 +111,62 @@ public class DisputeEvidenceService {
         storage.delete(disputeId, (String) target.get("fileName"));
     }
 
+    public static final int MAX_OWNER = 5;
+
+    /** Chu san tai len mot anh giai trinh (2.3.96): toi da {@value #MAX_OWNER} anh, chi khi chua giai trinh va con han. */
+    @Transactional
+    public DisputeEvidenceResponse uploadOwner(UUID ownerId, UUID disputeId, MultipartFile file) {
+        BookingDispute dispute = requireOwnerCanRespond(ownerId, disputeId);
+        if (file == null || file.isEmpty()) {
+            throw invalidImage("File anh rong.");
+        }
+        if (file.getSize() > MAX_BYTES) {
+            throw invalidImage("Anh vuot qua dung luong toi da 5MB.");
+        }
+        List<Map<String, Object>> list = dispute.getOwnerEvidences() == null ? new ArrayList<>() : new ArrayList<>(dispute.getOwnerEvidences());
+        if (list.size() >= MAX_OWNER) {
+            throw ApiException.conflict(ErrorCode.IMAGE_LIMIT_REACHED,
+                    "Giai trinh co toi da " + MAX_OWNER + " anh. Hay xoa bot anh cu truoc.", Map.of());
+        }
+        byte[] bytes = readBytes(file);
+        String extension = VenueImageStorage.detectExtension(bytes)
+                .orElseThrow(() -> invalidImage("Chi nhan anh JPEG, PNG hoac WebP."));
+        String fileName = storage.store(disputeId, bytes, extension);
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", UUID.randomUUID().toString());
+        item.put("fileName", fileName);
+        item.put("originalName", cleanName(file.getOriginalFilename()));
+        item.put("size", bytes.length);
+        item.put("contentType", VenueImageStorage.CONTENT_TYPES.get(extension));
+        item.put("uploadedAt", Instant.now().toString());
+        item.put("supplementId", null);
+        list.add(item);
+        dispute.setOwnerEvidences(list);
+        disputeRepository.saveAndFlush(dispute);
+        return toResponse(disputeId, item);
+    }
+
+    /** Chu san xoa anh giai trinh truoc khi gui (2.3.96). */
+    @Transactional
+    public void deleteOwner(UUID ownerId, UUID disputeId, UUID evidenceId) {
+        BookingDispute dispute = requireOwnerCanRespond(ownerId, disputeId);
+        List<Map<String, Object>> list = dispute.getOwnerEvidences() == null ? new ArrayList<>() : new ArrayList<>(dispute.getOwnerEvidences());
+        Map<String, Object> target = list.stream().filter(item -> evidenceId.toString().equals(item.get("id"))).findFirst()
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay anh bang chung."));
+        list.remove(target);
+        dispute.setOwnerEvidences(list);
+        disputeRepository.saveAndFlush(dispute);
+        storage.delete(disputeId, (String) target.get("fileName"));
+    }
+
+    private BookingDispute requireOwnerCanRespond(UUID ownerId, UUID disputeId) {
+        BookingDispute dispute = disputeRepository.findByIdForUpdate(disputeId)
+                .filter(item -> item.getBooking().getVenue().getOwner().getId().equals(ownerId))
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay bao cao."));
+        OwnerDisputeService.requireCanRespond(dispute, Instant.now());
+        return dispute;
+    }
+
     /** Anh de hien thi: chi nguoi bao cao, chu san cua san hoac quan tri vien; nguoi khac nhan 404. */
     @Transactional(readOnly = true)
     public EvidenceFile file(UUID userId, UUID disputeId, UUID evidenceId) {

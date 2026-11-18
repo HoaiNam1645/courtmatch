@@ -40,6 +40,49 @@ public class OwnerDisputeService {
 
     private final BookingDisputeRepository disputeRepository;
     private final OwnedVenueLookup ownedVenueLookup;
+    private final com.courtly.service.audit.AuditService auditService;
+    private final com.courtly.service.notification.DisputeNotifier disputeNotifier;
+
+    static final int MIN_RESPONSE = 10;
+    static final int MAX_RESPONSE = 2000;
+
+    /** Chu san chi giai trinh/dinh kem anh khi dang cho giai trinh, chua giai trinh va chua het han. */
+    static void requireCanRespond(BookingDispute dispute, Instant now) {
+        if (!"awaiting_owner_response".equals(dispute.getStatus()) || dispute.getOwnerResponse() != null) {
+            throw ApiException.conflict(ErrorCode.BOOKING_DISPUTE_INVALID,
+                    "Bao cao khong con cho ban giai trinh.", Map.of());
+        }
+        if (isOverdue(dispute, now)) {
+            throw ApiException.conflict(ErrorCode.BOOKING_DISPUTE_INVALID,
+                    "Da qua han giai trinh 48 gio, quan tri vien se xu ly bao cao.", Map.of());
+        }
+    }
+
+    /** 2.3.95: gui giai trinh mot lan, khong sua; bao cao chuyen sang quan tri vien xem xet. */
+    @Transactional
+    public Detail respond(UUID ownerId, UUID disputeId, String content) {
+        BookingDispute dispute = disputeRepository.findByIdForUpdate(disputeId)
+                .filter(item -> item.getBooking().getVenue().getOwner().getId().equals(ownerId))
+                .orElseThrow(() -> ApiException.notFound("Khong tim thay bao cao."));
+        Instant now = Instant.now();
+        requireCanRespond(dispute, now);
+        String text = content == null ? "" : content.trim();
+        if (text.length() < MIN_RESPONSE || text.length() > MAX_RESPONSE) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Noi dung giai trinh khong hop le.",
+                    Map.of("content", "Noi dung giai trinh tu " + MIN_RESPONSE + " den " + MAX_RESPONSE + " ky tu"));
+        }
+        dispute.setOwnerResponse(text);
+        dispute.setOwnerRespondedBy(dispute.getBooking().getVenue().getOwner());
+        dispute.setOwnerRespondedAt(now);
+        dispute.setStatus("reviewing");
+        disputeRepository.saveAndFlush(dispute);
+        int images = dispute.getOwnerEvidences() == null ? 0 : dispute.getOwnerEvidences().size();
+        auditService.record(dispute.getBooking().getVenue().getOwner(), "dispute.owner_response", "booking_disputes", dispute.getId(),
+                Map.of("status", "awaiting_owner_response"),
+                Map.of("status", "reviewing", "bookingId", dispute.getBooking().getId().toString(), "evidenceCount", images));
+        disputeNotifier.responded(dispute);
+        return toDetail(dispute, now);
+    }
 
     @Transactional(readOnly = true)
     public ListResponse list(UUID ownerId, UUID venueId, String status, int page, int size) {
@@ -85,7 +128,9 @@ public class OwnerDisputeService {
                 new Booking(booking.getId(), booking.getBookingCode(), booking.getVenue().getId(), booking.getVenue().getName(),
                         first == null ? null : first.getCourt().getName(), first == null ? null : first.getStartTime(),
                         last == null ? null : last.getEndTime(), booking.getPayableAmount()),
-                view.timeline(), awaiting && !overdue && dispute.getOwnerResponse() == null);
+                view.timeline(), awaiting && !overdue && dispute.getOwnerResponse() == null,
+                awaiting && dispute.getOwnerResponse() == null
+                        ? DisputeEvidenceService.toResponses(dispute.getId(), dispute.getOwnerEvidences()) : java.util.List.of());
     }
 
     static Item toItem(BookingDispute dispute, Instant now) {

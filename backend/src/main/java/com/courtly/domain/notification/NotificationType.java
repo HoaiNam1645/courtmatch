@@ -25,6 +25,8 @@ public final class NotificationType {
     public static final String BOOKING_DISPUTE_UPDATED = "booking_dispute_updated";
     /** Nguoi choi huy bao cao: bao chu san khoi phai giai trinh (2.3.92). */
     public static final String BOOKING_DISPUTE_CANCELLED = "booking_dispute_cancelled";
+    /** Chu san giai trinh bao cao: bao nguoi choi (2.3.95). */
+    public static final String BOOKING_DISPUTE_RESPONDED = "booking_dispute_responded";
     public static final String MATCH_SCHEDULED = "match_scheduled";
     public static final String MATCH_REMINDER = "match_reminder";
     /** Han che chu san do cong no hoa hong qua han (B2): bat buoc, khong tat duoc kenh trong ung dung. */
@@ -44,6 +46,7 @@ public final class NotificationType {
             BOOKING_DISPUTE_OPENED,
             BOOKING_DISPUTE_UPDATED,
             BOOKING_DISPUTE_CANCELLED,
+            BOOKING_DISPUTE_RESPONDED,
             MATCH_SCHEDULED,
             MATCH_REMINDER,
             DEBT_RESTRICTION

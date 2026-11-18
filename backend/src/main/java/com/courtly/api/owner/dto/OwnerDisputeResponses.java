@@ -38,11 +38,17 @@ public final class OwnerDisputeResponses {
     }
 
     /**
+     * @param draftEvidences anh giai trinh da tai len nhung chua gui (chi khi canRespond)
      * @param canRespond    con giai trinh duoc (cho giai trinh, chua qua han, chua giai trinh)
      * @param timeline      actor: player (nguoi choi), you (chu san), admin
      */
     public record Detail(UUID id, String category, String categoryLabel, String status, boolean closed, boolean refundRequested,
                          BigDecimal refundAmount, Instant createdAt, Instant ownerResponseDeadline, boolean overdue,
-                         Player player, Booking booking, List<DisputeDetailResponse.TimelineEntry> timeline, boolean canRespond) {
+                         Player player, Booking booking, List<DisputeDetailResponse.TimelineEntry> timeline, boolean canRespond,
+                         List<com.courtly.api.dispute.dto.DisputeEvidenceResponse> draftEvidences) {
+    }
+
+    /** 2.3.95: noi dung giai trinh; do dai kiem tra trong service. */
+    public record ResponseRequest(@jakarta.validation.constraints.NotBlank(message = "Hay nhap noi dung giai trinh") String content) {
     }
 }

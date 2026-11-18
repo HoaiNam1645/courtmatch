@@ -10,19 +10,19 @@ import { EvidencePicker } from './EvidencePicker'
  * Thêm hoặc xóa ảnh bằng chứng của báo cáo ban đầu khi chủ sân chưa giải trình (2.3.88).
  * Ảnh tải lỗi ở màn hình gửi báo cáo được tải lại tại đây.
  */
-export function EvidenceManager({ disputeId, initial, evidenceRemaining, onChanged, onOpen }) {
+export function EvidenceManager({ disputeId, initial, evidenceRemaining, onChanged, onOpen, uploadFn = uploadDisputeEvidence, deleteFn = deleteDisputeEvidence, maxImages = EVIDENCE_LIMITS.maxInitial, title = 'Ảnh bằng chứng của bạn', hint = 'Bạn thêm hoặc xóa ảnh được cho tới khi chủ sân giải trình.' }) {
   const [files, setFiles] = useState([])
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
   const [errors, setErrors] = useState([])
-  const limit = Math.max(0, Math.min(EVIDENCE_LIMITS.maxInitial - initial.length, evidenceRemaining))
+  const limit = Math.max(0, Math.min(maxImages - initial.length, evidenceRemaining))
 
   async function remove(evidence) {
     if (busy) return
     setBusy(true)
     setErrors([])
     try {
-      await deleteDisputeEvidence(disputeId, evidence.id)
+      await deleteFn(disputeId, evidence.id)
       onChanged()
     } catch (failure) {
       setErrors([failure instanceof ApiError ? failure.message : 'Không xóa được ảnh'])
@@ -39,7 +39,7 @@ export function EvidenceManager({ disputeId, initial, evidenceRemaining, onChang
     for (let index = 0; index < files.length; index += 1) {
       setProgress(`Đang tải ảnh ${index + 1}/${files.length}...`)
       try {
-        await uploadDisputeEvidence(disputeId, files[index])
+        await uploadFn(disputeId, files[index])
       } catch (failure) {
         failed.push({ file: files[index], message: `${files[index].name}: ${failure instanceof ApiError ? failure.message : 'Không tải được ảnh'}` })
       }
@@ -53,8 +53,8 @@ export function EvidenceManager({ disputeId, initial, evidenceRemaining, onChang
 
   return (
     <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4" data-testid="evidence-manager">
-      <h3 className="text-sm font-semibold">Ảnh bằng chứng của bạn</h3>
-      <p className="mt-1 text-xs font-medium text-stone-500">Bạn thêm hoặc xóa ảnh được cho tới khi chủ sân giải trình.</p>
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="mt-1 text-xs font-medium text-stone-500">{hint}</p>
       {initial.length === 0 && <p className="mt-3 text-xs font-medium text-stone-500" data-testid="evidence-manager-empty">Chưa có ảnh nào.</p>}
       {initial.length > 0 && (
         <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5" data-testid="evidence-manager-list">

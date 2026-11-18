@@ -50,7 +50,7 @@ export function evidenceProblem(file) {
   return null
 }
 
-function toEvidence(item) {
+export function toEvidence(item) {
   return {
     id: item.id,
     originalName: item.originalName,

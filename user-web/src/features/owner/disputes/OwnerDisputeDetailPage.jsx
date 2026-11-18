@@ -1,14 +1,17 @@
 import { CircleUserRound, FileText, ShieldCheck, Store, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchOwnerDispute, OWNER_ACTOR_LABEL, OWNER_STATUS_LABEL } from '../../../api/ownerDisputes'
+import { deleteOwnerEvidence, fetchOwnerDispute, OWNER_ACTOR_LABEL, OWNER_RESPONSE_LIMITS, OWNER_STATUS_LABEL, respondToDispute, uploadOwnerEvidence } from '../../../api/ownerDisputes'
 import { RESOLUTION_LABEL } from '../../../api/bookingDisputes'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
+import { ConfirmDialog } from '../../disputes/ConfirmDialog'
 import { EvidenceImage } from '../../disputes/EvidenceImage'
+import { EvidenceManager } from '../../disputes/EvidenceManager'
 import { formatDateTime, remainingText } from '../../disputes/disputeUi'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerCard, OwnerError, OwnerLoading } from '../components/OwnerUi'
+import { primaryButtonClass, textareaClass } from '../ownerStyles'
 
 const ACTOR_ICON = { player: CircleUserRound, you: Store, admin: ShieldCheck }
 const TYPE_TITLE = { created: 'Người chơi gửi báo cáo', supplement: 'Người chơi bổ sung thông tin', owner_response: 'Giải trình của bạn', resolution: 'Quản trị viên kết luận' }
@@ -18,6 +21,19 @@ function OwnerDisputeDetailPage() {
   const { disputeId } = useParams()
   const { status, data, error, reload } = useApiResource(() => fetchOwnerDispute(disputeId), [disputeId])
   const [lightbox, setLightbox] = useState(null)
+  const [content, setContent] = useState('')
+  const [confirming, setConfirming] = useState(false)
+  const [notice, setNotice] = useState('')
+  const trimmed = content.trim()
+  const tooShort = trimmed.length < OWNER_RESPONSE_LIMITS.min
+
+  async function submit() {
+    await respondToDispute(disputeId, content)
+    setConfirming(false)
+    setContent('')
+    setNotice('Đã gửi giải trình. Quản trị viên sẽ xem xét báo cáo này.')
+    reload()
+  }
 
   return (
     <OwnerLayout eyebrow="Báo cáo của khách" title="Chi tiết báo cáo" description="Xem nội dung và bằng chứng người chơi gửi, giải trình của bạn và kết luận của quản trị viên.">
@@ -40,6 +56,24 @@ function OwnerDisputeDetailPage() {
                 <dd className={classNames('mt-1 text-sm font-semibold', data.overdue ? 'text-red-700' : '')} data-testid="odd-deadline">{data.status === 'awaiting_owner_response' || data.status === 'open' ? `${formatDateTime(data.ownerResponseDeadline)} (${remainingText(data.ownerResponseDeadline)})` : formatCurrency(data.booking.payableAmount)}</dd></div>
             </dl>
           </OwnerCard>
+
+          {notice && <p role="status" data-testid="odd-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
+          {data.canRespond && (
+            <OwnerCard title="Giải trình của bạn" description="Chỉ gửi được một lần và không sửa được sau khi gửi. Kèm ảnh bằng chứng nếu có.">
+              <label htmlFor="odd-response" className="text-sm font-semibold">Nội dung giải trình</label>
+              <textarea id="odd-response" data-testid="odd-response" className={`${textareaClass} mt-2 h-36`} maxLength={OWNER_RESPONSE_LIMITS.max} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Nêu rõ sự việc và cách bạn đã xử lý" />
+              <p className="mt-1 text-xs font-medium text-stone-500" data-testid="odd-response-count">{trimmed.length}/{OWNER_RESPONSE_LIMITS.max} ký tự (tối thiểu {OWNER_RESPONSE_LIMITS.min})</p>
+              <EvidenceManager disputeId={disputeId} initial={data.draftEvidences} evidenceRemaining={OWNER_RESPONSE_LIMITS.maxImages} maxImages={OWNER_RESPONSE_LIMITS.maxImages}
+                uploadFn={uploadOwnerEvidence} deleteFn={deleteOwnerEvidence} onChanged={reload} onOpen={(url, evidence) => setLightbox({ url, name: evidence.originalName })}
+                title="Ảnh bằng chứng của bạn" hint="Tối đa 5 ảnh. Bạn thêm hoặc xóa ảnh được cho tới khi gửi giải trình." />
+              <button type="button" data-testid="odd-submit" disabled={tooShort} onClick={() => setConfirming(true)} className={`${primaryButtonClass} mt-4`}>Gửi giải trình</button>
+            </OwnerCard>
+          )}
+          {confirming && (
+            <ConfirmDialog title="Gửi giải trình?" confirmLabel="Gửi giải trình" onConfirm={submit} onClose={() => setConfirming(false)} testId="odd-confirm">
+              Giải trình chỉ gửi được một lần và không sửa được sau đó. Người chơi sẽ được thông báo và quản trị viên sẽ xem xét.
+            </ConfirmDialog>
+          )}
 
           <OwnerCard title="Nội dung trao đổi">
             <ol className="grid gap-4" data-testid="odd-timeline">
