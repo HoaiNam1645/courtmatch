@@ -78,6 +78,7 @@ public class BookingService {
     private final com.courtly.service.owner.OwnerRestrictionService restrictionService;
     private final VoucherService voucherService;
     private final VenueReviewRepository venueReviewRepository;
+    private final com.courtly.domain.review.ReportRepository reportRepository;
     private final com.courtly.service.review.VenueReviewService reviewService;
 
     /**
@@ -196,6 +197,11 @@ public class BookingService {
         Map<UUID, VenueReview> reviews = bookings.isEmpty() ? Map.of()
                 : venueReviewRepository.findByUserAndBookings(userId, bookings.getContent().stream().map(Booking::getId).toList())
                 .stream().collect(java.util.stream.Collectors.toMap(review -> review.getBooking().getId(), review -> review));
+        // Danh gia dang bi chu san bao cao (cho admin): khoa sua/xoa.
+        java.util.Set<UUID> reviewsUnderReport = reviews.isEmpty() ? java.util.Set.of()
+                : new java.util.HashSet<>(reportRepository.findTargetIdsWithStatus(com.courtly.common.enums.ReportTargetType.VENUE_REVIEW,
+                reviews.values().stream().map(VenueReview::getId).toList(),
+                java.util.List.of(com.courtly.common.enums.ReportStatus.PENDING, com.courtly.common.enums.ReportStatus.REVIEWING)));
         Instant now = Instant.now();
         return PageResponse.from(bookings, bookings.getContent().stream()
                 .map(booking -> {
@@ -203,7 +209,7 @@ public class BookingService {
                     boolean completed = booking.getStatus() == BookingStatus.COMPLETED;
                     return toSummary(booking, covers.get(booking.getVenue().getId()),
                             review == null ? null : new BookingSummaryResponse.MyReview(review.getId(), review.getRating(),
-                                    review.getComment(), review.getStatus().getValue()),
+                                    review.getComment(), review.getStatus().getValue(), reviewsUnderReport.contains(review.getId())),
                             reviewService.canReview(booking, review != null, now),
                             completed ? reviewService.reviewDeadline(booking) : null);
                 })

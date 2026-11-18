@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { CheckCircle2, LoaderCircle, MessageSquareReply, Pencil } from 'lucide-react'
+import { CheckCircle2, Flag, LoaderCircle, MessageSquareReply, Pencil } from 'lucide-react'
 import { ApiError } from '../../../api/client'
 import { fetchOwnerVenues } from '../../../api/ownerVenues'
-import { fetchOwnerVenueReviews, replyToVenueReview, updateVenueReviewReply } from '../../../api/venueReviews'
+import { fetchOwnerVenueReviews, replyToVenueReview, reviewReportStatusMeta, updateVenueReviewReply } from '../../../api/venueReviews'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
 import { classNames } from '../../../shared/utils'
 import { StarRow } from '../../reviews/StarRating'
 import { OwnerLayout } from '../components/OwnerLayout'
+import { ReportReviewDialog } from '../components/ReportReviewDialog'
 import { OwnerEmpty, OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { formatDateTime } from '../ownerDates'
 import { inputClass, primaryButtonClass, secondaryButtonClass, textareaClass } from '../ownerStyles'
@@ -16,6 +17,7 @@ const FILTERS = [
   { id: 'all', label: 'Tất cả' },
   { id: 'unanswered', label: 'Chưa trả lời' },
   { id: 'answered', label: 'Đã trả lời' },
+  { id: 'reported', label: 'Đã báo cáo' },
 ]
 const MAX_REPLY = 1000
 
@@ -71,8 +73,11 @@ function ReplyForm({ review, onReplied, editing = false, onCancel }) {
   )
 }
 
-function ReviewCard({ review, onReplied }) {
+function ReviewCard({ review, onReplied, onReport }) {
   const [editing, setEditing] = useState(false)
+  const reportMeta = reviewReportStatusMeta(review.report)
+  const openReport = review.report && ['pending', 'reviewing'].includes(review.report.status)
+  const visible = review.status === 'visible'
   return (
     <article className="rounded-xl border border-emerald-100 bg-white p-4 shadow-[0_10px_28px_rgba(24,65,44,0.06)]" data-testid={`owner-review-${review.id}`} data-answered={review.reply ? 'true' : 'false'} data-rating={review.rating}>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -82,8 +87,10 @@ function ReviewCard({ review, onReplied }) {
         </div>
         <StarRow value={review.rating} />
       </div>
+      {reportMeta && <p className={classNames('mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold', reportMeta.className)} data-testid={`owner-report-${review.id}`} data-tone={reportMeta.tone}><Flag className="size-3.5" />{reportMeta.label}{review.report.reasonLabel ? ` · ${review.report.reasonLabel}` : ''}</p>}
+      {!visible && <p className="mt-2 text-xs font-medium text-stone-500" data-testid={`owner-hidden-${review.id}`}>Đánh giá này đã bị ẩn khỏi trang sân.</p>}
       {review.comment ? <p className="mt-2 whitespace-pre-line text-sm font-medium leading-6 text-stone-700">{review.comment}</p> : <p className="mt-2 text-sm font-medium text-stone-400">Khách chỉ chấm sao, không viết nhận xét.</p>}
-      {review.reply && !editing && (
+      {visible && review.reply && !editing && (
         <div className="mt-3 rounded-lg border-l-4 border-emerald-500 bg-emerald-50/70 p-3" data-testid={`owner-reply-${review.id}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-semibold text-emerald-800">Bạn đã trả lời · {formatDateTime(review.reply.repliedAt)}{review.reply.edited && <span data-testid={`owner-reply-edited-${review.id}`}> · Đã chỉnh sửa</span>}</p>
@@ -92,8 +99,14 @@ function ReviewCard({ review, onReplied }) {
           <p className="mt-1 whitespace-pre-line text-sm font-medium leading-6 text-stone-700">{review.reply.content}</p>
         </div>
       )}
-      {review.reply && editing && <ReplyForm review={review} editing onCancel={() => setEditing(false)} onReplied={(message) => { setEditing(false); onReplied(message) }} />}
-      {!review.reply && <ReplyForm review={review} onReplied={onReplied} />}
+      {visible && review.reply && editing && <ReplyForm review={review} editing onCancel={() => setEditing(false)} onReplied={(message) => { setEditing(false); onReplied(message) }} />}
+      {visible && !review.reply && <ReplyForm review={review} onReplied={onReplied} />}
+      {visible && !openReport && (
+        <div className="mt-3 flex justify-end">
+          <button type="button" data-testid={`report-open-${review.id}`} onClick={() => onReport(review)} className="inline-flex h-8 items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 text-xs font-semibold text-red-700"><Flag className="size-3.5" />Báo cáo đánh giá
+          </button>
+        </div>
+      )}
     </article>
   )
 }
@@ -105,6 +118,7 @@ function OwnerReviewsPage() {
   const [rating, setRating] = useState('')
   const [page, setPage] = useState(0)
   const [notice, setNotice] = useState('')
+  const [reporting, setReporting] = useState(null)
   const venues = useApiResource(() => fetchOwnerVenues({ size: 100 }), [])
   const { status, data, error, reload } = useApiResource(
     () => fetchOwnerVenueReviews({ venueId, filter, rating, page }),
@@ -138,11 +152,11 @@ function OwnerReviewsPage() {
         {notice && <p role="status" data-testid="or-notice" className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"><CheckCircle2 className="size-4 shrink-0" />{notice}</p>}
         {status === 'loading' && <OwnerLoading rows={3} />}
         {status === 'error' && <OwnerError message={error?.message} onRetry={reload} />}
-        {status === 'empty' && <OwnerEmpty title={filter === 'unanswered' ? 'Bạn đã trả lời hết đánh giá' : 'Chưa có đánh giá nào'} description="Đánh giá mới của người chơi sẽ xuất hiện tại đây." />}
+        {status === 'empty' && <OwnerEmpty title={filter === 'unanswered' ? 'Bạn đã trả lời hết đánh giá' : filter === 'reported' ? 'Bạn chưa báo cáo đánh giá nào' : 'Chưa có đánh giá nào'} description="Đánh giá mới của người chơi sẽ xuất hiện tại đây." />}
         {status === 'success' && (
           <>
             <div className="grid gap-3" data-testid="or-list">
-              {data.items.map((review) => <ReviewCard key={review.id} review={review} onReplied={(message) => { setNotice(message ?? 'Đã đăng câu trả lời công khai.'); reload() }} />)}
+              {data.items.map((review) => <ReviewCard key={review.id} review={review} onReport={setReporting} onReplied={(message) => { setNotice(message ?? 'Đã đăng câu trả lời công khai.'); reload() }} />)}
             </div>
             <div className="flex items-center justify-between gap-3">
               <button type="button" className={secondaryButtonClass} disabled={page === 0} onClick={() => setPage(page - 1)}>Trang trước</button>
@@ -152,6 +166,13 @@ function OwnerReviewsPage() {
           </>
         )}
       </div>
+      {reporting && (
+        <ReportReviewDialog
+          review={reporting}
+          onClose={() => setReporting(null)}
+          onReported={(message) => { setReporting(null); setNotice(message ?? 'Đã gửi báo cáo. Đánh giá vẫn hiển thị cho tới khi quản trị viên kết luận.'); reload() }}
+        />
+      )}
     </OwnerLayout>
   )
 }

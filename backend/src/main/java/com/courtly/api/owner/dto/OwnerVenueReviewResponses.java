@@ -15,8 +15,28 @@ public final class OwnerVenueReviewResponses {
     public record Reply(String content, Instant repliedAt, boolean edited) {
     }
 
+    /**
+     * Bao cao moi nhat cua chinh chu san ve danh gia nay (2.3.83).
+     *
+     * @param status         pending, reviewing, resolved hoac rejected
+     * @param handlingAction review_hidden (da an danh gia) hoac review_kept (giu nguyen); null khi chua ket luan
+     */
+    public record Report(UUID id, String reason, String reasonLabel, String status, String handlingAction,
+                         Instant createdAt, Instant handledAt) {
+    }
+
+    /** @param status visible, hidden hoac reported: trang thai hien thi cong khai cua danh gia */
     public record Item(UUID id, UUID venueId, String venueName, int rating, String comment, String reviewerName,
-                       Instant createdAt, boolean edited, Reply reply) {
+                       Instant createdAt, boolean edited, String status, Reply reply, Report report) {
+    }
+
+    /** Mot ly do bao cao trong danh muc (2.3.83). */
+    public record ReportReason(String code, String label, String hint, boolean descriptionRequired) {
+    }
+
+    public record ReportRequest(
+            @NotBlank(message = "Vui long chon ly do bao cao") String reason,
+            @Size(max = 1000, message = "Mo ta toi da 1000 ky tu") String description) {
     }
 
     /** @param unanswered tong so danh gia hien thi chua tra loi cua moi san cua chu san (khong phu thuoc bo loc) */

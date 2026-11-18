@@ -58,7 +58,7 @@ test.describe.serial('2.3.78 - 2.3.79 player edits and deletes own venue review'
 
   test('a review that is reported or hidden shows why it cannot be changed, with no edit or delete button', async ({ page }) => {
     await openCompleted(page)
-    await expect(page.getByTestId(`review-locked-${reportedId}`)).toContainText('đang bị báo cáo')
+    await expect(page.getByTestId(`review-locked-${reportedId}`)).toContainText('đang được xem xét')
     await expect(page.getByTestId(`review-locked-${hiddenId}`)).toContainText('bị quản trị viên ẩn')
     for (const id of [reportedId, hiddenId]) {
       await expect(page.getByTestId(`review-edit-${id}`)).toHaveCount(0)

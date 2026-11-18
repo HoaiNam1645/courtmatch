@@ -9,6 +9,7 @@ import java.util.UUID;
  * @param reviewerName ten nguoi danh gia; khong tra email hay so dien thoai
  * @param edited       danh gia da duoc nguoi viet chinh sua sau khi dang
  * @param mine         danh gia cua chinh nguoi dang xem (de hien nut sua/xoa); luon false khi chua dang nhap
+ * @param locked       danh gia cua chinh minh dang bi chu san bao cao cho admin xu ly nen tam thoi khong sua/xoa duoc (chi tinh cho danh gia cua minh)
  */
 public record VenueReviewResponse(UUID id,
                                   String reviewerName,
@@ -18,6 +19,7 @@ public record VenueReviewResponse(UUID id,
                                   Instant createdAt,
                                   boolean edited,
                                   boolean mine,
+                                  boolean locked,
                                   Reply reply) {
 
     /** Cau tra loi cong khai cua chu san (2.3.81); null khi chua tra loi. */

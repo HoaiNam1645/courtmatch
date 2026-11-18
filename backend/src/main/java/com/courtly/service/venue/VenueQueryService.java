@@ -55,6 +55,7 @@ public class VenueQueryService {
     private final VenueOperatingHoursRepository operatingHoursRepository;
     private final VenueReviewRepository venueReviewRepository;
     private final VenueReviewReplyRepository venueReviewReplyRepository;
+    private final com.courtly.domain.review.ReportRepository reportRepository;
 
     /**
      * Tim kiem san kem loc va sap xep (2.1.13, 2.1.14, 2.1.19 - 2.1.21).
@@ -102,6 +103,13 @@ public class VenueQueryService {
                 : venueReviewReplyRepository.findByReviewIds(reviews.getContent().stream().map(VenueReview::getId).toList())
                 .stream().collect(java.util.stream.Collectors.toMap(reply -> reply.getReview().getId(), reply -> reply));
 
+        // Chi tinh trang thai bao cao cho danh gia cua chinh nguoi xem, khong lo viec chu san da bao cao danh gia cua nguoi khac.
+        java.util.List<UUID> mineIds = viewerId == null ? java.util.List.of() : reviews.getContent().stream()
+                .filter(review -> review.getUser().getId().equals(viewerId)).map(VenueReview::getId).toList();
+        java.util.Set<UUID> underReport = mineIds.isEmpty() ? java.util.Set.of()
+                : new java.util.HashSet<>(reportRepository.findTargetIdsWithStatus(com.courtly.common.enums.ReportTargetType.VENUE_REVIEW, mineIds,
+                java.util.List.of(com.courtly.common.enums.ReportStatus.PENDING, com.courtly.common.enums.ReportStatus.REVIEWING)));
+
         return PageResponse.from(reviews, reviews.getContent().stream()
                 .map(review -> new VenueReviewResponse(
                         review.getId(),
@@ -113,6 +121,7 @@ public class VenueQueryService {
                         // Bo qua chenh lech duoi 1 giay giua created_at va updated_at do cung mot lan ghi.
                         review.getUpdatedAt() != null && review.getUpdatedAt().isAfter(review.getCreatedAt().plusSeconds(1)),
                         viewerId != null && review.getUser().getId().equals(viewerId),
+                        underReport.contains(review.getId()),
                         toReply(replies.get(review.getId()))))
                 .toList());
     }

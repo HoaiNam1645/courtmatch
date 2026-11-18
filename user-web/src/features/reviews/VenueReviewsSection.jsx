@@ -97,7 +97,8 @@ export function VenueReviewsSection({ venue, user }) {
                 <p className="mt-1.5 whitespace-pre-line text-xs font-medium leading-5 text-stone-700">{review.reply.content}</p>
               </div>
             )}
-            {review.mine && (
+            {review.mine && review.locked && <p data-testid={`venue-review-locked-${review.id}`} className="mt-3 text-xs font-medium text-stone-500">Đánh giá đang được xem xét theo một báo cáo, tạm thời chưa sửa hoặc xóa được.</p>}
+            {review.mine && !review.locked && (
               <div className="mt-3 flex gap-2">
                 <button type="button" data-testid={`venue-review-edit-${review.id}`} onClick={() => { setNotice(''); setEditing(review) }} className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 text-xs font-semibold text-emerald-800"><Pencil className="size-3.5" />Sửa</button>
                 <button type="button" data-testid={`venue-review-delete-${review.id}`} onClick={() => { setNotice(''); setDeleting(review) }} className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-700"><Trash2 className="size-3.5" />Xóa</button>

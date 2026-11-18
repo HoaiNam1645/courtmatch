@@ -61,6 +61,23 @@ public interface VenueReviewRepository extends JpaRepository<VenueReview, UUID> 
             """)
     Page<VenueReview> findForOwner(Collection<UUID> venueIds, ReviewStatus status, int rating, String filter, Pageable pageable);
 
+    /** Danh gia (moi trang thai) ma chu san da bao cao, de chu san theo doi ket qua (2.3.83). */
+    @Query(value = """
+            SELECT r FROM VenueReview r
+            JOIN FETCH r.user
+            JOIN FETCH r.venue
+            WHERE r.venue.id IN :venueIds AND (:rating = 0 OR r.rating = :rating)
+              AND EXISTS (SELECT 1 FROM Report x WHERE x.targetId = r.id AND x.targetType = :type AND x.reporter.id = :ownerId)
+            ORDER BY r.createdAt DESC, r.id
+            """,
+            countQuery = """
+            SELECT count(r) FROM VenueReview r
+            WHERE r.venue.id IN :venueIds AND (:rating = 0 OR r.rating = :rating)
+              AND EXISTS (SELECT 1 FROM Report x WHERE x.targetId = r.id AND x.targetType = :type AND x.reporter.id = :ownerId)
+            """)
+    Page<VenueReview> findReportedByOwner(UUID ownerId, com.courtly.common.enums.ReportTargetType type, Collection<UUID> venueIds,
+                                          int rating, Pageable pageable);
+
     /** So danh gia hien thi chua duoc tra loi cua cac san (huy hieu o menu chu san). */
     @Query("""
             SELECT count(r) FROM VenueReview r

@@ -32,6 +32,8 @@ export function insertReview(venue, tag, bookingId, rating, comment, status = 'v
 
 /** Dọn đơn, tài khoản E2E (kéo theo đánh giá) và khôi phục điểm trung bình của sân. */
 export function cleanupReviews(venue, codePrefix) {
+  // Báo cáo về đánh giá của tài khoản E2E (người báo cáo là chủ sân seed nên không tự xóa theo tài khoản E2E).
+  runSql(`DELETE FROM reports WHERE target_type = 'venue_review' AND target_id IN (SELECT r.id FROM venue_reviews r JOIN users u ON u.id = r.user_id WHERE u.email LIKE 'e2e-%@example.com')`)
   runSql(`DELETE FROM bookings WHERE booking_code LIKE '${codePrefix}%'`)
   deleteE2eUsers()
   if (venue) runSql(`UPDATE venues SET average_rating = ${venue.snapshot.rating}, review_count = ${venue.snapshot.count} WHERE id = '${venue.id}'`)

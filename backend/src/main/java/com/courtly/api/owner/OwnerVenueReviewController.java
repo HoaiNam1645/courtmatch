@@ -51,6 +51,21 @@ public class OwnerVenueReviewController {
         return ResponseEntity.ok(reviewService.updateReply(OwnerVenueController.ownerId(jwt), reviewId, request.content()));
     }
 
+    /** 2.3.83 - danh muc ly do bao cao. */
+    @GetMapping("/report-reasons")
+    public ResponseEntity<java.util.List<OwnerVenueReviewResponses.ReportReason>> reportReasons() {
+        return ResponseEntity.ok(com.courtly.service.owner.VenueReviewReportReasons.ALL);
+    }
+
+    /** 2.3.83 - bao cao mot danh gia co noi dung khong phu hop. */
+    @PostMapping("/{reviewId}/report")
+    public ResponseEntity<OwnerVenueReviewResponses.Item> report(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID reviewId,
+            @Valid @RequestBody OwnerVenueReviewResponses.ReportRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.report(
+                OwnerVenueController.ownerId(jwt), reviewId, request.reason(), request.description()));
+    }
+
     @PostMapping("/{reviewId}/reply")
     public ResponseEntity<OwnerVenueReviewResponses.Item> reply(
             @AuthenticationPrincipal Jwt jwt, @PathVariable UUID reviewId,

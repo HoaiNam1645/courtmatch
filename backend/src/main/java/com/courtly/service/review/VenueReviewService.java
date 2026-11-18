@@ -31,9 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class VenueReviewService {
 
     static final int MAX_COMMENT = 1000;
+    static final java.util.List<com.courtly.common.enums.ReportStatus> UNDER_REVIEW =
+            java.util.List.of(com.courtly.common.enums.ReportStatus.PENDING, com.courtly.common.enums.ReportStatus.REVIEWING);
 
     private final VenueReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
+    private final com.courtly.domain.review.ReportRepository reportRepository;
     @Value("${courtly.reviews.window-days:7}")
     private int windowDays;
 
@@ -100,6 +103,12 @@ public class VenueReviewService {
                             ? "Danh gia dang bi bao cao nen tam thoi khong the sua hoac xoa."
                             : "Danh gia da bi quan tri vien an nen khong the sua hoac xoa.",
                     java.util.Map.of());
+        }
+        // Chu san da bao cao va dang cho xu ly: khoa sua/xoa de khong ne kiem duyet (danh gia van hien thi cong khai).
+        if (reportRepository.existsByTargetTypeAndTargetIdAndStatusIn(com.courtly.common.enums.ReportTargetType.VENUE_REVIEW,
+                reviewId, UNDER_REVIEW)) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_STATE_INVALID,
+                    "Danh gia dang bi bao cao nen tam thoi khong the sua hoac xoa.", java.util.Map.of());
         }
         return review;
     }
