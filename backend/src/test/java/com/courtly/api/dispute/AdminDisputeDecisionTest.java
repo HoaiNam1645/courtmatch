@@ -48,7 +48,7 @@ class AdminDisputeDecisionTest extends BookingDisputeTestBase {
     }
 
     private void answer(String id) {
-        jdbc.update("UPDATE booking_disputes SET status = 'reviewing', owner_response = 'Da giai trinh', owner_responded_at = now() + interval '1 second' WHERE id = ?", UUID.fromString(id));
+        jdbc.update("UPDATE booking_disputes SET status = 'reviewing', owner_response = 'Da giai trinh', created_at = now() - interval '2 hours', owner_responded_at = now() - interval '1 hour' WHERE id = ?", UUID.fromString(id));
         entityManager.clear();
     }
 
