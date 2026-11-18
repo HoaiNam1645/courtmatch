@@ -159,7 +159,7 @@ class BookingDisputeViewTest extends BookingDisputeTestBase {
                   owner_response = 'Chu san giai trinh: toi chi thu tien thue vot', owner_responded_at = now() + interval '2 hours',
                   owner_evidences_json = jsonb_build_array(jsonb_build_object('id', '33333333-3333-4333-8333-333333333333', 'fileName', 'o.jpg',
                        'originalName', 'bien-lai.jpg', 'size', 5, 'contentType', 'image/jpeg', 'uploadedAt', to_char((now()) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))),
-                  status = 'resolved', resolution = 'refund_half', resolution_note = 'Hoan 50% theo thoa thuan', handled_at = now() + interval '3 hours'
+                  status = 'resolved', resolution = 'refund_half', resolution_note = 'Hoan 50% theo thoa thuan', handled_at = now() + interval '3 hours', handled_by = (SELECT id FROM users LIMIT 1)
                 WHERE id = ?::uuid
                 """, id);
         entityManager.clear();

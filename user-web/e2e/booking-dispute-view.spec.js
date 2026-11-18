@@ -119,7 +119,7 @@ test.describe.serial('2.3.89 - 2.3.90 player lists and opens own booking reports
 
     // Báo cáo đã có giải trình và quyết định: cả bốn bước hiện đúng thứ tự, đúng người gửi.
     runSql(`UPDATE booking_disputes SET reporter_updates_json = jsonb_build_array(jsonb_build_object('id', 's1', 'content', 'E2E bổ sung: có tin nhắn chứng minh', 'createdAt', to_char((now() + interval '30 minutes') AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))),
-      owner_response = 'E2E chủ sân giải trình', owner_responded_at = now() + interval '1 hour', status = 'resolved', resolution = 'refund_full', resolution_note = 'E2E hoàn toàn phần', handled_at = now() + interval '2 hours' WHERE id = '${ids.d1}'`)
+      owner_response = 'E2E chủ sân giải trình', owner_responded_at = now() + interval '1 hour', status = 'resolved', resolution = 'refund_full', resolution_note = 'E2E hoàn toàn phần', handled_at = now() + interval '2 hours', handled_by = (SELECT id FROM users WHERE email = 'admin@courtly.vn') WHERE id = '${ids.d1}'`)
     await page.reload()
     const entries = page.locator('[data-testid^="dd-entry-"]')
     await expect(entries).toHaveCount(4)

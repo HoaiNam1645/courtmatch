@@ -64,7 +64,7 @@ class BookingDisputeCreateTest extends BookingDisputeTestBase {
         JsonNode data = objectMapper.readTree(jdbc.queryForObject(
                 "SELECT data_json::text FROM notifications WHERE user_id = ? AND type = 'booking_dispute_opened'", String.class, owner.getId()));
         assertThat(data.get("disputeId").asText()).isEqualTo(created.get("id").asText());
-        assertThat(data.get("route").asText()).isEqualTo("/owner/bookings");
+        assertThat(data.get("route").asText()).startsWith("/owner/disputes/");
         assertThat(jdbc.queryForObject("SELECT content FROM notifications WHERE user_id = ? AND type = 'booking_dispute_opened'",
                 String.class, owner.getId())).contains(created.get("bookingCode").asText()).contains("Sân đóng cửa");
     }

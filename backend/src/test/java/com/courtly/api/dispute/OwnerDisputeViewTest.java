@@ -145,7 +145,7 @@ class OwnerDisputeViewTest extends BookingDisputeTestBase {
                 reporter_evidences_json = jsonb_build_array(jsonb_build_object('id', '22222222-2222-4222-8222-222222222222', 'fileName', 'x.jpg',
                     'originalName', 'cong.jpg', 'size', 10, 'contentType', 'image/jpeg', 'uploadedAt', '2026-01-01T00:00:00Z', 'supplementId', null)),
                 reporter_updates_json = jsonb_build_array(jsonb_build_object('id', 's1', 'content', 'Nguoi choi bo sung', 'createdAt', '2999-01-01T00:00:00Z')),
-                owner_response = 'Chu san giai trinh', owner_responded_at = '2999-01-02T00:00:00Z', status = 'resolved', resolution = 'refund_half',
+                owner_response = 'Chu san giai trinh', owner_responded_at = '2999-01-02T00:00:00Z', status = 'resolved', resolution = 'refund_half', handled_by = (SELECT id FROM users LIMIT 1),
                 resolution_note = 'Hoan mot nua', handled_at = '2999-01-03T00:00:00Z'
                 """);
 

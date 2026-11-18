@@ -66,7 +66,7 @@ class BookingDisputeSupplementTest extends BookingDisputeTestBase {
         JsonNode data = objectMapper.readTree(jdbc.queryForObject(
                 "SELECT data_json::text FROM notifications WHERE user_id = ? AND type = 'booking_dispute_updated'", String.class, owner.getId()));
         assertThat(data.get("disputeId").asText()).isEqualTo(id.toString());
-        assertThat(data.get("route").asText()).isEqualTo("/owner/bookings");
+        assertThat(data.get("route").asText()).startsWith("/owner/disputes/");
 
         JsonNode timeline = detail(id).get("timeline");
         assertThat(timeline).hasSize(2);
