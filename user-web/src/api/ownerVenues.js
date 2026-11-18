@@ -62,6 +62,7 @@ export async function fetchOwnerVenues({ page = 0, size = 50 } = {}) {
       courtCount: Number(venue.courtCount ?? 0),
       coverImageUrl: venue.coverImageUrl ?? null,
       createdAt: venue.createdAt,
+      suspensionReason: venue.suspensionReason ?? '',
     })),
     totalElements: data.totalElements,
   }
@@ -83,6 +84,7 @@ export function toUiVenueDetail(venue) {
     status: venue.status,
     approvalStatus: venue.approvalStatus,
     rejectionReason: venue.rejectionReason ?? '',
+    suspensionReason: venue.suspensionReason ?? '',
     rejectedAt: venue.rejectedAt ?? null,
     services: (venue.services ?? []).map((service) => ({
       code: service.code,

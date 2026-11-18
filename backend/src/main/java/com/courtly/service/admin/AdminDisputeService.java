@@ -50,7 +50,7 @@ public class AdminDisputeService {
     private final BookingDisputeRepository disputeRepository;
 
     @Transactional(readOnly = true)
-    public ListResponse list(UUID adminId, String status, String q, String category, String refund, LocalDate from, LocalDate to,
+    public ListResponse list(UUID adminId, String status, String q, String category, String refund, UUID venueId, LocalDate from, LocalDate to,
                              int page, int size) {
         accessService.requirePermission(adminId, PERMISSION);
         String group = status == null || status.isBlank() ? "pending" : status;
@@ -79,6 +79,10 @@ public class AdminDisputeService {
         if (category != null && !category.isBlank() && !"all".equals(category)) {
             where.append(" AND d.category = ?");
             args.add(category);
+        }
+        if (venueId != null) {
+            where.append(" AND v.id = ?");
+            args.add(venueId);
         }
         if ("yes".equals(refund)) {
             where.append(" AND d.refund_requested");

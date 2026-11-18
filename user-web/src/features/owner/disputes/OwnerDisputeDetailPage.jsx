@@ -15,7 +15,7 @@ import { OwnerCard, OwnerError, OwnerLoading } from '../components/OwnerUi'
 import { SuspendedCommissionsCard } from '../components/SuspendedCommissionsCard'
 import { primaryButtonClass, textareaClass } from '../ownerStyles'
 
-const ACTOR_ICON = { player: CircleUserRound, you: Store, admin: ShieldCheck }
+const ACTOR_ICON = { player: CircleUserRound, you: Store, admin: ShieldCheck, system: ShieldCheck }
 const TYPE_TITLE = { created: 'Người chơi gửi báo cáo', supplement: 'Người chơi bổ sung thông tin', owner_response: 'Giải trình của bạn', resolution: 'Quản trị viên kết luận' }
 
 /** 2.3.94 - chi tiết báo cáo kèm bằng chứng của người chơi. */
@@ -87,7 +87,7 @@ function OwnerDisputeDetailPage() {
                   <li key={`${entry.type}-${index}`} data-testid={`odd-entry-${index}`} data-type={entry.type} data-actor={entry.actor}
                     className={classNames('rounded-xl border p-4', entry.actor === 'player' ? 'border-stone-200 bg-white' : entry.actor === 'you' ? 'border-emerald-200 bg-emerald-50/60' : 'border-violet-200 bg-violet-50/60')}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="flex items-center gap-2 text-sm font-semibold"><Icon className="size-4" />{TYPE_TITLE[entry.type] ?? OWNER_ACTOR_LABEL[entry.actor]}</p>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Icon className="size-4" />{entry.actor === 'system' ? 'Hệ thống tự xử lý' : TYPE_TITLE[entry.type] ?? OWNER_ACTOR_LABEL[entry.actor]}</p>
                       <span className="text-xs font-medium text-stone-500">{formatDateTime(entry.at)}</span>
                     </div>
                     {entry.label && <p className="mt-2 text-sm font-bold text-violet-800">{RESOLUTION_LABEL[entry.label] ?? entry.label}</p>}

@@ -61,7 +61,7 @@ function AdminDisputeDetailPage() {
     reload()
   }
 
-  const adminEntries = data?.timeline.filter((entry) => entry.actor === 'admin') ?? []
+  const adminEntries = data?.timeline.filter((entry) => entry.actor === 'admin' || entry.actor === 'system') ?? []
 
   return (
     <AdminLayout eyebrow="2.3.99 · Chi tiết báo cáo" title="Chi tiết báo cáo đơn đặt sân" description="So sánh nội dung và bằng chứng của người chơi và chủ sân trước khi quyết định.">
@@ -171,7 +171,7 @@ function AdminDisputeDetailPage() {
             <OwnerCard title="Kết luận">
               {adminEntries.map((entry, index) => (
                 <div key={index} data-testid="add-admin-entry">
-                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4" />{ADMIN_ACTOR_LABEL.admin} · {RESOLUTION_LABEL[entry.label] ?? entry.label} · {formatDateTime(entry.at)}</p>
+                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4" />{ADMIN_ACTOR_LABEL[entry.actor]} · {RESOLUTION_LABEL[entry.label] ?? entry.label} · {formatDateTime(entry.at)}</p>
                   <p className="mt-2 whitespace-pre-line text-sm font-medium text-slate-700">{entry.text}</p>
                 </div>
               ))}

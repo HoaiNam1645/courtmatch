@@ -65,4 +65,11 @@ public class AdminVenueController {
                                                              @Valid @RequestBody RejectVenueRequest request) {
         return ResponseEntity.ok(venueService.reject(AdminJwt.adminId(jwt), venueId, request.reasonCode(), request.note()));
     }
+
+    /** 2.3.104 - bat lai san bi tu dong tam ngung do bi xu thua nhieu lan. */
+    @PostMapping("/{venueId}/reactivate")
+    public ResponseEntity<AdminVenueResponses.Detail> reactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId,
+                                                                 @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody com.courtly.api.admin.dto.ReviewReportNoteRequest request) {
+        return ResponseEntity.ok(venueService.reactivate(AdminJwt.adminId(jwt), venueId, request.note()));
+    }
 }

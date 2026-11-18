@@ -61,6 +61,10 @@ public class AdminVenueService {
     private final VenueOperatingHoursRepository hoursRepository;
     private final OwnerVenueService ownerVenueService;
     private final BookingRepository bookingRepository;
+    private final com.courtly.service.dispute.DisputeVenueSuspensionService suspensionService;
+
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
     private final AuditService auditService;
 
     /**
@@ -94,6 +98,23 @@ public class AdminVenueService {
                         venue.getApprovalStatus().getValue(), courts.getOrDefault(venue.getId(), 0L), venue.getCreatedAt()))
                 .toList(),
                 venues.getNumber(), venues.getSize(), venues.getTotalElements(), venues.getTotalPages(), counts);
+    }
+
+    /** 2.3.104 - bat lai san bi tu dong tam ngung vi bi xu thua nhieu lan; ghi chu bat buoc. */
+    @Transactional
+    public AdminVenueResponses.Detail reactivate(UUID adminId, UUID venueId, String note) {
+        User admin = accessService.requirePermission(adminId, APPROVE_PERMISSION);
+        String clean = note == null ? "" : note.trim();
+        if (clean.length() < 5 || clean.length() > 1000) {
+            throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Ghi chu khong hop le.", Map.of("note", "Ghi chu tu 5 den 1000 ky tu"));
+        }
+        Venue venue = requireVenue(venueId);
+        if (!suspensionService.reactivate(venueId, admin, clean)) {
+            throw ApiException.conflict(ErrorCode.VENUE_REVIEW_INVALID, "Chi bat lai duoc san dang bi tam ngung do bao cao.", Map.of());
+        }
+        entityManager.flush();
+        entityManager.clear();
+        return toDetail(requireVenue(venue.getId()));
     }
 
     @Transactional(readOnly = true)

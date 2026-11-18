@@ -129,6 +129,58 @@ public class DisputeNotifier {
                 "%s: %s của đơn %s.".formatted(how, money, code), amount);
     }
 
+    /** Nhac chu san giai trinh o gio thu 24 (2.3.107); gui them email theo tuy chon thong bao. */
+    public void ownerReminder(BookingDispute dispute) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("disputeId", dispute.getId().toString());
+        data.put("bookingId", dispute.getBooking().getId().toString());
+        notifications.send(dispute.getBooking().getVenue().getOwner().getId(), NotificationType.BOOKING_DISPUTE_REMINDER,
+                "Nhắc giải trình báo cáo của khách",
+                "Báo cáo về đơn %s vẫn chờ bạn giải trình. Hạn cuối %s, quá hạn hệ thống sẽ xử lý theo hướng có lợi cho người chơi."
+                        .formatted(dispute.getBooking().getBookingCode(), DEADLINE.format(dispute.getOwnerResponseDeadline())),
+                "/owner/disputes/" + dispute.getId(), data);
+    }
+
+    /** He thong tu xu thua do chu san khong giai trinh (2.3.107): bao ca hai ben; amount null neu khong co khoan hoan. */
+    public void autoResolved(BookingDispute dispute, BigDecimal amount) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("disputeId", dispute.getId().toString());
+        data.put("bookingId", dispute.getBooking().getId().toString());
+        data.put("resolution", dispute.getResolution());
+        String code = dispute.getBooking().getBookingCode();
+        String ownerText = amount == null
+                ? "Bạn không giải trình trong 48 giờ nên báo cáo về đơn %s được kết luận chủ sân không phản hồi (tính là một lần xử thua).".formatted(code)
+                : "Bạn không giải trình trong 48 giờ nên hệ thống quyết định hoàn tiền toàn phần %sđ cho đơn %s. Hãy hoàn trực tiếp cho người chơi và báo lại.".formatted(MONEY.format(amount), code);
+        String playerText = amount == null
+                ? "Chủ sân không giải trình trong 48 giờ nên báo cáo về đơn %s được kết luận có lợi cho bạn.".formatted(code)
+                : "Chủ sân không giải trình trong 48 giờ nên hệ thống quyết định hoàn tiền toàn phần %sđ cho đơn %s. Chủ sân sẽ hoàn trực tiếp cho bạn.".formatted(MONEY.format(amount), code);
+        notifications.send(dispute.getBooking().getVenue().getOwner().getId(), NotificationType.BOOKING_DISPUTE_RESOLVED,
+                "Báo cáo được hệ thống tự xử lý", ownerText, "/owner/disputes/" + dispute.getId(), data);
+        notifications.send(dispute.getReporter().getId(), NotificationType.BOOKING_DISPUTE_RESOLVED,
+                "Báo cáo của bạn đã có kết luận", playerText, "/bao-cao/" + dispute.getId(), data);
+    }
+
+    /** San bi tu dong tam ngung vi bi xu thua nhieu lan (2.3.104): bao chu san va quan tri vien. */
+    public void venueSuspended(java.util.UUID venueId, String venueName, java.util.UUID ownerId, String reason) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("venueId", venueId.toString());
+        notifications.send(ownerId, NotificationType.VENUE_SUSPENDED, "Sân của bạn bị tạm ngưng",
+                "Sân %s bị tạm ngưng hoạt động. %s Các đơn đã đặt vẫn được giữ nguyên. Hãy liên hệ quản trị viên để được xem xét bật lại."
+                        .formatted(venueName, reason), "/owner/venues/" + venueId, data);
+        for (java.util.UUID admin : admins()) {
+            notifications.send(admin, NotificationType.VENUE_SUSPENDED, "Sân bị tự động tạm ngưng",
+                    "Sân %s bị tự động tạm ngưng. %s".formatted(venueName, reason), "/admin/disputes?tab=venues", data);
+        }
+    }
+
+    /** Admin bat lai san da tam ngung (2.3.104). */
+    public void venueReactivated(java.util.UUID venueId, String venueName, java.util.UUID ownerId, String note) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("venueId", venueId.toString());
+        notifications.send(ownerId, NotificationType.VENUE_SUSPENDED, "Sân của bạn hoạt động trở lại",
+                "Sân %s đã được quản trị viên bật lại. Ghi chú: %s".formatted(venueName, note), "/owner/venues/" + venueId, data);
+    }
+
     /** Hoa hong tam hoan quay lai cong no (2.3.110). */
     public void commissionRestored(java.util.UUID ownerId, java.util.UUID disputeId, java.util.UUID bookingId, BigDecimal amount, java.time.Instant dueAt) {
         Map<String, Object> data = new LinkedHashMap<>();

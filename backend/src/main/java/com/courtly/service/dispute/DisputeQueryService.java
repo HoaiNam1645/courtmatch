@@ -84,7 +84,7 @@ public class DisputeQueryService {
                     DisputeEvidenceService.toResponses(id, dispute.getOwnerEvidences())));
         }
         if (dispute.getResolution() != null && dispute.getHandledAt() != null) {
-            timeline.add(new TimelineEntry("resolution", "admin", dispute.getHandledAt(), dispute.getResolutionNote(), dispute.getResolution(),
+            timeline.add(new TimelineEntry("resolution", dispute.getHandledBy() == null ? "system" : "admin", dispute.getHandledAt(), dispute.getResolutionNote(), dispute.getResolution(),
                     DisputeEvidenceService.toResponses(id, dispute.getResolutionEvidences())));
         }
         timeline.sort(Comparator.comparing(TimelineEntry::at));

@@ -33,6 +33,7 @@ public class AdminDisputeController {
 
     private final AdminDisputeService service;
     private final AdminDisputeDecisionService decisionService;
+    private final com.courtly.service.admin.AdminDisputeVenueStatsService venueStatsService;
 
     @GetMapping
     public ResponseEntity<AdminDisputeResponses.ListResponse> list(
@@ -41,13 +42,29 @@ public class AdminDisputeController {
             @RequestParam(required = false) @Size(max = 100, message = "Tu khoa toi da 100 ky tu") String q,
             @RequestParam(defaultValue = "all") @Size(max = 40, message = "Loai toi da 40 ky tu") String category,
             @RequestParam(defaultValue = "all") String refund,
+            @RequestParam(required = false) UUID venueId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
             @RequestParam(defaultValue = "20")
             @Min(value = 1, message = "Kich thuoc trang tu 1 den 100")
             @Max(value = 100, message = "Kich thuoc trang tu 1 den 100") int size) {
-        return ResponseEntity.ok(service.list(AdminJwt.adminId(jwt), status, q, category, refund, from, to, page, size));
+        return ResponseEntity.ok(service.list(AdminJwt.adminId(jwt), status, q, category, refund, venueId, from, to, page, size));
+    }
+
+    /** 2.3.103 - thong ke bao cao theo san. */
+    @GetMapping("/venue-stats")
+    public ResponseEntity<AdminDisputeResponses.VenueStatsResponse> venueStats(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) @Size(max = 100, message = "Tu khoa toi da 100 ky tu") String q,
+            @RequestParam(defaultValue = "lost") String sort,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "So trang bat dau tu 0") int page,
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "Kich thuoc trang tu 1 den 100")
+            @Max(value = 100, message = "Kich thuoc trang tu 1 den 100") int size) {
+        return ResponseEntity.ok(venueStatsService.list(AdminJwt.adminId(jwt), from, to, q, sort, page, size));
     }
 
     @GetMapping("/{disputeId}")

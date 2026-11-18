@@ -98,7 +98,7 @@ public class OwnerVenueService {
                         venue.getId(), venue.getName(), venue.getSlug(), venue.getDistrict(),
                         venue.getAddress(), venue.getStatus().getValue(), venue.getApprovalStatus().getValue(),
                         courtCounts.getOrDefault(venue.getId(), 0L), covers.get(venue.getId()),
-                        venue.getCreatedAt()))
+                        venue.getCreatedAt(), venue.getSuspensionReason()))
                 .toList());
     }
 
@@ -463,6 +463,7 @@ public class OwnerVenueService {
                         .toList(),
                 venue.getCreatedAt(), venue.getUpdatedAt(),
                 venue.getApprovalStatus() == ApprovalStatus.REJECTED ? venue.getRejectionReason() : null,
-                venue.getApprovalStatus() == ApprovalStatus.REJECTED ? venue.getRejectedAt() : null);
+                venue.getApprovalStatus() == ApprovalStatus.REJECTED ? venue.getRejectedAt() : null,
+                venue.getSuspensionReason());
     }
 }

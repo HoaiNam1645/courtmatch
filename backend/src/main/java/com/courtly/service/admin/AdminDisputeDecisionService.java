@@ -40,6 +40,7 @@ public class AdminDisputeDecisionService {
     private final AuditService auditService;
     private final DisputeNotifier disputeNotifier;
     private final com.courtly.service.dispute.DisputeCommissionService commissionService;
+    private final com.courtly.service.dispute.DisputeVenueSuspensionService suspensionService;
 
     @Transactional
     public Detail refundFull(UUID adminId, UUID disputeId, String note) {
@@ -135,6 +136,7 @@ public class AdminDisputeDecisionService {
                 Map.of("status", "resolved", "resolution", resolution, "amount", amount, "requested", requested, "note", cleanNote,
                         "bookingId", bookingId.toString()));
         disputeNotifier.refundDecided(dispute, amount, full, cleanNote);
+        suspensionService.evaluate(dispute.getBooking().getVenue().getId());
         return viewService.toDetail(dispute);
     }
 

@@ -19,5 +19,6 @@ public record OwnerVenueSummaryResponse(UUID id,
                                         String approvalStatus,
                                         long courtCount,
                                         String coverImageUrl,
-                                        Instant createdAt) {
+                                        Instant createdAt,
+                                        String suspensionReason) {
 }

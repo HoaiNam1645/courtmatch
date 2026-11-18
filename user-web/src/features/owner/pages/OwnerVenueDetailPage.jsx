@@ -94,6 +94,13 @@ function OwnerVenueDetailPage() {
               <span key={meta.label} className={classNames('rounded-full px-3 py-1.5 text-xs font-bold', meta.className)}>{meta.label}</span>
             ))}
           </div>
+          {venue.suspensionReason && venue.status === 'inactive' && (
+            <section className="mb-5 rounded-xl border border-red-300 bg-red-50 p-4" data-testid="venue-suspension">
+              <h2 className="text-sm font-semibold text-red-800">Sân đang bị tạm ngưng hoạt động</h2>
+              <p className="mt-1 text-sm font-medium text-red-700" data-testid="venue-suspension-reason">{venue.suspensionReason}</p>
+              <p className="mt-1 text-xs font-medium text-red-700">Sân không hiện với người chơi và không nhận đặt mới; các đơn đã đặt vẫn được giữ nguyên. Hãy liên hệ quản trị viên để được xem xét bật lại.</p>
+            </section>
+          )}
           {venue.approvalStatus === 'rejected' && (
             <section className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4" data-testid="venue-rejection">
               <h2 className="text-sm font-semibold text-red-800">Quản trị viên đã từ chối sân này</h2>

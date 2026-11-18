@@ -45,6 +45,7 @@ function OwnerVenuesPage() {
                   <Badge meta={statusMeta(VENUE_STATUS_META, venue.status)} testId="venue-status" />
                 </div>
                 <h2 className="mt-2 truncate text-base font-semibold text-emerald-950">{venue.name}</h2>
+                {venue.suspensionReason && <p className="mt-1 rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-800" data-testid="venue-suspension">Sân bị tạm ngưng: {venue.suspensionReason}</p>}
                 <p className="mt-1 line-clamp-2 text-sm font-medium text-stone-500">{venue.address}{venue.district && !venue.address.includes(venue.district) ? `, ${venue.district}` : ''}</p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-emerald-700">{venue.courtCount} sân con</p>

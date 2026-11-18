@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight, ImageIcon, Search, X } from 'lucide-react'
 import { ADMIN_DISPUTE_STATUS, ADMIN_DISPUTE_TABS, DISPUTE_CATEGORY_OPTIONS, fetchAdminDisputes } from '../../../api/adminDisputes'
 import { RESOLUTION_LABEL } from '../../../api/bookingDisputes'
@@ -11,16 +11,26 @@ import { elapsedText, formatDateTime as formatDisputeTime } from '../../disputes
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { inputClass, secondaryButtonClass } from '../../owner/ownerStyles'
 import { AdminLayout } from '../components/AdminLayout'
+import { DisputeVenueStats } from '../components/DisputeVenueStats'
 
 /** 2.3.98 - danh sách báo cáo về đơn đặt sân; mặc định là các báo cáo chủ sân đã giải trình, cũ nhất lên đầu. */
 function AdminDisputesPage() {
-  const [filters, setFilters] = useState({ status: 'pending', category: 'all', refund: 'all', from: '', to: '', page: 0 })
+  const [params, setParams] = useSearchParams()
+  const view = params.get('tab') === 'venues' ? 'venues' : 'list'
+  const venueId = params.get('venueId') ?? ''
+  const venueName = params.get('venueName') ?? ''
+  const [filters, setFilters] = useState({ status: params.get('status') ?? 'pending', category: 'all', refund: 'all', from: '', to: '', page: 0 })
   const [query, setQuery] = useState('')
+  const statusParam = params.get('status')
+  // Mở từ liên kết ngoài (ví dụ thống kê theo sân) trên cùng một route: đồng bộ tab trạng thái theo URL.
+  useEffect(() => {
+    if (statusParam) setFilters((current) => ({ ...current, status: statusParam, page: 0 }))
+  }, [statusParam, venueId])
   const q = useDebounced(query)
   const invalidRange = filters.from && filters.to && filters.to < filters.from
   const { status, data, error, reload } = useApiResource(
-    () => (invalidRange ? Promise.resolve({ items: [], page: 0, totalPages: 0, totalElements: 0, counts: {} }) : fetchAdminDisputes({ ...filters, q })),
-    [filters.status, filters.category, filters.refund, filters.from, filters.to, filters.page, q],
+    () => (invalidRange ? Promise.resolve({ items: [], page: 0, totalPages: 0, totalElements: 0, counts: {} }) : fetchAdminDisputes({ ...filters, venueId, q })),
+    [filters.status, filters.category, filters.refund, filters.from, filters.to, filters.page, q, venueId],
     { isEmpty: (result) => result.items.length === 0 },
   )
   const counts = data?.counts ?? {}
@@ -31,7 +41,21 @@ function AdminDisputesPage() {
 
   return (
     <AdminLayout eyebrow="2.3.98 · Báo cáo đơn đặt sân" title="Báo cáo đơn đặt sân" description="Báo cáo của người chơi về đơn đặt sân. Xem giải trình của chủ sân và quyết định hoàn tiền.">
+      <div className="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-white p-1 sm:w-fit" role="group" aria-label="Kiểu xem">
+        {[['list', 'Danh sách báo cáo'], ['venues', 'Theo sân']].map(([id, label]) => (
+          <button key={id} type="button" aria-pressed={view === id} data-testid={`ad-view-${id}`} className={classNames('h-10 flex-1 whitespace-nowrap rounded-md px-4 text-sm font-semibold sm:flex-none', view === id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100')}
+            onClick={() => setParams(id === 'venues' ? { tab: 'venues' } : {})}>{label}</button>
+        ))}
+      </div>
+      {view === 'venues' && <OwnerCard><DisputeVenueStats /></OwnerCard>}
+      {view === 'list' && (
       <OwnerCard>
+        {venueId && (
+          <p className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold" data-testid="ad-venue-filter">
+            Đang lọc theo sân {venueName || venueId}
+            <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => setParams({})}>Bỏ lọc</button>
+          </p>
+        )}
         <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Trạng thái báo cáo">
           {ADMIN_DISPUTE_TABS.map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={filters.status === id} data-testid={`ad-tab-${id}`} onClick={() => setFilter({ status: id })}
@@ -106,6 +130,7 @@ function AdminDisputesPage() {
           )}
         </div>
       </OwnerCard>
+      )}
     </AdminLayout>
   )
 }

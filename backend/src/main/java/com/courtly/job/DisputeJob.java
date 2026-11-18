@@ -16,12 +16,19 @@ import org.springframework.stereotype.Component;
 public class DisputeJob {
 
     private final DisputeRefundService refundService;
+    private final com.courtly.service.dispute.DisputeTimeoutService timeoutService;
 
     @Scheduled(initialDelayString = "${courtly.jobs.disputes.initial-delay-ms:90000}",
             fixedDelayString = "${courtly.jobs.disputes.interval-ms:600000}")
     public void run() {
         try {
-            int confirmed = refundService.autoConfirmDue(Instant.now());
+            Instant now = Instant.now();
+            int reminded = timeoutService.remind(now);
+            int resolved = timeoutService.resolveOverdue(now);
+            if (reminded > 0 || resolved > 0) {
+                log.info("Bao cao don dat san: nhac {} chu san, tu xu thua {} bao cao", reminded, resolved);
+            }
+            int confirmed = refundService.autoConfirmDue(now);
             if (confirmed > 0) {
                 log.info("Tu xac nhan {} khoan hoan tien", confirmed);
             }

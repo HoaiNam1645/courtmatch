@@ -15,7 +15,7 @@ export const OWNER_STATUS_LABEL = {
   cancelled: 'Người chơi đã huỷ',
 }
 
-export const OWNER_ACTOR_LABEL = { player: 'Người chơi', you: 'Bạn', admin: 'Quản trị viên' }
+export const OWNER_ACTOR_LABEL = { player: 'Người chơi', you: 'Bạn', admin: 'Quản trị viên', system: 'Hệ thống' }
 
 function toItem(item) {
   return {

@@ -63,4 +63,21 @@ public final class AdminDisputeResponses {
                          List<TimelineEntry> timeline, boolean canDecide, boolean canRefund,
                          BigDecimal fullAmount, BigDecimal halfAmount) {
     }
+
+    /**
+     * 2.3.103 - thong ke bao cao theo san.
+     *
+     * @param lost          so bao cao xu thua (hoan toan phan, mot nua, chu san khong phan hoi)
+     * @param autoResolved  so bao cao he thong tu xu ly do chu san qua han giai trinh
+     * @param lostInWindow  so lan xu thua trong cua so tam ngung gan nhat (khong phu thuoc khoang ngay da loc)
+     * @param refundAmount  tong tien da quyet dinh hoan trong khoang ngay da loc
+     */
+    public record VenueStat(UUID venueId, String venueName, String ownerName, String venueStatus, String suspensionReason,
+                            long total, long awaiting, long pending, long lost, long rejected, long cancelled, long autoResolved,
+                            double lostRate, BigDecimal refundAmount, long lostInWindow) {
+    }
+
+    public record VenueStatsResponse(List<VenueStat> items, int page, int size, long totalElements, int totalPages,
+                                     int suspendThreshold, int suspendWindowDays) {
+    }
 }

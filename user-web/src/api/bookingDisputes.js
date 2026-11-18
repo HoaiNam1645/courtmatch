@@ -86,9 +86,10 @@ export const RESOLUTION_LABEL = {
   refund_half: 'Hoàn tiền một nửa',
   rejected: 'Bác bỏ yêu cầu hoàn tiền',
   dismissed: 'Bác bỏ báo cáo',
+  owner_no_response: 'Chủ sân không phản hồi',
 }
 
-export const DISPUTE_ACTOR_LABEL = { you: 'Bạn', owner: 'Chủ sân', admin: 'Quản trị viên' }
+export const DISPUTE_ACTOR_LABEL = { you: 'Bạn', owner: 'Chủ sân', admin: 'Quản trị viên', system: 'Hệ thống' }
 export const DISPUTE_TAB_FILTERS = [['all', 'Tất cả'], ['active', 'Đang xử lý'], ['closed', 'Đã đóng']]
 
 function toSummary(item) {

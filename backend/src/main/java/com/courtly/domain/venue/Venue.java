@@ -82,6 +82,13 @@ public class Venue extends AuditedEntity {
     @Column(name = "status", nullable = false, length = 30)
     private VenueStatus status = VenueStatus.PENDING;
 
+    /** Ly do tam ngung do bi xu thua nhieu lan (2.3.104); null khi khong bi tam ngung. */
+    @Column(name = "suspension_reason")
+    private String suspensionReason;
+
+    @Column(name = "suspended_at")
+    private java.time.Instant suspendedAt;
+
     @Column(name = "approval_status", nullable = false, length = 30)
     private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
 

@@ -29,7 +29,8 @@ public record OwnerVenueDetailResponse(UUID id,
                                        Instant createdAt,
                                        Instant updatedAt,
                                        String rejectionReason,
-                                       Instant rejectedAt) {
+                                       Instant rejectedAt,
+                                       String suspensionReason) {
 
     /** @param price null = khong niem yet gia, 0 = mien phi */
     public record ServiceItem(String code, String name, BigDecimal price, String note) {
