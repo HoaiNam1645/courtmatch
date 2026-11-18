@@ -8,6 +8,8 @@ const AdminOwnerPage = lazy(() => import('./pages/AdminOwnerPage'))
 const AdminVenuesPage = lazy(() => import('./pages/AdminVenuesPage'))
 const AdminUserReportsPage = lazy(() => import('./pages/AdminUserReportsPage'))
 const AdminReviewReportsPage = lazy(() => import('./pages/AdminReviewReportsPage'))
+const AdminDisputesPage = lazy(() => import('./pages/AdminDisputesPage'))
+const AdminDisputeDetailPage = lazy(() => import('./pages/AdminDisputeDetailPage'))
 const AdminStatsPage = lazy(() => import('./pages/AdminStatsPage'))
 const AdminFeePoliciesPage = lazy(() => import('./pages/AdminFeePoliciesPage'))
 const AdminFeeRevenuePage = lazy(() => import('./pages/AdminFeeRevenuePage'))
@@ -27,6 +29,8 @@ const adminRoutes = [
   { path: '/admin/venues', element: <AdminVenuesPage /> },
   { path: '/admin/user-reports', element: <AdminUserReportsPage /> },
   { path: '/admin/review-reports', element: <AdminReviewReportsPage /> },
+  { path: '/admin/disputes', element: <AdminDisputesPage /> },
+  { path: '/admin/disputes/:disputeId', element: <AdminDisputeDetailPage /> },
   { path: '/admin/stats', element: <AdminStatsPage /> },
   { path: '/admin/fees', element: <AdminFeePoliciesPage /> },
   { path: '/admin/fee-revenue', element: <AdminFeeRevenuePage /> },

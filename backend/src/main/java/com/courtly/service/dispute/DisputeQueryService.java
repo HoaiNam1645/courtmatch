@@ -65,7 +65,7 @@ public class DisputeQueryService {
     /**
      * {@code ownerView}: dong thoi gian nhin tu chu san (nguoi choi la "player", chu san la "you"); mac dinh nhin tu nguoi choi.
      */
-    static DisputeDetailResponse toDetail(BookingDispute dispute, boolean ownerView) {
+    public static DisputeDetailResponse toDetail(BookingDispute dispute, boolean ownerView) {
         UUID id = dispute.getId();
         List<Map<String, Object>> evidences = dispute.getReporterEvidences() == null ? List.of() : dispute.getReporterEvidences();
         List<Map<String, Object>> updates = dispute.getReporterUpdates() == null ? List.of() : dispute.getReporterUpdates();

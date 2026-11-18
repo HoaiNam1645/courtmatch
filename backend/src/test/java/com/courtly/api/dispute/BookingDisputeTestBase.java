@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** Nen chung cho test bao cao don dat san (2.3.85 - 2.3.92): chu san, san, nguoi choi va ham tao don o trang thai/thoi diem cho truoc. */
-abstract class BookingDisputeTestBase extends OwnerApiTestBase {
+abstract class BookingDisputeTestBase extends com.courtly.api.admin.AdminApiTestBase {
 
     @Autowired protected BookingRepository bookingRepository;
     @Autowired protected JdbcTemplate jdbc;

@@ -24,3 +24,12 @@ export function remainingText(deadline, now = Date.now()) {
 }
 
 export const formatDateTime = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '')
+
+/** "đã chờ 5 giờ" / "đã chờ 2 ngày" kể từ một mốc thời gian (thời gian báo cáo chờ quản trị viên xử lý). */
+export function elapsedText(since, now = Date.now()) {
+  if (!since) return ''
+  const minutes = Math.max(0, Math.floor((now - new Date(since).getTime()) / 60000))
+  if (minutes < 60) return `đã chờ ${minutes} phút`
+  const hours = Math.floor(minutes / 60)
+  return hours < 48 ? `đã chờ ${hours} giờ` : `đã chờ ${Math.floor(hours / 24)} ngày`
+}
