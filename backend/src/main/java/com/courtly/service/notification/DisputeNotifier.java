@@ -202,7 +202,7 @@ public class DisputeNotifier {
                 "Người chơi đã huỷ báo cáo",
                 "Người chơi đã huỷ báo cáo về đơn %s, bạn không cần giải trình nữa."
                         .formatted(dispute.getBooking().getBookingCode()),
-                "/owner/bookings", data);
+                "/owner/disputes/" + dispute.getId(), data);
     }
 
     /** Nguoi choi bo sung thong tin khi bao cao con cho chu san giai trinh: bao cho chu san. */
@@ -214,7 +214,7 @@ public class DisputeNotifier {
                 "Người chơi bổ sung thông tin báo cáo",
                 "Người chơi vừa bổ sung thông tin cho báo cáo về đơn %s. Hãy xem trước hạn giải trình %s."
                         .formatted(dispute.getBooking().getBookingCode(), DEADLINE.format(dispute.getOwnerResponseDeadline())),
-                "/owner/bookings", data);
+                "/owner/disputes/" + dispute.getId(), data);
     }
 
     /** Nguoi choi tao bao cao: bao cho chu san cua san va han giai trinh. */
@@ -228,6 +228,6 @@ public class DisputeNotifier {
                 "Người chơi báo cáo đơn %s tại %s (%s). Hãy giải trình trước %s."
                         .formatted(dispute.getBooking().getBookingCode(), dispute.getBooking().getVenue().getName(), categoryLabel,
                                 DEADLINE.format(dispute.getOwnerResponseDeadline())),
-                "/owner/bookings", data);
+                "/owner/disputes/" + dispute.getId(), data);
     }
 }
