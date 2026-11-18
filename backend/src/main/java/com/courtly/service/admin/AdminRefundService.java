@@ -98,6 +98,61 @@ public class AdminRefundService {
                 """, refundId, paymentId, bookingId, amount, cleanReason, admin.getId(), admin.getId(), Timestamp.from(now));
         jdbc.update("UPDATE payments SET status = ? WHERE id = ?", fullRefund ? "refunded" : "partially_refunded", paymentId);
 
+        applyToCommission(admin, commissionId, commission, refundId, amount, paid, refundedBefore, refundedAfter, fullRefund, cleanReason, now);
+
+        restrictionService.recompute(ownerId);
+        entityManager.flush();
+        return detailService.load(commissionId);
+    }
+
+    /**
+     * 2.3.109 - khoan hoan theo bao cao vua duoc xac nhan: dieu chinh hoa hong cua don. Hoa hong dang tam hoan duoc mo ra truoc;
+     * hoa hong da duoc mien thi khong con gi de hoan. {@code actor} null khi he thong tu xac nhan.
+     *
+     * @return true neu da dieu chinh hoa hong
+     */
+    public boolean applyDisputeRefund(User actor, UUID bookingId, UUID refundId, BigDecimal amount, BigDecimal paid,
+                                      BigDecimal refundedBefore, String reason) {
+        List<Map<String, Object>> found = jdbc.queryForList("""
+                SELECT id, booking_id, owner_id, settlement_id, commission_amount, voucher_discount, courtly_owed, status
+                FROM booking_commissions WHERE booking_id = ? FOR UPDATE
+                """, bookingId);
+        if (found.isEmpty()) {
+            return false;
+        }
+        Map<String, Object> commission = new java.util.HashMap<>(found.getFirst());
+        UUID commissionId = (UUID) commission.get("id");
+        if ("waived".equals(commission.get("status"))) {
+            return false;
+        }
+        if ("suspended".equals(commission.get("status"))) {
+            String before = jdbc.queryForObject("SELECT coalesce(status_before, 'due') FROM booking_commissions WHERE id = ?", String.class, commissionId);
+            jdbc.update("UPDATE booking_commissions SET status = ?, status_before = NULL, suspended_at = NULL, suspended_dispute_id = NULL WHERE id = ?", before, commissionId);
+            commission.put("status", before);
+        }
+        UUID ownerId = (UUID) commission.get("owner_id");
+        jdbc.queryForObject("SELECT user_id FROM court_owner_profiles WHERE user_id = ? FOR UPDATE", UUID.class, ownerId);
+        BigDecimal refundedAfter = refundedBefore.add(amount);
+        boolean fullRefund = refundedAfter.compareTo(paid) >= 0;
+        applyToCommission(actor, commissionId, commission, refundId, amount, paid, refundedBefore, refundedAfter, fullRefund, reason, Instant.now());
+        restrictionService.recompute(ownerId);
+        return true;
+    }
+
+    /**
+     * Ap khoan hoan da xac nhan len hoa hong cua don: hoa hong, phan voucher Courtly boi va khoan Courtly no chu san giam theo ty le
+     * phan con lai cua khoan da thu; hoan toan bo thi hoa hong waived. Dung chung cho ghi nhan hoan tien cua admin (2.3.52) va hoan tien
+     * theo bao cao (2.3.109).
+     */
+    private void applyToCommission(User admin, UUID commissionId, Map<String, Object> commission, UUID refundId, BigDecimal amount,
+                                   BigDecimal paid, BigDecimal refundedBefore, BigDecimal refundedAfter, boolean fullRefund,
+                                   String cleanReason, Instant now) {
+        UUID ownerId = (UUID) commission.get("owner_id");
+        UUID settlementId = (UUID) commission.get("settlement_id");
+        BigDecimal oldCommission = (BigDecimal) commission.get("commission_amount");
+        BigDecimal oldDiscount = (BigDecimal) commission.get("voucher_discount");
+        BigDecimal oldOwed = (BigDecimal) commission.get("courtly_owed");
+        String oldStatus = (String) commission.get("status");
         // Ty le con lai cua khoan da thu so voi truoc lan hoan nay; ap dung len hoa hong hien tai (ke ca da dieu chinh).
         BigDecimal ratio = paid.subtract(refundedAfter).divide(paid.subtract(refundedBefore), new MathContext(12, RoundingMode.HALF_UP));
         BigDecimal newCommission = scale(oldCommission, ratio, fullRefund);
@@ -190,9 +245,6 @@ public class AdminRefundService {
             }
         }
 
-        restrictionService.recompute(ownerId);
-        entityManager.flush();
-        return detailService.load(commissionId);
     }
 
     private static BigDecimal scale(BigDecimal value, BigDecimal ratio, boolean zero) {

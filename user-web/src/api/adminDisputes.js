@@ -6,6 +6,7 @@ import { toEvidence } from './bookingDisputes'
 export const ADMIN_DISPUTE_TABS = [
   ['pending', 'Chờ xử lý'],
   ['awaiting', 'Chờ chủ sân giải trình'],
+  ['refunding', 'Đang hoàn tiền'],
   ['resolved', 'Đã giải quyết'],
   ['rejected', 'Đã bác bỏ'],
   ['cancelled', 'Đã huỷ'],

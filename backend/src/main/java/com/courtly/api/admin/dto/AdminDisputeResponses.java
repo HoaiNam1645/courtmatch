@@ -21,7 +21,7 @@ public final class AdminDisputeResponses {
     public record Item(UUID id, UUID bookingId, String bookingCode, String venueName, String ownerName, String playerName,
                        String category, String categoryLabel, String status, boolean refundRequested, BigDecimal refundAmount,
                        int playerImages, int ownerImages, Instant createdAt, Instant waitingSince, String resolution,
-                       long priorVenueDisputes) {
+                       long priorVenueDisputes, String refundStatus) {
     }
 
     public record ListResponse(List<Item> items, int page, int size, long totalElements, int totalPages, Map<String, Long> counts) {

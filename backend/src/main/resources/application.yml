@@ -95,6 +95,8 @@ courtly:
     report-window-days: ${BOOKING_DISPUTE_WINDOW_DAYS:7}
     # Han chu san giai trinh ke tu luc tao bao cao.
     owner-response-hours: ${BOOKING_DISPUTE_OWNER_RESPONSE_HOURS:48}
+    # 2.3.108: so ngay nguoi choi khong phan hoi thi he thong tu xac nhan khoan hoan.
+    refund-auto-confirm-days: ${DISPUTE_REFUND_AUTO_CONFIRM_DAYS:7}
   matching:
     # Nguong canh bao chat luong ghep cap tren man hinh quan tri (2.3.73).
     quality:
@@ -125,6 +127,11 @@ courtly:
       enabled: ${REMINDER_JOB_ENABLED:true}
       initial-delay-ms: 120000
       interval-ms: ${REMINDER_JOB_INTERVAL_MS:300000}
+    disputes:
+      # Tu xu thua khi chu san qua han giai trinh (2.3.107), nhac gio thu 24, tu xac nhan hoan tien (2.3.108).
+      enabled: ${DISPUTE_JOB_ENABLED:true}
+      initial-delay-ms: 90000
+      interval-ms: ${DISPUTE_JOB_INTERVAL_MS:600000}
     match-data:
       enabled: ${MATCH_DATA_JOB_ENABLED:true}
       confirmation-interval-ms: ${MATCH_CONFIRMATION_JOB_INTERVAL_MS:3600000}

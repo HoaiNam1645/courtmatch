@@ -58,9 +58,10 @@ public class AdminDisputeService {
             case "pending" -> "d.status = 'reviewing'";
             case "awaiting" -> "d.status IN ('open', 'awaiting_owner_response')";
             case "resolved", "rejected", "cancelled" -> "d.status = '" + group + "'";
+            case "refunding" -> "d.status = 'resolved' AND EXISTS (SELECT 1 FROM refunds rf WHERE rf.dispute_id = d.id AND rf.status IN ('awaiting_owner_refund', 'owner_reported_refunded'))";
             case "all" -> "TRUE";
             default -> throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Trang thai khong hop le.",
-                    Map.of("status", "Chi nhan pending, awaiting, resolved, rejected, cancelled hoac all"));
+                    Map.of("status", "Chi nhan pending, awaiting, refunding, resolved, rejected, cancelled hoac all"));
         };
         if (from != null && to != null && to.isBefore(from)) {
             throw ApiException.badRequest(ErrorCode.VALIDATION_FAILED, "Khoang ngay khong hop le.",
@@ -102,6 +103,7 @@ public class AdminDisputeService {
         String order = switch (group) {
             case "pending" -> "d.owner_responded_at ASC NULLS LAST, d.created_at ASC";
             case "awaiting" -> "d.owner_response_deadline ASC NULLS LAST, d.created_at ASC";
+            case "refunding" -> "d.handled_at ASC NULLS LAST, d.created_at ASC";
             default -> "d.created_at DESC";
         };
         Long total = jdbc.queryForObject("SELECT count(*) " + from_ + " WHERE " + where, Long.class, args.toArray());
@@ -114,6 +116,7 @@ public class AdminDisputeService {
                        COALESCE(jsonb_array_length(d.reporter_evidences_json), 0) AS player_images,
                        COALESCE(jsonb_array_length(d.owner_evidences_json), 0) AS owner_images,
                        d.created_at, COALESCE(d.owner_responded_at, d.created_at) AS waiting_since, d.resolution,
+                       (SELECT rf.status FROM refunds rf WHERE rf.dispute_id = d.id ORDER BY rf.created_at DESC LIMIT 1) AS refund_status,
                        (SELECT count(*) FROM booking_disputes p JOIN bookings pb ON pb.id = p.booking_id
                         WHERE pb.venue_id = v.id AND p.id <> d.id AND p.created_at < d.created_at) AS prior
                 """ + from_ + " WHERE " + where + " ORDER BY " + order + ", d.id LIMIT ? OFFSET ?",
@@ -122,7 +125,7 @@ public class AdminDisputeService {
                         categoryLabel(rs.getString("category")), rs.getString("status"), rs.getBoolean("refund_requested"),
                         rs.getBigDecimal("requested_refund_amount"), rs.getInt("player_images"), rs.getInt("owner_images"),
                         instant(rs.getObject("created_at", OffsetDateTime.class)), instant(rs.getObject("waiting_since", OffsetDateTime.class)),
-                        rs.getString("resolution"), rs.getLong("prior")), pageArgs.toArray());
+                        rs.getString("resolution"), rs.getLong("prior"), rs.getString("refund_status")), pageArgs.toArray());
         int totalPages = (int) Math.ceil(total / (double) size);
         return new ListResponse(items, page, size, total, totalPages, counts());
     }
@@ -204,6 +207,7 @@ public class AdminDisputeService {
             counts.merge(key, rs.getLong("total"), Long::sum);
         });
         counts.put("all", counts.values().stream().mapToLong(Long::longValue).sum());
+        counts.put("refunding", jdbc.queryForObject("SELECT count(DISTINCT d.id) FROM booking_disputes d JOIN refunds rf ON rf.dispute_id = d.id WHERE d.status = 'resolved' AND rf.status IN ('awaiting_owner_refund', 'owner_reported_refunded')", Long.class));
         return counts;
     }
 

@@ -8,6 +8,7 @@ import { classNames, formatCurrency } from '../../../shared/utils'
 import { ConfirmDialog } from '../../disputes/ConfirmDialog'
 import { EvidenceImage } from '../../disputes/EvidenceImage'
 import { EvidenceManager } from '../../disputes/EvidenceManager'
+import { RefundPanel } from '../../disputes/RefundPanel'
 import { formatDateTime, remainingText } from '../../disputes/disputeUi'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerCard, OwnerError, OwnerLoading } from '../components/OwnerUi'
@@ -58,6 +59,7 @@ function OwnerDisputeDetailPage() {
             </dl>
           </OwnerCard>
 
+          <RefundPanel disputeId={data.id} role="owner" onChanged={reload} onOpen={(url) => setLightbox({ url, name: 'Chứng từ hoàn tiền' })} />
           <SuspendedCommissionsCard bookingId={data.booking.id} />
           {notice && <p role="status" data-testid="odd-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
           {data.canRespond && (

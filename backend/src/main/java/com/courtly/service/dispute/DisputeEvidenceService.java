@@ -188,12 +188,7 @@ public class DisputeEvidenceService {
     }
 
     private boolean isActiveAdmin(UUID userId) {
-        try {
-            adminAccessService.requireActiveAdmin(userId);
-            return true;
-        } catch (ApiException exception) {
-            return false;
-        }
+        return adminAccessService.isActiveAdmin(userId);
     }
 
     /** Anh cua ca ba ben (nguoi bao cao, chu san, quan tri vien): cung thu muc luu tru, cung co che xem co kiem tra quyen. */

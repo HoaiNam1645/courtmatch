@@ -10,6 +10,7 @@ import { disputeStatusMeta, formatDateTime, remainingText } from './disputeUi'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EvidenceImage } from './EvidenceImage'
 import { EvidenceManager } from './EvidenceManager'
+import { RefundPanel } from './RefundPanel'
 import { SupplementForm } from './SupplementForm'
 
 const ACTOR_ICON = { you: CircleUserRound, owner: Store, admin: ShieldCheck }
@@ -65,6 +66,7 @@ function DisputeDetailPage({ reportId, user, onLogout }) {
       {data.canCancel && <button type="button" data-testid="dd-cancel" onClick={() => { setNotice(''); setCancelling(true) }} className="mt-4 h-11 rounded-lg border border-red-200 bg-white px-5 text-sm font-semibold text-red-700">Huỷ báo cáo</button>}
 
       <h2 className="mt-8 text-lg font-semibold">Nội dung trao đổi</h2>
+      <div className="mt-4"><RefundPanel disputeId={data.id} role="player" onChanged={reload} onOpen={(url) => setLightbox({ url, name: 'Chứng từ hoàn tiền' })} /></div>
       <ol className="mt-4 grid gap-4" data-testid="dd-timeline">
         {data.timeline.map((entry, index) => {
           const Icon = ACTOR_ICON[entry.actor] ?? FileText

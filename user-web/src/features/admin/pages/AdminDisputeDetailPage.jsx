@@ -7,6 +7,7 @@ import { useApiResource } from '../../../hooks/useApiResource'
 import { classNames, formatCurrency } from '../../../shared/utils'
 import { ConfirmDialog } from '../../disputes/ConfirmDialog'
 import { EvidenceImage } from '../../disputes/EvidenceImage'
+import { RefundPanel } from '../../disputes/RefundPanel'
 import { formatDateTime } from '../../disputes/disputeUi'
 import { OwnerCard, OwnerError, OwnerLoading } from '../../owner/components/OwnerUi'
 import { AdminLayout } from '../components/AdminLayout'
@@ -85,6 +86,7 @@ function AdminDisputeDetailPage() {
             </dl>
           </OwnerCard>
 
+          <RefundPanel disputeId={data.id} role="admin" onChanged={reload} onOpen={(url) => setLightbox({ url, name: 'Chứng từ hoàn tiền' })} />
           {notice && <p role="status" data-testid="add-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
           {data.canDecide && (
             <OwnerCard title="Quyết định" description="Quyết định không sửa được sau khi gửi. Chủ sân sẽ hoàn tiền trực tiếp cho người chơi.">

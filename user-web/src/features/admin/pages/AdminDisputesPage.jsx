@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight, ImageIcon, Search, X } from 'lucide-react'
 import { ADMIN_DISPUTE_STATUS, ADMIN_DISPUTE_TABS, DISPUTE_CATEGORY_OPTIONS, fetchAdminDisputes } from '../../../api/adminDisputes'
 import { RESOLUTION_LABEL } from '../../../api/bookingDisputes'
+import { REFUND_STATUS } from '../../../api/disputeRefunds'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { useDebounced } from '../../../hooks/useDebounced'
 import { classNames, formatCurrency } from '../../../shared/utils'
@@ -89,6 +90,7 @@ function AdminDisputesPage() {
                           <span data-testid="ad-waiting">{item.status === 'reviewing' ? `Chờ xử lý từ ${formatDisputeTime(item.waitingSince)} (${elapsedText(item.waitingSince)})` : `Gửi lúc ${formatDisputeTime(item.createdAt)}`}</span>
                           <span data-testid="ad-prior">Sân có {item.priorVenueDisputes} báo cáo trước đó</span>
                           {item.resolution && <span className="text-emerald-800">{RESOLUTION_LABEL[item.resolution] ?? item.resolution}</span>}
+                          {item.refundStatus && <span className="text-slate-700" data-testid="ad-refund-status">Khoản hoàn: {REFUND_STATUS[item.refundStatus]?.label ?? item.refundStatus}</span>}
                         </div>
                       </Link>
                     </li>

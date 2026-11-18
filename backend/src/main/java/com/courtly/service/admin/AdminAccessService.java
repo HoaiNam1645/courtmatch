@@ -39,6 +39,18 @@ public class AdminAccessService {
         return user;
     }
 
+    /**
+     * Co phai quan tri vien dang hoat dong khong, KHONG nem loi: dung de phan quyen xem tai nguyen ma nguoi khac cung xem duoc.
+     * (Bat ngoai le tu {@link #requireActiveAdmin} trong mot transaction khac se danh dau transaction ngoai rollback-only.)
+     */
+    @Transactional(readOnly = true)
+    public boolean isActiveAdmin(UUID userId) {
+        return userRepository.findById(userId)
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE)
+                .filter(user -> user.getUserRoles().stream().anyMatch(userRole -> Role.ADMIN.equals(userRole.getRole().getCode())))
+                .isPresent();
+    }
+
     /** Quan tri vien phai co quyen chi tiet {@code permissionCode} qua mot trong cac vai tro cua minh. */
     @Transactional(readOnly = true)
     public User requirePermission(UUID userId, String permissionCode) {
