@@ -1,7 +1,9 @@
 package com.courtly.api.owner;
 
 import com.courtly.api.owner.dto.CommissionListResponse;
+import com.courtly.api.owner.dto.SuspendedCommissionResponse;
 import com.courtly.service.owner.OwnerCommissionService;
+import com.courtly.service.owner.OwnerSuspendedCommissionService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
@@ -25,6 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class OwnerCommissionController {
 
     private final OwnerCommissionService commissionService;
+    private final OwnerSuspendedCommissionService suspendedService;
+
+    /** 2.3.97 - hoa hong dang tam hoan do tranh chap. */
+    @GetMapping("/suspended")
+    public ResponseEntity<SuspendedCommissionResponse> suspended(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(suspendedService.list(OwnerVenueController.ownerId(jwt)));
+    }
 
     @GetMapping
     public ResponseEntity<CommissionListResponse> list(

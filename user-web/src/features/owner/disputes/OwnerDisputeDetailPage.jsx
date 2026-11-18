@@ -11,6 +11,7 @@ import { EvidenceManager } from '../../disputes/EvidenceManager'
 import { formatDateTime, remainingText } from '../../disputes/disputeUi'
 import { OwnerLayout } from '../components/OwnerLayout'
 import { OwnerCard, OwnerError, OwnerLoading } from '../components/OwnerUi'
+import { SuspendedCommissionsCard } from '../components/SuspendedCommissionsCard'
 import { primaryButtonClass, textareaClass } from '../ownerStyles'
 
 const ACTOR_ICON = { player: CircleUserRound, you: Store, admin: ShieldCheck }
@@ -57,6 +58,7 @@ function OwnerDisputeDetailPage() {
             </dl>
           </OwnerCard>
 
+          <SuspendedCommissionsCard bookingId={data.booking.id} />
           {notice && <p role="status" data-testid="odd-notice" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">{notice}</p>}
           {data.canRespond && (
             <OwnerCard title="Giải trình của bạn" description="Chỉ gửi được một lần và không sửa được sau khi gửi. Kèm ảnh bằng chứng nếu có.">

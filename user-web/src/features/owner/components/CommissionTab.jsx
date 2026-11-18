@@ -7,6 +7,7 @@ import { classNames, formatCurrency } from '../../../shared/utils'
 import { formatDateTime } from '../ownerDates'
 import { inputClass, secondaryButtonClass } from '../ownerStyles'
 import { OwnerCard, OwnerEmpty, OwnerError, OwnerLoading } from './OwnerUi'
+import { SuspendedCommissionsCard } from './SuspendedCommissionsCard'
 
 /** 2.3.18 — phí nền tảng của từng booking, chụp theo chính sách lúc ghi nhận. */
 function CommissionTab() {
@@ -32,6 +33,8 @@ function CommissionTab() {
           {data?.activePolicy && <> Chính sách hiện hành: <span className="font-semibold text-emerald-900" data-testid="active-policy">{data.activePolicy.name} · {describeFee(data.activePolicy.feeType, data.activePolicy.feeValue, formatCurrency)}</span>.</>}
         </p>
       </div>
+
+      <SuspendedCommissionsCard />
 
       <OwnerCard>
         <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Trạng thái hoa hồng">

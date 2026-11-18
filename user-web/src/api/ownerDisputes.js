@@ -101,3 +101,20 @@ export async function uploadOwnerEvidence(disputeId, file) {
 export async function deleteOwnerEvidence(disputeId, evidenceId) {
   await request(`/api/v1/owner/booking-disputes/${disputeId}/evidences/${evidenceId}`, { method: 'DELETE' })
 }
+
+/** 2.3.97: hoa hồng đang tạm hoãn đối soát do tranh chấp (chỉ đọc). */
+export async function fetchSuspendedCommissions() {
+  const data = await request('/api/v1/owner/commissions/suspended')
+  return {
+    totalAmount: Number(data.totalAmount ?? 0),
+    items: data.items.map((item) => ({
+      bookingId: item.bookingId,
+      bookingCode: item.bookingCode,
+      venueName: item.venueName,
+      commissionAmount: Number(item.commissionAmount),
+      voucherDiscount: Number(item.voucherDiscount ?? 0),
+      disputeId: item.disputeId ?? null,
+      suspendedAt: item.suspendedAt,
+    })),
+  }
+}
