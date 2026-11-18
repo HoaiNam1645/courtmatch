@@ -130,7 +130,7 @@ class DisputeCommissionHoldTest extends BookingDisputeTestBase {
         assertThat(commissionStatus(bookingId)).isEqualTo("due");
         assertThat(jdbc.queryForObject("SELECT due_at >= now() - interval '1 minute' FROM booking_commissions WHERE booking_id = ?", Boolean.class, bookingId)).isTrue();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM notifications WHERE type = 'booking_dispute_resolved' AND user_id IN (?, ?)", Integer.class, owner.getId(), player.getId())).isEqualTo(2);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action = 'dispute.reject'", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action = 'dispute.reject' AND created_at >= now()", Integer.class)).isEqualTo(1);
         reject(disputeId, "Camera cho thay san van mo cua binh thuong", 409);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM notifications WHERE type = 'commission_restored' AND user_id = ?", Integer.class, owner.getId())).isEqualTo(1);
     }

@@ -76,8 +76,8 @@ class DisputeRefundFlowTest extends DisputeFinanceTestBase {
         assertThat(commissionStatus(ids[1])).isEqualTo("adjusted");
         assertThat(commissionAmount(ids[1])).isEqualByComparingTo("6111");
         assertThat(jdbc.queryForObject("SELECT confirmed_by FROM refunds WHERE id = ?", UUID.class, UUID.fromString(refundId))).isEqualTo(player.getId());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action IN ('refund.owner_report', 'refund.confirm', 'commission.refund_adjust')", Integer.class)).isEqualTo(3);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM notifications WHERE type = 'booking_refund_updated'", Integer.class)).isGreaterThanOrEqualTo(4);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action IN ('refund.owner_report', 'refund.confirm', 'commission.refund_adjust') AND created_at >= now()", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notifications WHERE type = 'booking_refund_updated' AND created_at >= now()", Integer.class)).isGreaterThanOrEqualTo(4);
         playerPost(playerToken, "/api/v1/refunds/" + refundId + "/confirm", null, 409);
         assertThat(commissionAmount(ids[1])).isEqualByComparingTo("6111");
     }
