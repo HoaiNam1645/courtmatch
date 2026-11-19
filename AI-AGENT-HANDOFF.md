@@ -148,8 +148,14 @@ Da trien khai backend va frontend cho cac nhom:
 
 - `2.2.1-2.2.10`: du lieu tran, lam sach, dac trung, Elo, thong ke va hieu suat.
 - `2.2.20-2.2.27`: tim kiem va loc doi tac theo vi tri, thoi gian, ky nang, phong cach.
-- `2.2.28-2.2.30`: xep hang/de xuat doi tac co nguon diem va co che fallback. Khong
-  duoc mac dinh rang da co mot AI service FastAPI doc lap hoan chinh neu chua kiem tra.
+- `2.2.11-2.2.19`, `2.2.28-2.2.30`: model AI that. Thu muc `ai-service/` (uv, FastAPI,
+  CatBoostRanker xep hang doi tac + CatBoostClassifier chia doi tren nen Elo). Huan luyen:
+  `cd ai-service && uv run python -m train partner|team` (doc thang cac bang cua he thong,
+  chia theo thoi gian, so voi baseline, ghi `artifacts/{version}/`, KHONG commit .cbm).
+  Spring Boot goi qua `AiServiceClient` (token `AI_SERVICE_TOKEN`, timeout 1,5 giay), kiem tra
+  lai ket qua, xep theo diem roi moi phan trang; AI tat/loi/qua han/chua co model thi dung
+  baseline (`scoring_source = baseline`). Admin nhap/kich hoat/quay lai model o `/admin/matching`
+  tab Model AI (quyen `matching.manage`). Model chia doi hien chua thang Elo nen chua kich hoat duoc.
 - `2.2.31-2.2.36`: gui, xem, chap nhan, tu choi, huy yeu cau va xem doi tac da ket noi.
 - `2.2.37-2.2.42`: tao tran, ghi/xac nhan ket qua, cap nhat Elo, hieu suat, xem ket qua
   va lich su.

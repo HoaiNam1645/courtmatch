@@ -19,6 +19,13 @@ function toPartner(candidate) {
     styleCompatibility: Number(candidate.styleCompatibility),
     availableFrom: candidate.availableFrom,
     availableUntil: candidate.availableUntil,
+    totalScore: candidate.totalScore == null ? null : Number(candidate.totalScore),
+    confidence: candidate.confidence == null ? null : Number(candidate.confidence),
+    confidenceLabel: candidate.confidenceLabel ?? null,
+    reasons: candidate.reasons ?? [],
+    scoringSource: candidate.scoringSource ?? 'baseline',
+    sourceLabel: candidate.sourceLabel ?? 'Gợi ý theo công thức',
+    listId: candidate.listId ?? null,
   }
 }
 
@@ -31,6 +38,7 @@ export async function searchPartners({
   maxRatingDifference,
   page = 0,
   size = 12,
+  listId = null,
 }) {
   const search = new URLSearchParams({
     preferredLocationId,
@@ -40,6 +48,8 @@ export async function searchPartners({
     page: String(page),
     size: String(size),
   })
+  // Trang sau của cùng một lần tìm gửi lại listId để dùng đúng một model và thứ tự (2.2.29).
+  if (listId) search.set('listId', listId)
   const data = await request(`/api/v1/partners/search?${search.toString()}`)
   return {
     partners: data.content.map(toPartner),
@@ -47,6 +57,7 @@ export async function searchPartners({
     size: data.size,
     totalElements: data.totalElements,
     totalPages: data.totalPages,
+    listId: data.content[0]?.listId ?? listId,
   }
 }
 

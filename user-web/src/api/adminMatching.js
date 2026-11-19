@@ -181,7 +181,7 @@ export async function fetchMatchingPerformance({ from, to } = {}) {
   }
 }
 
-export const MODEL_TYPE_LABEL = { baseline_ranker: 'Xếp hạng đối tác (baseline)', catboost_ranker: 'Xếp hạng đối tác (CatBoost)', double_team_ranker: 'Chia đội đôi' }
+export const MODEL_TYPE_LABEL = { baseline_ranker: 'Xếp hạng đối tác (baseline)', catboost_ranker: 'Xếp hạng đối tác (CatBoost)', double_team_ranker: 'Chia đội đôi (baseline)', catboost_team_ranker: 'Chia đội đôi (CatBoost)' }
 export const MODEL_STATUS_LABEL = { active: 'Đang hoạt động', ready: 'Sẵn sàng', training: 'Đang huấn luyện', failed: 'Lỗi', archived: 'Lưu trữ' }
 
 export const STATS_METRICS = [

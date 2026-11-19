@@ -67,7 +67,7 @@ function DoubleTeamResultPage({ batchId, user, onLogout }) {
           <a href="/partners/double-teams" className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-100/70"><ArrowLeft className="size-4" />Chọn lại người chơi</a>
           <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-lime-300">2.3.69 · Đề xuất đội đôi tối ưu</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{data ? matchTypeLabels[data.matchType] : 'Kết quả chia đội'}</h1>
-          {data && <p className="mt-3 text-sm text-emerald-100/70" data-testid="dt-source">Tính bằng công thức cơ sở (baseline) · {data.modelVersion}</p>}
+          {data && <p className="mt-3 text-sm text-emerald-100/70" data-testid="dt-source">{data.scoringSource === 'ai' ? 'Gợi ý bằng AI' : `Tính bằng công thức cơ sở (baseline) · ${data.modelVersion}`}</p>}
         </div>
       </section>
 

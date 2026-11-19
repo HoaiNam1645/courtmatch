@@ -7,12 +7,12 @@ export function usePartnerSearch() {
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
-  const search = useCallback(async (filters, page = 0) => {
+  const search = useCallback(async (filters, page = 0, listId = null) => {
     setStatus('loading')
     setError('')
     setFieldErrors({})
     try {
-      const result = await searchPartners({ ...filters, page })
+      const result = await searchPartners({ ...filters, page, listId })
       setData(result)
       setStatus(result.partners.length === 0 ? 'empty' : 'success')
       return true

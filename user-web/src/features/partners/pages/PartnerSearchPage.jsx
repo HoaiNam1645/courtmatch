@@ -65,7 +65,22 @@ function PartnerCard({ partner, requestSent, onInvite }) {
             </div>
             <p className="mt-1 text-xs font-semibold text-stone-400">{partner.ratingLabel} · {partner.totalMatches} trận hợp lệ</p>
           </div>
+          {partner.totalScore != null && (
+            <div className="shrink-0 text-right" data-testid={`partner-score-${partner.id}`}>
+              <p className="text-2xl font-semibold leading-none text-emerald-900" data-testid="partner-score">{Math.round(partner.totalScore)}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-stone-400">Điểm phù hợp</p>
+            </div>
+          )}
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="partner-source">
+          <span data-source={partner.scoringSource} className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${partner.scoringSource === 'ai' ? 'bg-violet-100 text-violet-700' : 'bg-stone-100 text-stone-600'}`}>{partner.sourceLabel}</span>
+          {partner.confidenceLabel && <span data-testid="partner-confidence" className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${partner.confidenceLabel === 'Cao' ? 'bg-emerald-100 text-emerald-800' : partner.confidenceLabel === 'Trung bình' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600'}`}>Độ tin cậy: {partner.confidenceLabel}</span>}
+        </div>
+        {partner.reasons.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-1.5" data-testid="partner-reasons" aria-label="Lý do gợi ý">
+            {partner.reasons.map((reason) => <li key={reason} className="rounded-full bg-lime-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">{reason}</li>)}
+          </ul>
+        )}
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-emerald-950 p-3 text-white"><p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-200/70">Elo</p><p className="mt-1 text-xl font-semibold text-lime-300">{partner.ratingScore.toFixed(0)}</p></div>
@@ -146,7 +161,7 @@ function PartnerSearchPage({ user, onLogout }) {
     await results.search(activeForm, 0)
   }
 
-  const changePage = (page) => results.search(activeForm, page)
+  const changePage = (page) => results.search(activeForm, page, results.listId)
   const fieldErrors = { ...results.fieldErrors, ...clientErrors }
   const openRequest = (partner) => {
     setSelectedPartner(partner)

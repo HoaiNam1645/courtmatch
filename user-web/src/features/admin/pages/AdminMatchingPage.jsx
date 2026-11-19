@@ -5,6 +5,7 @@ import { classNames } from '../../../shared/utils'
 import { shiftIsoDate, todayInVietnam } from '../../owner/ownerDates'
 import { inputClass } from '../../owner/ownerStyles'
 import { AdminLayout } from '../components/AdminLayout'
+import { AiModelManagement } from '../components/matching/AiModelManagement'
 import { ModelAnalysisSection } from '../components/matching/ModelAnalysisSection'
 import { PerformanceSection } from '../components/matching/PerformanceSection'
 import { TeamHistorySection } from '../components/matching/TeamHistorySection'
@@ -52,6 +53,7 @@ function AdminMatchingPage() {
       {!problem && tab === 'partner-history' && <PartnerHistorySection range={range} source={source} />}
       {!problem && tab === 'models' && (
         <div className="grid min-w-0 grid-cols-1 gap-8">
+          <AiModelManagement />
           <ModelAnalysisSection range={range} source={source} />
           <PerformanceSection range={range} />
         </div>
