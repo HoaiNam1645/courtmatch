@@ -191,7 +191,7 @@ def train_team(data: Dataset | None = None, seed: int = config.RANDOM_SEED, para
     spread = float(np.std([abs(2 * p - 1) for p in valid_p])) or 1.0
     version = registry.new_version("team", _params_hash(params, seed))
     metadata = {
-        "kind": "team", "modelType": "double_team_ranker", "schema": schema_document("team"), "seed": seed,
+        "kind": "team", "modelType": "catboost_team_ranker", "schema": schema_document("team"), "seed": seed,
         "parameters": params, "bestIteration": int(model.get_best_iteration() or 0),
         "labelDefinition": "1 neu doi 1 thang tran; mau huan luyen duoc doi xung (doi cho hai doi va dao nhan).",
         "dataNote": DATA_NOTE,

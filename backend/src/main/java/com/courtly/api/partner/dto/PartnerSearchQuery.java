@@ -33,7 +33,10 @@ public record PartnerSearchQuery(
 
         @Min(value = 1, message = "Kich thuoc trang tu 1 den 100")
         @Max(value = 100, message = "Kich thuoc trang tu 1 den 100")
-        Integer size) {
+        Integer size,
+
+        /** Danh sach da xep hang cua lan tim truoc (tu trang 1); gui lai de cac trang sau dung dung mot model va thu tu. */
+        UUID listId) {
 
     public int ratingDifference() {
         return maxRatingDifference == null ? 200 : maxRatingDifference;

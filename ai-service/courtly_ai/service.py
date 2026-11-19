@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from . import config, inference
 
-KIND_BY_TYPE = {"catboost_ranker": "partner", "double_team_ranker": "team"}
+KIND_BY_TYPE = {"catboost_ranker": "partner", "catboost_team_ranker": "team"}
 
 
 class Candidate(BaseModel):

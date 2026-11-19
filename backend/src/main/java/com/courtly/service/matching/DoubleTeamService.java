@@ -74,6 +74,7 @@ public class DoubleTeamService {
     private final DoubleTeamSuggestionRepository suggestionRepository;
     private final ObjectMapper objectMapper;
     private final MatchingRunRecorder runRecorder;
+    private final TeamBalanceService teamBalanceService;
 
     /** 2.3.63 - 2.3.69: kiem tra 4 nguoi, tinh va luu cac phuong an chia doi. */
     @Transactional
@@ -114,7 +115,12 @@ public class DoubleTeamService {
 
         List<Option> options = buildOptions(ids, input.matchType(), users, playerById, pairByKey);
 
-        AiModel model = baselineModel();
+        TeamBalanceService.Outcome ai = teamBalanceService.predict(options, playerById, pairByKey, input.matchType() == DoubleTeamType.MIXED);
+        if (ai.ai()) {
+            options = applyAi(options, ai);
+        }
+        String source = ai.ai() ? "ai" : "baseline";
+        AiModel model = ai.ai() ? ai.model() : baselineModel();
         UUID batchId = UUID.randomUUID();
         Instant now = Instant.now();
         User requester = users.get(requesterId);
@@ -127,7 +133,7 @@ public class DoubleTeamService {
             row.setMatchType(input.matchType());
             row.setRankNo((short) option.rank());
             row.setRecommended(option.recommended());
-            row.setScoringSource("baseline");
+            row.setScoringSource(source);
             row.setTeam1Players(option.team1().playerIds());
             row.setTeam2Players(option.team2().playerIds());
             row.setTeam1Strength(option.team1().strength());
@@ -137,12 +143,45 @@ public class DoubleTeamService {
             rows.add(row);
         }
         suggestionRepository.saveAllAndFlush(rows);
-        runRecorder.recordSuccess(batchId, MatchingRunRecorder.DOUBLE_TEAM, requesterId, model, "baseline",
-                rows.size(), (System.nanoTime() - startedAt) / 1_000_000,
-                Map.of("matchType", input.matchType().getValue()));
-        return new DoubleTeamSuggestionResponse(batchId, input.matchType(), "baseline",
+        Map<String, Object> runParams = new LinkedHashMap<>();
+        runParams.put("matchType", input.matchType().getValue());
+        if (ai.fallbackReason() != null) {
+            runParams.put("fallbackReason", ai.fallbackReason());
+        }
+        runRecorder.recordSuccess(batchId, MatchingRunRecorder.DOUBLE_TEAM, requesterId, model, source,
+                rows.size(), (System.nanoTime() - startedAt) / 1_000_000, runParams);
+        return new DoubleTeamSuggestionResponse(batchId, input.matchType(), source,
                 model.getModelVersion(), rows.getFirst().getCreatedAt() != null ? rows.getFirst().getCreatedAt() : now,
                 players, pairs, options);
+    }
+
+    /**
+     * Xep lai cac phuong an theo do can bang do model AI du doan (2.2.28): doi 1 thang p -> do chenh |2p - 1| * 100 (0 = can bang tuyet doi),
+     * nhan theo cung nguong voi baseline. Phuong an khuyen nghi la phuong an can bang nhat.
+     */
+    private List<Option> applyAi(List<Option> options, TeamBalanceService.Outcome ai) {
+        List<Option> scored = new ArrayList<>();
+        for (Option option : options) {
+            TeamBalanceService.Result result = ai.byRank().get(option.rank());
+            double p = result.probability().doubleValue();
+            BigDecimal gap = BigDecimal.valueOf(Math.abs(2 * p - 1) * 100.0).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal probability = BigDecimal.valueOf(p * 100.0).setScale(1, RoundingMode.HALF_UP);
+            scored.add(new Option(0, false, option.team1(), option.team2(), gap, label(gap), probability, null));
+        }
+        scored.sort(Comparator.comparing(Option::balanceScore).thenComparing(
+                option -> option.team1().compatibility().add(option.team2().compatibility()), Comparator.reverseOrder()));
+        List<Option> out = new ArrayList<>();
+        Option best = scored.getFirst();
+        for (int i = 0; i < scored.size(); i++) {
+            Option o = scored.get(i);
+            String reason = i == 0
+                    ? "Mô hình AI dự đoán đội 1 có %s%% khả năng thắng, hai đội gần như cân bằng nhất trong các cách chia; điểm tương thích hai đội là %s và %s."
+                            .formatted(o.team1WinProbability().toPlainString(), o.team1().compatibility().toPlainString(), o.team2().compatibility().toPlainString())
+                    : "Mô hình AI dự đoán đội 1 có %s%% khả năng thắng, lệch hơn phương án tốt nhất %s điểm."
+                            .formatted(o.team1WinProbability().toPlainString(), o.balanceScore().subtract(best.balanceScore()).stripTrailingZeros().toPlainString());
+            out.add(new Option(i + 1, i == 0, o.team1(), o.team2(), o.balanceScore(), o.balanceLabel(), o.team1WinProbability(), reason));
+        }
+        return out;
     }
 
     /** 2.3.76 - lich su chia doi cua chinh minh, moi nhat truoc. */

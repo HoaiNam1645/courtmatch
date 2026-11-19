@@ -53,6 +53,7 @@ public class RoleAndPermissionSeeder implements Seeder {
         PERMISSIONS.put("report.handle", "Xu ly bao cao vi pham");
         PERMISSIONS.put("stats.system.view", "Xem thong ke he thong");
         PERMISSIONS.put("matching.view", "Xem phan tich va lich su ghep cap");
+        PERMISSIONS.put("matching.manage", "Nhap, kich hoat va quay lai phien ban model AI");
     }
 
     private static final Map<String, String> ROLE_NAMES = new LinkedHashMap<>();

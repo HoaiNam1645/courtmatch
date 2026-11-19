@@ -83,6 +83,9 @@ public final class ErrorCode {
     public static final String PERMISSION_ASSIGNMENT_INVALID = "PERMISSION_ASSIGNMENT_INVALID";
     public static final String OWNER_ACCOUNT_INVALID = "OWNER_ACCOUNT_INVALID";
     public static final String VENUE_REVIEW_INVALID = "VENUE_REVIEW_INVALID";
+    // Model AI (2.2.16, 2.2.19)
+    public static final String AI_MODEL_INVALID = "AI_MODEL_INVALID";
+    public static final String AI_SERVICE_UNAVAILABLE = "AI_SERVICE_UNAVAILABLE";
     // Bao cao ve don dat san (2.3.85 - 2.3.86)
     public static final String BOOKING_DISPUTE_INVALID = "BOOKING_DISPUTE_INVALID";
     // Danh gia san cua nguoi choi (2.3.77 - 2.3.81)

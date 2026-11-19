@@ -86,7 +86,7 @@ def test_load_guards(data, trained, tmp_path):
     assert c.post("/v1/models/load", headers=headers(), json={"modelType": "catboost_ranker", "modelVersion": "khong-co"}).status_code == 404
     assert c.post("/v1/models/load", headers=headers(), json={"modelType": "catboost_ranker", "modelVersion": "../etc"}).status_code == 422
     assert c.post("/v1/models/load", headers=headers(), json={"modelType": "bad", "modelVersion": partner["version"]}).status_code == 422
-    assert c.post("/v1/models/load", headers=headers(), json={"modelType": "double_team_ranker", "modelVersion": partner["version"]}).status_code == 409
+    assert c.post("/v1/models/load", headers=headers(), json={"modelType": "catboost_team_ranker", "modelVersion": partner["version"]}).status_code == 409
     assert c.post("/v1/models/load", headers=headers(), json={"modelType": "catboost_ranker", "modelVersion": partner["version"], "checksum": "0" * 64}).status_code == 409
     # file bi sua -> checksum khong khop
     broken = registry.artifact_dir(partner["version"]) / "model.cbm"
@@ -99,7 +99,7 @@ def test_load_guards(data, trained, tmp_path):
 def test_predict_balance_is_symmetric(data, trained):
     _, team = trained
     c = client()
-    c.post("/v1/models/load", headers=headers(), json={"modelType": "double_team_ranker", "modelVersion": team["version"]})
+    c.post("/v1/models/load", headers=headers(), json={"modelType": "catboost_team_ranker", "modelVersion": team["version"]})
     row = dataset.build_team_rows(data)[0].values
     from courtly_ai.pairs import swap_teams
     clean = lambda v: {k: (None if x != x else x) for k, x in v.items()}

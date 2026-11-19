@@ -17,6 +17,8 @@ import com.courtly.domain.match.PlayerStatistics;
 import com.courtly.domain.match.PlayerStatisticsRepository;
 import com.courtly.domain.matching.AiModel;
 import com.courtly.domain.matching.PartnerSearchRepository;
+import com.courtly.domain.matching.PlayerMatchProfile;
+import com.courtly.domain.matching.PlayerMatchProfileRepository;
 import com.courtly.domain.matching.PartnerSuggestion;
 import com.courtly.domain.matching.PartnerSuggestionRepository;
 import com.courtly.common.enums.SuggestionSource;
@@ -56,14 +58,31 @@ public class PartnerSearchService {
     private final PartnerSearchRepository partnerSearchRepository;
     private final PartnerSuggestionRepository suggestionRepository;
     private final MatchingRunRecorder runRecorder;
+    private final PlayerMatchProfileRepository matchProfileRepository;
+    private final PartnerRankingService rankingService;
+
+    /** Ket qua mot lan tim: trang can tra, nguon diem va ly do rot ve baseline (neu co). */
+    private record Ranked(List<PartnerSearchResponse> list, String source, AiModel model, String fallbackReason, UUID listId,
+                          Map<UUID, List<String>> reasonCodes) {
+    }
+
+    private static final int POOL_LIMIT = 200;
+    private static final BigDecimal PROVISIONAL_CAP = BigDecimal.valueOf(70);
+    private static final long LIST_TTL_MS = 10 * 60 * 1000;
+    private static final int LIST_CACHE_MAX = 500;
+    private final Map<UUID, CachedList> listCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record CachedList(UUID requesterId, long expiresAt, Ranked ranked) {
+    }
 
     /** Tim doi tac va ghi nhat ky lan tim (2.3.70 - 2.3.76); loi he thong cung duoc ghi lai. */
     @Transactional
     public PageResponse<PartnerSearchResponse> search(UUID requesterId, PartnerSearchQuery query) {
         long startedAt = System.nanoTime();
         try {
-            PageResponse<PartnerSearchResponse> page = findPartners(requesterId, query);
-            recordSearch(requesterId, query, page, (System.nanoTime() - startedAt) / 1_000_000);
+            Ranked ranked = rankedList(requesterId, query);
+            PageResponse<PartnerSearchResponse> page = pageOf(ranked.list(), query);
+            recordSearch(requesterId, query, page, ranked, (System.nanoTime() - startedAt) / 1_000_000);
             return page;
         } catch (ApiException e) {
             throw e;
@@ -74,14 +93,46 @@ public class PartnerSearchService {
         }
     }
 
-    private void recordSearch(UUID requesterId, PartnerSearchQuery query,
-                              PageResponse<PartnerSearchResponse> page, long durationMs) {
-        AiModel model = runRecorder.partnerBaselineModel();
+    /** Danh sach da xep hang: lay lai tu bo nho dem neu trang sau cua cung mot lan tim, nguoc lai loc + cham diem moi. */
+    private Ranked rankedList(UUID requesterId, PartnerSearchQuery query) {
+        long now = System.currentTimeMillis();
+        listCache.values().removeIf(entry -> entry.expiresAt() < now);
+        if (query.listId() != null) {
+            CachedList cached = listCache.get(query.listId());
+            if (cached != null && cached.requesterId().equals(requesterId)) {
+                return cached.ranked();
+            }
+        }
+        Ranked ranked = rank(requesterId, query);
+        if (listCache.size() < LIST_CACHE_MAX) {
+            listCache.put(ranked.listId(), new CachedList(requesterId, now + LIST_TTL_MS, ranked));
+        }
+        return ranked;
+    }
+
+    private static PageResponse<PartnerSearchResponse> pageOf(List<PartnerSearchResponse> list, PartnerSearchQuery query) {
+        int size = query.pageSize();
+        int from = Math.min(list.size(), query.pageNumber() * size);
+        int to = Math.min(list.size(), from + size);
+        int totalPages = (int) Math.ceil(list.size() / (double) size);
+        return new PageResponse<>(list.subList(from, to), query.pageNumber(), size, list.size(), totalPages);
+    }
+
+    private void recordSearch(UUID requesterId, PartnerSearchQuery query, PageResponse<PartnerSearchResponse> page,
+                              Ranked ranked, long durationMs) {
+        AiModel model = ranked.model() != null ? ranked.model() : runRecorder.partnerBaselineModel();
+        Map<String, Object> params = searchParams(query);
+        params.put("listId", ranked.listId().toString());
+        params.put("poolSize", ranked.list().size());
+        if (ranked.fallbackReason() != null) {
+            params.put("fallbackReason", ranked.fallbackReason());
+        }
         UUID searchId = runRecorder.recordSuccess(null, MatchingRunRecorder.PARTNER_SEARCH, requesterId,
-                model, "baseline", page.content().size(), durationMs, searchParams(query));
+                model, ranked.source(), page.content().size(), durationMs, params);
         User requester = userRepository.getReferenceById(requesterId);
         List<PartnerSuggestion> rows = new ArrayList<>();
         int offset = query.pageNumber() * query.pageSize();
+        boolean ai = "ai".equals(ranked.source());
         for (int index = 0; index < page.content().size(); index++) {
             PartnerSearchResponse item = page.content().get(index);
             PartnerSuggestion row = new PartnerSuggestion();
@@ -92,15 +143,16 @@ public class PartnerSearchService {
             row.setLocationScore(item.locationCompatibility());
             row.setTimeScore(item.timeCompatibility());
             row.setStyleScore(item.styleCompatibility());
-            row.setTotalScore(PartnerScoring.total(item.skillSimilarity(), item.styleCompatibility(),
-                    item.timeCompatibility(), item.locationCompatibility()));
-            row.setScoringSource(SuggestionSource.BASELINE);
+            row.setTotalScore(item.totalScore());
+            row.setConfidenceScore(ai ? item.confidence() : null);
+            row.setScoringSource(ai ? SuggestionSource.AI : SuggestionSource.BASELINE);
             row.setSearchId(searchId);
             row.setRankNo((short) Math.min(offset + index + 1, Short.MAX_VALUE));
             Map<String, Object> reason = new LinkedHashMap<>();
             reason.put("ratingGap", item.ratingGap());
             reason.put("distanceKm", item.distanceKm());
             reason.put("provisional", item.provisional());
+            reason.put("reasons", ranked.reasonCodes().getOrDefault(item.userId(), List.of()));
             row.setReasonJson(reason);
             rows.add(row);
         }
@@ -117,7 +169,7 @@ public class PartnerSearchService {
         return params;
     }
 
-    private PageResponse<PartnerSearchResponse> findPartners(UUID requesterId, PartnerSearchQuery query) {
+    private Ranked rank(UUID requesterId, PartnerSearchQuery query) {
         User requester = requireActivePlayer(requesterId);
         PlayerPreferredLocation location = preferredLocationRepository
                 .findByIdAndUserId(query.preferredLocationId(), requesterId)
@@ -153,7 +205,7 @@ public class PartnerSearchService {
                         (short) start.getDayOfWeek().getValue(),
                         start.toLocalTime(),
                         end.toLocalTime(),
-                        PageRequest.of(query.pageNumber(), query.pageSize()));
+                        PageRequest.of(0, POOL_LIMIT));
 
         Set<UUID> scheduleUserIds = candidates.getContent().stream()
                 .map(PartnerSearchRepository.PartnerCandidateRow::getUserId)
@@ -179,7 +231,115 @@ public class PartnerSearchService {
                         start.toLocalTime(),
                         end.toLocalTime()))
                 .toList();
-        return PageResponse.from(candidates, content);
+
+        // Cham diem CHI cac ung vien da qua bo loc bat buoc (2.2.28); AI loi/qua han/chua co model thi dung baseline.
+        Map<UUID, PlayerMatchProfile> profiles = new HashMap<>();
+        matchProfileRepository.findAllById(scheduleUserIds).forEach(profile -> profiles.put(profile.getUserId(), profile));
+        String requesterPlayType = requester.getPlayerProfile() == null || requester.getPlayerProfile().getPreferredPlayType() == null
+                ? null : requester.getPlayerProfile().getPreferredPlayType().getValue();
+        List<PartnerRankingService.Input> inputs = content.stream()
+                .map(item -> new PartnerRankingService.Input(item.userId(),
+                        aiFeatures(requesterRating, profiles.get(requesterId), requesterPlayType, item, profiles.get(item.userId()))))
+                .toList();
+        PartnerRankingService.Outcome outcome = rankingService.rank(requesterId, inputs);
+
+        List<PartnerSearchResponse> scored = new ArrayList<>();
+        Map<UUID, List<String>> reasonCodes = new HashMap<>();
+        for (PartnerSearchResponse item : content) {
+            BigDecimal baseline = PartnerScoring.total(item.skillSimilarity(), item.styleCompatibility(),
+                    item.timeCompatibility(), item.locationCompatibility());
+            PartnerRankingService.Scored ai = outcome.ai() ? outcome.scores().get(item.userId()) : null;
+            BigDecimal total = ai == null ? baseline : ai.totalScore();
+            if (ai != null && item.provisional() && total.compareTo(PROVISIONAL_CAP) > 0) {
+                total = PROVISIONAL_CAP; // cold-start: nguoi duoi 5 tran khong duoc day len cao chi vi du lieu it
+            }
+            BigDecimal confidence = ai == null ? null : ai.confidence();
+            List<String> codes = ai == null ? baselineReasons(item) : ai.reasonCodes();
+            reasonCodes.put(item.userId(), codes);
+            scored.add(withScore(item, total, confidence, codes, outcome.ai()));
+        }
+        // Xep theo diem giam dan (hoa thi giu thu tu goc: gan Elo roi gan vi tri), roi moi phan trang.
+        List<PartnerSearchResponse> ordered = new ArrayList<>(scored);
+        ordered.sort(Comparator.comparing(PartnerSearchResponse::totalScore).reversed());
+        UUID listId = UUID.randomUUID();
+        List<PartnerSearchResponse> finalList = ordered.stream().map(item -> withList(item, listId)).toList();
+        return new Ranked(finalList, outcome.source(), outcome.model(), outcome.fallbackReason(), listId, reasonCodes);
+    }
+
+    private static Map<String, Object> aiFeatures(BigDecimal requesterRating, PlayerMatchProfile requesterProfile,
+                                                  String requesterPlayType, PartnerSearchResponse candidate,
+                                                  PlayerMatchProfile candidateProfile) {
+        Map<String, Object> f = new LinkedHashMap<>();
+        f.put("r_rating", requesterRating);
+        f.put("c_rating", candidate.ratingScore());
+        f.put("rating_gap", candidate.ratingGap());
+        f.put("r_win_rate", requesterProfile == null ? BigDecimal.valueOf(50) : requesterProfile.getWinRate());
+        f.put("c_win_rate", candidateProfile == null ? BigDecimal.valueOf(50) : candidateProfile.getWinRate());
+        f.put("r_matches", requesterProfile == null ? 0 : requesterProfile.getTotalMatches());
+        f.put("c_matches", candidate.totalMatches());
+        f.put("r_stability", requesterProfile == null ? null : requesterProfile.getPerformanceConsistency());
+        f.put("c_stability", candidateProfile == null ? null : candidateProfile.getPerformanceConsistency());
+        f.put("r_recency_days", requesterProfile == null ? null : requesterProfile.getDataRecencyDays());
+        f.put("c_recency_days", candidateProfile == null ? null : candidateProfile.getDataRecencyDays());
+        f.put("r_avg_point_diff", requesterProfile == null ? null : requesterProfile.getAveragePointDifference());
+        f.put("c_avg_point_diff", candidateProfile == null ? null : candidateProfile.getAveragePointDifference());
+        f.put("skill_similarity", candidate.skillSimilarity());
+        f.put("location_score", candidate.locationCompatibility());
+        f.put("time_score", candidate.timeCompatibility());
+        f.put("style_score", candidate.styleCompatibility());
+        f.put("distance_km", candidate.distanceKm());
+        f.put("same_play_type", requesterPlayType != null && requesterPlayType.equals(candidate.preferredPlayType()) ? 1 : 0);
+        f.put("r_provisional", requesterProfile == null || requesterProfile.getTotalMatches() < PROVISIONAL_MATCH_LIMIT ? 1 : 0);
+        f.put("c_provisional", candidate.provisional() ? 1 : 0);
+        return f;
+    }
+
+    /** Ly do khi dung baseline: cac diem thanh phan cao nhat (toi da 3). */
+    static List<String> baselineReasons(PartnerSearchResponse item) {
+        record Part(String code, BigDecimal score, double threshold) {
+        }
+        List<Part> parts = new ArrayList<>(List.of(
+                new Part("SKILL_BALANCED", item.skillSimilarity(), 70), new Part("NEAR_LOCATION", item.locationCompatibility(), 60),
+                new Part("SAME_TIME", item.timeCompatibility(), 60), new Part("STYLE_MATCH", item.styleCompatibility(), 80)));
+        return parts.stream().filter(part -> part.score() != null && part.score().doubleValue() >= part.threshold())
+                .sorted(Comparator.comparing((Part part) -> part.score()).reversed()).limit(3).map(Part::code).toList();
+    }
+
+    static String confidenceLabel(BigDecimal confidence, boolean provisional) {
+        if (provisional) return "Chưa đủ dữ liệu";
+        if (confidence == null) return null;
+        if (confidence.doubleValue() >= 0.7) return "Cao";
+        if (confidence.doubleValue() >= 0.4) return "Trung bình";
+        return "Thấp";
+    }
+
+    static final Map<String, String> REASON_TEXT = Map.of(
+            "SKILL_BALANCED", "Trình độ sát nhau",
+            "NEAR_LOCATION", "Gần khu vực chơi của bạn",
+            "SAME_TIME", "Trùng khung giờ rảnh",
+            "STYLE_MATCH", "Phong cách chơi hợp nhau",
+            "SAME_PLAY_TYPE", "Cùng hình thức chơi",
+            "GOOD_FORM", "Phong độ tốt gần đây",
+            "EXPERIENCED", "Đã chơi nhiều trận");
+
+    private static PartnerSearchResponse withScore(PartnerSearchResponse item, BigDecimal total, BigDecimal confidence,
+                                                   List<String> codes, boolean ai) {
+        List<String> texts = codes.stream().map(code -> REASON_TEXT.getOrDefault(code, null)).filter(java.util.Objects::nonNull).toList();
+        return new PartnerSearchResponse(item.userId(), item.fullName(), item.avatarUrl(), item.playingStyle(),
+                item.preferredPlayType(), item.ratingScore(), item.ratingLabel(), item.totalMatches(), item.provisional(),
+                item.ratingGap(), item.skillSimilarity(), item.distanceKm(), item.locationCompatibility(),
+                item.timeCompatibility(), item.styleCompatibility(), item.availableFrom(), item.availableUntil(),
+                total, confidence, confidenceLabel(confidence, item.provisional()), texts,
+                ai ? "ai" : "baseline", ai ? "Gợi ý bằng AI" : "Gợi ý theo công thức", null);
+    }
+
+    private static PartnerSearchResponse withList(PartnerSearchResponse item, UUID listId) {
+        return new PartnerSearchResponse(item.userId(), item.fullName(), item.avatarUrl(), item.playingStyle(),
+                item.preferredPlayType(), item.ratingScore(), item.ratingLabel(), item.totalMatches(), item.provisional(),
+                item.ratingGap(), item.skillSimilarity(), item.distanceKm(), item.locationCompatibility(),
+                item.timeCompatibility(), item.styleCompatibility(), item.availableFrom(), item.availableUntil(),
+                item.totalScore(), item.confidence(), item.confidenceLabel(), item.reasons(), item.scoringSource(),
+                item.sourceLabel(), listId);
     }
 
     private User requireActivePlayer(UUID userId) {
@@ -228,7 +388,8 @@ public class PartnerSearchService {
                         requestedDay, requestedStart, requestedEnd),
                 styleCompatibility(requesterStyle, candidateStyle),
                 candidate.getAvailableFrom(),
-                candidate.getAvailableUntil());
+                candidate.getAvailableUntil(),
+                null, null, null, List.of(), null, null, null);
     }
 
     /** 100 khi hai Elo bang nhau, giam dan theo xac suat ky vong cua cong thuc Elo. */

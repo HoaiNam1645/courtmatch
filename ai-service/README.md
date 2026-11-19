@@ -32,7 +32,7 @@ uv run pytest
 
 ## API
 - `GET /health` — trang thai va model dang nap (khong can token).
-- `POST /v1/models/load` `{modelType, modelVersion, checksum?}` — nap artifact; kiem tra checksum va schema dac trung.
+- `POST /v1/models/load` `{modelType: catboost_ranker|catboost_team_ranker, modelVersion, checksum?}` — nap artifact; kiem tra checksum va schema dac trung.
 - `POST /v1/rank-partners` `{requesterId, candidates:[{userId, features}]}` (toi da 200) -> `totalScore` 0-100, `confidence` 0-1, `reasons`, `modelVersion`.
 - `POST /v1/predict-balance` `{options:[{optionId, features}]}` -> `team1WinProbability`, `balance`.
 

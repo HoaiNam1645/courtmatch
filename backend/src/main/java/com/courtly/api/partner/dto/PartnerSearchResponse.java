@@ -2,6 +2,7 @@ package com.courtly.api.partner.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 /** Ung vien da qua bo loc, kem cac diem dac trung do backend tinh. */
@@ -22,5 +23,12 @@ public record PartnerSearchResponse(
         BigDecimal timeCompatibility,
         BigDecimal styleCompatibility,
         LocalTime availableFrom,
-        LocalTime availableUntil) {
+        LocalTime availableUntil,
+        BigDecimal totalScore,
+        BigDecimal confidence,
+        String confidenceLabel,
+        List<String> reasons,
+        String scoringSource,
+        String sourceLabel,
+        UUID listId) {
 }

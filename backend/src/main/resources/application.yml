@@ -97,6 +97,16 @@ courtly:
     owner-response-hours: ${BOOKING_DISPUTE_OWNER_RESPONSE_HOURS:48}
     # 2.3.108: so ngay nguoi choi khong phan hoi thi he thong tu xac nhan khoan hoan.
     refund-auto-confirm-days: ${DISPUTE_REFUND_AUTO_CONFIRM_DAYS:7}
+  ai:
+    # AI service FastAPI (2.2.17). Tat hoac loi/qua han thi Spring Boot dung baseline (2.2.28).
+    enabled: ${AI_SERVICE_ENABLED:true}
+    base-url: ${AI_SERVICE_URL:http://127.0.0.1:8001}
+    # Token noi bo gui trong X-Internal-Token; thieu token thi coi nhu AI khong kha dung.
+    token: ${AI_SERVICE_TOKEN:}
+    connect-timeout-ms: ${AI_SERVICE_CONNECT_TIMEOUT_MS:500}
+    timeout-ms: ${AI_SERVICE_TIMEOUT_MS:1500}
+    # Thu muc artifacts cua AI service, doc metadata khi nhap model (khong nhan duong dan tuy y).
+    artifact-dir: ${AI_ARTIFACT_DIR:../ai-service/artifacts}
   matching:
     # Nguong canh bao chat luong ghep cap tren man hinh quan tri (2.3.73).
     quality:

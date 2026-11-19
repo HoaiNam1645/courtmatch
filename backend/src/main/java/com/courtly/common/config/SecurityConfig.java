@@ -35,7 +35,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableConfigurationProperties({JwtProperties.class, CorsProperties.class,
         MailProperties.class, PasswordResetProperties.class, EmailVerificationProperties.class,
-        StorageProperties.class})
+        StorageProperties.class, AiProperties.class})
 public class SecurityConfig {
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {

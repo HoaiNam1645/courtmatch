@@ -81,7 +81,8 @@ class PartnerSearchControllerTest {
         // tim kiem se doi theo thu trong tuan cua ngay chay test.
         @SuppressWarnings("unchecked")
         java.util.Set<Integer> busyDays = ((java.util.List<Number>) entityManager.createNativeQuery(
-                "SELECT DISTINCT day_of_week FROM player_availability_slots WHERE start_time < time '19:30' AND end_time > time '18:00'")
+                "SELECT DISTINCT day_of_week FROM player_availability_slots WHERE start_time < time '19:30' AND end_time > time '18:00' "
+                + "AND user_id NOT IN (SELECT id FROM users WHERE email LIKE '%@bwf.example')")
                 .getResultList()).stream().map(Number::intValue).collect(java.util.stream.Collectors.toSet());
         requestedTime = ZonedDateTime.now(VIETNAM_ZONE).plusDays(2)
                 .withHour(18).withMinute(0).withSecond(0).withNano(0);
