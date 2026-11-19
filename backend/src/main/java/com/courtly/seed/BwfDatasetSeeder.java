@@ -6,8 +6,13 @@ import com.courtly.common.enums.MatchStatus;
 import com.courtly.common.enums.MatchDataSource;
 import com.courtly.common.enums.MatchType;
 import com.courtly.common.enums.PlayType;
+import com.courtly.common.enums.PlayingStyle;
 import com.courtly.common.enums.SkillLevel;
 import com.courtly.common.enums.UserStatus;
+import com.courtly.domain.account.PlayerAvailabilitySlot;
+import com.courtly.domain.account.PlayerAvailabilitySlotRepository;
+import com.courtly.domain.account.PlayerPreferredLocation;
+import com.courtly.domain.account.PlayerPreferredLocationRepository;
 import com.courtly.domain.account.PlayerProfile;
 import com.courtly.domain.account.Role;
 import com.courtly.domain.account.RoleRepository;
@@ -29,6 +34,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +87,8 @@ public class BwfDatasetSeeder implements Seeder {
     private final MatchRepository matchRepository;
     private final PlayerStatisticsRepository statisticsRepository;
     private final PlayerRatingHistoryRepository ratingHistoryRepository;
+    private final PlayerPreferredLocationRepository locationRepository;
+    private final PlayerAvailabilitySlotRepository availabilityRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
@@ -97,7 +105,8 @@ public class BwfDatasetSeeder implements Seeder {
 
         UUID idNguoiDauTien = SeedIds.of(duLieuNguoi.players().get(0).key());
         if (userRepository.existsById(idNguoiDauTien)) {
-            log.info("  [bwf] da co du lieu, bo qua");
+            int boSung = boSungHoSoNguoiDaCo(duLieuNguoi.players());
+            log.info("  [bwf] da co du lieu, bo qua (bo sung ho so cho {} nguoi)", boSung);
             return;
         }
 
@@ -140,13 +149,74 @@ public class BwfDatasetSeeder implements Seeder {
             profile.setPreferredPlayType(PlayType.from(p.preferredPlayType()));
             // playing_style va date_of_birth de trong: bo du lieu BWF khong co hai thong
             // tin nay, va dien bua vao se lam sai feature dau vao cua model.
+            if (p.profile() != null) {
+                profile.setPlayingStyle(PlayingStyle.from(p.profile().playingStyle()));
+            }
             user.setPlayerProfile(profile);
 
             userRepository.save(user);
             statisticsRepository.save(thongKe(user, p.statistics(), bayGio));
+            themHoSoBoSung(user, p);
             theoKhoa.put(p.key(), user);
         }
         return theoKhoa;
+    }
+
+    /**
+     * Bo sung khu vuc choi, lich ranh va phong cach (2.2.11). Chi them khi nguoi choi CHUA co khu vuc/lich, nen chay lai
+     * hoac chay tren database da seed truoc day deu khong tao trung.
+     */
+    private void themHoSoBoSung(User user, BwfSeedData.Player p) {
+        BwfSeedData.Profile profile = p.profile();
+        if (profile == null) {
+            return;
+        }
+        if (!locationRepository.existsByUserId(user.getId())) {
+            PlayerPreferredLocation location = new PlayerPreferredLocation();
+            location.setId(SeedIds.of("preferred-location:" + p.key()));
+            location.setUser(user);
+            location.setLabel("Gan nha");
+            location.setAddress(profile.location().district() + ", Da Nang");
+            location.setLatitude(BigDecimal.valueOf(profile.location().latitude()));
+            location.setLongitude(BigDecimal.valueOf(profile.location().longitude()));
+            location.setRadiusKm(BigDecimal.valueOf(profile.location().radiusKm()));
+            location.setDefault(true);
+            locationRepository.save(location);
+        }
+        if (availabilityRepository.findAllByUserIds(java.util.Set.of(user.getId())).isEmpty()) {
+            int index = 0;
+            for (BwfSeedData.Slot slot : profile.availability()) {
+                PlayerAvailabilitySlot entity = new PlayerAvailabilitySlot();
+                entity.setId(SeedIds.of("availability:" + p.key() + ":" + index++));
+                entity.setUser(user);
+                entity.setDayOfWeek((short) slot.dayOfWeek());
+                entity.setStartTime(LocalTime.parse(slot.start()));
+                entity.setEndTime(LocalTime.parse(slot.end()));
+                availabilityRepository.save(entity);
+            }
+        }
+    }
+
+    /** Database da seed truoc khi co ho so bo sung: them phong cach, khu vuc va lich ranh cho tung nguoi con thieu. */
+    private int boSungHoSoNguoiDaCo(List<BwfSeedData.Player> danhSach) {
+        int count = 0;
+        for (BwfSeedData.Player p : danhSach) {
+            if (p.profile() == null) continue;
+            User user = userRepository.findById(SeedIds.of(p.key())).orElse(null);
+            if (user == null) continue;
+            boolean thieu = !locationRepository.existsByUserId(user.getId())
+                    || availabilityRepository.findAllByUserIds(java.util.Set.of(user.getId())).isEmpty();
+            PlayerProfile profile = user.getPlayerProfile();
+            if (profile != null && profile.getPlayingStyle() == null) {
+                profile.setPlayingStyle(PlayingStyle.from(p.profile().playingStyle()));
+                thieu = true;
+            }
+            if (thieu) {
+                themHoSoBoSung(user, p);
+                count++;
+            }
+        }
+        return count;
     }
 
     private PlayerStatistics thongKe(User user, BwfSeedData.Statistics s, Instant bayGio) {

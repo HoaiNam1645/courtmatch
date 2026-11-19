@@ -19,8 +19,10 @@ JSON nay - dung lam bo kiem thu doi chieu.
 """
 
 import csv
+import hashlib
 import json
 import math
+import random
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -55,6 +57,50 @@ DISCIPLINE_TO_TYPE = {
     "XD": "mixed_double",
 }
 DISCIPLINE_TO_GENDER = {"MS": "male", "MD": "male", "WS": "female", "WD": "female"}
+
+
+# --- Bo sung ho so cho nguoi choi seed (2.2.11) ---------------------------
+# Du lieu BWF chi la nguon seed: sau khi dinh dang, moi nguoi choi duoc bo sung khu vuc
+# choi, lich ranh, phong cach de du du lieu nhu nguoi choi he thong. Sinh bang hat giong
+# co dinh theo khoa nguoi choi, nen chay lai cho dung ket qua cu. Seeder chi chen hang so.
+QUAN_DA_NANG = [
+    # ten quan, vi do, kinh do (trung voi 6 san mau trong venues.json), trong so dan cu
+    ("Hai Chau", 16.0609, 108.2237, 0.30),
+    ("Thanh Khe", 16.0655, 108.1858, 0.20),
+    ("Son Tra", 16.0837, 108.2372, 0.18),
+    ("Ngu Hanh Son", 16.0042, 108.2522, 0.10),
+    ("Lien Chieu", 16.0747, 108.1497, 0.12),
+    ("Cam Le", 16.0192, 108.1995, 0.10),
+]
+BAN_KINH_KM = [3, 5, 7, 10]
+# Mau lich ranh: (ten, cac khung (thu, gio bat dau, gio ket thuc)); thu 1 = thu hai ... 7 = chu nhat.
+MAU_LICH = [
+    ("toi tuan", [(2, "18:00", "21:00"), (4, "18:00", "21:00"), (6, "18:30", "21:30")]),
+    ("toi hai ngay", [(3, "19:00", "22:00"), (5, "19:00", "22:00")]),
+    ("cuoi tuan sang", [(6, "18:00", "21:00"), (7, "06:00", "10:00"), (1, "06:30", "10:00")]),
+    ("cuoi tuan chieu", [(7, "15:00", "19:00"), (1, "15:30", "18:30"), (3, "18:00", "21:00")]),
+    ("linh hoat", [(2, "18:00", "22:00"), (5, "17:30", "21:00"), (7, "08:00", "12:00"), (1, "16:00", "20:00")]),
+]
+
+
+def bo_sung_ho_so(khoa: str, avg_ghi: float, avg_thung: float) -> dict:
+    """Ho so bo sung xac dinh theo khoa nguoi choi (cung khoa -> cung ket qua)."""
+    rng = random.Random(int(hashlib.sha256(("profile:" + khoa).encode()).hexdigest()[:16], 16))
+    quan = rng.choices(QUAN_DA_NANG, weights=[q[3] for q in QUAN_DA_NANG])[0]
+    # Rai quanh trung tam quan khoang +-1,2 km de cac nguoi cung quan khong trung toa do.
+    vi_do = round(quan[1] + rng.uniform(-0.011, 0.011), 6)
+    kinh_do = round(quan[2] + rng.uniform(-0.011, 0.011), 6)
+    # Phong cach: nguoi ghi nhieu diem hon bi thung nghieng ve tan cong, nguoi chiu nhieu diem hon nghieng ve phong thu.
+    chenh = avg_ghi - avg_thung + rng.uniform(-3.0, 3.0)
+    phong_cach = "attacking" if chenh > 2.0 else "defensive" if chenh < -2.0 else "balanced"
+    ten_mau, khung = rng.choice(MAU_LICH)
+    return {
+        "playingStyle": phong_cach,
+        "location": {"district": quan[0], "latitude": vi_do, "longitude": kinh_do,
+                     "radiusKm": rng.choice(BAN_KINH_KM)},
+        "availability": [{"dayOfWeek": thu, "start": bd, "end": kt} for thu, bd, kt in khung],
+        "availabilityPattern": ten_mau,
+    }
 
 
 def tach_nguoi_choi(o_doi: str):
@@ -324,6 +370,7 @@ def main():
                 "avgPointsConceded": f"{tong_thung[p] / n:.2f}",
                 "lastPlayedDaysAgo": lan_cuoi[p],
             },
+            "profile": bo_sung_ho_so(khoa_nguoi_choi(p), tong_ghi[p] / n, tong_thung[p] / n),
         })
 
     meta = {

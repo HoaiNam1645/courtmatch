@@ -13,5 +13,7 @@ public interface PlayerPreferredLocationRepository extends JpaRepository<PlayerP
 
     Optional<PlayerPreferredLocation> findByIdAndUserId(UUID id, UUID userId);
 
+    boolean existsByUserId(UUID userId);
+
     void deleteAllByUserId(UUID userId);
 }

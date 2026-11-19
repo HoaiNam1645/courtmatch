@@ -32,7 +32,22 @@ public final class BwfSeedData {
                          String gender,
                          String skillLevel,
                          String preferredPlayType,
-                         Statistics statistics) {
+                         Statistics statistics,
+                         Profile profile) {
+    }
+
+    /**
+     * Ho so bo sung cho nguoi choi seed (2.2.11): phong cach, khu vuc choi o Da Nang va lich ranh, de du du lieu nhu
+     * nguoi choi he thong. Sinh san o script voi hat giong co dinh.
+     */
+    public record Profile(String playingStyle, Location location, List<Slot> availability, String availabilityPattern) {
+    }
+
+    public record Location(String district, double latitude, double longitude, int radiusKm) {
+    }
+
+    /** {@code dayOfWeek}: 1 = thu hai ... 7 = chu nhat; gio dang HH:mm. */
+    public record Slot(int dayOfWeek, String start, String end) {
     }
 
     public record Statistics(int totalMatches,

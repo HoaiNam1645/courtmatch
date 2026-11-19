@@ -30,6 +30,33 @@
     "avgPointsScored": "46.81",
     "avgPointsConceded": "35.26",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.073082,
+     "longitude": 108.189593,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -49,6 +76,33 @@
     "avgPointsScored": "45.73",
     "avgPointsConceded": "43.77",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.079631,
+     "longitude": 108.147374,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -68,6 +122,38 @@
     "avgPointsScored": "43.86",
     "avgPointsConceded": "38.41",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.054649,
+     "longitude": 108.181925,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -87,6 +173,33 @@
     "avgPointsScored": "47.77",
     "avgPointsConceded": "45.47",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.079444,
+     "longitude": 108.228955,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -106,6 +219,38 @@
     "avgPointsScored": "35.00",
     "avgPointsConceded": "43.60",
     "lastPlayedDaysAgo": 54
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.027962,
+     "longitude": 108.193534,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -125,6 +270,33 @@
     "avgPointsScored": "47.56",
     "avgPointsConceded": "42.81",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.012484,
+     "longitude": 108.250685,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -144,6 +316,33 @@
     "avgPointsScored": "39.08",
     "avgPointsConceded": "44.75",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.063774,
+     "longitude": 108.187142,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -163,6 +362,33 @@
     "avgPointsScored": "45.34",
     "avgPointsConceded": "44.72",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.011848,
+     "longitude": 108.262951,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -182,6 +408,33 @@
     "avgPointsScored": "44.82",
     "avgPointsConceded": "44.56",
     "lastPlayedDaysAgo": 124
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.05709,
+     "longitude": 108.178657,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -201,6 +454,28 @@
     "avgPointsScored": "41.81",
     "avgPointsConceded": "44.38",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.074787,
+     "longitude": 108.184206,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -220,6 +495,38 @@
     "avgPointsScored": "46.22",
     "avgPointsConceded": "42.38",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.017144,
+     "longitude": 108.197862,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -239,6 +546,33 @@
     "avgPointsScored": "46.40",
     "avgPointsConceded": "43.48",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.022807,
+     "longitude": 108.190291,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -258,6 +592,33 @@
     "avgPointsScored": "42.05",
     "avgPointsConceded": "37.40",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.058535,
+     "longitude": 108.182009,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -277,6 +638,38 @@
     "avgPointsScored": "42.33",
     "avgPointsConceded": "37.78",
     "lastPlayedDaysAgo": 111
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.062605,
+     "longitude": 108.21624,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -296,6 +689,33 @@
     "avgPointsScored": "44.49",
     "avgPointsConceded": "46.54",
     "lastPlayedDaysAgo": 111
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.000611,
+     "longitude": 108.246634,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -315,6 +735,33 @@
     "avgPointsScored": "46.77",
     "avgPointsConceded": "46.94",
     "lastPlayedDaysAgo": 124
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.070831,
+     "longitude": 108.227284,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -334,6 +781,38 @@
     "avgPointsScored": "45.90",
     "avgPointsConceded": "45.63",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.066628,
+     "longitude": 108.234414,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -353,6 +832,38 @@
     "avgPointsScored": "40.06",
     "avgPointsConceded": "47.74",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.073649,
+     "longitude": 108.195128,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -372,6 +883,28 @@
     "avgPointsScored": "38.85",
     "avgPointsConceded": "42.24",
     "lastPlayedDaysAgo": 53
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.069383,
+     "longitude": 108.225352,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -391,6 +924,33 @@
     "avgPointsScored": "33.16",
     "avgPointsConceded": "43.58",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.076368,
+     "longitude": 108.19278,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -410,6 +970,33 @@
     "avgPointsScored": "37.27",
     "avgPointsConceded": "47.13",
     "lastPlayedDaysAgo": 167
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.0684,
+     "longitude": 108.140446,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -429,6 +1016,33 @@
     "avgPointsScored": "45.68",
     "avgPointsConceded": "48.16",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.055015,
+     "longitude": 108.194171,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -448,6 +1062,38 @@
     "avgPointsScored": "38.79",
     "avgPointsConceded": "45.91",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.077407,
+     "longitude": 108.230529,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -467,6 +1113,33 @@
     "avgPointsScored": "44.73",
     "avgPointsConceded": "41.32",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.023712,
+     "longitude": 108.195075,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -486,6 +1159,33 @@
     "avgPointsScored": "36.75",
     "avgPointsConceded": "45.67",
     "lastPlayedDaysAgo": 5
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.06735,
+     "longitude": 108.142562,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -505,6 +1205,28 @@
     "avgPointsScored": "42.97",
     "avgPointsConceded": "39.22",
     "lastPlayedDaysAgo": 162
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.084097,
+     "longitude": 108.230065,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -524,6 +1246,33 @@
     "avgPointsScored": "45.38",
     "avgPointsConceded": "37.87",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.061148,
+     "longitude": 108.195153,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -543,6 +1292,28 @@
     "avgPointsScored": "38.40",
     "avgPointsConceded": "46.10",
     "lastPlayedDaysAgo": 53
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.065956,
+     "longitude": 108.146647,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -562,6 +1333,33 @@
     "avgPointsScored": "46.39",
     "avgPointsConceded": "49.09",
     "lastPlayedDaysAgo": 165
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.063132,
+     "longitude": 108.217133,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -581,6 +1379,33 @@
     "avgPointsScored": "45.40",
     "avgPointsConceded": "43.76",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.997247,
+     "longitude": 108.246437,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -600,6 +1425,33 @@
     "avgPointsScored": "44.16",
     "avgPointsConceded": "44.28",
     "lastPlayedDaysAgo": 26
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.069447,
+     "longitude": 108.15458,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -619,6 +1471,33 @@
     "avgPointsScored": "39.58",
     "avgPointsConceded": "42.67",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.065216,
+     "longitude": 108.147453,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -638,6 +1517,28 @@
     "avgPointsScored": "46.24",
     "avgPointsConceded": "45.29",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.068668,
+     "longitude": 108.153766,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -657,6 +1558,33 @@
     "avgPointsScored": "41.19",
     "avgPointsConceded": "44.31",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.004903,
+     "longitude": 108.251411,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -676,6 +1604,33 @@
     "avgPointsScored": "47.02",
     "avgPointsConceded": "42.71",
     "lastPlayedDaysAgo": 36
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.056645,
+     "longitude": 108.19646,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -695,6 +1650,38 @@
     "avgPointsScored": "43.08",
     "avgPointsConceded": "44.87",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.060181,
+     "longitude": 108.215738,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -714,6 +1701,33 @@
     "avgPointsScored": "43.36",
     "avgPointsConceded": "48.10",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.074798,
+     "longitude": 108.178495,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -733,6 +1747,33 @@
     "avgPointsScored": "46.11",
     "avgPointsConceded": "42.43",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.056715,
+     "longitude": 108.188614,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -752,6 +1793,33 @@
     "avgPointsScored": "39.76",
     "avgPointsConceded": "42.24",
     "lastPlayedDaysAgo": 397
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.06673,
+     "longitude": 108.193425,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -771,6 +1839,33 @@
     "avgPointsScored": "46.37",
     "avgPointsConceded": "43.82",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.021927,
+     "longitude": 108.208673,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -790,6 +1885,33 @@
     "avgPointsScored": "47.87",
     "avgPointsConceded": "39.21",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.067182,
+     "longitude": 108.180116,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -809,6 +1931,28 @@
     "avgPointsScored": "47.12",
     "avgPointsConceded": "41.88",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.080938,
+     "longitude": 108.15919,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -828,6 +1972,33 @@
     "avgPointsScored": "42.54",
     "avgPointsConceded": "46.04",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.059527,
+     "longitude": 108.196076,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -847,6 +2018,33 @@
     "avgPointsScored": "42.54",
     "avgPointsConceded": "46.04",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.086288,
+     "longitude": 108.24437,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -866,6 +2064,33 @@
     "avgPointsScored": "42.15",
     "avgPointsConceded": "43.45",
     "lastPlayedDaysAgo": 312
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.068001,
+     "longitude": 108.178434,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -885,6 +2110,33 @@
     "avgPointsScored": "34.51",
     "avgPointsConceded": "44.49",
     "lastPlayedDaysAgo": 4
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.076238,
+     "longitude": 108.184463,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -904,6 +2156,33 @@
     "avgPointsScored": "42.72",
     "avgPointsConceded": "41.67",
     "lastPlayedDaysAgo": 46
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.068959,
+     "longitude": 108.186024,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -923,6 +2202,38 @@
     "avgPointsScored": "47.35",
     "avgPointsConceded": "44.64",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.083789,
+     "longitude": 108.146693,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -942,6 +2253,28 @@
     "avgPointsScored": "44.73",
     "avgPointsConceded": "41.32",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.067795,
+     "longitude": 108.182936,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -961,6 +2294,38 @@
     "avgPointsScored": "41.04",
     "avgPointsConceded": "42.42",
     "lastPlayedDaysAgo": 543
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.011827,
+     "longitude": 108.258726,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -980,6 +2345,33 @@
     "avgPointsScored": "41.70",
     "avgPointsConceded": "40.74",
     "lastPlayedDaysAgo": 130
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.079545,
+     "longitude": 108.244477,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -999,6 +2391,33 @@
     "avgPointsScored": "46.39",
     "avgPointsConceded": "49.09",
     "lastPlayedDaysAgo": 165
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.051229,
+     "longitude": 108.21741,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1018,6 +2437,33 @@
     "avgPointsScored": "41.48",
     "avgPointsConceded": "45.21",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.010838,
+     "longitude": 108.199669,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1037,6 +2483,33 @@
     "avgPointsScored": "39.75",
     "avgPointsConceded": "41.75",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.013661,
+     "longitude": 108.257817,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1056,6 +2529,28 @@
     "avgPointsScored": "37.99",
     "avgPointsConceded": "44.73",
     "lastPlayedDaysAgo": 2
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.067881,
+     "longitude": 108.230574,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1075,6 +2570,38 @@
     "avgPointsScored": "40.08",
     "avgPointsConceded": "44.78",
     "lastPlayedDaysAgo": 27
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.010145,
+     "longitude": 108.257992,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1094,6 +2621,38 @@
     "avgPointsScored": "48.65",
     "avgPointsConceded": "40.02",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.009449,
+     "longitude": 108.189732,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1113,6 +2672,33 @@
     "avgPointsScored": "32.33",
     "avgPointsConceded": "41.44",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.006724,
+     "longitude": 108.245985,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1132,6 +2718,33 @@
     "avgPointsScored": "38.81",
     "avgPointsConceded": "45.27",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.06811,
+     "longitude": 108.214402,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1151,6 +2764,33 @@
     "avgPointsScored": "43.44",
     "avgPointsConceded": "44.19",
     "lastPlayedDaysAgo": 198
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.057844,
+     "longitude": 108.188845,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1170,6 +2810,28 @@
     "avgPointsScored": "43.42",
     "avgPointsConceded": "46.38",
     "lastPlayedDaysAgo": 27
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.07926,
+     "longitude": 108.227444,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1189,6 +2851,33 @@
     "avgPointsScored": "43.19",
     "avgPointsConceded": "39.50",
     "lastPlayedDaysAgo": 625
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.002992,
+     "longitude": 108.257094,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1208,6 +2897,28 @@
     "avgPointsScored": "40.50",
     "avgPointsConceded": "46.04",
     "lastPlayedDaysAgo": 27
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.007981,
+     "longitude": 108.243622,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1227,6 +2938,33 @@
     "avgPointsScored": "46.10",
     "avgPointsConceded": "40.72",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.999031,
+     "longitude": 108.25067,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1246,6 +2984,38 @@
     "avgPointsScored": "45.58",
     "avgPointsConceded": "39.10",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.071497,
+     "longitude": 108.154742,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1265,6 +3035,28 @@
     "avgPointsScored": "37.47",
     "avgPointsConceded": "45.00",
     "lastPlayedDaysAgo": 2
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.069837,
+     "longitude": 108.221847,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1284,6 +3076,33 @@
     "avgPointsScored": "44.82",
     "avgPointsConceded": "44.56",
     "lastPlayedDaysAgo": 124
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.075991,
+     "longitude": 108.244997,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1303,6 +3122,38 @@
     "avgPointsScored": "44.20",
     "avgPointsConceded": "44.83",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.061866,
+     "longitude": 108.233335,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1322,6 +3173,33 @@
     "avgPointsScored": "39.81",
     "avgPointsConceded": "46.77",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.06779,
+     "longitude": 108.193803,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1341,6 +3219,33 @@
     "avgPointsScored": "44.25",
     "avgPointsConceded": "41.15",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.072357,
+     "longitude": 108.19082,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1360,6 +3265,28 @@
     "avgPointsScored": "35.00",
     "avgPointsConceded": "43.60",
     "lastPlayedDaysAgo": 54
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.054989,
+     "longitude": 108.215972,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1379,6 +3306,33 @@
     "avgPointsScored": "41.29",
     "avgPointsConceded": "44.87",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.060816,
+     "longitude": 108.218447,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1398,6 +3352,28 @@
     "avgPointsScored": "46.33",
     "avgPointsConceded": "42.50",
     "lastPlayedDaysAgo": 530
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.052622,
+     "longitude": 108.212712,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1417,6 +3393,28 @@
     "avgPointsScored": "46.82",
     "avgPointsConceded": "41.79",
     "lastPlayedDaysAgo": 199
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.058358,
+     "longitude": 108.190016,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1436,6 +3434,28 @@
     "avgPointsScored": "46.77",
     "avgPointsConceded": "39.40",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.088779,
+     "longitude": 108.228006,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1455,6 +3475,33 @@
     "avgPointsScored": "47.59",
     "avgPointsConceded": "43.28",
     "lastPlayedDaysAgo": 199
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.066478,
+     "longitude": 108.144697,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1474,6 +3521,38 @@
     "avgPointsScored": "48.64",
     "avgPointsConceded": "44.51",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.073768,
+     "longitude": 108.237592,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1493,6 +3572,33 @@
     "avgPointsScored": "43.30",
     "avgPointsConceded": "45.27",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.064628,
+     "longitude": 108.176393,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1512,6 +3618,33 @@
     "avgPointsScored": "39.66",
     "avgPointsConceded": "38.34",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.014431,
+     "longitude": 108.259834,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1531,6 +3664,33 @@
     "avgPointsScored": "46.40",
     "avgPointsConceded": "43.48",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.005033,
+     "longitude": 108.246596,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1550,6 +3710,28 @@
     "avgPointsScored": "42.72",
     "avgPointsConceded": "45.28",
     "lastPlayedDaysAgo": 258
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.025731,
+     "longitude": 108.195135,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1569,6 +3751,28 @@
     "avgPointsScored": "40.24",
     "avgPointsConceded": "39.35",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.05088,
+     "longitude": 108.220945,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1588,6 +3792,33 @@
     "avgPointsScored": "44.22",
     "avgPointsConceded": "43.42",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.053411,
+     "longitude": 108.215437,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1607,6 +3838,33 @@
     "avgPointsScored": "46.94",
     "avgPointsConceded": "41.19",
     "lastPlayedDaysAgo": 50
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.070384,
+     "longitude": 108.221402,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1626,6 +3884,33 @@
     "avgPointsScored": "42.72",
     "avgPointsConceded": "41.67",
     "lastPlayedDaysAgo": 46
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.05293,
+     "longitude": 108.21527,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1645,6 +3930,33 @@
     "avgPointsScored": "44.00",
     "avgPointsConceded": "47.39",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.080849,
+     "longitude": 108.232821,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1664,6 +3976,28 @@
     "avgPointsScored": "42.10",
     "avgPointsConceded": "48.25",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.051979,
+     "longitude": 108.228941,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1683,6 +4017,33 @@
     "avgPointsScored": "43.89",
     "avgPointsConceded": "44.04",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.075959,
+     "longitude": 108.1755,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1702,6 +4063,33 @@
     "avgPointsScored": "42.05",
     "avgPointsConceded": "37.40",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.068649,
+     "longitude": 108.213329,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1721,6 +4109,28 @@
     "avgPointsScored": "44.15",
     "avgPointsConceded": "41.56",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.071956,
+     "longitude": 108.142921,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1740,6 +4150,38 @@
     "avgPointsScored": "42.22",
     "avgPointsConceded": "38.66",
     "lastPlayedDaysAgo": 155
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.072487,
+     "longitude": 108.188746,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1759,6 +4201,33 @@
     "avgPointsScored": "44.96",
     "avgPointsConceded": "42.32",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.078144,
+     "longitude": 108.145094,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1778,6 +4247,38 @@
     "avgPointsScored": "37.25",
     "avgPointsConceded": "46.18",
     "lastPlayedDaysAgo": 117
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.993375,
+     "longitude": 108.242813,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -1797,6 +4298,28 @@
     "avgPointsScored": "45.25",
     "avgPointsConceded": "46.62",
     "lastPlayedDaysAgo": 111
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.02724,
+     "longitude": 108.194035,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -1816,6 +4339,33 @@
     "avgPointsScored": "42.42",
     "avgPointsConceded": "41.25",
     "lastPlayedDaysAgo": 40
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.068196,
+     "longitude": 108.217678,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1835,6 +4385,33 @@
     "avgPointsScored": "37.09",
     "avgPointsConceded": "43.41",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.050197,
+     "longitude": 108.228369,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1854,6 +4431,33 @@
     "avgPointsScored": "39.14",
     "avgPointsConceded": "47.36",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.004821,
+     "longitude": 108.252531,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1873,6 +4477,33 @@
     "avgPointsScored": "39.50",
     "avgPointsConceded": "46.73",
     "lastPlayedDaysAgo": 53
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.023168,
+     "longitude": 108.203896,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1892,6 +4523,33 @@
     "avgPointsScored": "43.27",
     "avgPointsConceded": "44.62",
     "lastPlayedDaysAgo": 2
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.009137,
+     "longitude": 108.258121,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1911,6 +4569,33 @@
     "avgPointsScored": "44.73",
     "avgPointsConceded": "34.22",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.074666,
+     "longitude": 108.148846,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1930,6 +4615,33 @@
     "avgPointsScored": "45.95",
     "avgPointsConceded": "47.69",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.019733,
+     "longitude": 108.205575,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -1949,6 +4661,33 @@
     "avgPointsScored": "46.49",
     "avgPointsConceded": "45.16",
     "lastPlayedDaysAgo": 36
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.054824,
+     "longitude": 108.177456,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -1968,6 +4707,33 @@
     "avgPointsScored": "44.94",
     "avgPointsConceded": "48.38",
     "lastPlayedDaysAgo": 40
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.062121,
+     "longitude": 108.176412,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -1987,6 +4753,33 @@
     "avgPointsScored": "41.42",
     "avgPointsConceded": "36.36",
     "lastPlayedDaysAgo": 111
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.028332,
+     "longitude": 108.205222,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2006,6 +4799,33 @@
     "avgPointsScored": "43.77",
     "avgPointsConceded": "42.79",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.000449,
+     "longitude": 108.26296,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2025,6 +4845,38 @@
     "avgPointsScored": "41.67",
     "avgPointsConceded": "49.33",
     "lastPlayedDaysAgo": 173
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.079489,
+     "longitude": 108.153333,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2044,6 +4896,28 @@
     "avgPointsScored": "39.62",
     "avgPointsConceded": "47.75",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.06762,
+     "longitude": 108.220835,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2063,6 +4937,28 @@
     "avgPointsScored": "44.84",
     "avgPointsConceded": "46.65",
     "lastPlayedDaysAgo": 111
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.018688,
+     "longitude": 108.210393,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2082,6 +4978,38 @@
     "avgPointsScored": "41.50",
     "avgPointsConceded": "46.88",
     "lastPlayedDaysAgo": 5
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.057176,
+     "longitude": 108.188826,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2101,6 +5029,33 @@
     "avgPointsScored": "41.79",
     "avgPointsConceded": "45.89",
     "lastPlayedDaysAgo": 40
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.057845,
+     "longitude": 108.212708,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2120,6 +5075,33 @@
     "avgPointsScored": "48.64",
     "avgPointsConceded": "44.51",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.057686,
+     "longitude": 108.234547,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2139,6 +5121,28 @@
     "avgPointsScored": "43.36",
     "avgPointsConceded": "48.10",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.055584,
+     "longitude": 108.215388,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2158,6 +5162,28 @@
     "avgPointsScored": "47.56",
     "avgPointsConceded": "42.81",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.064336,
+     "longitude": 108.148509,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2177,6 +5203,33 @@
     "avgPointsScored": "44.19",
     "avgPointsConceded": "38.84",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.090655,
+     "longitude": 108.228253,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2196,6 +5249,33 @@
     "avgPointsScored": "44.33",
     "avgPointsConceded": "45.06",
     "lastPlayedDaysAgo": 12
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.016703,
+     "longitude": 108.207606,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2215,6 +5295,33 @@
     "avgPointsScored": "34.74",
     "avgPointsConceded": "45.37",
     "lastPlayedDaysAgo": 229
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.062569,
+     "longitude": 108.212823,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2234,6 +5341,38 @@
     "avgPointsScored": "42.75",
     "avgPointsConceded": "44.71",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.062638,
+     "longitude": 108.188121,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2253,6 +5392,33 @@
     "avgPointsScored": "48.18",
     "avgPointsConceded": "42.88",
     "lastPlayedDaysAgo": 312
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.01328,
+     "longitude": 108.202607,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2272,6 +5438,28 @@
     "avgPointsScored": "45.41",
     "avgPointsConceded": "41.90",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.066943,
+     "longitude": 108.180613,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2291,6 +5479,33 @@
     "avgPointsScored": "42.08",
     "avgPointsConceded": "45.73",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.076057,
+     "longitude": 108.177212,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2310,6 +5525,33 @@
     "avgPointsScored": "43.44",
     "avgPointsConceded": "44.19",
     "lastPlayedDaysAgo": 198
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.057271,
+     "longitude": 108.189202,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2329,6 +5571,33 @@
     "avgPointsScored": "40.89",
     "avgPointsConceded": "43.26",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.993614,
+     "longitude": 108.258587,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2348,6 +5617,28 @@
     "avgPointsScored": "42.72",
     "avgPointsConceded": "43.72",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.079814,
+     "longitude": 108.23941,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2367,6 +5658,33 @@
     "avgPointsScored": "40.17",
     "avgPointsConceded": "43.96",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.075762,
+     "longitude": 108.182994,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2386,6 +5704,33 @@
     "avgPointsScored": "47.35",
     "avgPointsConceded": "44.64",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.054355,
+     "longitude": 108.217486,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2405,6 +5750,33 @@
     "avgPointsScored": "38.94",
     "avgPointsConceded": "44.26",
     "lastPlayedDaysAgo": 46
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.018137,
+     "longitude": 108.203638,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2424,6 +5796,28 @@
     "avgPointsScored": "34.50",
     "avgPointsConceded": "45.38",
     "lastPlayedDaysAgo": 167
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.028334,
+     "longitude": 108.19282,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2443,6 +5837,33 @@
     "avgPointsScored": "40.26",
     "avgPointsConceded": "46.00",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.051812,
+     "longitude": 108.222054,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2462,6 +5883,38 @@
     "avgPointsScored": "30.65",
     "avgPointsConceded": "44.22",
     "lastPlayedDaysAgo": 11
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.069027,
+     "longitude": 108.151254,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2481,6 +5934,33 @@
     "avgPointsScored": "43.93",
     "avgPointsConceded": "39.78",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.071769,
+     "longitude": 108.183245,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2500,6 +5980,33 @@
     "avgPointsScored": "37.51",
     "avgPointsConceded": "45.34",
     "lastPlayedDaysAgo": 2
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.067525,
+     "longitude": 108.152203,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2519,6 +6026,33 @@
     "avgPointsScored": "42.31",
     "avgPointsConceded": "40.76",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.0656,
+     "longitude": 108.185927,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2538,6 +6072,28 @@
     "avgPointsScored": "42.44",
     "avgPointsConceded": "45.73",
     "lastPlayedDaysAgo": 124
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.052453,
+     "longitude": 108.21686,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2557,6 +6113,33 @@
     "avgPointsScored": "42.78",
     "avgPointsConceded": "42.65",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.066502,
+     "longitude": 108.226915,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2576,6 +6159,33 @@
     "avgPointsScored": "39.66",
     "avgPointsConceded": "38.34",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.072573,
+     "longitude": 108.156709,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2595,6 +6205,33 @@
     "avgPointsScored": "41.29",
     "avgPointsConceded": "44.87",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.994989,
+     "longitude": 108.25146,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2614,6 +6251,38 @@
     "avgPointsScored": "44.20",
     "avgPointsConceded": "44.83",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.072414,
+     "longitude": 108.158556,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2633,6 +6302,33 @@
     "avgPointsScored": "46.88",
     "avgPointsConceded": "39.04",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.070757,
+     "longitude": 108.224729,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2652,6 +6348,38 @@
     "avgPointsScored": "47.23",
     "avgPointsConceded": "39.48",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.088207,
+     "longitude": 108.236936,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2671,6 +6399,33 @@
     "avgPointsScored": "45.73",
     "avgPointsConceded": "43.77",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.0658,
+     "longitude": 108.195039,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2690,6 +6445,33 @@
     "avgPointsScored": "41.31",
     "avgPointsConceded": "47.94",
     "lastPlayedDaysAgo": 54
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.072393,
+     "longitude": 108.189716,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2709,6 +6491,28 @@
     "avgPointsScored": "36.51",
     "avgPointsConceded": "44.66",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.02431,
+     "longitude": 108.204431,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2728,6 +6532,33 @@
     "avgPointsScored": "39.75",
     "avgPointsConceded": "41.75",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.009695,
+     "longitude": 108.241414,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2747,6 +6578,33 @@
     "avgPointsScored": "42.75",
     "avgPointsConceded": "44.71",
     "lastPlayedDaysAgo": 22
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.077943,
+     "longitude": 108.243053,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2766,6 +6624,38 @@
     "avgPointsScored": "42.88",
     "avgPointsConceded": "43.65",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.056766,
+     "longitude": 108.18677,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2785,6 +6675,28 @@
     "avgPointsScored": "47.02",
     "avgPointsConceded": "42.71",
     "lastPlayedDaysAgo": 36
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.056771,
+     "longitude": 108.179898,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2804,6 +6716,28 @@
     "avgPointsScored": "42.43",
     "avgPointsConceded": "42.89",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.060034,
+     "longitude": 108.183922,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -2823,6 +6757,33 @@
     "avgPointsScored": "45.90",
     "avgPointsConceded": "45.63",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.087091,
+     "longitude": 108.239159,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -2842,6 +6803,33 @@
     "avgPointsScored": "41.91",
     "avgPointsConceded": "44.57",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.073826,
+     "longitude": 108.189226,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2861,6 +6849,33 @@
     "avgPointsScored": "43.92",
     "avgPointsConceded": "44.88",
     "lastPlayedDaysAgo": 592
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.014606,
+     "longitude": 108.248229,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2880,6 +6895,38 @@
     "avgPointsScored": "40.55",
     "avgPointsConceded": "44.40",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.070668,
+     "longitude": 108.220058,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2899,6 +6946,38 @@
     "avgPointsScored": "46.94",
     "avgPointsConceded": "42.33",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.024784,
+     "longitude": 108.190223,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -2918,6 +6997,33 @@
     "avgPointsScored": "44.73",
     "avgPointsConceded": "34.22",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.027924,
+     "longitude": 108.193608,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2937,6 +7043,33 @@
     "avgPointsScored": "44.79",
     "avgPointsConceded": "43.96",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.052878,
+     "longitude": 108.216641,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -2956,6 +7089,33 @@
     "avgPointsScored": "38.94",
     "avgPointsConceded": "44.26",
     "lastPlayedDaysAgo": 46
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.061944,
+     "longitude": 108.18023,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2975,6 +7135,33 @@
     "avgPointsScored": "45.72",
     "avgPointsConceded": "44.12",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.072389,
+     "longitude": 108.176626,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -2994,6 +7181,33 @@
     "avgPointsScored": "44.79",
     "avgPointsConceded": "43.96",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.060068,
+     "longitude": 108.227487,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -3013,6 +7227,33 @@
     "avgPointsScored": "42.97",
     "avgPointsConceded": "39.22",
     "lastPlayedDaysAgo": 162
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.01117,
+     "longitude": 108.247516,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -3032,6 +7273,33 @@
     "avgPointsScored": "45.72",
     "avgPointsConceded": "44.12",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.054967,
+     "longitude": 108.221401,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3051,6 +7319,33 @@
     "avgPointsScored": "45.05",
     "avgPointsConceded": "42.52",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.059465,
+     "longitude": 108.190549,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3070,6 +7365,33 @@
     "avgPointsScored": "46.37",
     "avgPointsConceded": "43.82",
     "lastPlayedDaysAgo": 30
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.055013,
+     "longitude": 108.196553,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3089,6 +7411,33 @@
     "avgPointsScored": "38.38",
     "avgPointsConceded": "41.50",
     "lastPlayedDaysAgo": 40
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.065361,
+     "longitude": 108.230361,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3108,6 +7457,28 @@
     "avgPointsScored": "42.61",
     "avgPointsConceded": "46.96",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.085866,
+     "longitude": 108.240267,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3127,6 +7498,33 @@
     "avgPointsScored": "42.00",
     "avgPointsConceded": "41.95",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.074575,
+     "longitude": 108.230671,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3146,6 +7544,28 @@
     "avgPointsScored": "45.19",
     "avgPointsConceded": "42.19",
     "lastPlayedDaysAgo": 23
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.057062,
+     "longitude": 108.225797,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3165,6 +7585,33 @@
     "avgPointsScored": "44.44",
     "avgPointsConceded": "47.02",
     "lastPlayedDaysAgo": 27
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.002914,
+     "longitude": 108.262944,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3184,6 +7631,33 @@
     "avgPointsScored": "41.44",
     "avgPointsConceded": "46.49",
     "lastPlayedDaysAgo": 26
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.079013,
+     "longitude": 108.13984,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3203,6 +7677,28 @@
     "avgPointsScored": "42.69",
     "avgPointsConceded": "36.76",
     "lastPlayedDaysAgo": 37
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.089164,
+     "longitude": 108.241876,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3222,6 +7718,33 @@
     "avgPointsScored": "45.10",
     "avgPointsConceded": "38.45",
     "lastPlayedDaysAgo": 123
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.073592,
+     "longitude": 108.186299,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3241,6 +7764,33 @@
     "avgPointsScored": "43.38",
     "avgPointsConceded": "41.71",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.050539,
+     "longitude": 108.2333,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3260,6 +7810,38 @@
     "avgPointsScored": "37.25",
     "avgPointsConceded": "46.18",
     "lastPlayedDaysAgo": 117
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.070966,
+     "longitude": 108.147871,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -3279,6 +7861,33 @@
     "avgPointsScored": "43.25",
     "avgPointsConceded": "52.25",
     "lastPlayedDaysAgo": 34
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.06357,
+     "longitude": 108.192738,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -3298,6 +7907,33 @@
     "avgPointsScored": "42.60",
     "avgPointsConceded": "50.45",
     "lastPlayedDaysAgo": 8
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Lien Chieu",
+     "latitude": 16.068972,
+     "longitude": 108.139471,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3317,6 +7953,33 @@
     "avgPointsScored": "34.42",
     "avgPointsConceded": "43.81",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.057732,
+     "longitude": 108.219194,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3336,6 +7999,33 @@
     "avgPointsScored": "43.14",
     "avgPointsConceded": "50.81",
     "lastPlayedDaysAgo": 8
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.05761,
+     "longitude": 108.227637,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3355,6 +8045,33 @@
     "avgPointsScored": "42.44",
     "avgPointsConceded": "45.70",
     "lastPlayedDaysAgo": 165
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.070421,
+     "longitude": 108.225877,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 4,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 6,
+      "start": "18:30",
+      "end": "21:30"
+     }
+    ],
+    "availabilityPattern": "toi tuan"
    }
   },
   {
@@ -3374,6 +8091,38 @@
     "avgPointsScored": "43.11",
     "avgPointsConceded": "44.09",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.0165,
+     "longitude": 108.205531,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   },
   {
@@ -3393,6 +8142,33 @@
     "avgPointsScored": "42.07",
     "avgPointsConceded": "43.15",
     "lastPlayedDaysAgo": 32
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.065666,
+     "longitude": 108.217522,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3412,6 +8188,33 @@
     "avgPointsScored": "34.67",
     "avgPointsConceded": "45.52",
     "lastPlayedDaysAgo": 228
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.079406,
+     "longitude": 108.228606,
+     "radiusKm": 7
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3431,6 +8234,33 @@
     "avgPointsScored": "29.75",
     "avgPointsConceded": "45.08",
     "lastPlayedDaysAgo": 26
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Thanh Khe",
+     "latitude": 16.061634,
+     "longitude": 108.182835,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 7,
+      "start": "15:00",
+      "end": "19:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "15:30",
+      "end": "18:30"
+     },
+     {
+      "dayOfWeek": 3,
+      "start": "18:00",
+      "end": "21:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan chieu"
    }
   },
   {
@@ -3450,6 +8280,28 @@
     "avgPointsScored": "45.05",
     "avgPointsConceded": "42.52",
     "lastPlayedDaysAgo": 39
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Son Tra",
+     "latitude": 16.078533,
+     "longitude": 108.247877,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3469,6 +8321,28 @@
     "avgPointsScored": "42.43",
     "avgPointsConceded": "42.89",
     "lastPlayedDaysAgo": 33
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 15.997181,
+     "longitude": 108.242285,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3488,6 +8362,33 @@
     "avgPointsScored": "44.19",
     "avgPointsConceded": "38.84",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Ngu Hanh Son",
+     "latitude": 16.002846,
+     "longitude": 108.242814,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3507,6 +8408,28 @@
     "avgPointsScored": "39.08",
     "avgPointsConceded": "44.21",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.021061,
+     "longitude": 108.20179,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3526,6 +8449,33 @@
     "avgPointsScored": "44.61",
     "avgPointsConceded": "43.03",
     "lastPlayedDaysAgo": 29
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.015959,
+     "longitude": 108.195989,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3545,6 +8495,33 @@
     "avgPointsScored": "45.54",
     "avgPointsConceded": "40.83",
     "lastPlayedDaysAgo": 25
+   },
+   "profile": {
+    "playingStyle": "attacking",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.014469,
+     "longitude": 108.20249,
+     "radiusKm": 10
+    },
+    "availability": [
+     {
+      "dayOfWeek": 6,
+      "start": "18:00",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "06:00",
+      "end": "10:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "06:30",
+      "end": "10:00"
+     }
+    ],
+    "availabilityPattern": "cuoi tuan sang"
    }
   },
   {
@@ -3564,6 +8541,28 @@
     "avgPointsScored": "33.70",
     "avgPointsConceded": "45.74",
     "lastPlayedDaysAgo": 4
+   },
+   "profile": {
+    "playingStyle": "defensive",
+    "location": {
+     "district": "Hai Chau",
+     "latitude": 16.058599,
+     "longitude": 108.22527,
+     "radiusKm": 3
+    },
+    "availability": [
+     {
+      "dayOfWeek": 3,
+      "start": "19:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "19:00",
+      "end": "22:00"
+     }
+    ],
+    "availabilityPattern": "toi hai ngay"
    }
   },
   {
@@ -3583,6 +8582,38 @@
     "avgPointsScored": "42.60",
     "avgPointsConceded": "41.90",
     "lastPlayedDaysAgo": 356
+   },
+   "profile": {
+    "playingStyle": "balanced",
+    "location": {
+     "district": "Cam Le",
+     "latitude": 16.023934,
+     "longitude": 108.20407,
+     "radiusKm": 5
+    },
+    "availability": [
+     {
+      "dayOfWeek": 2,
+      "start": "18:00",
+      "end": "22:00"
+     },
+     {
+      "dayOfWeek": 5,
+      "start": "17:30",
+      "end": "21:00"
+     },
+     {
+      "dayOfWeek": 7,
+      "start": "08:00",
+      "end": "12:00"
+     },
+     {
+      "dayOfWeek": 1,
+      "start": "16:00",
+      "end": "20:00"
+     }
+    ],
+    "availabilityPattern": "linh hoat"
    }
   }
  ]
