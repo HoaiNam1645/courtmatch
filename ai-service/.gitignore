@@ -1,0 +1,8 @@
+# File model .cbm va ket qua huan luyen KHONG dua len git (2.2.13).
+artifacts/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+catboost_info/
