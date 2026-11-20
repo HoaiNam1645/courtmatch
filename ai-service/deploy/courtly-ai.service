@@ -1,0 +1,28 @@
+# AI service cua Courtly tren server dung chung (1 vCPU / 2GB RAM): gioi han tai nguyen de khong anh huong cac du an khac.
+# Neu service het bo nho hoac loi, Spring Boot tu dung baseline nen khong anh huong nguoi choi.
+[Unit]
+Description=Courtly AI service (FastAPI + CatBoost)
+After=network.target
+
+[Service]
+User=courtly
+Group=courtly
+WorkingDirectory=/opt/courtly/ai-service
+EnvironmentFile=/opt/courtly/ai-service/.env
+Environment=AI_ARTIFACT_DIR=/opt/courtly/ai-service/artifacts
+ExecStart=/opt/courtly/ai-service/.venv/bin/uvicorn courtly_ai.service:app --host 127.0.0.1 --port 8001 --workers 1
+Restart=on-failure
+RestartSec=10
+# Tran bo nho cung: vuot thi chi service nay bi dung, khong keo cac du an khac
+MemoryHigh=240M
+MemoryMax=320M
+CPUQuota=40%
+Nice=10
+TasksMax=64
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

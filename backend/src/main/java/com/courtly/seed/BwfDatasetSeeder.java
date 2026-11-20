@@ -77,7 +77,7 @@ public class BwfDatasetSeeder implements Seeder {
 
     private static final String FILE_NGUOI_CHOI = "seed/bwf-players.json";
     private static final String FILE_TRAN_DAU = "seed/bwf-matches.json";
-    private static final int SO_TRAN_DU_KIEN = 2555;
+    private static final int SO_TRAN_DU_KIEN = 5954;
 
     /** Mat khau giong moi tai khoan mau khac, de dang nhap thu. */
     private static final String MAT_KHAU = UserSeeder.DEFAULT_PASSWORD;
@@ -94,7 +94,7 @@ public class BwfDatasetSeeder implements Seeder {
 
     @Override
     public String name() {
-        return "bo du lieu BWF (188 van dong vien, " + SO_TRAN_DU_KIEN + " tran)";
+        return "bo du lieu BWF (187 van dong vien, " + SO_TRAN_DU_KIEN + " tran)";
     }
 
     @Override

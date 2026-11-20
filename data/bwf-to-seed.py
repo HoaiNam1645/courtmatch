@@ -22,6 +22,7 @@ import csv
 import hashlib
 import json
 import math
+import os
 import random
 import re
 import unicodedata
@@ -31,12 +32,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "data" / "bwf-match-data" / "matches.csv"
-OUT_DIR = ROOT / "backend" / "src" / "main" / "resources" / "seed"
+OUT_DIR = Path(os.environ["BWF_OUT_DIR"]) if os.environ.get("BWF_OUT_DIR") else ROOT / "backend" / "src" / "main" / "resources" / "seed"
 
 # --- Tham so chon mau -------------------------------------------------------
 # Muc tieu theo thiet ke Sprint 2: 150-300 nguoi choi, moi nguoi 10-20 tran.
-FROM_DATE = "2024-01-01"      # chi lay giai gan day de nguoi choi con "dang hoat dong"
-TARGET_PLAYERS = 200          # so van dong vien dua vao bo seed
+FROM_DATE = os.environ.get("BWF_FROM_DATE", "2018-01-01")      # chi lay giai gan day de nguoi choi con "dang hoat dong"
+TARGET_PLAYERS = int(os.environ.get("BWF_TARGET_PLAYERS", "200"))          # so van dong vien dua vao bo seed
 MIN_MATCHES = 8               # duoi nguong nay thi Elo chua kip hoi tu
 MOC_HOM_NAY = date(2026, 7, 6)  # ngay cuoi cua bo du lieu, dung de quy ra "daysAgo"
 
@@ -194,9 +195,9 @@ def hop_le_mot_set(a: int, b: int) -> bool:
     cao, thap = max(a, b), min(a, b)
     if cao == 21:
         return thap <= 19
-    if 22 <= cao <= 30:
-        return cao - thap == 2 or (cao == 30 and thap == 29)
-    return False
+    if 22 <= cao <= 29:
+        return cao - thap == 2
+    return cao == 30 and thap == 29  # den 29-29 thi diem vang 30-29; 30-28 khong the xay ra (va bi rang buoc CSDL chan)
 
 
 def doi_thang(games):

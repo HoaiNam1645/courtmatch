@@ -16,6 +16,7 @@ import com.courtly.domain.account.UserRepository;
 import com.courtly.domain.match.PlayerStatistics;
 import com.courtly.domain.match.PlayerStatisticsRepository;
 import com.courtly.domain.matching.AiModel;
+import com.courtly.domain.matching.AiModelRepository;
 import com.courtly.domain.matching.PartnerSearchRepository;
 import com.courtly.domain.matching.PlayerMatchProfile;
 import com.courtly.domain.matching.PlayerMatchProfileRepository;
@@ -60,6 +61,9 @@ public class PartnerSearchService {
     private final MatchingRunRecorder runRecorder;
     private final PlayerMatchProfileRepository matchProfileRepository;
     private final PartnerRankingService rankingService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final AiModelRepository modelRepository;
 
     /** Ket qua mot lan tim: trang can tra, nguon diem va ly do rot ve baseline (neu co). */
     private record Ranked(List<PartnerSearchResponse> list, String source, AiModel model, String fallbackReason, UUID listId,
@@ -68,11 +72,10 @@ public class PartnerSearchService {
 
     private static final int POOL_LIMIT = 200;
     private static final BigDecimal PROVISIONAL_CAP = BigDecimal.valueOf(70);
-    private static final long LIST_TTL_MS = 10 * 60 * 1000;
-    private static final int LIST_CACHE_MAX = 500;
-    private final Map<UUID, CachedList> listCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long LIST_TTL_MINUTES = 10;
 
-    private record CachedList(UUID requesterId, long expiresAt, Ranked ranked) {
+    /** Phan luu xuong DB cua mot danh sach da xep hang (model duoc luu qua model_id). */
+    private record StoredList(List<PartnerSearchResponse> items, Map<UUID, List<String>> codes) {
     }
 
     /** Tim doi tac va ghi nhat ky lan tim (2.3.70 - 2.3.76); loi he thong cung duoc ghi lai. */
@@ -93,21 +96,49 @@ public class PartnerSearchService {
         }
     }
 
-    /** Danh sach da xep hang: lay lai tu bo nho dem neu trang sau cua cung mot lan tim, nguoc lai loc + cham diem moi. */
+    /**
+     * Danh sach da xep hang: trang sau cua cung mot lan tim doc lai tu DB (partner_search_lists, het han sau 10 phut, chi nguoi tim), nguoc lai
+     * loc + cham diem moi. Luu DB nen khong mat khi backend khoi dong lai va dung chung giua nhieu may.
+     */
     private Ranked rankedList(UUID requesterId, PartnerSearchQuery query) {
-        long now = System.currentTimeMillis();
-        listCache.values().removeIf(entry -> entry.expiresAt() < now);
         if (query.listId() != null) {
-            CachedList cached = listCache.get(query.listId());
-            if (cached != null && cached.requesterId().equals(requesterId)) {
-                return cached.ranked();
+            Ranked stored = loadList(requesterId, query.listId());
+            if (stored != null) {
+                return stored;
             }
         }
         Ranked ranked = rank(requesterId, query);
-        if (listCache.size() < LIST_CACHE_MAX) {
-            listCache.put(ranked.listId(), new CachedList(requesterId, now + LIST_TTL_MS, ranked));
-        }
+        saveList(requesterId, ranked);
         return ranked;
+    }
+
+    private Ranked loadList(UUID requesterId, UUID listId) {
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT model_id, scoring_source, fallback_reason, payload_json::text AS payload FROM partner_search_lists WHERE id = ? AND requester_id = ? AND expires_at > now()",
+                listId, requesterId);
+        if (rows.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> row = rows.getFirst();
+        try {
+            StoredList stored = objectMapper.readValue((String) row.get("payload"), StoredList.class);
+            AiModel model = row.get("model_id") == null ? null : modelRepository.findById((UUID) row.get("model_id")).orElse(null);
+            return new Ranked(stored.items(), (String) row.get("scoring_source"), model, (String) row.get("fallback_reason"), listId, stored.codes());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            return null; // danh sach hong: tinh lai thay vi bao loi cho nguoi choi
+        }
+    }
+
+    private void saveList(UUID requesterId, Ranked ranked) {
+        try {
+            String payload = objectMapper.writeValueAsString(new StoredList(ranked.list(), ranked.reasonCodes()));
+            jdbc.update("DELETE FROM partner_search_lists WHERE expires_at < now()");
+            jdbc.update("INSERT INTO partner_search_lists (id, requester_id, model_id, scoring_source, fallback_reason, payload_json, expires_at) VALUES (?, ?, ?, ?, ?, ?::jsonb, now() + make_interval(mins => ?))",
+                    ranked.listId(), requesterId, ranked.model() == null ? null : ranked.model().getId(), ranked.source(),
+                    ranked.fallbackReason(), payload, (int) LIST_TTL_MINUTES);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            // khong luu duoc danh sach chi lam trang sau phai tinh lai, khong lam hong lan tim hien tai
+        }
     }
 
     private static PageResponse<PartnerSearchResponse> pageOf(List<PartnerSearchResponse> list, PartnerSearchQuery query) {

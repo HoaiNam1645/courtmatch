@@ -1,0 +1,6 @@
+# Chi phuc vu suy luan (khong huan luyen): khong can psycopg. Phien ban khop uv.lock khi huan luyen.
+catboost==1.2.10
+numpy>=2.0
+fastapi>=0.115
+uvicorn>=0.32
+pydantic>=2.9

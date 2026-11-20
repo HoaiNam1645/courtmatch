@@ -162,7 +162,7 @@ Da trien khai backend va frontend cho cac nhom:
 - `2.2.43-2.2.45`: cham sao, nhan xet va xem danh gia cong khai cua doi tac.
 
 Du lieu BWF chi la nguon seed de tao du lieu mau, khong phai mot chuc nang nguoi dung.
-Seed hien co khoang 188 van dong vien va 2.555 tran BWF.
+Seed hien co khoang 187 van dong vien va 5.954 tran BWF (tu 2018).
 
 ### Sprint 3
 

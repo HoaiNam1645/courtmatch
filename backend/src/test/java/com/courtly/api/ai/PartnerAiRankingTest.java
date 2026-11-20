@@ -289,4 +289,18 @@ class PartnerAiRankingTest extends OwnerApiTestBase {
                 .param("durationMinutes", "90").param("listId", listId)).andExpect(status().isOk());
         assertThat(mine()).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Danh sach da xep hang luu o DB (khong mat khi khoi dong lai); het han sau 10 phut thi tinh lai")
+    void listIsPersistedAndExpires() throws Exception {
+        withModel(true);
+        String listId = search().get("content").get(0).get("listId").asText();
+        entityManager.flush();
+        assertThat(jdbc.queryForObject("SELECT scoring_source || '|' || (expires_at > now() + interval '9 minutes')::text FROM partner_search_lists WHERE id = ?::uuid AND requester_id = ?",
+                String.class, listId, requester.getId())).isEqualTo("ai|true");
+        jdbc.update("UPDATE partner_search_lists SET expires_at = now() - interval '1 second' WHERE id = ?::uuid", listId);
+        entityManager.clear();
+        search("listId", listId);
+        assertThat(mine()).hasSize(2);
+    }
 }
