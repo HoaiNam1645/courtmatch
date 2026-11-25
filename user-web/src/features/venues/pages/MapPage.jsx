@@ -535,7 +535,7 @@ function MapPage() {
 
         {showFilters && <VenueFilterPanel filters={filters} districts={districts} onChange={setFilters} onReset={() => setFilters(DEFAULT_VENUE_FILTERS)} onClose={() => setShowFilters(false)} />}
       </div>
-      <BottomNav activeLabel="Bản đồ" />
+      <BottomNav activeLabel="Bản đồ" persistent />
     </main>
   )
 }

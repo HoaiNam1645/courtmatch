@@ -46,6 +46,12 @@ function HomePage() {
   }), [query, venueFilters, userLocation])
 
   const venueSearch = useVenueSearch(searchParams)
+  // Mở từ mục "Khám phá" (/#venues): trình duyệt cuộn tới neo trước khi danh sách tải xong, nên cuộn lại khi danh sách đã hiện.
+  useEffect(() => {
+    if (venueSearch.status !== 'loading' && window.location.hash === '#venues') {
+      document.getElementById('venues')?.scrollIntoView({ block: 'start' })
+    }
+  }, [venueSearch.status])
   const venues = venueSearch.venues
   const districts = useMemo(() => districtStats.map((item) => item.name), [districtStats])
   const activeVenueFilterCount = [

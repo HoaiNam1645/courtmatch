@@ -29,7 +29,17 @@ export const fallbackSlides = [
 export const navigationTabs = [
   { label: 'Trang chủ', icon: Home, href: '/' },
   { label: 'Bản đồ', icon: Map, href: '/map' },
-  { label: 'Khám phá', icon: List, href: '/explore', raised: true },
+  // Danh sách sân nằm ở trang chủ (mục #venues); /explore không có route nên trước đây bị đưa về trang chủ.
+  { label: 'Khám phá', icon: List, href: '/#venues', raised: true },
   { label: 'Đối tác', icon: Users, href: '/partners' },
   { label: 'Tài khoản', icon: UserRound, href: '/login' },
 ]
+
+/** Mục điều hướng đang mở theo đường dẫn, dùng cho thanh dưới (điện thoại) và thanh trên (máy tính). */
+export function activeTabFor(pathname, hash = '') {
+  if (pathname === '/') return hash === '#venues' ? 'Khám phá' : 'Trang chủ'
+  if (pathname === '/map' || pathname === '/ban-do') return 'Bản đồ'
+  if (/^\/(san|venue)\//.test(pathname) || pathname.startsWith('/booking/checkout')) return 'Khám phá'
+  if (pathname.startsWith('/partners')) return 'Đối tác'
+  return 'Tài khoản'
+}

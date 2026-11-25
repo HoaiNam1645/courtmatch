@@ -4,7 +4,7 @@ import { classNames } from '../shared/utils'
 import { isOwner } from '../shared/roles'
 import { readCachedUser } from '../shared/session'
 import { NotificationBell } from '../features/notifications/NotificationBell'
-import { fallbackSlides, navigationTabs } from './config'
+import { activeTabFor, fallbackSlides, navigationTabs } from './config'
 
 function SplashScreen() {
   return (
@@ -135,6 +135,8 @@ function AppHeader({ user, onLogout }) {
           <span className="text-[23px] font-semibold tracking-normal">Courtly</span>
         </a>
 
+        <DesktopNav />
+
         {user ? (
           <div className="flex items-center gap-2">
             <NotificationBell />
@@ -177,18 +179,50 @@ function AppHeader({ user, onLogout }) {
   )
 }
 
-function BottomNav({ activeLabel = 'Trang chủ' }) {
+function tabHref(tab) {
+  return tab.label === 'Tài khoản' && readCachedUser() ? '/profile' : tab.href
+}
+
+/** Màn hình lớn (từ lg): các mục điều hướng nằm trên thanh trên thay cho thanh dưới kiểu ứng dụng điện thoại. */
+function DesktopNav() {
+  const active = typeof window === 'undefined' ? '' : activeTabFor(window.location.pathname, window.location.hash)
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-emerald-100 bg-white/96 px-2 py-1 shadow-[0_-10px_26px_rgba(24,48,35,0.1)] backdrop-blur">
+    <nav aria-label="Điều hướng chính" className="hidden flex-1 items-center justify-center gap-1 lg:flex" data-testid="desktop-nav">
+      {navigationTabs.map((tab) => {
+        const Icon = tab.icon
+        const isActive = tab.label === active
+        return (
+          <a key={tab.label} href={tabHref(tab)} aria-current={isActive ? 'page' : undefined}
+            className={classNames('flex h-10 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition',
+              isActive ? 'bg-white/12 text-lime-300' : 'text-white/80 hover:bg-white/8 hover:text-white')}>
+            <Icon className="size-4" />{tab.label}
+          </a>
+        )
+      })}
+    </nav>
+  )
+}
+
+/**
+ * Thanh điều hướng dưới cho điện thoại/máy tính bảng (ẩn từ lg). Có một khoảng đệm cùng chiều cao đặt trong luồng trang để
+ * nội dung cuối trang không bị thanh cố định che, và chừa vùng an toàn (thanh home của iPhone).
+ * {@code persistent}: trang toàn màn hình kiểu ứng dụng (bản đồ) giữ thanh dưới ở mọi kích thước và tự chừa chỗ.
+ */
+function BottomNav({ activeLabel, persistent = false }) {
+  const current = activeLabel ?? (typeof window === 'undefined' ? 'Trang chủ' : activeTabFor(window.location.pathname, window.location.hash))
+  return (
+    <>
+    {!persistent && <div aria-hidden="true" className="h-[calc(4.5rem+env(safe-area-inset-bottom))] lg:hidden" data-testid="bottom-nav-spacer" />}
+    <nav aria-label="Điều hướng" data-testid="bottom-nav" className={classNames('fixed inset-x-0 bottom-0 z-40 border-t border-emerald-100 bg-white/96 px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-10px_26px_rgba(24,48,35,0.1)] backdrop-blur', !persistent && 'lg:hidden')}>
       <div className="mx-auto grid max-w-5xl grid-cols-5 items-end">
         {navigationTabs.map((tab) => {
           const Icon = tab.icon
-          const active = tab.label === activeLabel
-          const href = tab.label === 'Tài khoản' && readCachedUser() ? '/profile' : tab.href
+          const active = tab.label === current
           return (
             <a
               key={tab.label}
-              href={href}
+              href={tabHref(tab)}
+              aria-current={active ? 'page' : undefined}
               className={classNames(
                 'relative grid place-items-center gap-0.5 rounded-lg py-1 text-[11px] font-bold',
                 active ? 'text-emerald-600' : 'text-stone-400',
@@ -211,6 +245,7 @@ function BottomNav({ activeLabel = 'Trang chủ' }) {
         })}
       </div>
     </nav>
+    </>
   )
 }
 
