@@ -128,17 +128,24 @@ public class MatchSeeder implements Seeder {
     @Override
     @Transactional
     public void seed() {
-        if (matchRepository.count() > 0) {
+        // Kiem tra theo tung tran mau (khong theo tong so tran): database da co tran khac (nhap tay, tran BWF) van duoc
+        // khoi phuc tran mau neu bi xoa, va chay lai khong tao trung.
+        List<MatchSeed> missing = MATCHES.stream()
+                .filter(seed -> !matchRepository.existsById(SeedIds.of("match:" + seed.key())))
+                .toList();
+        if (missing.isEmpty()) {
             log.info("  [matches] da co du lieu, bo qua");
             return;
         }
 
-        MATCHES.forEach(this::seedMatch);
+        missing.forEach(this::seedMatch);
         STATISTICS.forEach(this::seedStatistics);
-        RATING_HISTORY.forEach(this::seedRatingHistory);
+        RATING_HISTORY.stream()
+                .filter(seed -> !ratingHistoryRepository.existsById(SeedIds.of("rating-history:" + seed.matchKey() + ":" + seed.playerKey())))
+                .forEach(this::seedRatingHistory);
 
         log.info("  [matches] {} tran, {} ban ghi thong ke, {} dong lich su rating",
-                MATCHES.size(), STATISTICS.size(), RATING_HISTORY.size());
+                missing.size(), STATISTICS.size(), RATING_HISTORY.size());
     }
 
     private void seedMatch(MatchSeed seed) {

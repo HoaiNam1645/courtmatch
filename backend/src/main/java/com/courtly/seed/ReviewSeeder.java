@@ -78,7 +78,8 @@ public class ReviewSeeder implements Seeder {
     @Transactional
     public void seed() {
         if (venueReviewRepository.count() > 0) {
-            log.info("  [reviews] da co du lieu, bo qua");
+            int relinked = relinkPartnerReviews();
+            log.info("  [reviews] da co du lieu, bo qua (noi lai {} danh gia doi tac mat tran)", relinked);
             return;
         }
 
@@ -105,6 +106,24 @@ public class ReviewSeeder implements Seeder {
         review.setCreatedAt(createdAt);
         review.setUpdatedAt(createdAt);
         venueReviewRepository.save(review);
+    }
+
+    /**
+     * Danh gia doi tac mau mat lien ket tran (tran mau bi xoa roi duoc MatchSeeder khoi phuc, match_id da bi dat NULL):
+     * noi lai dung tran mau. Chi dong toi danh gia mau, khong dong toi du lieu khac.
+     */
+    private int relinkPartnerReviews() {
+        int count = 0;
+        for (PartnerReviewSeed seed : PARTNER_REVIEWS) {
+            PartnerReview review = partnerReviewRepository.findById(SeedIds.of("partner-review:" + seed.key())).orElse(null);
+            if (review == null || review.getMatch() != null) continue;
+            var match = matchRepository.findById(SeedIds.of("match:" + seed.matchKey())).orElse(null);
+            if (match == null) continue;
+            review.setMatch(match);
+            partnerReviewRepository.save(review);
+            count++;
+        }
+        return count;
     }
 
     private void seedPartnerReview(PartnerReviewSeed seed) {

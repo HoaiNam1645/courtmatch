@@ -87,7 +87,7 @@ class PartnerReviewControllerTest {
                 .andExpect(jsonPath("$.reviewer.phone").doesNotExist());
 
         PartnerReview saved = reviewRepository.findAll().stream()
-                .filter(review -> review.getMatch().getId().equals(matchId))
+                .filter(review -> review.getMatch() != null && review.getMatch().getId().equals(matchId))
                 .findFirst().orElseThrow();
         assertThat(saved.getRating()).isEqualTo((short) 5);
         assertThat(saved.getStatus()).isEqualTo(ReviewStatus.VISIBLE);
