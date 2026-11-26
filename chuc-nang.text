@@ -205,34 +205,66 @@ Quy ước công nghệ:
 - Spring Boot vẫn lọc điều kiện bắt buộc, lưu kết quả và xử lý toàn bộ nghiệp vụ.
 - Khi AI service lỗi hoặc model chưa đủ dữ liệu, hệ thống dùng công thức baseline làm fallback.
 
-2.2.11. Xác định đặc trưng đầu vào và nhãn huấn luyện cho model
+Quyết định đã chốt cho nhóm này (2026-11-19):
+- Dữ liệu BWF chỉ là NGUỒN SEED: sau khi định dạng và lưu vào DB, người chơi seed được bổ sung cho đủ dữ liệu như người chơi hệ thống (khu vực chơi ở Đà Nẵng, lịch rảnh, phong cách, loại trận ưa thích), nên model huấn luyện trên chính các bảng của hệ thống và coi mọi người chơi như nhau; không có đường code riêng cho "BWF". Tài khoản seed (@bwf.example) vẫn bị ẩn khỏi kết quả tìm kiếm của người chơi thật và khỏi các số liệu phân tích admin như quy tắc hiện hành.
+- AI service nằm trong thư mục ai-service/ của repo, chạy bằng uv (có Dockerfile để đóng gói sau); file model .cbm KHÔNG commit vào git.
+- Phạm vi: xếp hạng đối tác (CatBoostRanker) VÀ chia đội (model dự đoán độ cân bằng của hai đội, double_team_ranker).
+- AI lỗi/quá hạn/chưa có model đang hoạt động: rớt về baseline trong cùng yêu cầu, vẫn trả kết quả, ghi scoring_source = baseline; người chơi chỉ thấy nhãn nguồn điểm ("Gợi ý bằng AI" hoặc "Gợi ý theo công thức").
+
+2.2.11. Xác định đặc trưng đầu vào và nhãn huấn luyện cho model [Đã triển khai]
   - Đặc trưng gồm kỹ năng, phong độ, tỷ lệ thắng làm trơn, độ ổn định, vị trí,
     thời gian rảnh, phong cách chơi và loại trận mong muốn.
   - Nhãn xếp hạng phản ánh mức phù hợp hoặc độ cân bằng của cặp người chơi.
-2.2.12. Tạo tập huấn luyện, kiểm định và kiểm thử theo thời gian
+  - Bổ sung dữ liệu seed cho đủ như người chơi hệ thống: script chuyển dữ liệu seed (data/bwf-to-seed.py) sinh thêm theo hạt giống cố định (chạy lại cho đúng kết quả cũ) cho mỗi người chơi seed: một khu vực chơi ghim toạ độ trong 6 quận Đà Nẵng kèm bán kính 3-10 km, 2-4 khung giờ rảnh mỗi tuần (tối trong tuần và cuối tuần, giống thói quen người chơi thật), phong cách tấn công/cân bằng/phòng thủ và loại trận ưa thích (đơn/đôi/đôi nam nữ, khớp loại trận người đó đã chơi nhiều nhất). Seeder chỉ chèn hằng số đã tính sẵn, không chạy thuật toán.
+  - Vector đặc trưng của một cặp (người tìm, ứng viên) gồm: Elo hai bên, chênh Elo, tỷ lệ thắng làm trơn hai bên, độ ổn định, độ mới dữ liệu, số trận, và các điểm tương thích đã có (kỹ năng, vị trí, thời gian, phong cách, 0-100) cùng cờ "tạm tính" (dưới 5 trận). Giá trị thiếu để trống (NaN), không điền trung bình. Danh sách đặc trưng và thứ tự là một schema duy nhất dùng chung cho huấn luyện và suy luận.
+  - Nhãn xếp hạng theo mức (0-4) tính từ kết quả THẬT của các lần hai người đã đấu/chơi cùng nhau trong giai đoạn sau thời điểm tạo đặc trưng: trận sát nút (chênh điểm nhỏ, đủ 3 set) điểm cao, trận một chiều điểm thấp; ứng viên hợp lệ nhưng chưa từng gặp người tìm là mẫu âm (mức 0) được lấy ngẫu nhiên có kiểm soát theo từng nhóm (mỗi người tìm là một nhóm xếp hạng). Khi hệ thống có đủ phản hồi thật (yêu cầu ghép được chấp nhận và đã chơi, 2.2.19) thì dữ liệu thật được cộng vào nhãn ở lần huấn luyện sau.
+  - Giới hạn cần nói rõ ở màn admin: phần lớn nhãn hiện lấy từ kết quả trận seed và hồ sơ bổ sung theo quy tắc trên, chưa phải hành vi người dùng thật; model sẽ được huấn luyện lại khi có dữ liệu thật (2.2.19).
+2.2.12. Tạo tập huấn luyện, kiểm định và kiểm thử theo thời gian [Đã triển khai]
   - Không chia ngẫu nhiên làm rò rỉ tương lai; dùng các trận cũ để dự đoán giai đoạn mới hơn.
   - Lưu schema đặc trưng để pipeline huấn luyện và pipeline dự đoán luôn giống nhau.
-2.2.13. Huấn luyện model CatBoostRanker
+  - Script ai-service/train đọc thẳng các bảng của hệ thống bằng tài khoản DB chỉ-đọc (DATABASE_URL), dựng nhóm xếp hạng theo "ảnh chụp đặc trưng tại thời điểm T" (chỉ dùng trận trước T để tính Elo/tỷ lệ thắng/độ ổn định, chỉ dùng trận sau T để gắn nhãn): huấn luyện = 70% mốc thời gian đầu, kiểm định = 15% kế, kiểm thử = 15% cuối; không người nào ở nhóm kiểm thử có nhãn lẫn vào tập huấn luyện.
+  - Lưu kèm số nhóm, số dòng và khoảng ngày của từng tập vào metadata; người dưới 3 trận (training_eligible = false) không làm mẫu huấn luyện chính nhưng vẫn nằm trong tập đánh giá "người mới".
+2.2.13. Huấn luyện model CatBoostRanker [Đã triển khai]
   - Script Python đọc dữ liệu đã seed/chuẩn hóa, huấn luyện model và xuất file .cbm.
   - Cấu hình huấn luyện và random seed phải được lưu để có thể tái lập kết quả.
-2.2.14. Đánh giá chất lượng model xếp hạng
+  - Chạy bằng "uv run python -m train partner" trong ai-service/; hàm mất mát YetiRankPairwise (nhóm theo người tìm), dừng sớm theo NDCG@10 trên tập kiểm định, random_seed cố định; cùng dữ liệu và cùng cấu hình phải ra cùng metric.
+  - Kết quả ghi vào ai-service/artifacts/{modelVersion}/: model.cbm, metadata.json (cấu hình, seed, schema đặc trưng, metric, khoảng ngày, checksum SHA-256), feature_importance.json. Thư mục artifacts không đưa lên git.
+  - Chia đội: "uv run python -m train team" huấn luyện CatBoostClassifier dự đoán xác suất đội 1 thắng từ đặc trưng của 4 người và 2 cặp (Elo trung bình hai đội, chênh Elo, tương thích cặp, độ ổn định) trên các trận đôi/đôi nam nữ; cùng cách chia thời gian và lưu artifact như trên (loại double_team_ranker).
+2.2.14. Đánh giá chất lượng model xếp hạng [Đã triển khai]
   - Dùng NDCG@K, Precision@K và Recall@K; không chỉ dùng accuracy.
   - Đánh giá riêng theo đánh đơn, đánh đôi và nhóm người chơi mới.
-2.2.15. So sánh model AI với công thức baseline
+  - K = 3, 5, 10 trên tập kiểm thử theo thời gian; "liên quan" là nhãn từ mức 2 trở lên; báo cáo kèm số nhóm và khoảng tin cậy bootstrap để không kết luận từ mẫu nhỏ (dưới 30 nhóm thì gắn "Chưa đủ dữ liệu").
+  - Chia đội: Log-loss, Brier, tỷ lệ đoán đúng đội thắng và độ chênh trung bình của phương án được chọn so với phương án tốt nhất thực tế; đánh giá riêng đôi nam, đôi nữ, đôi nam nữ.
+2.2.15. So sánh model AI với công thức baseline [Đã triển khai]
   - Baseline là tổng có trọng số của kỹ năng, vị trí, thời gian và phong cách chơi.
   - Chỉ chọn model mới khi kết quả kiểm thử tốt hơn baseline và không vi phạm luật lọc.
-2.2.16. Quản lý phiên bản và metadata của model
+  - Baseline (0,4 kỹ năng, 0,2 phong cách, 0,2 thời gian, 0,2 vị trí; chia đội dùng Elo trung bình) được chấm trên đúng tập kiểm thử bằng đúng các thước đo ở 2.2.14 và lưu cạnh metric của model. Điều kiện "tốt hơn": NDCG@10 cao hơn ít nhất 1 điểm phần trăm VÀ không kém baseline ở nhóm người mới VÀ 100% kết quả suy luận mẫu nằm trong tập đã lọc (kiểm thử luật lọc: không có ứng viên ngoài bán kính, ngoài lịch rảnh hoặc ngoài khoảng Elo).
+  - Không đạt thì model chỉ ở trạng thái ready, không được kích hoạt; màn admin nêu rõ chỉ số nào chưa đạt.
+2.2.16. Quản lý phiên bản và metadata của model [Đã triển khai]
   - Lưu modelVersion, danh sách đặc trưng, metric, thời điểm huấn luyện và checksum file model.
   - Mỗi danh sách đề xuất phải truy được model hoặc baseline đã tạo ra nó.
-2.2.17. Cung cấp API suy luận bằng FastAPI
+  - Nhập model vào hệ thống: POST /api/v1/admin/ai-models/import {modelVersion, modelType} đọc metadata.json trong artifacts (không nhận đường dẫn tuỳ ý), kiểm tra checksum file .cbm, tạo bản ghi ai_models trạng thái ready (artifact_path, artifact_checksum, feature_schema_json, metrics_json gồm cả metric baseline, parameters_json gồm seed và cấu hình). Trùng (model_type, model_version) bị từ chối.
+  - Kích hoạt: POST /api/v1/admin/ai-models/{id}/activate chỉ khi đạt điều kiện 2.2.15 và AI service nạp thử thành công và trả đúng modelVersion/checksum; model đang hoạt động cùng loại chuyển archived trong cùng giao dịch (chỉ một model active mỗi loại, ràng buộc DB). Quyền mới matching.manage (chỉ admin); ghi audit_logs.
+  - Mọi gợi ý đối tác và phương án chia đội lưu model_id + scoring_source như đã có; xem lại được model nào đã tạo ra từ màn lịch sử ghép cặp (2.3.74-75).
+2.2.17. Cung cấp API suy luận bằng FastAPI [Đã triển khai]
   - Các API chính: xếp hạng đối tác, dự đoán độ cân bằng và kiểm tra trạng thái service.
   - Có timeout, health check và xác thực kết nối nội bộ từ Spring Boot.
-2.2.18. Dự đoán điểm phù hợp và độ tin cậy
+  - ai-service/ (FastAPI, uv, Python 3.12+): POST /v1/rank-partners (người tìm + danh sách ứng viên đã lọc với đặc trưng, trả điểm, độ tin cậy, yếu tố giải thích, modelVersion), POST /v1/predict-balance (4 người, các phương án chia, trả xác suất thắng và độ cân bằng từng phương án), GET /health (trạng thái, model đang nạp, checksum, thời gian nạp), POST /v1/models/load (Spring yêu cầu nạp một artifact theo version khi kích hoạt).
+  - Xác thực nội bộ: tiêu đề X-Internal-Token khớp biến môi trường AI_SERVICE_TOKEN (Spring và service dùng chung), service chỉ lắng nghe 127.0.0.1 theo mặc định và không có cổng công khai; sai token trả 401.
+  - Spring Boot gọi bằng RestClient với timeout kết nối 500 ms và đọc 1.500 ms (cấu hình AI_SERVICE_TIMEOUT_MS), không thử lại trong cùng yêu cầu của người chơi; giới hạn tối đa 200 ứng viên mỗi lần gọi.
+  - Kiểm tra đầu vào chặt (kích thước danh sách, thứ tự và đủ đặc trưng đúng schema đang nạp); thiếu đặc trưng thì để trống, không điền giả.
+2.2.18. Dự đoán điểm phù hợp và độ tin cậy [Đã triển khai]
   - AI trả về totalScore, confidence, modelVersion và các yếu tố giải thích chính.
   - Spring Boot kiểm tra lại ứng viên trước khi lưu, không tin tuyệt đối kết quả từ AI.
-2.2.19. Theo dõi chất lượng và tái huấn luyện model
+  - totalScore chuẩn hoá 0-100; confidence 0-1 phản ánh độ dày dữ liệu của hai người (số trận, độ mới) và mức đồng thuận giữa các cây; yếu tố giải thích là 3 đặc trưng đóng góp lớn nhất theo SHAP của CatBoost, đổi sang lời dễ hiểu ("trình độ sát nhau", "cùng khung giờ rảnh", "gần nhau").
+  - Spring Boot bỏ mọi ứng viên AI trả về mà không nằm trong danh sách đã lọc, bỏ điểm ngoài khoảng 0-100 hoặc NaN, và nếu số kết quả không khớp số ứng viên gửi đi thì coi như AI lỗi và dùng baseline. Không bao giờ để AI thêm hoặc bỏ ứng viên qua bộ lọc bắt buộc.
+2.2.19. Theo dõi chất lượng và tái huấn luyện model [Đã triển khai]
   - Ghi nhận kết quả đề xuất, phản hồi ghép cặp và trận đã hoàn thành để đánh giá model.
   - Chỉ kích hoạt model mới sau khi vượt kiểm thử; có thể quay lại phiên bản trước.
+  - Theo dõi: dùng lại nhật ký matching_runs và các màn 2.3.70-2.3.76 (tỷ lệ chấp nhận, tỷ lệ lỗi, độ trễ P95, tuổi model) theo từng model_id và nguồn điểm AI/baseline để so sánh trực tiếp với baseline trên người dùng thật.
+  - Tái huấn luyện: chạy lại script huấn luyện khi có thêm dữ liệu (lệnh thủ công, có tham số mốc ngày); model mới đi qua 2.2.14-2.2.16 như model đầu tiên và không tự kích hoạt. Dữ liệu thật (yêu cầu ghép được chấp nhận và đã chơi, từ chối, bỏ qua) được cộng vào nhãn khi đủ ngưỡng 200 cặp có kết quả thật.
+  - Quay lại phiên bản trước: POST /api/v1/admin/ai-models/{id}/rollback (id là model cũ ở trạng thái archived của cùng loại) kích hoạt lại, nạp lại vào AI service và lưu audit_logs; kích hoạt model đã bị đánh failed bị chặn.
+  - Giao diện: tab "Model AI" ở /admin/matching có thêm danh sách phiên bản với metric so với baseline, nút Nhập / Kích hoạt / Quay lại (xác nhận trước khi thực hiện) và nêu rõ khi đang chạy bằng baseline.
 
 Ghép cặp Đối tác chơi thông minh
 
@@ -255,14 +287,21 @@ Ghép cặp Đối tác chơi thông minh
   - Tính tỷ lệ lịch rảnh của người tìm được ứng viên đáp ứng trong tuần.
 2.2.27. Tính đặc trưng tương thích về phong cách chơi
   - Chấm điểm theo mức độ phù hợp giữa phong cách tấn công, cân bằng và phòng thủ của hai người.
-2.2.28. Dùng CatBoostRanker tính điểm phù hợp tổng thể
+2.2.28. Dùng CatBoostRanker tính điểm phù hợp tổng thể [Đã triển khai]
   - Chỉ chấm điểm các ứng viên đã vượt qua bộ lọc bắt buộc ở 2.2.21–2.2.23.
   - Nếu AI service không khả dụng thì dùng baseline, đồng thời ghi rõ nguồn tính điểm.
-2.2.29. Tạo danh sách đề xuất đối tác theo thứ hạng AI
+  - Thứ tự: Spring Boot lọc bắt buộc (bán kính, lịch rảnh, khoảng Elo) -> tính các điểm tương thích -> gọi AI một lần cho toàn bộ ứng viên đã lọc (tối đa 200 người xếp theo độ gần về Elo và khoảng cách nếu nhiều hơn) -> kiểm tra lại (2.2.18) -> xếp theo điểm giảm dần rồi mới phân trang (hiện đang xếp theo độ chênh Elo/khoảng cách; sau thay đổi này thứ tự theo điểm của model hoặc baseline).
+  - Có model đang hoạt động và AI trả đúng hạn (dưới 1,5 giây): scoring_source = ai, lưu model_id, confidence_score. Không có model đang hoạt động, AI lỗi, quá hạn, trả sai: dùng baseline cùng một công thức như hiện nay, scoring_source = baseline; lần chạy vẫn ghi vào matching_runs kèm lý do rớt (timeout, lỗi kết nối, kết quả không hợp lệ, chưa có model).
+  - Chia đội: dùng model chia đội đang hoạt động để tính xác suất thắng và độ cân bằng của từng phương án trong 2.3.63-2.3.69 (công thức Elo vẫn là fallback và là phép kiểm tra chéo); phương án khuyến nghị là phương án có độ cân bằng tốt nhất theo nguồn đang dùng; scoring_source ghi ở từng phương án.
+2.2.29. Tạo danh sách đề xuất đối tác theo thứ hạng AI [Đã triển khai]
   - Lưu điểm, độ tin cậy, modelVersion và lý do đề xuất để phục vụ kiểm tra sau này.
-2.2.30. Xem chi tiết đề xuất đối tác
+  - Mỗi dòng partner_suggestions lưu total_score, các điểm thành phần, confidence_score, scoring_source, model_id (model hoặc baseline đã tạo ra nó), rank_no và reason_json (3 yếu tố chính bằng lời dễ hiểu); mọi lần xem một trang kết quả đều có bản ghi để đo chất lượng (đã làm ở 2.3.70).
+  - Cùng một lần tìm dùng đúng một model cho mọi trang (ghi search_id), để chuyển trang không đổi thứ tự khi model được kích hoạt giữa chừng.
+2.2.30. Xem chi tiết đề xuất đối tác [Đã triển khai]
   - Hiển thị các lý do dễ hiểu như trình độ cân bằng, gần vị trí và trùng lịch rảnh;
     không hiển thị trực tiếp cấu trúc nội bộ hoặc trọng số kỹ thuật của model.
+  - Mỗi ứng viên hiện điểm phù hợp (0-100), nhãn độ tin cậy (Cao / Trung bình / Thấp / Chưa đủ dữ liệu cho người dưới 5 trận), tối đa 3 lý do bằng lời tiếng Việt và nhãn nguồn: "Gợi ý bằng AI" hoặc "Gợi ý theo công thức". Không hiện modelVersion, tên đặc trưng, SHAP hay trọng số cho người chơi; admin xem được ở 2.3.74-2.3.75.
+  - Với người dưới 5 trận dùng cơ chế cold-start đã có (điểm tạm tính, hạ độ tin cậy) và không để AI đẩy họ lên cao chỉ vì dữ liệu ít.
 
 Yêu cầu Ghép cặp Đối tác
 
@@ -741,7 +780,7 @@ Báo cáo & Tranh chấp Hoàn tiền — Người chơi
   - Mỗi bổ sung lưu thêm một phần tử vào reporter_updates_json (thời điểm, nội dung, ảnh), tối đa 10 lần bổ sung; không sửa hay xóa được nội dung đã gửi để chủ sân và quản trị viên xem lại đúng lịch sử.
   - Gửi thông báo cho chủ sân (loại booking_dispute_updated) khi báo cáo còn chờ giải trình.
   - Giao diện: ô "Bổ sung thông tin" ở trang chi tiết báo cáo, kèm chọn ảnh.
-2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình [Mô tả chờ duyệt]
+2.3.92. Huỷ báo cáo khi chủ sân chưa giải trình [Đã triển khai]
   - API: POST /api/v1/booking-disputes/{disputeId}/cancel; chỉ người báo cáo, chỉ khi báo cáo đang awaiting_owner_response và chủ sân chưa gửi giải trình. Đã có giải trình, đang được quản trị viên xem xét hoặc đã đóng thì từ chối (409).
   - Báo cáo chuyển sang cancelled, giữ nguyên nội dung, ảnh và các lần bổ sung để làm bằng chứng lịch sử (không xóa); đơn có thể được báo cáo lại nếu còn trong thời hạn 7 ngày.
   - Có hộp xác nhận kèm cảnh báo "huỷ cả yêu cầu hoàn tiền"; ghi audit_logs; gửi thông báo cho chủ sân (loại booking_dispute_cancelled) để họ khỏi phải giải trình.
@@ -749,28 +788,28 @@ Báo cáo & Tranh chấp Hoàn tiền — Người chơi
 
 Báo cáo & Tranh chấp Hoàn tiền — Chủ sân
 
-2.3.93. Xem danh sách báo cáo liên quan tới sân của mình [Mô tả chờ duyệt]
+2.3.93. Xem danh sách báo cáo liên quan tới sân của mình [Đã triển khai]
   - API: GET /api/v1/owner/booking-disputes?venueId&status=all|awaiting|answered|closed&page&size, chỉ báo cáo về đơn thuộc sân của chủ sân đang đăng nhập (sân khác 404). awaiting = chờ giải trình (awaiting_owner_response); answered = đã giải trình, chờ quản trị viên (reviewing); closed = resolved / rejected / cancelled.
   - Mỗi dòng: mã đơn, sân, tên người chơi, loại báo cáo, trạng thái, yêu cầu hoàn tiền và số tiền, số ảnh, thời điểm gửi, hạn giải trình đếm ngược (sắp hết hạn khi còn dưới 6 giờ, đã quá hạn thì ghi rõ), kết luận khi đã đóng. Báo cáo chờ giải trình xếp lên đầu theo hạn gần nhất.
   - Kèm bộ đếm: số báo cáo chờ giải trình và số sắp hết hạn để hiện huy hiệu ở menu chủ sân.
   - Giao diện: trang /owner/disputes trong khu quản lý sân (mục "Báo cáo của khách"), lọc theo sân và trạng thái, phân trang.
-2.3.94. Xem chi tiết báo cáo kèm bằng chứng của người chơi [Mô tả chờ duyệt]
+2.3.94. Xem chi tiết báo cáo kèm bằng chứng của người chơi [Đã triển khai]
   - API: GET /api/v1/owner/booking-disputes/{disputeId}. Trả về đơn (mã, sân con, giờ chơi, số tiền đã trả), người chơi (họ tên và số điện thoại đã đăng ký đơn, như màn yêu cầu đặt sân), nội dung báo cáo, yêu cầu hoàn tiền, ảnh bằng chứng và các lần bổ sung theo dòng thời gian, giải trình của chính chủ sân (nếu có) và kết luận của quản trị viên (nếu có).
   - Ảnh xem qua API riêng tư đã có ở 2.3.88 (chủ sân của sân được phép); không lộ email hay địa chỉ của người chơi.
   - Hiển thị hạn giải trình và những việc chủ sân còn làm được (giải trình, tải ảnh).
   - Giao diện: trang /owner/disputes/:disputeId với dòng thời gian giống bên người chơi, thư viện ảnh bấm xem lớn.
-2.3.95. Gửi giải trình cho báo cáo [Mô tả chờ duyệt]
+2.3.95. Gửi giải trình cho báo cáo [Đã triển khai]
   - Hạn 48 giờ kể từ khi báo cáo được tạo.
   - API: POST /api/v1/owner/booking-disputes/{disputeId}/response (nội dung 10-2000 ký tự). Chỉ chủ sân của sân, chỉ khi báo cáo awaiting_owner_response và chưa quá owner_response_deadline; quá hạn thì từ chối (hệ thống sẽ tự xử ở 2.3.107).
   - Mỗi báo cáo chỉ giải trình một lần, không sửa được sau khi gửi (để quản trị viên xem đúng nội dung chủ sân đã nêu); lưu owner_response, owner_responded_by, owner_responded_at và chuyển báo cáo sang reviewing để chờ quản trị viên.
   - Gửi thông báo cho người chơi (loại booking_dispute_responded). Người chơi vẫn bổ sung thông tin được (2.3.91).
   - Giao diện: ô "Giải trình" ở trang chi tiết với bộ đếm ký tự, xác nhận trước khi gửi vì không sửa được.
-2.3.96. Đính kèm ảnh bằng chứng vào giải trình [Mô tả chờ duyệt]
+2.3.96. Đính kèm ảnh bằng chứng vào giải trình [Đã triển khai]
   - Nội dung giải trình và danh sách bằng chứng được lưu trực tiếp trong hồ sơ tranh chấp.
   - Cụ thể: tối đa 5 ảnh JPEG/PNG/WebP, mỗi ảnh tối đa 5 MB (nhận dạng bằng nội dung thật, mỗi lần một ảnh), lưu riêng tư cùng cơ chế 2.3.88 vào owner_evidences_json. API: POST /api/v1/owner/booking-disputes/{disputeId}/evidences, DELETE .../evidences/{evidenceId}.
   - Tải hoặc xóa ảnh được khi báo cáo còn awaiting_owner_response và chưa quá hạn; sau khi đã gửi giải trình thì khóa. Người chơi và quản trị viên xem được ảnh này, người ngoài thì 404.
   - Giao diện: chọn ảnh, xem trước, xóa trước khi gửi, báo lỗi từng ảnh; ảnh nên được tải lên trước khi bấm gửi giải trình.
-2.3.97. Xem khoản hoa hồng đang tạm hoãn đối soát do tranh chấp [Mô tả chờ duyệt]
+2.3.97. Xem khoản hoa hồng đang tạm hoãn đối soát do tranh chấp [Đã triển khai]
   - API: GET /api/v1/owner/commissions/suspended: danh sách hoa hồng của chủ sân ở trạng thái suspended (tạm hoãn do tranh chấp), mỗi dòng gồm mã đơn, sân, số hoa hồng đang hoãn, phần voucher Courtly bù, báo cáo liên quan, thời điểm bắt đầu hoãn; kèm tổng số tiền đang hoãn. Chỉ đọc.
   - Cho biết rõ: khoản này chưa bị tính vào công nợ đến hạn và chưa bị miễn, sẽ được tính lại hoặc điều chỉnh khi báo cáo có kết luận.
   - Lưu ý phạm vi: việc chuyển hoa hồng sang suspended thuộc 2.3.105; trước khi 2.3.105 được làm, danh sách luôn rỗng và màn hình hiển thị trạng thái trống đúng nghĩa.
@@ -778,41 +817,77 @@ Báo cáo & Tranh chấp Hoàn tiền — Chủ sân
 
 Báo cáo & Tranh chấp Hoàn tiền — Quản trị viên
 
-2.3.98. Xem danh sách báo cáo chờ xử lý [Mô tả chờ duyệt]
+2.3.98. Xem danh sách báo cáo chờ xử lý [Đã triển khai]
   - API: GET /api/v1/admin/booking-disputes?status=pending|awaiting|resolved|rejected|cancelled|all&q&category&refund&from&to&page&size; cần quyền refund.process. "Chờ xử lý" (mặc định) = reviewing: chủ sân đã giải trình, đang chờ quyết định, xếp cũ nhất lên đầu; awaiting = còn chờ chủ sân giải trình.
   - Mỗi dòng: mã đơn, sân và chủ sân, người chơi, loại, yêu cầu hoàn tiền, số ảnh hai bên, thời gian chờ, số báo cáo trước đây của cùng sân. Tìm theo mã đơn, tên người chơi, tên sân; lọc theo loại, có/không yêu cầu hoàn tiền, khoảng ngày; kèm bộ đếm theo từng trạng thái.
   - Giao diện: trang /admin/disputes trong nhóm Kiểm duyệt của khu quản trị.
-2.3.99. Xem chi tiết báo cáo kèm bằng chứng của cả hai phía [Mô tả chờ duyệt]
+2.3.99. Xem chi tiết báo cáo kèm bằng chứng của cả hai phía [Đã triển khai]
   - API: GET /api/v1/admin/booking-disputes/{disputeId}. Hai bên đặt cạnh nhau: nội dung và ảnh của người chơi (cả các lần bổ sung), giải trình và ảnh của chủ sân; đơn, khoản thanh toán (phương thức, số tiền chủ sân xác nhận đã thu, các lần hoàn trước đó), hoa hồng của đơn, yêu cầu hoàn tiền.
   - Kèm lịch sử để quyết định: số báo cáo trước đây của sân và kết quả (xử thua / bác bỏ), số báo cáo của người chơi.
   - Ảnh xem qua API riêng tư (quản trị viên được phép). Chỉ đọc; các nút quyết định hiện ở 2.3.100-102 khi báo cáo đang reviewing.
-2.3.100. Quyết định hoàn tiền toàn phần cho người chơi [Mô tả chờ duyệt]
+2.3.100. Quyết định hoàn tiền toàn phần cho người chơi [Đã triển khai]
   - API: POST /api/v1/admin/booking-disputes/{disputeId}/refund-full {note}; cần quyền refund.process, ghi chú bắt buộc 5-1000 ký tự; chỉ khi báo cáo reviewing và có yêu cầu hoàn tiền, đơn có khoản thanh toán đã xác nhận.
   - Quyết định: báo cáo chuyển resolved, resolution = refund_full, ghi handled_by/handled_at và ghi chú; tạo bản ghi refunds trạng thái awaiting_owner_refund (số tiền theo quy tắc ở dưới, gắn dispute_id, approved_by) để chủ sân hoàn trực tiếp cho người chơi. Courtly không giữ tiền nên không chuyển tiền; việc chủ sân hoàn và xác nhận đã nhận là 2.3.108.
   - Chưa điều chỉnh hoa hồng ở bước này (thuộc 2.3.105, 2.3.109, 2.3.110). Gửi thông báo cho chủ sân (phải hoàn bao nhiêu, hạn hoàn) và người chơi; ghi audit_logs.
   - Số tiền "toàn phần" = toàn bộ số tiền người chơi đã yêu cầu hoàn (không vượt số đã thu còn lại sau các lần hoàn trước).
-2.3.101. Quyết định hoàn tiền một nửa cho người chơi [Mô tả chờ duyệt]
+2.3.101. Quyết định hoàn tiền một nửa cho người chơi [Đã triển khai]
   - API: POST /api/v1/admin/booking-disputes/{disputeId}/refund-half {note}; cùng điều kiện và hiệu ứng như 2.3.100 với resolution = refund_half.
   - Số tiền "một nửa" = 50% số tiền người chơi yêu cầu hoàn, làm tròn xuống bội số 1.000đ và tối thiểu 1.000đ; hiển thị rõ cách tính trước khi xác nhận.
   - Giao diện chung của 2.3.100-102: ba nút quyết định ở chi tiết báo cáo, hộp xác nhận hiện số tiền hoàn và bắt nhập ghi chú, kết quả hiện ngay ở dòng thời gian của cả ba bên.
-2.3.102. Bác bỏ yêu cầu hoàn tiền
-2.3.103. Xem thống kê báo cáo theo từng sân
-2.3.104. Tạm ngưng hoạt động sân bị xử thua nhiều lần
+2.3.102. Bác bỏ yêu cầu hoàn tiền [Đã triển khai]
+  - API: POST /api/v1/admin/booking-disputes/{disputeId}/reject {note}; quyền refund.process, ghi chú bắt buộc 5-1000 ký tự (gửi cho cả hai bên); chỉ khi báo cáo đang reviewing (kể cả báo cáo không có yêu cầu hoàn tiền).
+  - Báo cáo chuyển rejected, resolution = rejected (có yêu cầu hoàn tiền) hoặc dismissed (chỉ phản ánh), ghi handled_by/handled_at. Không tạo khoản hoàn. Hoa hồng đang tạm hoãn của đơn được khôi phục theo 2.3.110.
+  - Gửi thông báo cho người chơi và chủ sân (booking_dispute_resolved, dùng lại loại thông báo của 2.3.100) và ghi audit_logs. Nút thứ ba ở chi tiết báo cáo, cùng hộp xác nhận bắt nhập ghi chú như 2.3.100-101.
+  - Bác bỏ được tính vào lịch sử của sân ("bác bỏ") để admin cân nhắc ở 2.3.103; không tính là xử thua.
+2.3.103. Xem thống kê báo cáo theo từng sân [Đã triển khai]
+  - API: GET /api/v1/admin/booking-disputes/venue-stats?from&to&q&sort&page&size; quyền refund.process. Mỗi dòng là một sân có báo cáo trong khoảng ngày: tổng báo cáo, đang chờ giải trình, đang chờ xử lý, xử thua (hoàn toàn phần hoặc một nửa, gồm cả tự động xử thua ở 2.3.107), bác bỏ, huỷ, tỷ lệ xử thua, tổng tiền đã quyết định hoàn, số lần quá hạn không giải trình, trạng thái sân và cờ "sắp chạm ngưỡng tạm ngưng".
+  - Sắp xếp mặc định theo số lần xử thua giảm dần; tìm theo tên sân hoặc chủ sân. Bấm vào một sân xem danh sách báo cáo của sân đó (lọc theo sân ở /admin/disputes).
+  - Chỉ đọc; đây là dữ liệu để admin cân nhắc, việc tạm ngưng thuộc 2.3.104. Tài khoản mẫu @bwf.example không tính.
+  - Giao diện: tab "Theo sân" ở trang /admin/disputes.
+2.3.104. Tạm ngưng hoạt động sân bị xử thua nhiều lần [Đã triển khai]
+  - Tự động: ngay khi một báo cáo của sân được kết luận xử thua (2.3.100, 2.3.101, 2.3.107) mà số báo cáo xử thua của sân trong 90 ngày gần nhất đạt từ 3 lần trở lên (cấu hình DISPUTE_SUSPEND_THRESHOLD, DISPUTE_SUSPEND_WINDOW_DAYS) thì sân chuyển status = inactive, đồng thời ghi lý do tạm ngưng (số lần, các báo cáo liên quan) vào audit_logs.
+  - Sân tạm ngưng không hiện ở tìm kiếm và không nhận đặt mới; các đơn đã đặt vẫn giữ nguyên và xử lý bình thường. Chủ sân nhận thông báo kèm lý do và thấy thông báo đỏ ở trang sân của mình.
+  - Admin bật lại sân bằng thao tác sẵn có của quản lý sân kèm ghi chú bắt buộc; sau khi bật lại, các lần xử thua cũ vẫn được tính nhưng hệ thống không tự tạm ngưng lại cho tới khi có thêm một lần xử thua mới.
+  - Chỉ tính báo cáo xử thua có kết luận, không tính bác bỏ hoặc huỷ.
 
 Xử lý Tự động cho Tranh chấp
 
-2.3.105. Tạm hoãn ghi nhận hoa hồng đến hạn của booking đang tranh chấp
+2.3.105. Tạm hoãn ghi nhận hoa hồng đến hạn của booking đang tranh chấp [Đã triển khai]
   - Courtly không giữ tiền sân; hệ thống chỉ tạm loại hoa hồng của đúng booking khỏi kỳ đối soát.
-2.3.106. Trừ khoản hoa hồng đang tranh chấp khỏi tổng công nợ đến hạn
-2.3.107. Tự động xử thua chủ sân khi quá hạn giải trình
+  - Ngay khi người chơi tạo báo cáo (2.3.85) hoa hồng của đơn chuyển sang suspended, kể cả khi người chơi chỉ phản ánh mà không yêu cầu hoàn tiền; lưu trạng thái trước đó để khôi phục chính xác. Hoa hồng đã nằm trong kỳ đối soát đã chốt (đã gắn kỳ công nợ) thì không tạm hoãn được, chỉ ghi chú vào báo cáo để admin xử lý theo 2.3.109.
+  - Mỗi đơn chỉ có một khoản hoa hồng nên khoản tạm hoãn gắn với báo cáo đang xử lý của đơn đó. Người chơi huỷ báo cáo (2.3.92) thì khoản được khôi phục theo 2.3.110 ngay.
+  - Khoản tạm hoãn không vào kỳ đối soát mới, không làm chủ sân bị hạn chế vì công nợ quá hạn; hiện ở 2.3.97 (danh sách "Hoa hồng đang tạm hoãn" đã làm, từ giờ có dữ liệu thật). Ghi audit_logs mỗi lần chuyển.
+2.3.106. Trừ khoản hoa hồng đang tranh chấp khỏi tổng công nợ đến hạn [Đã triển khai]
+  - Tổng công nợ đến hạn của chủ sân (trang Tài chính > Công nợ, tạo kỳ đối soát, tính hạn chế tài khoản) chỉ cộng các hoa hồng pending, due, adjusted; khoản suspended bị loại và hiển thị riêng thành "đang tạm hoãn" để chủ sân thấy công nợ thật.
+  - Rà lại mọi nơi tính công nợ (API công nợ của chủ sân, kỳ đối soát của admin, kiểm tra hạn chế tài khoản) để cùng một quy tắc; có test nhiều chủ sân và nhiều trạng thái hoa hồng. Khoản tạm hoãn được khôi phục thì tự vào lại công nợ đúng hạn ban đầu (không bị tính phạt chậm vì thời gian tạm hoãn).
+2.3.107. Tự động xử thua chủ sân khi quá hạn giải trình [Đã triển khai]
   - Quá 48 giờ không phản hồi thì chuyển sang quyết định yêu cầu owner hoàn tiền theo chính sách.
   - Gửi email nhắc ở giờ thứ 24.
-2.3.108. Theo dõi và xác nhận chủ sân đã hoàn tiền trực tiếp cho người chơi
+  - Tác vụ nền chạy mỗi 10 phút (bật tắt bằng DISPUTE_TIMEOUT_JOB_ENABLED như các job khác): báo cáo awaiting_owner_response đã quá owner_response_deadline được xử lý trong một transaction có khoá dòng, chỉ một lần.
+  - Có yêu cầu hoàn tiền và đơn có khoản thanh toán đã xác nhận: tự quyết định hoàn toàn phần đúng số người chơi yêu cầu (không vượt số còn hoàn được), tạo khoản hoàn awaiting_owner_refund như 2.3.100, resolution = refund_full, ghi chú "Chủ sân không giải trình trong 48 giờ".
+  - Không có yêu cầu hoàn tiền (chỉ phản ánh): báo cáo kết thúc resolved với resolution = owner_no_response, không có khoản hoàn, vẫn tính là một lần xử thua của sân.
+  - Báo cáo ghi rõ "hệ thống tự xử lý" (handled_by trống) ở dòng thời gian của cả ba bên. Sau khi đã tự xử thua, chủ sân vẫn xem được báo cáo nhưng không giải trình được nữa.
+  - Nhắc ở giờ thứ 24: thông báo trong ứng dụng và email, mỗi báo cáo chỉ nhắc một lần (chống trùng khi job chạy lại). Kết quả tự xử thua cũng thông báo cho hai bên và gọi 2.3.104.
+2.3.108. Theo dõi và xác nhận chủ sân đã hoàn tiền trực tiếp cho người chơi [Đã triển khai]
   - Chủ sân gửi bằng chứng hoàn tiền; người chơi hoặc admin xác nhận đã nhận.
   - Courtly không tự chuyển tiền vì không nắm giữ tiền thanh toán của booking.
-2.3.109. Hoàn lại phí nền tảng của đơn bị hoàn tiền
+  - Chủ sân: POST /api/v1/owner/refunds/{refundId}/report-paid kèm 1 ảnh chứng từ (chuyển khoản/biên nhận) và ghi chú; khoản hoàn từ awaiting_owner_refund sang owner_reported_refunded, lưu owner_reported_at và proof. Ảnh riêng tư như ảnh bằng chứng báo cáo.
+  - Người chơi: POST /api/v1/refunds/{refundId}/confirm (đã nhận, sang confirmed) hoặc /dispute (chưa nhận, kèm lý do; khoản hoàn quay về awaiting_owner_refund và admin được thông báo). Người chơi không phản hồi trong 7 ngày sau khi chủ sân báo đã hoàn thì job nền tự xác nhận, ghi rõ "tự xác nhận".
+  - Admin: xác nhận thay người chơi bất cứ lúc nào (refund.process, ghi chú bắt buộc), kể cả khi chủ sân chưa gửi chứng từ; admin cũng thấy danh sách khoản hoàn quá hạn chưa được chủ sân báo.
+  - Khi một khoản hoàn sang confirmed: payments chuyển partially_refunded hoặc refunded theo tổng đã hoàn, bắn 2.3.109 để điều chỉnh hoa hồng; ghi audit_logs mỗi bước.
+  - Giao diện: nút "Báo đã hoàn tiền" ở chi tiết báo cáo của chủ sân, nút "Đã nhận tiền" / "Chưa nhận được" ở chi tiết báo cáo của người chơi, khối "Khoản hoàn tiền" ở chi tiết báo cáo của admin.
+2.3.109. Hoàn lại phí nền tảng của đơn bị hoàn tiền [Đã triển khai]
   - Toàn phần: hủy toàn bộ hoa hồng; một phần: điều chỉnh theo số tiền owner thực giữ.
-2.3.110. Khôi phục khoản hoa hồng vào công nợ khi báo cáo bị bác bỏ
-2.3.111. Thông báo cho các bên liên quan ở mỗi bước xử lý
+  - Chạy khi khoản hoàn của báo cáo được xác nhận (2.3.108), dùng lại quy tắc đã có ở ghi nhận hoàn tiền của admin (2.3.52): hoa hồng, phần voucher Courtly bù và khoản Courtly nợ chủ sân giảm theo tỷ lệ phần còn lại của khoản đã thu; hoàn toàn bộ thì hoa hồng chuyển waived.
+  - Hoa hồng đang tạm hoãn (suspended) được mở ra và điều chỉnh trong cùng bước. Hoa hồng đã nằm trong kỳ đã chốt hoặc đã thanh toán thì phần thừa cộng vào số dư trả trước của chủ sân, trừ vào hoa hồng cũ nhất lần sau; tính lại hạn chế tài khoản.
+  - Mỗi khoản hoàn chỉ điều chỉnh hoa hồng một lần (chống trùng khi xác nhận lặp hoặc job tự xác nhận); ghi audit_logs thay đổi trước/sau; hiển thị phần hoa hồng đã hoàn ở chi tiết giao dịch đối soát và chi tiết báo cáo.
+2.3.110. Khôi phục khoản hoa hồng vào công nợ khi báo cáo bị bác bỏ [Đã triển khai]
+  - Khi báo cáo kết thúc mà không có khoản hoàn (bác bỏ ở 2.3.102, hoặc kết luận chỉ phản ánh, hoặc người chơi huỷ ở 2.3.92) thì hoa hồng suspended của đơn trở về đúng trạng thái trước khi tạm hoãn (pending hoặc due) với hạn thanh toán ban đầu; nếu đã quá hạn trong lúc tạm hoãn thì đến hạn ngay nhưng không bị tính chậm cho thời gian tạm hoãn.
+  - Báo cáo bị xử thua nhưng khoản hoàn bị người chơi tranh cãi hoặc chưa xác nhận thì hoa hồng giữ tạm hoãn cho tới khi 2.3.108 hoàn tất; hoa hồng chỉ khôi phục một lần, chống trùng.
+  - Gửi thông báo cho chủ sân (khoản hoa hồng trở lại công nợ, số tiền, hạn) và ghi audit_logs.
+2.3.111. Thông báo cho các bên liên quan ở mỗi bước xử lý [Đã triển khai]
+  - Rà soát và hoàn thiện thông báo cho cả hai bên ở mọi bước của luồng báo cáo, tránh trùng và đúng người: người chơi tạo báo cáo (chủ sân) → chủ sân giải trình (người chơi) → quá hạn 24 giờ nhắc (chủ sân) → tự xử thua (cả hai) → admin quyết định (cả hai, đã làm ở 2.3.100-102) → chủ sân báo đã hoàn (người chơi, admin) → người chơi xác nhận hoặc khiếu nại (chủ sân, admin) → hoa hồng được hoàn hoặc khôi phục (chủ sân) → sân bị tạm ngưng (chủ sân, admin).
+  - Mỗi thông báo có liên kết thẳng tới màn hình chi tiết báo cáo phù hợp với từng người nhận (chủ sân /owner/disputes/{id}, người chơi /bao-cao/{id}, admin /admin/disputes/{id}); sửa các thông báo cũ đang trỏ về /owner/bookings.
+  - Gom theo loại và tôn trọng tuỳ chọn thông báo của người dùng; các bước làm thay đổi tiền (quyết định hoàn tiền, hoàn tiền xác nhận, hoa hồng khôi phục, sân tạm ngưng) là loại bắt buộc không tắt được. Có test đủ ma trận bước × người nhận và E2E kiểm tra chuông thông báo.
 
 Ma trận độ ưu tiên theo Tác nhân: Sprint 3
