@@ -25,10 +25,13 @@ test.describe.serial('public pages and authentication', () => {
     const assertNoRuntimeErrors = watchRuntimeErrors(page, { ignoredUrls: ['/api/v1/auth/login'] })
     await page.goto('/login')
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-    await expect(page.getByText('Vui lòng nhập số điện thoại')).toBeVisible()
+    await expect(page.getByText('Vui lòng nhập email')).toBeVisible()
     await expect(page.getByText('Vui lòng nhập mật khẩu')).toBeVisible()
+    // Chỉ còn đăng nhập bằng email: không có tab số điện thoại và nút Google.
+    await expect(page.locator('[name="courtly_login_phone"]')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Số điện thoại' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Google/ })).toHaveCount(0)
 
-    await page.getByRole('button', { name: 'Email', exact: true }).click()
     await page.locator('[name="courtly_login_email"]').fill('an.nguyen@example.com')
     await page.locator('[name="courtly_login_password"]').fill('sai-mat-khau')
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
@@ -43,9 +46,9 @@ test.describe.serial('public pages and authentication', () => {
     assertNoRuntimeErrors()
   })
 
-  test('logs in by phone and validates registration and recovery forms', async ({ page }) => {
+  test('logs in through the form and validates registration and recovery forms', async ({ page }) => {
     const assertNoRuntimeErrors = watchRuntimeErrors(page)
-    await loginThroughUi(page, '0901000001', { method: 'phone' })
+    await loginThroughUi(page, 'an.nguyen@example.com')
 
     await page.goto('/register')
     await page.getByRole('button', { name: 'Đăng ký', exact: true }).click()

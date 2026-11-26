@@ -14,7 +14,6 @@ const NEW_PASSWORD = 'SanMoi@2026'
 
 async function loginThroughForm(page, email, password) {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'Email', exact: true }).click()
   await page.locator('[name="courtly_login_email"]').fill(email)
   await page.locator('[name="courtly_login_password"]').fill(password)
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()

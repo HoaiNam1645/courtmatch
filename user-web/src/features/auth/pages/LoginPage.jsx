@@ -1,22 +1,12 @@
 import { useState } from 'react'
-import { ArrowLeft, ChevronDown, Eye, EyeOff, Mail } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Mail } from 'lucide-react'
 import { ApiError } from '../../../api/client'
 import { login as loginApi } from '../../../api/auth'
 import { homePathFor } from '../../../shared/roles'
 import { saveCachedUser, savePendingVerification } from '../../../shared/session'
 import { FieldError, FormAlert } from '../../../shared/FormFeedback'
-import { classNames } from '../../../shared/utils'
-
-function GoogleMark() {
-  return (
-    <span className="relative grid size-5 place-items-center rounded-full bg-white text-[15px] font-bold">
-      <span className="text-[#4285f4]">G</span>
-    </span>
-  )
-}
 
 function LoginPage() {
-  const [method, setMethod] = useState('phone')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
@@ -27,15 +17,14 @@ function LoginPage() {
     if (submitting) return
 
     const formData = new FormData(event.currentTarget)
-    const emailOrPhone = (method === 'phone'
-      ? formData.get('courtly_login_phone')
-      : formData.get('courtly_login_email'))?.toString().trim() ?? ''
+    // Chỉ đăng nhập bằng email; API vẫn nhận trường emailOrPhone.
+    const emailOrPhone = formData.get('courtly_login_email')?.toString().trim() ?? ''
     const password = formData.get('courtly_login_password')?.toString() ?? ''
 
     // Kiểm tra phía client chỉ để báo sớm; backend vẫn kiểm tra lại toàn bộ.
     const nextFieldErrors = {}
     if (!emailOrPhone) {
-      nextFieldErrors.emailOrPhone = method === 'phone' ? 'Vui lòng nhập số điện thoại' : 'Vui lòng nhập email'
+      nextFieldErrors.emailOrPhone = 'Vui lòng nhập email'
     }
     if (!password) nextFieldErrors.password = 'Vui lòng nhập mật khẩu'
     if (Object.keys(nextFieldErrors).length > 0) {
@@ -86,69 +75,21 @@ function LoginPage() {
       <section className="relative z-10 mx-auto flex min-h-[calc(100svh-64px)] max-w-[600px] flex-col items-center justify-start pt-[96px]">
         <div className="w-full">
           <div className="overflow-hidden rounded-md bg-white shadow-[0_18px_44px_rgba(4,72,42,0.24)]">
-            <div className="login-tabs grid h-[58px] grid-cols-2 bg-[#f4f4f4] text-[18px] font-semibold">
-              {[
-                { id: 'phone', label: 'Số điện thoại' },
-                { id: 'email', label: 'Email' },
-              ].map((item) => {
-                const active = method === item.id
-                return (
-                  <button
-                    key={item.id}
-                    className={classNames(
-                      'login-tab relative flex items-center justify-center transition',
-                      active && 'login-tab-active z-10 bg-white text-[#0c5130]',
-                      !active && 'login-tab-muted text-stone-400',
-                      !active && item.id === 'phone' && 'login-tab-muted-phone',
-                      !active && item.id === 'email' && 'login-tab-muted-email',
-                    )}
-                    onClick={() => setMethod(item.id)}
-                  >
-                    <span className="relative z-10">{item.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-
             <form className="grid gap-6 px-6 pb-8 pt-9 sm:px-7" autoComplete="off" onSubmit={handleLogin}>
-              {method === 'phone' ? (
-                <label className="block">
-                  <span className="text-[18px] font-semibold text-[#0c5130]">Số điện thoại của bạn?</span>
-                  <div className="mt-3 flex h-[48px] overflow-hidden rounded-md border border-stone-300 bg-white focus-within:border-emerald-700">
-                    <span className="flex w-[104px] items-center justify-center gap-2.5 text-sm font-medium text-[#0c5130]">
-                      <span className="grid size-5 place-items-center rounded-full bg-[#e21a2c] text-[11px] text-yellow-300">
-                        ★
-                      </span>
-                      <span>+ 84</span>
-                      <ChevronDown className="size-4 text-stone-400" />
-                    </span>
-                    <input
-                      className="min-w-0 flex-1 px-3 text-base font-normal text-stone-800 outline-none placeholder:text-stone-400"
-                      placeholder="Nhập số điện thoại"
-                      inputMode="tel"
-                      name="courtly_login_phone"
-                      type="tel"
-                      autoComplete="off"
-                    />
-                  </div>
-                  <FieldError message={fieldErrors.emailOrPhone} />
-                </label>
-              ) : (
-                <label className="block">
-                  <span className="text-[18px] font-semibold text-[#0c5130]">Email của bạn? (*)</span>
-                  <div className="mt-3 flex h-[48px] items-center gap-3 rounded-md border border-stone-300 bg-white px-4 focus-within:border-emerald-700">
-                    <Mail className="size-4 text-[#0c5130]" />
-                    <input
-                      className="min-w-0 flex-1 text-base font-normal text-stone-800 outline-none placeholder:text-stone-400"
-                      placeholder="name@email.com"
-                      name="courtly_login_email"
-                      type="email"
-                      autoComplete="off"
-                    />
-                  </div>
-                  <FieldError message={fieldErrors.emailOrPhone} />
-                </label>
-              )}
+              <label className="block">
+                <span className="text-[18px] font-semibold text-[#0c5130]">Email của bạn? (*)</span>
+                <div className="mt-3 flex h-[48px] items-center gap-3 rounded-md border border-stone-300 bg-white px-4 focus-within:border-emerald-700">
+                  <Mail className="size-4 text-[#0c5130]" />
+                  <input
+                    className="min-w-0 flex-1 text-base font-normal text-stone-800 outline-none placeholder:text-stone-400"
+                    placeholder="name@email.com"
+                    name="courtly_login_email"
+                    type="email"
+                    autoComplete="off"
+                  />
+                </div>
+                <FieldError message={fieldErrors.emailOrPhone} />
+              </label>
 
               <label className="block">
                 <span className="text-[18px] font-semibold text-[#0c5130]">Mật khẩu (*)</span>
@@ -199,17 +140,6 @@ function LoginPage() {
           </p>
 
           <div className="mt-6 grid gap-6">
-            {/* 2.1.3 chưa triển khai. Vô hiệu hoá thay vì đăng nhập giả. */}
-            <button
-              type="button"
-              disabled
-              title="Chức năng đang được phát triển"
-              className="flex h-[44px] cursor-not-allowed items-center justify-center gap-3 rounded-md bg-white text-[17px] font-normal text-[#23543a] opacity-60 shadow-[0_8px_22px_rgba(4,72,42,0.12)]"
-            >
-              <GoogleMark />
-              Đăng nhập với Google
-            </button>
-
             {/* 2.3.1 — chủ sân dùng chung form này với tài khoản do quản trị viên cấp. */}
             <p className="login-owner-banner flex min-h-[76px] items-center justify-center rounded-md border border-[#e4b02d] bg-white px-5 text-center text-base leading-7 text-[#c98a12]">
               Bạn là CHỦ SÂN? Đăng nhập bằng tài khoản do quản trị viên Courtly cấp

@@ -44,14 +44,9 @@ export async function loginByApi(page, emailOrPhone, password = DEFAULT_PASSWORD
   return { token: payload.accessToken, user }
 }
 
-export async function loginThroughUi(page, identity, { method = 'email', password = DEFAULT_PASSWORD } = {}) {
+export async function loginThroughUi(page, email, { password = DEFAULT_PASSWORD } = {}) {
   await page.goto('/login')
-  if (method === 'email') {
-    await page.getByRole('button', { name: 'Email', exact: true }).click()
-    await page.locator('[name="courtly_login_email"]').fill(identity)
-  } else {
-    await page.locator('[name="courtly_login_phone"]').fill(identity)
-  }
+  await page.locator('[name="courtly_login_email"]').fill(email)
   await page.locator('[name="courtly_login_password"]').fill(password)
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
   await expect(page).toHaveURL('/')
